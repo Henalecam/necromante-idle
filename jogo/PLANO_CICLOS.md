@@ -247,3 +247,4 @@ Dono pediu ciclos a cada 5 minutos.
 79. Névoa no mapa (salas distantes aparecem como '?'), lições de toque uma por vez (orbe, objeto, golpe, cura, marca, detonar, mapa). Doc de design atualizado com o ciclo 13.
 80. Segundo nível secreto (Câmara do Tesouro: três guardiões de elite, 3 itens com 15% de Lendário) e ambiente de chefe Desabamento. Portão 9/9 (7 tentativas no chefe do Ato 1; chefe 1,15 h; expedição 3,55 min). Render retomável por folha (render_sprites.py pula folhas já prontas).
 81. Som sintetizado (golpes, mortes, explosões, almas, baús, bênçãos, portas, chefe, perigo, nível secreto, fim) com botão ♪ para ligar/desligar.
+82. Sala Armadilha (8% da vida de todos; o toque desarma e rende Ossos). Portão 9/9 (andar 37,5 s; chefe Ato 1 1,12 h, 7 tentativas).

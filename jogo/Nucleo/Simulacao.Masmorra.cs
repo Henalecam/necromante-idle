@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -80,7 +80,7 @@ namespace Necro.Nucleo
                     float r = _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    Salas.Add(r < 30f ? TipoSala.Bau : r < 45f ? TipoSala.Santuario : r < 56f ? TipoSala.AlmasPresas : r < 70f ? TipoSala.Fonte : r < 82f ? TipoSala.Emboscada : r < 91f ? TipoSala.Mercador : TipoSala.AltarDeSangue);
+                    Salas.Add(r < 28f ? TipoSala.Bau : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 92f ? TipoSala.AltarDeSangue : TipoSala.Armadilha);
                 }
                 else if (w < TotalDeOndas)
                 {
@@ -310,6 +310,29 @@ namespace Necro.Nucleo
                     Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = valor, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
                     EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
                     return;
+                }
+                case TipoSala.Armadilha:
+                {
+                    // placas de espinhos: sozinho, o grupo pisa e sangra; o toque do jogador desarma e ainda rende os ossos de quem caiu ali antes
+                    if (toque)
+                    {
+                        long achado = (long)(Cfg.BauOssos * 0.6f * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                        Resultado.Ossos += achado; valor = achado; sub = 1;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < Entidades.Count; i++)
+                        {
+                            var e = Entidades[i];
+                            if (!e.Viva || e.Faccao == Faccao.Inimigo) continue;
+                            float d = Math.Min(e.Vida - 1f, e.VidaMax * (e == Necromante ? Cfg.ArmadilhaDanoNoNecromante : Cfg.ArmadilhaDano));
+                            if (d <= 0f) continue;
+                            e.Vida -= d;
+                            Emitir(new EventoSim { Tipo = TipoEvento.Dano, Origem = -1, Alvo = e.Id, Valor = d, TipoDano = TipoDano.Fisico, Pos = e.Pos });
+                        }
+                        valor = Cfg.ArmadilhaDano;
+                    }
+                    break;
                 }
                 case TipoSala.Mercador:
                 {

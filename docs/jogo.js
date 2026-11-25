@@ -428,7 +428,7 @@ function quadro(m, acao, dir, tempo) {
 
 let saidaAtual = '', viagem = [1, 0];
 // ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
-const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende 50% a mais', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
+const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
   ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
   ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
@@ -441,7 +441,7 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['?', 'Inexplorada']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['?', 'Inexplorada']];
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos'];
@@ -477,7 +477,7 @@ function mapaSvg(c, rotulos) {
   mapa.forEach((m, i) => {
     const [x, y] = pos(m), real = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
     // névoa: só se conhece o que já foi visitado, a sala seguinte e o covil do chefe
-    const oculto = i > masm.sala + 1 && real !== 2, t = oculto ? 12 : real;
+    const oculto = i > masm.sala + 1 && real !== 2, t = oculto ? 13 : real;
     const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
     h += `<rect x="${x}" y="${y}" width="${c}" height="${c}" rx="${c * 0.18}" fill="${atual ? '#5a1a20' : feita ? '#241a1d' : '#120c0f'}" stroke="${atual ? '#ffd84a' : feita ? '#5c4c30' : '#4a3a3c'}" stroke-width="${atual ? 2 : 1}"><title>${SALAS[t][1]}</title></rect>`;
     h += `<text x="${x + c / 2}" y="${y + c * 0.72}" text-anchor="middle" font-size="${c * 0.62}" fill="${cor}" opacity="${feita ? 0.4 : 1}">${SALAS[t][0]}</text>`;
@@ -489,7 +489,7 @@ function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
     `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer; o que há nas salas distantes só se descobre chegando perto.</p>` +
-    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
+    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
 }
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
@@ -501,7 +501,7 @@ function eventoDeSala(tipo, v, x, y) {
   const sub = +v[2], toque = v[6] === '1', val = +v[4];
   if (!(ts === 3 && sub === 1)) { explor.salas++; if (ts === 3) explor.baus++; if (ts === 8) explor.secretos++; if (toque && ts !== 8 && ts !== 6) explor.toques++; }
   if (objeto) { objeto.aberto = 0.01; }
-  som(ts === 3 || ts === 9 ? 'bau' : ts === 8 ? 'secreto' : ts === 11 ? 'toque' : 'bencao');
+  som(ts === 12 ? (sub === 1 ? 'bau' : 'critico') : ts === 3 || ts === 9 ? 'bau' : ts === 8 ? 'secreto' : ts === 11 ? 'toque' : 'bencao');
   const brilho = (cor, n) => { for (let i = 0; i < n; i++) particulas.push([x, y, 0.6, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(3, 8), cor, rnd(0.6, 1.2)]); };
   if (ts === 3) {
     if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
@@ -511,6 +511,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
+  else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
@@ -543,6 +544,10 @@ function desenharObjeto(dt) {
     ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 40); g.addColorStop(0, `rgba(120,255,170,${ab ? 0.2 : 0.7 * pulso})`); g.addColorStop(1, 'rgba(120,255,170,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#2a2a2e'; ctx.lineWidth = 4; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * 9, 0); ctx.lineTo(i * 9 * (ab ? 1.8 : 1), -62); ctx.stroke(); }
     ctx.beginPath(); ctx.ellipse(0, 0, 22, 7, 0, 0, 7); ctx.stroke(); if (!ab) { ctx.beginPath(); ctx.ellipse(0, -62, 22, 7, 0, 0, 7); ctx.stroke(); }
+  } else if (o.tipo === 12) {   // armadilha: placa de espinhos
+    ctx.fillStyle = '#2a2428'; ctx.beginPath(); ctx.ellipse(0, 0, 46, 20, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#5a1a20'; ctx.lineWidth = 2; ctx.stroke();
+    const sobe = ab ? Math.min(1, o.aberto * 6) : 0.35 + 0.15 * pulso;
+    for (let i = -3; i <= 3; i++) for (let j = -1; j <= 1; j++) { const sx = i * 11 + j * 4, sy = j * 6; ctx.fillStyle = '#b8b0a0'; ctx.beginPath(); ctx.moveTo(sx - 3, sy); ctx.lineTo(sx + 3, sy); ctx.lineTo(sx, sy - 34 * sobe); ctx.closePath(); ctx.fill(); }
   } else if (o.tipo === 9) {    // mercador: vulto encapuzado com um saco
     ctx.fillStyle = '#2a2018'; ctx.beginPath(); ctx.moveTo(-18, 2); ctx.lineTo(-12, -52); ctx.quadraticCurveTo(0, -78, 12, -52); ctx.lineTo(18, 2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(0, -52, 7, 9, 0, 0, 7); ctx.fill(); ctx.fillStyle = `rgba(255,216,74,${pulso})`; ctx.fillRect(-4, -54, 2.5, 2.5); ctx.fillRect(2, -54, 2.5, 2.5);
