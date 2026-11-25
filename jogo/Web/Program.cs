@@ -72,7 +72,7 @@ public static partial class Jogo
            .Append(F(Math.Max(0f, _sim.RecargaDetonar))).Append(' ').Append(F(Math.Max(0f, _sim.RecargaFrenesi))).Append(' ')
            .Append(F(Math.Max(0f, _sim.FrenesiTempo))).Append(' ').Append(_sim.CadaveresDetonaveis).Append(' ').Append(_sim.MarcadoId).Append(' ').Append(_sim.NecromanteCorpoACorpo ? 1 : 0).Append(' ').Append(F(Math.Max(0f, _sim.RecargaSopro))).Append(' ').Append((int)_sim.FeiticoDoEspaco(0)).Append(' ').Append(F(_sim.RecargaDoFeiticoDeItem(0))).Append(' ').Append((int)_sim.FeiticoDoEspaco(1)).Append(' ').Append(F(_sim.RecargaDoFeiticoDeItem(1))).Append(' ').Append((int)_sim.PressagioAtual).Append('\n');
         _sb.Append("M ").Append(_sim.Fase).Append(' ').Append(_sim.SalaAtual).Append(' ').Append((int)_sim.Ambiente).Append(' ').Append((int)_sim.BencaoAtual).Append(' ')
-           .Append(_sim.EmNivelSecreto ? 1 : 0).Append(' ').Append(F(_sim.PosDoObjeto.X)).Append(' ').Append(F(_sim.PosDoObjeto.Y));
+           .Append(_sim.EmNivelSecreto ? (int)_sim.SecretoAtual : 0).Append(' ').Append(F(_sim.PosDoObjeto.X)).Append(' ').Append(F(_sim.PosDoObjeto.Y));
         foreach (var ts in _sim.Salas) _sb.Append(' ').Append((int)ts);
         _sb.Append('\n');
         _sb.Append('G'); foreach (var c in _sim.Mapa) _sb.Append(' ').Append(c.X).Append(' ').Append(c.Y).Append(' ').Append(c.Pai);

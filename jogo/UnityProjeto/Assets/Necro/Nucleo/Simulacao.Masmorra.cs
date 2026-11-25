@@ -11,7 +11,10 @@ namespace Necro.Nucleo
     public struct CelulaDoMapa { public int X; public int Y; public int Pai; }
 
     /// <summary>Ambiente da sala do chefe: muda as regras da luta para os dois lados.</summary>
-    public enum AmbienteDeChefe { Nenhum = 0, Lava = 1, NevoaPutrida = 2, Geada = 3 }
+    public enum AmbienteDeChefe { Nenhum = 0, Lava = 1, NevoaPutrida = 2, Geada = 3, Desabamento = 4 }
+
+    /// <summary>Qual nível secreto se abriu.</summary>
+    public enum NivelSecreto { Nenhum = 0, PastoProfano = 1, CamaraDoTesouro = 2 }
 
     /// <summary>Bênção de santuário: vale até o fim do andar.</summary>
     public enum Bencao { Nenhuma = 0, Furia = 1, Protecao = 2, Colheita = 3 }
@@ -23,7 +26,8 @@ namespace Necro.Nucleo
     /// </summary>
     public sealed partial class Simulacao
     {
-        private struct Perigo { public Vec2 Pos; public int TickDoEstouro; }
+        private struct Perigo { public Vec2 Pos; public int TickDoEstouro; public bool Pedra; }
+        public NivelSecreto SecretoAtual { get; private set; }
 
         /// <summary>Plano de salas do andar atual e a sala em que o grupo está.</summary>
         public readonly List<TipoSala> Salas = new List<TipoSala>(8);
@@ -63,7 +67,7 @@ namespace Necro.Nucleo
                 Salas.Add(TipoSala.Vazia);
                 if (_rngMasmorra.Chance(0.5f)) Salas.Add(TipoSala.Vazia);
                 Salas.Add(TipoSala.Chefe);
-                Ambiente = (AmbienteDeChefe)(1 + _rngMasmorra.Intervalo(0, 3));
+                Ambiente = (AmbienteDeChefe)(1 + _rngMasmorra.Intervalo(0, 4));
                 Emitir(new EventoSim { Tipo = TipoEvento.AmbienteDefinido, Extra = (int)Ambiente, Alvo = -1, Origem = -1 });
                 GerarMapa();
                 return;
@@ -154,7 +158,14 @@ namespace Necro.Nucleo
                 var centro = new Vec2(Cfg.LarguraArena * 0.6f, Cfg.AlturaArena * 0.5f);
                 SoltarItemEm(centro, RaridadeItem.Raro);
                 SoltarItemEm(centro, RaridadeItem.Magico);
-                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.Secreta, Valor = ossos, Critico = true, Pos = centro, Alvo = -1, Origem = -1 });
+                if (SecretoAtual == NivelSecreto.CamaraDoTesouro)
+                {
+                    // o tesouro: mais um item, com chance de Lendário
+                    SoltarItemEm(centro, _rngItens.Chance(Cfg.TesouroChanceDeLendario) ? RaridadeItem.Lendario : RaridadeItem.Raro);
+                    long extra = ossos; Resultado.Ossos += extra; ossos += extra;
+                }
+                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.Secreta, Valor = ossos, Critico = true, Pos = centro, Alvo = -1, Origem = (int)SecretoAtual });
+                SecretoAtual = NivelSecreto.Nenhum;
                 return false;   // segue para a conclusão normal do andar
             }
             if (Onda < TotalDeOndas)
@@ -220,14 +231,25 @@ namespace Necro.Nucleo
             Resultado.NiveisSecretos++;
             Salas.Add(TipoSala.Secreta); SalaAtual = Salas.Count - 1; ColocarNoMapa(SalaAtual);
             _portaisAntesDoSecreto = PortaisAtivos; PortaisAtivos = 3;
-            int n = Math.Min(Cfg.SecretoHordaMaxima, Cfg.SecretoHordaBase + Andar / 2);
-            int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo * 0.5f + 0.5f));
-            for (int k = 0; k < n; k++)
-                _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.ResProfana, Portal = k % 3, TickDeSpawn = TickAtual + 10 + k * intervalo });
-            // o Rei do Pasto chega por último
-            _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.ResProfana, Elite = true, Mods = ModificadorElite.EscudoDeOssos, Portal = 0, TickDeSpawn = TickAtual + 10 + n * intervalo + 10 });
+            SecretoAtual = _rngMasmorra.Chance(0.5f) ? NivelSecreto.PastoProfano : NivelSecreto.CamaraDoTesouro;
+            if (SecretoAtual == NivelSecreto.PastoProfano)
+            {
+                int n = Math.Min(Cfg.SecretoHordaMaxima, Cfg.SecretoHordaBase + Andar / 2);
+                int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo * 0.5f + 0.5f));
+                for (int k = 0; k < n; k++)
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.ResProfana, Portal = k % 3, TickDeSpawn = TickAtual + 10 + k * intervalo });
+                // o Rei do Pasto chega por último
+                _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.ResProfana, Elite = true, Mods = ModificadorElite.EscudoDeOssos, Portal = 0, TickDeSpawn = TickAtual + 10 + n * intervalo + 10 });
+            }
+            else
+            {
+                // Câmara do Tesouro: três guardiões de elite, um por porta
+                int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
+                for (int k = 0; k < 3; k++)
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = SortearEspecie(noAto, 2.01f), Elite = true, Mods = SortearModificadores(), Portal = k, TickDeSpawn = TickAtual + 10 + k * 15 });
+            }
             Fase = FaseExpedicao.EmOnda;
-            Emitir(new EventoSim { Tipo = TipoEvento.SalaIniciada, Extra = (int)TipoSala.Secreta, Valor = SalaAtual, Alvo = Salas.Count, Pos = new Vec2(Cfg.LarguraArena * 0.6f, Cfg.AlturaArena * 0.5f), Origem = -1 });
+            Emitir(new EventoSim { Tipo = TipoEvento.SalaIniciada, Extra = (int)TipoSala.Secreta, Valor = SalaAtual, Alvo = Salas.Count, Pos = new Vec2(Cfg.LarguraArena * 0.6f, Cfg.AlturaArena * 0.5f), Origem = (int)SecretoAtual });
         }
 
         private void AtualizarExploracao()
@@ -351,14 +373,16 @@ namespace Necro.Nucleo
             {
                 if (_perigos[i].TickDoEstouro > TickAtual) continue;
                 var p = _perigos[i]; _perigos.RemoveAt(i);
-                Emitir(new EventoSim { Tipo = TipoEvento.Explosao, Origem = -1, Pos = p.Pos, Valor = Cfg.LavaRaio, TipoDano = TipoDano.Fogo, Alvo = -1 });
-                float r2 = Cfg.LavaRaio * Cfg.LavaRaio;
+                float raio = p.Pedra ? Cfg.DesabamentoRaio : Cfg.LavaRaio, fator = p.Pedra ? Cfg.DesabamentoFator : 1f;
+                var tipoDoPerigo = p.Pedra ? TipoDano.Fisico : TipoDano.Fogo;
+                Emitir(new EventoSim { Tipo = TipoEvento.Explosao, Origem = -1, Pos = p.Pos, Valor = raio, TipoDano = tipoDoPerigo, Alvo = -1 });
+                float r2 = raio * raio;
                 for (int j = Entidades.Count - 1; j >= 0; j--)
                 {
                     var e = Entidades[j];
                     if (!e.Viva || Vec2.Dist2(e.Pos, p.Pos) > r2) continue;
                     float f = e.Chefe ? Cfg.LavaDanoNoChefe : e.Faccao == Faccao.Inimigo ? Cfg.LavaDanoEmInimigos : e == Necromante ? Cfg.LavaDanoNoNecromante : Cfg.LavaDanoEmAliados;
-                    CausarDano(null, e, e.VidaMax * f, TipoDano.Fogo, false);
+                    CausarDano(null, e, e.VidaMax * f * fator, tipoDoPerigo, false);
                 }
             }
             _tempoAmbiente += DT;
@@ -377,6 +401,22 @@ namespace Necro.Nucleo
                             if (alvo != null) pos = alvo.Pos;
                             _perigos.Add(new Perigo { Pos = pos, TickDoEstouro = TickAtual + espera });
                             Emitir(new EventoSim { Tipo = TipoEvento.PerigoAnunciado, Pos = pos, Valor = Cfg.LavaRaio, Extra = espera, Alvo = -1, Origem = -1 });
+                        }
+                    }
+                    break;
+                case AmbienteDeChefe.Desabamento:
+                    if (_tempoAmbiente >= Cfg.DesabamentoIntervalo)
+                    {
+                        _tempoAmbiente = 0f;
+                        int espera = (int)(Cfg.DesabamentoAviso * Cfg.TicksPorSegundo);
+                        for (int k = 0; k < 5; k++)
+                        {
+                            // o teto cede: duas pedras sobre aliados, duas sobre inimigos, uma ao acaso
+                            Vec2 pos = new Vec2(_rngMasmorra.Intervalo(2f, Cfg.LarguraArena - 2f), _rngMasmorra.Intervalo(1.5f, Cfg.AlturaArena - 1.5f));
+                            var alvo = k == 4 ? null : SortearViva(k < 2);
+                            if (alvo != null) pos = alvo.Pos;
+                            _perigos.Add(new Perigo { Pos = pos, TickDoEstouro = TickAtual + espera, Pedra = true });
+                            Emitir(new EventoSim { Tipo = TipoEvento.PerigoAnunciado, Pos = pos, Valor = Cfg.DesabamentoRaio, Extra = espera, Alvo = -1, Origem = -1, TipoDano = TipoDano.Fisico });
                         }
                     }
                     break;

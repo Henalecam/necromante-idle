@@ -175,6 +175,7 @@ function ambiente(dt, larg, alt) {
   else if (masm.amb === 1) tom = `rgba(255,90,10,${0.13 + 0.05 * Math.sin(tempoSim * 2)})`;
   else if (masm.amb === 2) tom = `rgba(70,140,30,${0.16 + 0.04 * Math.sin(tempoSim * 1.3)})`;
   else if (masm.amb === 3) tom = 'rgba(120,180,255,0.14)';
+  else if (masm.amb === 4) tom = 'rgba(90,80,70,0.14)';
   if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
   if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, 1.25 * (1 - Math.abs(2 * transicao - 1)))})`; ctx.fillRect(0, 0, larg, alt); }
   ctx.globalCompositeOperation = 'lighter';
@@ -409,18 +410,19 @@ function atualizarLicao() {
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['?', 'Inexplorada']];
-const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam']];
+const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
+const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos'];
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
 function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.pop(); }
 function lerMasmorra(p) {
   const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
-  masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: p[5] === '1', ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
+  masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
   if (masm.sala !== antes && !silencio) { transicao = 1; objeto = null; viagem = masm.sala === 0 ? [1, 0] : ({ l: [1, 0], o: [-1, 0], n: [0, 1], s: [0, -1] }[saidaAtual] || [1, 0]); }
   if (masm.sala !== antes) salaSuja = true;
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
-  if (masm.secreto && !secAntes && !silencio) { aviso('NÍVEL SECRETO · O Pasto Profano'); clarao = 0.8; tremor = 0.4; }
+  if (masm.secreto && !secAntes && !silencio) { aviso('NÍVEL SECRETO · ' + NOME_SECRETO[masm.qualSecreto]); clarao = 0.8; tremor = 0.4; }
   const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · Bênção: ' + BENCAOS[masm.bencao].split(':')[0] : '');
   if (rot !== lerMasmorra.rot) { lerMasmorra.rot = rot; $('t-sala').textContent = rot; }
 }
@@ -460,9 +462,9 @@ function mapaGrandeHtml() {
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
   if (tipo === 'AmbienteDefinido') { const a = AMBIENTES[ts]; if (a) { aviso('Sala do chefe · ' + a[0]); anotar(`Sala do chefe: <b>${a[0]}</b>, ${a[1]}.`); } return; }
-  if (tipo === 'PerigoAnunciado') { perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS }); return; }
+  if (tipo === 'PerigoAnunciado') { perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS, pedra: v[5] === 'Fisico' }); return; }
   if (tipo === 'SalaResolvida' && ts === 11) { if (+v[4] > 0) aviso('Ossos esquecidos: +' + fmt(Math.round(+v[4]))); return; }
-  if (tipo === 'SalaIniciada') { if (ts === 6) { aviso('Emboscada!'); tremor = 0.25; anotar('Emboscada: inimigos por todos os lados.'); } else if (ts === 8) anotar('<b style="color:#ff9ad0">Nível secreto: o Pasto Profano.</b>'); return; }
+  if (tipo === 'SalaIniciada') { if (ts === 6) { aviso('Emboscada!'); tremor = 0.25; anotar('Emboscada: inimigos por todos os lados.'); } else if (ts === 8) anotar(`<b style="color:#ff9ad0">Nível secreto: ${NOME_SECRETO[+v[2]] || 'desconhecido'}.</b>`); return; }
   // SalaResolvida
   const sub = +v[2], toque = v[6] === '1', val = +v[4];
   if (!(ts === 3 && sub === 1)) { explor.salas++; if (ts === 3) explor.baus++; if (ts === 8) explor.secretos++; if (toque && ts !== 8 && ts !== 6) explor.toques++; }
@@ -477,16 +479,16 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
-  else if (ts === 8) { aviso('O Pasto Profano foi limpo! Tesouro tomado.'); anotar(`Pasto Profano limpo: +${fmt(Math.round(val))} Ossos, 2 itens (um Raro) e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
+  else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
 function desenharObjeto(dt) {
   // perigos anunciados (lava): círculo que se fecha até estourar
   for (const pg of perigos) {
     pg.t += dt; const [px, py] = naTela(pg.x, pg.y), R = pg.r * arena.px_por_unidade_x, k = Math.min(1, pg.t / pg.dur);
-    ctx.fillStyle = `rgba(255,90,20,${0.12 + 0.25 * k})`; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = pg.pedra ? `rgba(0,0,0,${0.15 + 0.35 * k})` : `rgba(255,90,20,${0.12 + 0.25 * k})`; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = `rgba(255,${200 - 120 * k | 0},40,0.9)`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(px, py, R * k, R * 0.5 * k, 0, 0, 7); ctx.stroke();
-    if (Math.random() < 0.4) particulas.push([pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 0.1, 0, 0, rnd(2, 5), '#ff8a30', rnd(0.3, 0.7)]);
+    if (Math.random() < 0.4) particulas.push(pg.pedra ? [pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 7, 0, 0, -9, '#8a8078', 0.7] : [pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 0.1, 0, 0, rnd(2, 5), '#ff8a30', rnd(0.3, 0.7)]);
   }
   perigos = perigos.filter((pg) => pg.t < pg.dur + 0.1);
   if (!objeto) return;

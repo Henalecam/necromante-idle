@@ -567,6 +567,13 @@ def main():
         aplicar_acao(cena, acao)
         frames = escolher_frames(acao, a_cfg)
         folha = np.zeros((n_dir * alt, len(frames) * larg, 4), dtype=np.float32)
+        arquivo_pronto = os.path.join(cfg["saida"], f"{cfg['nome']}_{a_cfg['nome']}.png")
+        if os.path.exists(arquivo_pronto) and os.environ.get("NECRO_REFAZER") != "1":
+            # retomada: a folha desta ação já foi renderizada numa execução anterior (NECRO_REFAZER=1 força refazer)
+            log(f"Ação '{a_cfg['nome']}': folha já existe, pulando")
+            meta["acoes"].append({"nome": a_cfg["nome"], "arquivo": os.path.basename(arquivo_pronto), "frames": len(frames),
+                                  "fps": a_cfg.get("fps", 8), "loop": a_cfg.get("loop", True)})
+            continue
         log(f"Ação '{a_cfg['nome']}' ({acao.name}): {len(frames)} frames x {n_dir} direções")
         for c, f in enumerate(frames):
             definir_frame(cena, f)

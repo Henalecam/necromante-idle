@@ -1057,7 +1057,8 @@ namespace Necro.Testes
                 var sim = new Simulacao(Cfg, p, 5, ModoExpedicao.Avancar, 1) { LimiteDeAndares = 1, ForcarNivelSecreto = true };
                 int guarda = 0; bool viu = false;
                 while (!sim.Encerrada && guarda++ < 30000) { sim.Tick(); if (sim.EmNivelSecreto) viu = true; }
-                Afirmar(viu && sim.Resultado.NiveisSecretos == 1 && sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] >= 15 && sim.Resultado.Itens.Count >= 2, "secreto " + sim.Resultado.NiveisSecretos + " reses " + sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] + " itens " + sim.Resultado.Itens.Count);
+                bool pasto = sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] >= 15 && sim.Resultado.Itens.Count >= 2, camara = sim.Resultado.ElitesMortos >= 3 && sim.Resultado.Itens.Count >= 3;
+                Afirmar(viu && sim.Resultado.NiveisSecretos == 1 && (pasto || camara), "secreto " + sim.Resultado.NiveisSecretos + " reses " + sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] + " itens " + sim.Resultado.Itens.Count);
             });
             Teste("masmorra: a sala do chefe tem ambiente e ele fere os dois lados", () =>
             {

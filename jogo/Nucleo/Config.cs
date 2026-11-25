@@ -305,6 +305,8 @@ namespace Necro.Nucleo
         public float LavaDanoEmAliados = 0.10f, LavaDanoNoNecromante = 0.06f, LavaDanoEmInimigos = 0.18f, LavaDanoNoChefe = 0.03f;
         public float NevoaIntervalo = 2f, NevoaDanoEmAliados = 0.012f, NevoaDanoEmInimigos = 0.02f, NevoaReducaoDeCura = 0.25f;
         public float GeadaIntervalo = 6f, GeadaDuracao = 1.8f;
+        public float DesabamentoIntervalo = 4f, DesabamentoAviso = 1.3f, DesabamentoRaio = 1.1f, DesabamentoFator = 0.7f;   // pedras: menores e mais frequentes que a lava
+        public float TesouroChanceDeLendario = 0.15f;
 
         public float ChanceDePressagio = 0.35f;          // chance de um andar comum ter um presságio
         public int PressagioAPartirDoAndar = 7;         // a primeira expedição (até o andar 6) fica sem surpresas
