@@ -9,8 +9,9 @@ rm -f dist/_framework/*.map dist/_framework/*.symbols dist/package.json dist/*.r
 python3 - <<'PY'
 import os, shutil
 from PIL import Image
-src = os.path.join('..', '..', 'pipeline', 'saida'); dst = 'dist/arte'
+src = '/home/claude/necro-pipeline/saida'; dst = 'dist/arte'
 for nome in sorted(os.listdir(src)):
+    if nome.endswith('_retrato'): continue      # retratos de inspeção não vão para o jogo
     os.makedirs(f'{dst}/{nome}', exist_ok=True)
     for f in os.listdir(f'{src}/{nome}'):
         if f.endswith('.json'): shutil.copy(f'{src}/{nome}/{f}', f'{dst}/{nome}/{f}')

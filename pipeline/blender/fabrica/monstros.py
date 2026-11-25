@@ -329,7 +329,8 @@ def trapos(M, pts_topo, comp, m, osso, semente=0, n=5):
 
 def esqueleto(variante="guerreiro"):
     arqueiro = variante == "arqueiro"
-    elite = variante == "elite"
+    colosso = variante == "colosso"   # o mesmo campeão, enorme: Colosso de Ossos
+    elite = variante == "elite" or colosso
     B.cena_limpa()
     J = juntas()
     rig = rig_humanoide("Esqueleto", J)
@@ -479,7 +480,7 @@ def esqueleto(variante="guerreiro"):
     acoes = [dict(a) for a in ACOES_PADRAO]
     if arqueiro:
         acoes[2] = {"nome": "atacar", "acao_blender": "Atacar", "lista_frames": [1, 5, 8, 11, 14, 16], "fps": 10, "loop": False}
-    return rig, "Parado", acoes, {"altura_px": 110 if elite else 96}
+    return rig, "Parado", acoes, {"altura_px": 168 if colosso else 110 if elite else 96}
 
 
 def esqueleto_elite():
@@ -494,7 +495,8 @@ def arqueiro_ossudo():
 # ZUMBI
 # ---------------------------------------------------------------------------
 
-def zumbi():
+def zumbi(variante="zumbi"):
+    carnical = variante == "carnical"   # magro, cinza-azulado, olhos brancos: rápido e faminto
     B.cena_limpa()
     J = juntas(ombros=1.1)
     rig = rig_humanoide("Zumbi", J)
@@ -507,6 +509,10 @@ def zumbi():
     preto = B.mat_liso("Vazio", (0.004, 0.003, 0.003), 1.0)
     olho = B.mat_emissao("OlhoAmarelo", (1.0, 0.75, 0.15), 18.0)
     sangue = B.mat_sangue()
+    if carnical:
+        carne = B.mat_carne("CarneFria", ((0.13, 0.16, 0.19), (0.24, 0.27, 0.30), (0.07, 0.08, 0.12)), veia=(0.03, 0.03, 0.08), sangue_qtd=0.55, rasgos=0.65)
+        pano = B.mat_pano("Mortalha", (0.07, 0.07, 0.085), (0.015, 0.015, 0.02))
+        olho = B.mat_emissao("OlhoBranco", (0.85, 0.95, 1.0), 26.0)
 
     q, co, pe, pc = J["quadril"], J["coluna"], J["peito"], J["pescoco"]
     c = J["cabeca"]
@@ -592,14 +598,15 @@ def zumbi():
     anim_andar(rig, base, 0.7, arrastar=True)
     anim_atacar_garras(rig, base)
     anim_morrer(rig, base)
-    return rig, "Parado", ACOES_PADRAO, {"altura_px": 96}
+    return rig, "Parado", ACOES_PADRAO, {"altura_px": 90 if carnical else 96}
 
 
 # ---------------------------------------------------------------------------
 # DIABRETE
 # ---------------------------------------------------------------------------
 
-def diabrete():
+def diabrete(variante="diabrete"):
+    guerra = variante == "guerra"     # Diabo de Guerra: o mesmo corpo, grande, pele de carvão e brasa
     B.cena_limpa()
     J = juntas(pernas=0.62, tronco=0.72, ombros=0.85, bracos=1.05, cabeca=1.0)
     pe_, q = J["peito"], J["quadril"]
@@ -611,7 +618,7 @@ def diabrete():
     }
     rig = rig_humanoide("Diabrete", J, extras)
     M = Montagem()
-    pele = B.mat_demonio()
+    pele = B.mat_demonio("Carvao", (0.05, 0.035, 0.035), (0.01, 0.006, 0.006), (1.0, 0.25, 0.02), 14.0) if guerra else B.mat_demonio()
     membr = B.mat_demonio("Membrana", (0.16, 0.02, 0.03), (0.02, 0.0, 0.01), forca_brilho=0.0)
     chifre = B.mat_osso("Chifre", (0.12, 0.10, 0.09), (0.02, 0.015, 0.01))
     preto = B.mat_liso("Vazio", (0.004, 0.003, 0.003), 1.0)
@@ -683,7 +690,7 @@ def diabrete():
     for nome, f in (("Parado", lambda b: anim_parado(rig, b, 1.5)), ("Andar", lambda b: anim_andar(rig, b, 0.8)),
                     ("Atacar", lambda b: anim_atacar_garras(rig, b)), ("Morrer", lambda b: anim_morrer(rig, b, 0.50))):
         f(base)
-    return rig, "Parado", ACOES_PADRAO, {"altura_px": 64}
+    return rig, "Parado", ACOES_PADRAO, {"altura_px": 132 if guerra else 64}
 
 
 def l_(s):
@@ -696,6 +703,8 @@ def l_(s):
 
 def necromante(variante="necromante"):
     acolito = variante == "acolito"
+    foice = variante == "foice"      # mesma figura, de foice de guerra em vez de cajado: estilo corpo a corpo
+    aparicao = variante == "aparicao"   # espectro: manto que brilha frio, sem arma
     B.cena_limpa()
     J = juntas(tronco=1.05, ombros=1.05)
     extras = {"cajado": (J["mao.R"] + Vector((0, -0.02, 0.03)), J["mao.R"] + Vector((0, -0.02, 0.5)), "mao.R")}
@@ -715,6 +724,12 @@ def necromante(variante="necromante"):
     if acolito:
         olho = B.mat_emissao("OlhoBrasa", (1.0, 0.25, 0.05), 30.0)
         alma = B.mat_emissao("Brasa", (1.0, 0.3, 0.05), 12.0)
+    if aparicao:
+        manto = B.mat_emissao("Espectro", (0.30, 0.55, 1.0), 1.6)
+        forro = B.mat_emissao("EspectroForro", (0.55, 0.8, 1.0), 3.0)
+        osso = B.mat_osso("OssoFrio", (0.62, 0.72, 0.85), (0.10, 0.14, 0.22))
+        olho = B.mat_emissao("OlhoGelo", (0.6, 0.9, 1.0), 40.0)
+        alma = B.mat_emissao("ChamaFria", (0.5, 0.8, 1.0), 14.0)
 
     q, co, pe, pc, c = J["quadril"], J["coluna"], J["peito"], J["pescoco"], J["cabeca"]
     # saia do manto: larga e rasgada na barra, cobrindo as pernas
@@ -792,18 +807,35 @@ def necromante(variante="necromante"):
 
         # cajado: haste torta, caveira com chifres no topo, chama de alma, costelas em gaiola
         h = J["mao.R"] + Vector((0, -0.02, 0.03))
-        haste = [h + Vector((0, 0.0, -0.78)), h + Vector((0.01, 0.01, -0.3)), h, h + Vector((-0.012, 0, 0.45)), h + Vector((0.0, 0, 0.92))]
-        M.tubo("Haste", haste, [0.012, 0.02, 0.022, 0.02, 0.024], madeira, "cajado", subdiv=1, amplitude=0.006, escala_ruido=12, semente=21)
-        topo = h + Vector((0, 0, 0.92))
-        cranio(M, topo + Vector((0, 0.0, -0.02)), 0.72, osso, preto, alma, osso="cajado", dentes=True, mandibula=False, chifres=(osso, 0.9))
-        for k in range(4):
-            a = math.radians(45 + k * 90)
-            b0 = topo + Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, -0.02))
-            M.tubo("Gaiola", B.curva(b0, b0 + Vector((math.cos(a) * 0.13, math.sin(a) * 0.13, -0.10)), b0 + Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, -0.24)), 5),
-                   [0.012, 0.011, 0.01, 0.008, 0.004], osso, "cajado", subdiv=1)
-        M.esfera("AlmaPresa", topo + Vector((0, 0, -0.13)), (0.045, 0.045, 0.06), alma, "cajado", segs=8, aneis=6, amplitude=0.01, escala_ruido=20, semente=22)
-        M.tubo("Anel", [(h.x + 0.03 * math.cos(a), h.y + 0.03 * math.sin(a), h.z + 0.62) for a in [math.radians(x) for x in range(0, 361, 60)]],
-               [0.008] * 7, ouro, "cajado", subdiv=1)
+        if aparicao:
+            pass      # mãos vazias: ataca com rajadas de sombra
+        elif foice:
+            # foice de guerra: haste longa de madeira negra, lâmina larga e curva suja de sangue, contrapeso de caveira
+            aco = B.mat_metal("AcoFoice", (0.20, 0.20, 0.22), (0.10, 0.02, 0.02), 0.45)
+            sangue = B.mat_sangue()
+            haste = [h + Vector((0, 0.0, -0.80)), h + Vector((0.01, 0.01, -0.3)), h, h + Vector((-0.012, 0, 0.50)), h + Vector((0.0, 0, 1.02))]
+            M.tubo("HasteFoice", haste, [0.014, 0.02, 0.022, 0.02, 0.022], madeira, "cajado", subdiv=1, amplitude=0.006, escala_ruido=12, semente=21)
+            topo = h + Vector((0, 0, 1.0))
+            lam = [topo + Vector((0, 0.05, 0.0)), topo + Vector((0, -0.16, 0.10)), topo + Vector((0, -0.40, 0.06)), topo + Vector((0, -0.60, -0.10)), topo + Vector((0, -0.72, -0.32))]
+            M.tubo("LaminaFoice", lam, [(0.010, 0.050), (0.009, 0.085), (0.008, 0.080), (0.006, 0.055), (0.002, 0.006)], aco, "cajado", subdiv=2, amplitude=0.008, escala_ruido=26, semente=23)
+            M.tubo("FioSangue", [topo + Vector((0, -0.30, 0.0)), topo + Vector((0, -0.50, -0.07)), topo + Vector((0, -0.66, -0.24))], [(0.011, 0.03), (0.009, 0.03), (0.004, 0.012)], sangue, "cajado", subdiv=1, amplitude=0.01, escala_ruido=30, semente=24)
+            cranio(M, topo + Vector((0, 0.07, -0.06)), 0.5, osso, preto, alma, osso="cajado", dentes=True, mandibula=False)
+            M.tubo("AnelFoice", [(h.x + 0.03 * math.cos(a), h.y + 0.03 * math.sin(a), h.z + 0.80) for a in [math.radians(x) for x in range(0, 361, 60)]], [0.009] * 7, ouro, "cajado", subdiv=1)
+            for zz in (-0.76, -0.70):
+                M.cone("PontaFoice", h + Vector((0, 0, zz)), h + Vector((0, 0, zz - 0.10)), 0.02, aco, "cajado", segs=5)
+        if not foice and not aparicao:
+            haste = [h + Vector((0, 0.0, -0.78)), h + Vector((0.01, 0.01, -0.3)), h, h + Vector((-0.012, 0, 0.45)), h + Vector((0.0, 0, 0.92))]
+            M.tubo("Haste", haste, [0.012, 0.02, 0.022, 0.02, 0.024], madeira, "cajado", subdiv=1, amplitude=0.006, escala_ruido=12, semente=21)
+            topo = h + Vector((0, 0, 0.92))
+            cranio(M, topo + Vector((0, 0.0, -0.02)), 0.72, osso, preto, alma, osso="cajado", dentes=True, mandibula=False, chifres=(osso, 0.9))
+            for k in range(4):
+                a = math.radians(45 + k * 90)
+                b0 = topo + Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, -0.02))
+                M.tubo("Gaiola", B.curva(b0, b0 + Vector((math.cos(a) * 0.13, math.sin(a) * 0.13, -0.10)), b0 + Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, -0.24)), 5),
+                       [0.012, 0.011, 0.01, 0.008, 0.004], osso, "cajado", subdiv=1)
+            M.esfera("AlmaPresa", topo + Vector((0, 0, -0.13)), (0.045, 0.045, 0.06), alma, "cajado", segs=8, aneis=6, amplitude=0.01, escala_ruido=20, semente=22)
+            M.tubo("Anel", [(h.x + 0.03 * math.cos(a), h.y + 0.03 * math.sin(a), h.z + 0.62) for a in [math.radians(x) for x in range(0, 361, 60)]],
+                   [0.008] * 7, ouro, "cajado", subdiv=1)
     rig.vincular_partes(M.partes)
     base = {"coluna": (5, 0, 0), "peito": (8, 0, 0), "cabeca": (4, 0, 0), "braco.R": (38, 22, 0), "antebraco.R": (48, 0, 0),
             "cajado": (86, 0, 0),
@@ -816,10 +848,12 @@ def necromante(variante="necromante"):
                             19: {"quadril@loc": (0, 0, 0.03), "peito": (2, -3, 0)},
                             25: {"quadril@loc": (0, 0, 0.0), "peito": (4, 0, 6), "braco.L": (-12, 0, 0)}}, base)
     anim_conjurar(rig, base)
+    if foice:
+        anim_atacar_arma(rig, base)
     anim_morrer(rig, base)
-    acoes = [dict(a) for a in ACOES_PADRAO if a["nome"] != "atacar"]
+    acoes = [dict(a) for a in ACOES_PADRAO if foice or a["nome"] != "atacar"]
     acoes.insert(2, {"nome": "conjurar", "acao_blender": "Conjurar", "lista_frames": [1, 4, 7, 11, 15, 19], "fps": 12, "loop": False})
-    return rig, "Parado", acoes, {"altura_px": 96 if acolito else 104}
+    return rig, "Parado", acoes, {"altura_px": 96 if acolito else 100 if aparicao else 104}
 
 
 def acolito_caido():
@@ -1093,4 +1127,7 @@ def cao_de_cripta():
 
 MONSTROS = {"esqueleto": esqueleto, "zumbi": zumbi, "diabrete": diabrete, "necromante": necromante,
             "arqueiroossudo": arqueiro_ossudo, "acolitocaido": acolito_caido,
-            "abadessacosturada": abadessa, "caodecripta": cao_de_cripta, "esqueleto_elite": esqueleto_elite}
+            "abadessacosturada": abadessa, "caodecripta": cao_de_cripta, "esqueleto_elite": esqueleto_elite,
+            "necromante_foice": lambda: necromante("foice"),
+            "carnical": lambda: zumbi("carnical"), "diabodeguerra": lambda: diabrete("guerra"),
+            "aparicao": lambda: necromante("aparicao"), "colossodeossos": lambda: esqueleto("colosso")}

@@ -8,11 +8,16 @@ namespace Necro.Nucleo
         // estados
         AlcancarAndar, MinionsEmCampo, ItensEquipados, NivelDeConstrucao, DerrotarChefe,
         // contadores
-        MatarInimigos, MatarEspecie, MatarElites, CeifarAlmas, ErguerMinions, MelhorarConstrucoes, DesmancharItens
+        MatarInimigos, MatarEspecie, MatarElites, CeifarAlmas, ErguerMinions, MelhorarConstrucoes, DesmancharItens,
+        CeifarPorToque, AceitarPactos, FundirAlmas, SacrificarMinions, FazerOferendas,
+        // estado (novo; fica no fim para não mudar os números já salvos)
+        DominioDeEspecie,
+        // contadores da masmorra
+        AbrirBaus, SalasEspeciais
     }
 
     /// <summary>Ações fora da expedição que contam para missões.</summary>
-    public enum AcaoDeMissao { Erguer, Melhorar, Desmanchar }
+    public enum AcaoDeMissao { Erguer, Melhorar, Desmanchar, Fundir, Sacrificar, Ofertar }
 
     /// <summary>Sistemas da interface que as missões abrem (só a interface olha isto; a simulação não muda).</summary>
     public enum Sistema { Exercito, Necropole, Equipamento }
@@ -41,7 +46,16 @@ namespace Necro.Nucleo
             return p.MissaoAtual >= 0 && p.MissaoAtual < cfg.Missoes.Length ? cfg.Missoes[p.MissaoAtual] : null;
         }
 
-        public static bool EhContador(TipoMissao t) { return t >= TipoMissao.MatarInimigos; }
+        /// <summary>Saves antigos: duas missões entraram no meio da cadeia (índices 5 e 14); ajusta a posição uma única vez.</summary>
+        public static void Migrar(EstadoProgresso p)
+        {
+            if (p.VersaoDasMissoes >= 2) return;
+            int i = p.MissaoAtual;
+            p.MissaoAtual = i + (i >= 5 ? 1 : 0) + (i >= 13 ? 1 : 0);
+            p.VersaoDasMissoes = 2;
+        }
+
+        public static bool EhContador(TipoMissao t) { return t >= TipoMissao.MatarInimigos && t != TipoMissao.DominioDeEspecie; }
 
         /// <summary>Quanto um resultado de expedição (inteiro ou parcial) soma na missão.</summary>
         public static long Contar(DadosMissao m, ResultadoExpedicao r)
@@ -51,6 +65,10 @@ namespace Necro.Nucleo
             {
                 case TipoMissao.MatarInimigos: return r.InimigosMortos;
                 case TipoMissao.MatarElites: return r.ElitesMortos;
+                case TipoMissao.CeifarPorToque: return r.CeifasPorToque;
+                case TipoMissao.AceitarPactos: return r.PactosAceitos;
+                case TipoMissao.AbrirBaus: return r.BausAbertos;
+                case TipoMissao.SalasEspeciais: return r.SalasEspeciais;
                 case TipoMissao.MatarEspecie: return m.Alvo >= 0 && m.Alvo < r.MortesPorEspecie.Length ? r.MortesPorEspecie[m.Alvo] : 0;
                 case TipoMissao.CeifarAlmas:
                     int n = 0;
@@ -75,6 +93,7 @@ namespace Necro.Nucleo
                 case TipoMissao.ItensEquipados:
                     v = 0; for (int e = 0; e < 9; e++) if (!Equipamento.Vazio(Equipamento.Obter(p, (EspacoEquipamento)e))) v++; break;
                 case TipoMissao.NivelDeConstrucao: v = Necropole.Nivel(p, (Construcao)m.Alvo); break;
+                case TipoMissao.DominioDeEspecie: v = Bestiario.Dominio(p, (EspecieId)m.Alvo, cfg); break;
                 case TipoMissao.DerrotarChefe:
                     v = p.ChefesDerrotados.Contains(m.Alvo) || (emCurso != null && emCurso.ChefesDerrotados.Contains(m.Alvo)) ? 1 : 0; break;
                 default: v = p.ProgressoMissao + Contar(m, emCurso); break;
@@ -102,7 +121,10 @@ namespace Necro.Nucleo
             if (m == null) return;
             if ((acao == AcaoDeMissao.Erguer && m.Tipo == TipoMissao.ErguerMinions) ||
                 (acao == AcaoDeMissao.Melhorar && m.Tipo == TipoMissao.MelhorarConstrucoes) ||
-                (acao == AcaoDeMissao.Desmanchar && m.Tipo == TipoMissao.DesmancharItens))
+                (acao == AcaoDeMissao.Desmanchar && m.Tipo == TipoMissao.DesmancharItens) ||
+                (acao == AcaoDeMissao.Fundir && m.Tipo == TipoMissao.FundirAlmas) ||
+                (acao == AcaoDeMissao.Sacrificar && m.Tipo == TipoMissao.SacrificarMinions) ||
+                (acao == AcaoDeMissao.Ofertar && m.Tipo == TipoMissao.FazerOferendas))
                 p.ProgressoMissao += quantidade;
         }
 

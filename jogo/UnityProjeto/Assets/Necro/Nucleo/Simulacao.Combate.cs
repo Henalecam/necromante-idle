@@ -28,7 +28,9 @@ namespace Necro.Nucleo
                 if (atacante.Faccao == Faccao.Minion && SacrificioTempo > 0f) mais *= 1f + Cfg.Feitico(FeiticoId.Sacrificio).Potencia;
                 if (atacante.Faccao == Faccao.Minion && FrenesiTempo > 0f) mais *= 1f + Cfg.FrenesiBonusDeDano;
                 if (atacante.Faccao == Faccao.Minion) mais *= _pDanoMinion;
-                if (atacante.Faccao == Faccao.Inimigo) mais *= _fatorFuria * _pDanoInimigo;
+                if (alvo.Id == MarcadoId && atacante.Faccao != Faccao.Inimigo) mais *= 1f + Cfg.MarcaBonusDeDano;
+                if (atacante.Faccao == Faccao.Inimigo) mais *= _fatorFuria * _pDanoInimigo * _aDanoInimigo * _bProtecao;
+                else mais *= _bDanoAliado;
                 // Anel do Rei Solitário: +100% de dano do necromante enquanto não houver nenhum minion vivo.
                 if (Bonus.ReiSolitario && atacante == Necromante && !HaMinionVivo()) mais *= 1f + Cfg.ReiSolitarioBonus;
                 if (golpe)
@@ -112,6 +114,7 @@ namespace Necro.Nucleo
         private void Curar(Entidade curador, Entidade alvo, float valor)
         {
             if (!alvo.Viva || valor <= 0f) return;
+            if (Ambiente == AmbienteDeChefe.NevoaPutrida) valor *= 1f - Cfg.NevoaReducaoDeCura;
             float antes = alvo.Vida;
             alvo.Vida = Math.Min(alvo.VidaMax, alvo.Vida + valor);
             float real = alvo.Vida - antes;
@@ -174,7 +177,7 @@ namespace Necro.Nucleo
                 float ossos = Cfg.OssosPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1));
                 if (alvo.Elite) ossos *= 3f;
                 if (overkill) ossos *= 1f + Cfg.OssosExtrasOverkill;
-                ossos *= _pOssos;
+                ossos *= _pOssos * _aOssos * _bOssos * (_emSecreto ? Cfg.SecretoOssos : 1f);
                 int qOssos = Math.Max(1, (int)(ossos + 0.5f));
                 Resultado.Ossos += qOssos;
                 Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
@@ -194,8 +197,17 @@ namespace Necro.Nucleo
                 // Alma
                 int ato = Formulas.AtoDoAndar(Andar, Cfg);
                 bool jaDerrotado = alvo.Chefe && _chefesDerrotados.Contains(ato);
-                if (Rng.Chance(GeradorDeAlmas.ChanceDeDrop(Cfg, alvo.Elite, alvo.Chefe, jaDerrotado) * (1f + Bonus.ChanceDeAlma + _bonusAlmaNecropole + _pAlma)))
-                    CriarOrbe(alvo.Pos, GeradorDeAlmas.Gerar(Rng, Cfg, alvo.Especie), alvo.Id);
+                if (Rng.Chance(GeradorDeAlmas.ChanceDeDrop(Cfg, alvo.Elite, alvo.Chefe, jaDerrotado) * (1f + Bonus.ChanceDeAlma + _bonusAlmaNecropole + _pAlma + _aAlma + _bAlma + _sorte * Cfg.SorteMaisDropsPorPonto)))
+                {
+                    var almaNova = GeradorDeAlmas.Gerar(Rng, Cfg, alvo.Especie);
+                    if (_sorte > 0f && Rng.Chance(_sorte * Cfg.SorteChanceDeMelhorPorPonto))
+                    {
+                        // sorte: sorteia outra e fica com a de maior qualidade
+                        var outra = GeradorDeAlmas.Gerar(Rng, Cfg, alvo.Especie);
+                        if (outra.Qualidade > almaNova.Qualidade) almaNova = outra;
+                    }
+                    CriarOrbe(alvo.Pos, almaNova, alvo.Id);
+                }
                 // Itens: sorteados num fluxo próprio de Rng e entregues direto no resultado.
                 SoltarItens(alvo, jaDerrotado);
                 if (alvo.Chefe && !jaDerrotado)

@@ -1,5 +1,5 @@
 // Desenho e interface da versão de navegador. As regras do jogo rodam no núcleo C# (WebAssembly): aqui só se desenha.
-const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite'];
+const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'necromante_foice', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite', 'carnical'];
 const ACAO = { Parado: 'parado', Andando: 'andar', Atacando: 'atacar', Conjurando: 'conjurar', Morrendo: 'morrer' };
 const TPS = 10, CHAVE = 'necromante-idle-save-v1';
 const $ = (id) => document.getElementById(id);
@@ -11,33 +11,152 @@ function imagem(src) {
 async function json(src) { return (await fetch(src)).json(); }
 
 const monstros = {};
+// ---- vista isométrica (losango 2:1, como nos ARPGs clássicos): x da simulação desce para a direita, y sobe para a direita ----
+const K = 40, PAREDE = 150, OX = 40 + 2 * K, OY = PAREDE + 20 + 7 * K, CW = OX + 34 * K + 40, CH = OY + 11 * K + 40, VISTA_H = 640;
+const P = (x, y) => [OX + (x + y) * K, OY + (x - y) * K / 2];
 let arena, chao, sangue, sctx;
 
 async function carregarArte() {
-  arena = await json('arte/arena/arena.json');
-  chao = await imagem('arte/arena/arena_chao.webp');
-  sangue = document.createElement('canvas'); sangue.width = chao.width; sangue.height = chao.height; sctx = sangue.getContext('2d');
+  arena = { px_por_unidade_x: K * Math.SQRT2, px_por_unidade_y: K * Math.SQRT1_2 };
+  chao = document.createElement('canvas'); chao.width = CW; chao.height = CH;
+  sangue = document.createElement('canvas'); sangue.width = CW; sangue.height = CH; sctx = sangue.getContext('2d');
+  construirSala();
   await Promise.all(ESPECIES.map(async (n) => {
-    const meta = await json(`arte/${n}/${n}.json`);
+    // conjunto de sprites ausente (ainda não renderizado) não derruba o jogo: quem usa cai no sprite padrão
+    let meta; try { const r = await fetch(`arte/${n}/${n}.json`); if (!r.ok) return; meta = await r.json(); } catch (e) { return; }
     const acoes = {};
     await Promise.all(meta.acoes.map(async (a) => { acoes[a.nome] = { ...a, img: await imagem(`arte/${n}/${a.arquivo.replace('.png', '.webp')}`) }; }));
     monstros[n] = { meta, acoes, W: meta.largura_frame, H: meta.altura_frame, pivo: meta.pivo_px };
   }));
 }
 
+// espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
+const PROVISORIO = { carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5] };
+function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : null; }
 function monstro(especie, elite) {
-  const n = especie.toLowerCase();
+  let n = especie.toLowerCase();
+  if (!monstros[n] && PROVISORIO[n]) n = PROVISORIO[n][0];
   return (elite && monstros[n + '_elite']) || monstros[n] || monstros.esqueleto;
 }
-function direcao(dx, dy) { return Math.round(((Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360) / 45) % 8; }
+function direcao(dx, dy) { return Math.round(((Math.atan2(dx + dy, dx - dy) * 180 / Math.PI + 360) % 360) / 45) % 8; }
+function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
 function escHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-function naTela(x, y) {
-  const hc = chao.height - arena.topo_px;
-  return [(arena.margem_sim + x) * arena.px_por_unidade_x, arena.topo_px + hc - (arena.margem_sim + y) * arena.px_por_unidade_y];
-}
+function naTela(x, y) { return P(x, y); }
 const rnd = (a, b) => a + Math.random() * (b - a);
+// ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
+const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
+function construirSala() {
+  if (!chao) return;
+  const c = chao.getContext('2d'), tipo = masm.tipos[masm.sala] || 0, ato = Math.floor((Math.max(1, andar) - 1) / 10);
+  let sem = (andar * 131 + masm.sala * 17 + 7) >>> 0; const r01 = () => { sem = (sem + 0x6D2B79F5) >>> 0; let t = sem; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  let base = TEMA[tipo] || [58, 53, 50]; if (ato >= 1 && !TEMA[tipo]) base = [44, 58, 54];
+  base = base.map((v) => Math.round(v * 1.3));
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#050305'; c.fillRect(0, 0, CW, CH);
+  const poli = (pts, cor, borda) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (cor) { c.fillStyle = cor; c.fill(); } if (borda) { c.strokeStyle = borda; c.stroke(); } };
+  // portas: vizinhos no mapa (pai e filhos). leste = borda da frente à direita; oeste = parede esquerda; norte = parede direita; sul = borda da frente à esquerda
+  const eu = mapa[masm.sala], portas = { l: false, o: false, n: false, s: false };
+  if (eu) mapa.forEach((m, i) => { if (i === masm.sala) return; const liga = m[2] === masm.sala || eu[2] === i; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
+  // espessura da laje nas duas bordas da frente
+  const A = P(-1, -1), B = P(21, -1), C = P(21, 13), D = P(-1, 13), esp = 26;
+  poli([A, B, [B[0], B[1] + esp], [A[0], A[1] + esp]], '#141012'); poli([B, C, [C[0], C[1] + esp], [B[0], B[1] + esp]], '#0e0b0d');
+  // soleiras das portas da frente
+  c.lineWidth = 1;
+  if (portas.l) poli([P(21, 4.6), P(22.6, 4.6), P(22.6, 7.4), P(21, 7.4)], `rgb(${base.map((v) => v + 16).join(',')})`, '#000');
+  if (portas.s) poli([P(8.6, -1), P(8.6, -2.6), P(11.4, -2.6), P(11.4, -1)], `rgb(${base.map((v) => v + 16).join(',')})`, '#000');
+  // lajes
+  for (let i = -1; i < 21; i += 2) for (let j = -1; j < 13; j += 2) {
+    const v = (r01() - 0.5) * 16, luz = 1 - 0.018 * (Math.abs(i - 9) + Math.abs(j - 5)), cor = base.map((b) => Math.max(0, Math.round((b + v) * luz)));
+    poli([P(i, j), P(i + 2, j), P(i + 2, j + 2), P(i, j + 2)], `rgb(${cor.join(',')})`, 'rgba(0,0,0,0.55)');
+    if (r01() < 0.22) { const [x, y] = P(i + 0.4 + r01() * 1.2, j + 0.4 + r01() * 1.2); c.strokeStyle = 'rgba(0,0,0,0.5)'; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r01() - 0.5) * 50, y + (r01() - 0.5) * 22); c.lineTo(x + (r01() - 0.5) * 70, y + (r01() - 0.5) * 30); c.stroke(); }
+    if (r01() < 0.10) { const [x, y] = P(i + 1, j + 1); c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(x, y, 30 + r01() * 30, 12 + r01() * 12, 0, 0, 7); c.fill(); }
+  }
+  // paredes do fundo (esquerda: x = -1; direita: y = 13)
+  const parede = (p0, p1, escura, porta) => {
+    const g = c.createLinearGradient(0, Math.min(p0[1], p1[1]) - PAREDE, 0, Math.max(p0[1], p1[1]));
+    const tom = base.map((b) => Math.round(b * (escura ? 0.62 : 0.8)));
+    g.addColorStop(0, `rgb(${tom.map((v) => Math.round(v * 0.45)).join(',')})`); g.addColorStop(1, `rgb(${tom.join(',')})`);
+    poli([p0, p1, [p1[0], p1[1] - PAREDE], [p0[0], p0[1] - PAREDE]], g, '#000');
+    c.save(); c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.lineTo(p1[0], p1[1] - PAREDE); c.lineTo(p0[0], p0[1] - PAREDE); c.closePath(); c.clip();
+    c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1;
+    for (let h = 22; h < PAREDE; h += 22) { c.beginPath(); c.moveTo(p0[0], p0[1] - h); c.lineTo(p1[0], p1[1] - h); c.stroke(); }
+    const n = 22; for (let q = 0; q <= n; q++) for (let h = 0; h < PAREDE; h += 22) { const t = (q + ((h / 22) % 2) * 0.5) / n; if (t > 1) continue; const x = p0[0] + (p1[0] - p0[0]) * t, y = p0[1] + (p1[1] - p0[1]) * t; c.beginPath(); c.moveTo(x, y - h); c.lineTo(x, y - h - 22); c.stroke(); }
+    const em = (t, h) => [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t - h];
+    if (porta) {   // arco escuro com moldura
+      const a0 = em(0.42, 0), a1 = em(0.58, 0), a2 = em(0.58, 104), a3 = em(0.5, 124), a4 = em(0.42, 104);
+      poli([a0, a1, a2, a3, a4], '#020102', '#8a744a'); c.lineWidth = 3; c.strokeStyle = '#5c4c30'; c.stroke(); c.lineWidth = 1;
+    }
+    for (const t of porta ? [0.3, 0.7] : [0.25, 0.5, 0.75]) {   // tochas
+      const [x, y] = em(t, 86); c.fillStyle = '#2a2018'; c.fillRect(x - 2, y, 4, 18);
+      c.globalCompositeOperation = 'lighter'; const gl = c.createRadialGradient(x, y - 4, 0, x, y - 4, 90); gl.addColorStop(0, 'rgba(255,170,70,0.55)'); gl.addColorStop(0.25, 'rgba(255,120,40,0.18)'); gl.addColorStop(1, 'rgba(255,120,40,0)'); c.fillStyle = gl; c.beginPath(); c.arc(x, y - 4, 90, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over';
+    }
+    c.restore();
+  };
+  parede(A, D, false, portas.o); parede(D, C, true, portas.n);
+  // luz das tochas no chão e escuridão nas bordas
+  c.globalCompositeOperation = 'lighter';
+  for (const [x, y] of [P(-0.5, 3), P(-0.5, 9), P(5, 12.5), P(15, 12.5)]) { const gl = c.createRadialGradient(x, y, 0, x, y, 200); gl.addColorStop(0, 'rgba(255,150,60,0.16)'); gl.addColorStop(1, 'rgba(255,150,60,0)'); c.fillStyle = gl; c.beginPath(); c.ellipse(x, y, 200, 110, 0, 0, 7); c.fill(); }
+  c.globalCompositeOperation = 'source-over';
+}
 function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) * 1.2; }
 
+// marcas no chão conforme a morte: o jeito de matar fica escrito na arena
+function marcaDeCondicao(x, y, cond, grande) {
+  const [px, py] = naTela(x, y), r = grande ? 46 : 28;
+  if (cond === 'Queimado') {
+    const g = sctx.createRadialGradient(px, py, 2, px, py, r); g.addColorStop(0, 'rgba(8,6,5,0.85)'); g.addColorStop(0.6, 'rgba(20,12,8,0.5)'); g.addColorStop(1, 'rgba(20,12,8,0)');
+    sctx.save(); sctx.translate(px, py); sctx.scale(1, 0.5); sctx.translate(-px, -py); sctx.fillStyle = g; sctx.beginPath(); sctx.arc(px, py, r, 0, 7); sctx.fill(); sctx.restore();
+    for (let i = 0; i < 16; i++) particulas.push([x + rnd(-0.4, 0.4), y + rnd(-0.3, 0.3), 0.2, rnd(-0.3, 0.3), rnd(-0.2, 0.2), rnd(3, 6.5), '#ff8a2a', rnd(0.6, 1.3)]);
+  } else if (cond === 'Congelado') {
+    for (let i = 0; i < 9; i++) { const ox = gauss() * r * 0.5, oy = gauss() * r * 0.22; sctx.fillStyle = `rgba(170,215,255,${rnd(0.12, 0.3)})`; sctx.beginPath(); sctx.ellipse(px + ox, py + oy, rnd(5, 14), rnd(2, 6), rnd(0, 3), 0, 7); sctx.fill(); }
+    for (let i = 0; i < 10; i++) particulas.push([x, y, 0.7, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(1, 4), '#cfe8ff', rnd(0.4, 0.8)]);
+  } else if (cond === 'Putrefato') {
+    mancha(x, y, grande ? 30 : 20, 9, [52, 84, 20]);
+    for (let i = 0; i < 6; i++) particulas.push([x + rnd(-0.3, 0.3), y, 0.2, rnd(-0.2, 0.2), 0, rnd(2, 3.5), '#7ab030', rnd(0.8, 1.4)]);
+  } else if (cond === 'Eletrizado') {
+    for (let i = 0; i < 5; i++) raios.push([x, y, x + rnd(-1.2, 1.2), y + rnd(-0.8, 0.8), 0.18, 0, 1]);
+    sctx.fillStyle = 'rgba(30,30,50,0.45)'; sctx.beginPath(); sctx.ellipse(px, py, r * 0.6, r * 0.25, 0, 0, 7); sctx.fill();
+  } else if (cond === 'Oco') {
+    for (let i = 0; i < 14; i++) particulas.push([x + rnd(-0.3, 0.3), y + rnd(-0.2, 0.2), 0.5, rnd(-0.4, 0.4), rnd(-0.3, 0.3), rnd(2.5, 5), '#9a6aff', rnd(0.7, 1.3)]);
+  }
+}
+function pilhaDeOssos(x, y) {
+  const [px, py] = naTela(x, y);
+  for (let i = 0; i < 6; i++) {
+    const a = rnd(0, 3.14), l = rnd(5, 11), ox = rnd(-12, 12), oy = rnd(-5, 5);
+    sctx.strokeStyle = `rgba(${190 + rnd(-20, 20) | 0},${175 + rnd(-20, 20) | 0},140,0.75)`; sctx.lineWidth = 2.2; sctx.lineCap = 'round';
+    sctx.beginPath(); sctx.moveTo(px + ox - Math.cos(a) * l, py + oy - Math.sin(a) * l * 0.5); sctx.lineTo(px + ox + Math.cos(a) * l, py + oy + Math.sin(a) * l * 0.5); sctx.stroke();
+  }
+}
+// poeira e brasas no ar, e névoa rasteira: a masmorra respira
+const poeira = Array.from({ length: 46 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), v: 0.4 + Math.random(), brasa: Math.random() < 0.3 }));
+function ambiente(dt, larg, alt) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // tom do andar: quanto mais fundo, mais doentio; andar de chefe pulsa em vermelho
+  const noAto = ((andar - 1) % 10) + 1, ato = Math.floor((andar - 1) / 10);
+  let tom = null;
+  if (noAto === 10) tom = `rgba(140,10,20,${0.10 + 0.05 * Math.sin(tempoSim * 3)})`;
+  else if (ato >= 1) tom = `rgba(20,90,80,${0.05 + 0.012 * noAto})`;
+  else if (noAto > 5) tom = `rgba(120,30,10,${0.02 * (noAto - 5)})`;
+  if (masm.secreto) tom = `rgba(255,120,190,${0.10 + 0.04 * Math.sin(tempoSim * 4)})`;
+  else if (masm.amb === 1) tom = `rgba(255,90,10,${0.13 + 0.05 * Math.sin(tempoSim * 2)})`;
+  else if (masm.amb === 2) tom = `rgba(70,140,30,${0.16 + 0.04 * Math.sin(tempoSim * 1.3)})`;
+  else if (masm.amb === 3) tom = 'rgba(120,180,255,0.14)';
+  if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
+  if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${transicao * transicao})`; ctx.fillRect(0, 0, larg, alt); }
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of poeira) {
+    p.y -= dt * 0.02 * p.v * (p.brasa ? 2.2 : 1); p.x += dt * 0.008 * Math.sin(tempoSim * 0.7 + p.z * 9);
+    if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
+    const a = (p.brasa ? 0.55 : 0.16) * (0.6 + 0.4 * Math.sin(tempoSim * 2 + p.z * 20)), r = (p.brasa ? 1.4 : 2.2) * (larg / 900 + 0.6);
+    ctx.fillStyle = p.brasa ? `rgba(255,140,50,${a})` : `rgba(200,190,170,${a})`; ctx.beginPath(); ctx.arc(p.x * larg, p.y * alt, r, 0, 7); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  for (let i = 0; i < 3; i++) {
+    const fx = ((tempoSim * (0.012 + i * 0.006) + i * 0.37) % 1.4 - 0.2) * larg, fy = alt * (0.72 + i * 0.09);
+    const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, larg * 0.45); g.addColorStop(0, 'rgba(150,160,150,0.07)'); g.addColorStop(1, 'rgba(150,160,150,0)');
+    ctx.save(); ctx.translate(fx, fy); ctx.scale(1, 0.22); ctx.translate(-fx, -fy); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, larg * 0.45, 0, 7); ctx.fill(); ctx.restore();
+  }
+}
 function mancha(x, y, raio, n, cor = [70, 4, 8]) {
   const [px, py] = naTela(x, y);
   for (let i = 0; i < n; i++) {
@@ -52,11 +171,17 @@ const estado = new Map();      // id -> entidade viva
 const mortos = new Map();      // id -> entidade caída (cadáver à vista)
 const cadaverDe = new Map();   // id do cadáver -> id da entidade
 let particulas = [], raios = [], numeros = [], orbes = [], projeteis = [], pocas = [];
-let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '';
+let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '', marcado = -1, almasVoando = [], ritoEmCurso = 0, clarao = 0, deFoice = false, dicaGolpe = false, sopro = 0, dicaSopro = false, itens = [[0, 0], [0, 0]], autosAnterior = '', pressagio = 0;
+const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos']];
 const COR_MORTE = { Queimado: '20,14,12', Congelado: '120,170,210', Putrefato: '60,90,25', Eletrizado: '40,40,60', Oco: '50,30,80' };
 const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
-function limparArena() { mortos.clear(); cadaverDe.clear(); sctx.clearRect(0, 0, sangue.width, sangue.height); particulas = []; }
+function limparArena(tudo) {
+  mortos.clear(); cadaverDe.clear(); particulas = [];
+  if (tudo) { sctx.clearRect(0, 0, sangue.width, sangue.height); return; }
+  // andar novo na mesma expedição: o chão guarda metade do que aconteceu
+  sctx.save(); sctx.globalCompositeOperation = 'destination-out'; sctx.fillStyle = 'rgba(0,0,0,0.5)'; sctx.fillRect(0, 0, sangue.width, sangue.height); sctx.restore();
+}
 
 function aviso(texto) {
   if (silencio) return;
@@ -74,7 +199,9 @@ function ler(texto) {
         const a = +p[1];
         if (a !== andar) { if (andar) limparArena(); andar = a; aviso('Andar ' + a); }
         mana = +p[2] / Math.max(1, +p[3]); saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
-        poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; break;
+        poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
+        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
+        break;
       }
       case 'E': {
         const id = +p[1]; vivos.add(id);
@@ -86,6 +213,8 @@ function ler(texto) {
         if (Math.abs(dx) + Math.abs(dy) > 1e-6) s.dir = direcao(dx, dy);
         s.especie = p[2]; s.inimigo = p[3] === '1'; s.x = x; s.y = y; s.viva = p[9] === '1'; s.vida = +p[10];
         s.elite = p[11] === '1'; s.chefe = p[12] === '1'; s.necro = p[13] === '1';
+        s.golpe = +p[14] || 0; s.qual = p[15] === undefined ? -1 : +p[15];
+        if (s.golpe > 0 && !dicaGolpe && !silencio) { dicaGolpe = true; aviso('Toque no inimigo que brilha para interromper o golpe'); }
         if (s.necro) necro = s;
         break;
       }
@@ -94,6 +223,8 @@ function ler(texto) {
       case 'S': pocas.push([+p[2], +p[3], +p[4]]); break;
       case 'K': oferta = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'A': ativos = p.slice(1).map(Number); break;
+      case 'M': lerMasmorra(p); break;
+      case 'G': lerMapa(p); break;
       case 'V': evento(p); break;
       case 'F': fimDeExpedicao(p); break;
     }
@@ -101,19 +232,75 @@ function ler(texto) {
   for (const id of estado.keys()) if (!vivos.has(id)) estado.delete(id);
 }
 
+// ---- estatísticas de combate: tudo sai dos eventos da simulação ----
+const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana' };
+const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
+let estat = null, estatAnterior = null;
+function linhaAliado(s) {
+  let l = estat.aliados.get(s.id);
+  if (!l) { l = { nome: NOME_ESPECIE[s.especie] || s.especie, q: s.necro ? -1 : s.qual, necro: s.necro, dano: 0, sofrido: 0, cura: 0, curado: 0, abates: 0, maior: 0, morreu: 0 }; estat.aliados.set(s.id, l); }
+  return l;
+}
+function linhaInimigo(especie) {
+  let l = estat.inimigos.get(especie);
+  if (!l) { l = { nome: NOME_ESPECIE[especie] || especie, dano: 0, sofrido: 0, mortos: 0 }; estat.inimigos.set(especie, l); }
+  return l;
+}
+function registrar(v) {
+  if (!estat) estat = novaEstat();
+  const tipo = v[1], origem = estado.get(+v[2]), alvo = estado.get(+v[3]), valor = +v[4] || 0;
+  if (tipo === 'Dano' && valor > 0) {
+    if (origem && !origem.inimigo) { const l = linhaAliado(origem); l.dano += valor; if (valor > l.maior) l.maior = valor; estat.dano += valor; estat.golpes++; if (v[6] === '1') estat.criticos++; if (valor > estat.maiorGolpe) estat.maiorGolpe = valor; }
+    if (alvo && !alvo.inimigo) { linhaAliado(alvo).sofrido += valor; estat.sofrido += valor; if (origem && origem.inimigo) linhaInimigo(origem.especie).dano += valor; }
+    if (alvo && alvo.inimigo) linhaInimigo(alvo.especie).sofrido += valor;
+  } else if (tipo === 'Cura' && valor > 0) {
+    if (origem && !origem.inimigo) linhaAliado(origem).cura += valor;
+    if (alvo && !alvo.inimigo) { linhaAliado(alvo).curado += valor; estat.cura += valor; }
+  } else if (tipo === 'Morte') {
+    if (alvo && alvo.inimigo) { linhaInimigo(alvo.especie).mortos++; estat.abates++; if (origem && !origem.inimigo) linhaAliado(origem).abates++; }
+    else if (alvo) linhaAliado(alvo).morreu++;
+  }
+}
+function estatHtml(e, titulo) {
+  if (!e || !e.aliados.size) return `<h3>${titulo}</h3><p class="nota">Ainda sem dados.</p>`;
+  const dur = Math.max(1, (e.fim || tempoSim) - e.inicio), al = [...e.aliados.values()].sort((a, b) => b.dano - a.dano), maxD = Math.max(1, ...al.map((l) => l.dano)), maxS = Math.max(1, ...al.map((l) => l.sofrido));
+  let h = `<h3>${titulo}</h3><div class="est"><span>Dano total <b style="color:#fff;font-weight:normal">${fmt(Math.round(e.dano))}</b> · ${fmt(Math.round(e.dano / dur))} por segundo</span><span>${Math.floor(dur / 60)}m${String(Math.floor(dur % 60)).padStart(2, '0')}s</span>` +
+    `<small>Dano tankado ${fmt(Math.round(e.sofrido))} · cura ${fmt(Math.round(e.cura))} · ${e.abates} abates · maior golpe ${fmt(Math.round(e.maiorGolpe))} · ${e.golpes ? Math.round(100 * e.criticos / e.golpes) : 0}% críticos</small></div>`;
+  h += '<p class="nota">Por aliado: a barra vermelha é o dano causado; a azul, o dano tankado.</p>';
+  al.forEach((l) => {
+    h += `<div class="est"><span class="${l.necro ? '' : 'q' + Math.max(0, l.q)}" ${l.necro ? 'style="color:var(--alma)"' : ''}>${esc(l.nome)}${l.morreu ? ` <span class="nota">· caiu ${l.morreu}×</span>` : ''}</span><span>${fmt(Math.round(l.dano))} <span class="nota">(${Math.round(100 * l.dano / Math.max(1, e.dano))}%)</span></span>` +
+      `<div class="b"><i style="width:${100 * l.dano / maxD}%;background:#c8323c"></i></div><div class="b"><i style="width:${100 * l.sofrido / maxS}%;background:#4a8fd0"></i></div>` +
+      `<small>${fmt(Math.round(l.dano / dur))}/s · tankou ${fmt(Math.round(l.sofrido))} · ${l.abates} abates · maior golpe ${fmt(Math.round(l.maior))}${l.cura ? ' · curou ' + fmt(Math.round(l.cura)) : ''}${l.curado ? ' · recebeu ' + fmt(Math.round(l.curado)) + ' de cura' : ''}</small></div>`;
+  });
+  const ini = [...e.inimigos.values()].sort((a, b) => b.dano - a.dano);
+  if (ini.length) {
+    h += '<p class="nota">Por tipo de inimigo: quanto dano fizeram no seu exército.</p>';
+    const mx = Math.max(1, ...ini.map((l) => l.dano));
+    ini.forEach((l) => { h += `<div class="est"><span>${esc(l.nome)}</span><span>${fmt(Math.round(l.dano))}</span><div class="b"><i style="width:${100 * l.dano / mx}%;background:#d9b25f"></i></div><small>${l.mortos} mortos · sofreram ${fmt(Math.round(l.sofrido))} de dano</small></div>`; });
+  }
+  return h;
+}
 function evento(v) {
+  if (!silencio) registrar(v);
   if (silencio && v[1] !== 'CadaverCriado' && v[1] !== 'CadaverConsumido' && v[1] !== 'CadaverRemovido' && v[1] !== 'Morte') return;
   const tipo = v[1], x = +v[10], y = +v[11], dx = +v[12], dy = +v[13];
+  if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
+  if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
+  if (tipo === 'AndarConcluido') anotar(`Andar ${v[14]} concluído em ${Math.round(+v[4])} s.`);
   if (tipo === 'Dano' && +v[4] > 0) {
     if (Math.random() < 0.6) mancha(x + rnd(-0.3, 0.3), y + rnd(-0.2, 0.2), 5, 2);
     for (let i = 0; i < 3; i++) particulas.push([x, y, 0.9, rnd(-1.5, 1.5), rnd(-1, 1), rnd(1, 3.5), '#78080c', 0.6]);
     const alvo = estado.get(+v[3]);
+    if (alvo) alvo.flash = 0.12;
     if (alvo && (v[6] === '1' || +v[4] >= 1)) numeros.push({ x, y, v: Math.round(+v[4]), crit: v[6] === '1', t: 0.8, amigo: alvo && !alvo.inimigo });
   } else if (tipo === 'Morte') {
     const id = +v[3], s = estado.get(id); if (!s) return;
     const over = v[8] === '1';
     mortos.set(id, { ...s, t: tempoSim, over, cond: v[7] });
     mancha(x, y, over ? 26 : 16, over ? 14 : 8);
+    marcaDeCondicao(x, y, v[7], over || s.chefe);
     if (over || s.chefe) tremor = s.chefe ? 0.5 : 0.18;
     const f = over ? 5 : 2.5;
     for (let i = 0, k = over ? 46 : 14; i < k; i++)
@@ -123,27 +310,45 @@ function evento(v) {
   else if (tipo === 'CadaverConsumido' || tipo === 'CadaverRemovido') {
     const id = cadaverDe.get(+v[3]); cadaverDe.delete(+v[3]);
     if (mortos.has(id)) {
+      pilhaDeOssos(x, y);
       if (tipo === 'CadaverConsumido') {
         mancha(x, y, 22, 12);
         for (let i = 0; i < 30; i++) particulas.push([x, y, 0.4, rnd(-4, 4), rnd(-3, 3), rnd(2, 6), Math.random() < 0.5 ? '#82080c' : '#c8bea0', rnd(0.5, 1)]);
       }
       mortos.delete(id);
     }
+  } else if (tipo === 'FeiticoLancado' && +v[14] >= 100) {
+    const f = +v[14] - 100; clarao = Math.max(clarao, 0.25);
+    if (f === 1) { const n = necro; if (n) raios.push([n.x, n.y, x, y, 0.4]); for (let i = 0; i < 26; i++) particulas.push([x, y, 1, rnd(-3, 3), rnd(-2, 2), rnd(2, 7), '#9a6aff', rnd(0.5, 1)]); }
+    else if (f === 2) { raios.push([x, y, x, y, 0.35, +v[4] || 3]); for (let i = 0; i < 30; i++) { const a = rnd(0, 6.28); particulas.push([x + Math.cos(a) * 2, y + Math.sin(a) * 1.4, 0.8, Math.cos(a) * 3, Math.sin(a) * 2, rnd(1, 3), '#c8bea0', rnd(0.3, 0.6)]); } }
+    else if (f === 3) { for (let i = 0; i < 46; i++) particulas.push([x + rnd(-3, 3), y + rnd(-2, 2), rnd(5, 9), 0, 0, rnd(-9, -4), '#c8bea0', rnd(0.6, 1.1)]); tremor = Math.max(tremor, 0.22); }
+    else if (f === 4) { for (const s of estado.values()) if (s.viva && !s.inimigo) for (let i = 0; i < 6; i++) particulas.push([s.x + rnd(-0.4, 0.4), s.y, 0.2, 0, 0, rnd(2, 5), '#7fd8ff', rnd(0.5, 0.9)]); }
   } else if (tipo === 'FeiticoLancado') {
     const n = estado.get(+v[2]);
     if (n && v[14] !== '0') raios.push([n.x, n.y, x, y, 0.4]);
   } else if (tipo === 'Explosao') {
     raios.push([x, y, x, y, 0.35, +v[4] || 1.5]);
+    marcaDeCondicao(x, y, 'Queimado', true); clarao = Math.max(clarao, 0.5);
     tremor = Math.max(tremor, 0.15);
+  } else if (tipo === 'EfeitoAplicado' && v[14] === '10') {
+    aviso('Golpe interrompido!'); clarao = Math.max(clarao, 0.35);
+    for (let i = 0; i < 18; i++) particulas.push([x, y, 1.2, rnd(-3, 3), rnd(-2, 2), rnd(2, 5), '#ffd84a', rnd(0.4, 0.8)]);
   } else if (tipo === 'AlmaCeifada') {
+    if (necro) almasVoando.push({ x, y, t: 0 });
     if (v[6] === '1') { aviso('Alma melhorada pelo toque!'); for (let i = 0; i < 24; i++) particulas.push([x, y, 1, rnd(-3, 3), rnd(-2, 2), rnd(3, 7), '#78ffaa', rnd(0.6, 1.1)]); }
     for (let i = 0; i < 14; i++) particulas.push([x, y, 1, rnd(-1.5, 1.5), rnd(-1, 1), rnd(2, 5), '#78ffaa', rnd(0.4, 0.8)]);
   }
 }
 
 function fimDeExpedicao(p) {
-  aviso(`Expedição encerrada no andar ${p[1]} · ${p[2]} almas · ${p[3]} itens`);
-  limparArena(); andar = 0; if (!silencio) { salvar(); atualizarPainel(true); }
+  if (estat) { estat.fim = tempoSim; estatAnterior = estat; } estat = null;
+  if (!silencio) {
+    const r = $('resumo');
+    r.innerHTML = `<div class="t">Expedição encerrada · andar ${p[1]}</div><div class="g"><div><b>${fmt(+p[4])}</b><span>Ossos</span></div><div><b>${p[2]}</b><span>almas</span></div><div><b>${p[3]}</b><span>itens</span></div><div><b>${p[5]}</b><span>mortes</span></div></div>` + (explor.salas ? `<div class="nota" style="color:var(--texto)">Salas especiais: ${explor.salas} · baús: ${explor.baus} · com a sua mão: ${explor.toques}${explor.secretos ? ' · <span style="color:#ff9ad0">nível secreto limpo</span>' : ''}</div>` : '') + `<div class="nota">As almas foram para o Filactério e os itens para o Inventário. Toque para fechar.</div>`;
+    r.hidden = false; clearTimeout(fimDeExpedicao.t); fimDeExpedicao.t = setTimeout(() => { r.hidden = true; }, 7000);
+  }
+  explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
+  limparArena(true); andar = 0; if (!silencio) { salvar(); atualizarPainel(true); }
 }
 
 function quadro(m, acao, dir, tempo) {
@@ -154,27 +359,141 @@ function quadro(m, acao, dir, tempo) {
   return [a.img, f * m.W, dir * m.H];
 }
 
-let camX = 0, dica = false;
+let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
+// ---- masmorra: salas, objeto da sala, ambiente do chefe ----
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia']];
+const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam']];
+const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos'];
+let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
+let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
+function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.pop(); }
+function lerMasmorra(p) {
+  const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
+  masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: p[5] === '1', ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
+  if (masm.sala !== antes && !silencio) { transicao = 1; limparArena(); objeto = null; }
+  if (masm.sala !== antes) salaSuja = true;
+  if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
+  if (masm.secreto && !secAntes && !silencio) { aviso('NÍVEL SECRETO · O Pasto Profano'); clarao = 0.8; tremor = 0.4; }
+  const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · Bênção: ' + BENCAOS[masm.bencao].split(':')[0] : '');
+  if (rot !== lerMasmorra.rot) { lerMasmorra.rot = rot; $('t-sala').textContent = rot; }
+}
+let mapaChave = '';
+function lerMapa(p) {
+  const m = []; for (let i = 1; i + 2 < p.length; i += 3) m.push([+p[i], +p[i + 1], +p[i + 2]]);
+  const chave = p.join(' ') + '|' + masm.sala + '|' + masm.tipos.join(',');
+  if (chave === mapaChave) return;
+  mapaChave = chave; mapa = m; salaSuja = true;
+  $('salas').innerHTML = mapaSvg(13, false);
+  if (!$('mapa-grande').hidden) $('mapa-corpo').innerHTML = mapaGrandeHtml();
+}
+// o mapa do andar: salas numa grade, ligadas por corredores; visitadas apagadas, a atual em destaque
+function mapaSvg(c, rotulos) {
+  if (!mapa.length) return '';
+  const xs = mapa.map((m) => m[0]), ys = mapa.map((m) => m[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const passo = c * 1.55, W = (x1 - x0) * passo + c + 6, H = (y1 - y0) * passo + c + 6, pos = (m) => [3 + (m[0] - x0) * passo, 3 + (y1 - m[1]) * passo];
+  let h = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  mapa.forEach((m, i) => { if (m[2] < 0 || !mapa[m[2]]) return; const [ax, ay] = pos(m), [bx, by] = pos(mapa[m[2]]); h += `<line x1="${ax + c / 2}" y1="${ay + c / 2}" x2="${bx + c / 2}" y2="${by + c / 2}" stroke="${i <= masm.sala ? '#8a744a' : '#4a3a3c'}" stroke-width="${Math.max(2, c * 0.22)}"/>`; });
+  mapa.forEach((m, i) => {
+    const [x, y] = pos(m), t = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
+    const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
+    h += `<rect x="${x}" y="${y}" width="${c}" height="${c}" rx="${c * 0.18}" fill="${atual ? '#5a1a20' : feita ? '#241a1d' : '#120c0f'}" stroke="${atual ? '#ffd84a' : feita ? '#5c4c30' : '#4a3a3c'}" stroke-width="${atual ? 2 : 1}"><title>${SALAS[t][1]}</title></rect>`;
+    h += `<text x="${x + c / 2}" y="${y + c * 0.72}" text-anchor="middle" font-size="${c * 0.62}" fill="${cor}" opacity="${feita ? 0.4 : 1}">${SALAS[t][0]}</text>`;
+    if (rotulos) h += `<text x="${x + c / 2}" y="${y + c + 11}" text-anchor="middle" font-size="10" fill="${atual ? '#fff' : '#8d7c6c'}">${SALAS[t][1].split(' ')[0]}</text>`;
+  });
+  return h + '</svg>';
+}
+function mapaGrandeHtml() {
+  const feitas = masm.sala, total = masm.tipos.length;
+  return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
+    `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
+    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
+}
+function eventoDeSala(tipo, v, x, y) {
+  const ts = +v[14];
+  if (tipo === 'AmbienteDefinido') { const a = AMBIENTES[ts]; if (a) { aviso('Sala do chefe · ' + a[0]); anotar(`Sala do chefe: <b>${a[0]}</b>, ${a[1]}.`); } return; }
+  if (tipo === 'PerigoAnunciado') { perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS }); return; }
+  if (tipo === 'SalaResolvida' && ts === 11) { if (+v[4] > 0) aviso('Ossos esquecidos: +' + fmt(Math.round(+v[4]))); return; }
+  if (tipo === 'SalaIniciada') { if (ts === 6) { aviso('Emboscada!'); tremor = 0.25; anotar('Emboscada: inimigos por todos os lados.'); } else if (ts === 8) anotar('<b style="color:#ff9ad0">Nível secreto: o Pasto Profano.</b>'); return; }
+  // SalaResolvida
+  const sub = +v[2], toque = v[6] === '1', val = +v[4];
+  if (!(ts === 3 && sub === 1)) { explor.salas++; if (ts === 3) explor.baus++; if (ts === 8) explor.secretos++; if (toque && ts !== 8 && ts !== 6) explor.toques++; }
+  if (objeto) { objeto.aberto = 0.01; }
+  const brilho = (cor, n) => { for (let i = 0; i < n; i++) particulas.push([x, y, 0.6, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(3, 8), cor, rnd(0.6, 1.2)]); };
+  if (ts === 3) {
+    if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
+    else { aviso((sub === 2 ? 'Baú dourado! ' : 'Baú: ') + '+' + fmt(Math.round(val)) + ' Ossos'); anotar(`${sub === 2 ? '<b style="color:#ffd84a">Baú dourado</b>' : 'Baú'}: +${fmt(Math.round(val))} Ossos${sub === 2 ? ', item Raro e Sangue' : ''}${toque ? ' (aberto por você)' : ''}.`); brilho('#ffd84a', sub === 2 ? 60 : 26); if (sub === 2) clarao = 0.5; }
+  } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * (sub === 3 ? 250 : 100))}%) até o fim do andar.`); brilho('#7fd8ff', 34); }
+  else if (ts === 5) { aviso('Alma libertada: ' + QUALIDADES[sub]); anotar(`Almas presas: uma alma <span class="q${sub}">${QUALIDADES[sub]}</span> se soltou${toque ? ' (melhorada pelo seu toque?)' : ''}.`); brilho('#78ffaa', 30); }
+  else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
+  else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
+  else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
+  else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
+  else if (ts === 8) { aviso('O Pasto Profano foi limpo! Tesouro tomado.'); anotar(`Pasto Profano limpo: +${fmt(Math.round(val))} Ossos, 2 itens (um Raro) e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
+}
+function desenharObjeto(dt) {
+  // perigos anunciados (lava): círculo que se fecha até estourar
+  for (const pg of perigos) {
+    pg.t += dt; const [px, py] = naTela(pg.x, pg.y), R = pg.r * arena.px_por_unidade_x, k = Math.min(1, pg.t / pg.dur);
+    ctx.fillStyle = `rgba(255,90,20,${0.12 + 0.25 * k})`; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = `rgba(255,${200 - 120 * k | 0},40,0.9)`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(px, py, R * k, R * 0.5 * k, 0, 0, 7); ctx.stroke();
+    if (Math.random() < 0.4) particulas.push([pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 0.1, 0, 0, rnd(2, 5), '#ff8a30', rnd(0.3, 0.7)]);
+  }
+  perigos = perigos.filter((pg) => pg.t < pg.dur + 0.1);
+  if (!objeto) return;
+  const o = objeto; o.t += dt; if (o.aberto) { o.aberto += dt; if (o.aberto > 1.6 && masm.fase !== 'Explorando') { objeto = null; return; } }
+  const [px, py] = naTela(o.x, o.y), ab = o.aberto > 0, pulso = 0.6 + 0.4 * Math.sin(o.t * 5);
+  ctx.save(); ctx.translate(px, py);
+  ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(0, 4, 34, 12, 0, 0, 7); ctx.fill();
+  if (!ab) { ctx.strokeStyle = `rgba(217,178,95,${0.4 + 0.5 * pulso})`; ctx.lineWidth = o.tocado ? 4 : 2; ctx.beginPath(); ctx.ellipse(0, 4, 44 + 4 * pulso, 16 + 2 * pulso, 0, 0, 7); ctx.stroke(); }
+  if (o.tipo === 3) {           // baú
+    ctx.fillStyle = '#4a2c16'; ctx.fillRect(-26, -30, 52, 32); ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 3; ctx.strokeRect(-26, -30, 52, 32);
+    ctx.fillStyle = '#d9b25f'; ctx.fillRect(-4, -20, 8, 10);
+    ctx.save(); ctx.translate(-26, -30); ctx.rotate(ab ? -1.1 : 0); ctx.fillStyle = '#5c3a1c'; ctx.fillRect(0, -16, 52, 16); ctx.strokeRect(0, -16, 52, 16); ctx.restore();
+    if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 60); g.addColorStop(0, 'rgba(255,220,100,0.8)'); g.addColorStop(1, 'rgba(255,220,100,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 60, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 4) {    // santuário
+    ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.moveTo(-16, 2); ctx.lineTo(-10, -74); ctx.lineTo(0, -88); ctx.lineTo(10, -74); ctx.lineTo(16, 2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#1a1a22'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(110,200,255,${ab ? 1 : 0.4 + 0.4 * pulso})`; ctx.font = '26px Georgia'; ctx.textAlign = 'center'; ctx.fillText('✦', 0, -38);
+    const g = ctx.createRadialGradient(0, -44, 0, 0, -44, ab ? 90 : 46); g.addColorStop(0, 'rgba(110,200,255,0.5)'); g.addColorStop(1, 'rgba(110,200,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -44, 90, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  } else if (o.tipo === 5) {    // almas presas
+    ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 40); g.addColorStop(0, `rgba(120,255,170,${ab ? 0.2 : 0.7 * pulso})`); g.addColorStop(1, 'rgba(120,255,170,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = '#2a2a2e'; ctx.lineWidth = 4; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * 9, 0); ctx.lineTo(i * 9 * (ab ? 1.8 : 1), -62); ctx.stroke(); }
+    ctx.beginPath(); ctx.ellipse(0, 0, 22, 7, 0, 0, 7); ctx.stroke(); if (!ab) { ctx.beginPath(); ctx.ellipse(0, -62, 22, 7, 0, 0, 7); ctx.stroke(); }
+  } else if (o.tipo === 9) {    // mercador: vulto encapuzado com um saco
+    ctx.fillStyle = '#2a2018'; ctx.beginPath(); ctx.moveTo(-18, 2); ctx.lineTo(-12, -52); ctx.quadraticCurveTo(0, -78, 12, -52); ctx.lineTo(18, 2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(0, -52, 7, 9, 0, 0, 7); ctx.fill(); ctx.fillStyle = `rgba(255,216,74,${pulso})`; ctx.fillRect(-4, -54, 2.5, 2.5); ctx.fillRect(2, -54, 2.5, 2.5);
+    ctx.fillStyle = '#5c4a2c'; ctx.beginPath(); ctx.ellipse(26, -8, 13, 12, 0, 0, 7); ctx.fill(); ctx.stroke();
+  } else if (o.tipo === 10) {   // altar de sangue
+    ctx.fillStyle = '#34282c'; ctx.fillRect(-30, -22, 60, 24); ctx.fillStyle = '#463a3e'; ctx.fillRect(-36, -30, 72, 10);
+    ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
+    if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 7) {    // fonte
+    ctx.fillStyle = '#3a3438'; ctx.beginPath(); ctx.ellipse(0, -6, 36, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#2a2428'; ctx.fillRect(-7, -6, 14, 10);
+    ctx.fillStyle = `rgba(170,20,32,${0.8 + 0.2 * pulso})`; ctx.beginPath(); ctx.ellipse(0, -8, 30, 10, 0, 0, 7); ctx.fill();
+    if (Math.random() < 0.5) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.5, rnd(-0.4, 0.4), 0, rnd(3, 6), '#c8202c', rnd(0.4, 0.8)]);
+  }
+  ctx.restore();
+}
 try { dica = localStorage.getItem(CHAVE + '-dica') === '1'; } catch (e) { /* sem armazenamento */ }
 function desenhar(dt) {
-  const larg = tela.width, alt = tela.height, esc = alt / chao.height;
-  const visivel = larg / esc;
-  let alvo = chao.width / 2 - visivel / 2;
-  if (visivel < chao.width && necro) {
-    // tela estreita: a câmera segue a briga (e os orbes, que são alvo de toque); o necromante pode ficar fora do quadro
-    let soma = 0, n = 0;
-    for (const s of estado.values()) if (s.viva && !s.necro) { soma += naTela(s.rx, s.ry)[0]; n++; }
-    for (const o of orbes) { soma += naTela(o[0], o[1])[0] * 3; n += 3; }
-    const nx = naTela(necro.rx, necro.ry)[0];
-    alvo = (n ? soma / n : nx) - visivel / 2;
+  if (salaSuja) { salaSuja = false; construirSala(); }
+  const larg = tela.width, alt = tela.height, esc = alt / VISTA_H, visivel = larg / esc;
+  {
+    let sx = 0, sy = 0, n = 0;
+    for (const s of estado.values()) if (s.viva) { const [px, py] = naTela(s.rx, s.ry), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }
+    for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; }
+    if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; }
+    const c0 = P(10, 6), cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
+    let ax = visivel >= CW ? (CW - visivel) / 2 : Math.max(0, Math.min(CW - visivel, cx - visivel / 2));
+    let ay = VISTA_H >= CH ? (CH - VISTA_H) / 2 : Math.max(0, Math.min(CH - VISTA_H, cy - VISTA_H * 0.56));
+    const kc = Math.min(1, dt * 2.5); camX += (ax - camX) * kc; camY += (ay - camY) * kc;
   }
-  alvo = Math.max(0, Math.min(Math.max(0, chao.width - visivel), alvo));
-  if (visivel >= chao.width) alvo = (chao.width - visivel) / 2;
-  camX += (alvo - camX) * Math.min(1, dt * 3);
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#060406'; ctx.fillRect(0, 0, larg, alt);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#050305'; ctx.fillRect(0, 0, larg, alt);
   const tx = tremor > 0 ? rnd(-1, 1) * tremor * 14 : 0, ty = tremor > 0 ? rnd(-1, 1) * tremor * 9 : 0; tremor = Math.max(0, tremor - dt);
-  ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, ty * esc);
+  ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
   ctx.drawImage(chao, 0, 0); ctx.drawImage(sangue, 0, 0);
+  if (transicao > 0) transicao = Math.max(0, transicao - dt * 1.4);
+  desenharObjeto(dt);
 
   for (const [x, y, r] of pocas) {
     const [px, py] = naTela(x, y);
@@ -186,26 +505,69 @@ function desenhar(dt) {
     const k = Math.min(1, dt * 14); s.rx += (s.x - s.rx) * k; s.ry += (s.y - s.ry) * k;
     if (!s.viva && mortos.has(s.id)) continue;
     if (!s.viva) continue;
-    lista.push([s, ACAO[s.anim] || 'parado', tempoSim - s.t, false]);
+    lista.push([s, transicao > 0 && !s.inimigo ? 'andar' : ACAO[s.anim] || 'parado', transicao > 0 && !s.inimigo ? tempoSim : tempoSim - s.t, false]);
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
   for (const [s, acao, tempo, morto] of lista) {
-    const m = monstro(s.especie, s.elite), [px, py] = naTela(s.rx, s.ry);
-    if (!morto && !s.inimigo) { ctx.strokeStyle = 'rgba(60,255,140,0.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(px, py, 22, 9, 0, 0, 7); ctx.stroke(); }
+    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), [px, py] = naTela(s.rx, s.ry);
+    if (!morto) {
+      // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
+      const corQ = ['160,160,160', '235,228,210', '110,168,255', '255,216,74', '255,77,106'];
+      let cor = null, larg2 = 2, raio = 22;
+      if (s.necro) cor = '110,255,170';
+      else if (!s.inimigo) { cor = corQ[Math.max(0, s.qual)] || corQ[1]; larg2 = 2 + Math.max(0, s.qual) * 0.6; }
+      else if (s.chefe) { cor = '255,50,60'; larg2 = 4; raio = 46; }
+      else if (s.elite) { cor = '255,190,60'; larg2 = 3; raio = 28; }
+      if (cor) {
+        const pulso2 = (s.inimigo || s.qual >= 3) ? 0.55 + 0.25 * Math.sin(tempoSim * 4 + s.id) : 0.5;
+        if (s.qual >= 2 || s.elite || s.chefe) { ctx.fillStyle = `rgba(${cor},${0.10 + (s.qual >= 3 || s.chefe ? 0.08 : 0)})`; ctx.beginPath(); ctx.ellipse(px, py, raio, raio * 0.42, 0, 0, 7); ctx.fill(); }
+        ctx.strokeStyle = `rgba(${cor},${pulso2})`; ctx.lineWidth = larg2; ctx.beginPath(); ctx.ellipse(px, py, raio, raio * 0.42, 0, 0, 7); ctx.stroke();
+      }
+    }
+    if (!morto && s.gelo > tempoSim) { ctx.fillStyle = 'rgba(140,200,255,0.35)'; ctx.beginPath(); ctx.ellipse(px, py - 30, 26, 44, 0, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(200,235,255,0.8)'; ctx.lineWidth = 2; ctx.stroke(); }
+    if (!morto && s.golpe > 0) {
+      const k = Math.min(1, s.golpe / 1.4), R = 2.3 * arena.px_por_unidade_x;
+      ctx.fillStyle = `rgba(255,40,20,${0.10 + 0.12 * (1 - k)})`; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#ff5a30'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, R * (0.25 + 0.75 * k), R * 0.5 * (0.25 + 0.75 * k), 0, 0, 7); ctx.stroke();
+    }
+    if (!morto && s.id === marcado) {
+      // Marca do Ceifador: mira vermelha girando aos pés do alvo
+      ctx.save(); ctx.translate(px, py); ctx.scale(1, 0.42); ctx.rotate(tempoSim * 2.4);
+      ctx.strokeStyle = '#ff3040'; ctx.lineWidth = 3; ctx.setLineDash([14, 9]); ctx.beginPath(); ctx.arc(0, 0, s.chefe ? 60 : 34, 0, 7); ctx.stroke(); ctx.restore();
+    }
+    if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
     const [img, sx, sy] = quadro(m, acao, s.dir, tempo);
-    const e = s.chefe ? 1 : 1;
+    const prov = s.necro ? null : visual(s.especie), e = prov ? prov[1] : 1;
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
-    if (morto && COR_MORTE[s.cond]) {
+    if (prov && !(morto && COR_MORTE[s.cond])) {
+      if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
+      tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
+      tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H);
+      ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
+    } else if (morto && COR_MORTE[s.cond]) {
       // cadáver tingido pela condição da morte (queimado, congelado, putrefato...)
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
       tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${COR_MORTE[s.cond]},0.45)`; tctx.fillRect(0, 0, m.W, m.H);
-      ctx.drawImage(tinta, dx0, dy0);
+      ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
+    if (!morto && s.flash > 0) {
+      // clarão de impacto: o mesmo quadro somado por cima
+      s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, s.flash * 9);
+      ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
+    if (!morto && s.golpe > 0) {
+      const tg = py - (s.chefe ? 190 : 146); ctx.font = 'bold 30px Georgia'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+      ctx.fillStyle = Math.sin(tempoSim * 22) > 0 ? '#ffd84a' : '#ff5a30'; ctx.strokeText('!', px, tg); ctx.fillText('!', px, tg);
+    }
+    if (!morto && s.id === marcado) {
+      const topoM = py - (s.chefe ? 172 : 128), b2 = Math.sin(tempoSim * 6) * 3;
+      ctx.fillStyle = '#ff3040'; ctx.beginPath(); ctx.moveTo(px, topoM + 12 + b2); ctx.lineTo(px - 8, topoM + b2); ctx.lineTo(px + 8, topoM + b2); ctx.fill();
+    }
     if (!morto && s.vida < 0.999) {
       const w = s.chefe ? 70 : 30, topo = py - (s.chefe ? 150 : 108);
       ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(px - w / 2, topo, w, 4);
-      ctx.fillStyle = s.inimigo ? '#be1414' : (s.necro ? '#e0c060' : '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
+      ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
     }
   }
 
@@ -217,7 +579,7 @@ function desenhar(dt) {
   }
 
   for (const [x, y, dx, dy, lanca] of projeteis) {
-    const [px, py] = naTela(x, y), ddx = dx * 16, ddy = -dy * 8;
+    const [px, py] = naTela(x, y), ddx = (dx + dy) * 11.3, ddy = (dx - dy) * 5.7;
     ctx.lineCap = 'round';
     if (lanca) {
       ctx.strokeStyle = 'rgba(120,255,160,0.45)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(px - ddx * 4, py - 52 - ddy * 4); ctx.lineTo(px + ddx * 1.5, py - 52 + ddy * 1.5); ctx.stroke();
@@ -228,7 +590,9 @@ function desenhar(dt) {
   }
   for (const r of raios) {
     const [x1, y1] = naTela(r[2], r[3]), a = r[4] / 0.4;
-    if (r[5]) {
+    if (r[6]) {
+      const [x0, y0] = naTela(r[0], r[1]); ctx.strokeStyle = `rgba(170,200,255,${r[4] / 0.18})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, y0 - 30); ctx.lineTo((x0 + x1) / 2 + rnd(-8, 8), (y0 + y1) / 2 - 30 + rnd(-8, 8)); ctx.lineTo(x1, y1 - 10); ctx.stroke();
+    } else if (r[5]) {
       const k = 1 - r[4] / 0.35;
       ctx.strokeStyle = `rgba(255,150,60,${1 - k})`; ctx.lineWidth = 5; ctx.beginPath();
       ctx.ellipse(x1, y1, r[5] * arena.px_por_unidade_x * k, r[5] * arena.px_por_unidade_y * k, 0, 0, 7); ctx.stroke();
@@ -242,12 +606,40 @@ function desenhar(dt) {
   raios = raios.filter((r) => r[4] > 0);
   for (const p of particulas) {
     p[5] -= 14 * dt; p[0] += p[3] * dt; p[1] += p[4] * dt; p[2] += p[5] * dt; p[7] -= dt;
-    if (p[2] <= 0) { if (p[6] !== '#c8bea0' && p[6] !== '#78ffaa') mancha(p[0], p[1], 4, 1); p[7] = 0; continue; }
+    if (p[2] <= 0) { if (p[6] === '#78080c' || p[6] === '#82080c' || p[6] === '#5a0408') mancha(p[0], p[1], 4, 1); p[7] = 0; continue; }
     const [px, py] = naTela(p[0], p[1]);
     ctx.fillStyle = p[6]; ctx.fillRect(px - 1.5, py - p[2] * arena.px_por_unidade_x * 0.6 - 1.5, 3, 3);
   }
   particulas = particulas.filter((p) => p[7] > 0);
   if (particulas.length > 900) particulas.splice(0, particulas.length - 900);
+  // almas ceifadas voam até o necromante
+  for (const a of almasVoando) {
+    a.t += dt * 1.8; if (!necro) { a.t = 2; continue; }
+    const [x0, y0] = naTela(a.x, a.y), [x1, y1] = naTela(necro.rx, necro.ry), k = Math.min(1, a.t), kk = k * k * (3 - 2 * k);
+    const ax = x0 + (x1 - x0) * kk, ay = y0 - 30 + (y1 - 60 - (y0 - 30)) * kk - Math.sin(k * Math.PI) * 70;
+    for (const [r, al] of [[14, 0.2], [7, 0.5], [3.5, 1]]) { ctx.fillStyle = `rgba(140,255,190,${al})`; ctx.beginPath(); ctx.arc(ax, ay, r, 0, 7); ctx.fill(); }
+    if (Math.random() < 0.6) particulas.push([a.x + (necro.rx - a.x) * kk, a.y + (necro.ry - a.y) * kk, 1.2 + Math.sin(k * Math.PI), rnd(-0.5, 0.5), rnd(-0.4, 0.4), 0.5, '#78ffaa', 0.35]);
+  }
+  almasVoando = almasVoando.filter((a) => a.t < 1);
+  ambiente(dt, larg, alt);
+  if (clarao > 0) { ctx.fillStyle = `rgba(255,190,110,${clarao * 0.35})`; ctx.fillRect(0, 0, larg, alt); clarao = Math.max(0, clarao - dt * 2.2); }
+  // penumbra: bordas escuras e luz de tocha tremendo
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const tremula = 0.5 + 0.06 * Math.sin(tempoSim * 9) + 0.04 * Math.sin(tempoSim * 23.7);
+  const grad = ctx.createRadialGradient(larg / 2, alt * 0.55, alt * 0.25, larg / 2, alt * 0.55, Math.max(larg, alt) * 0.75);
+  grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, `rgba(0,0,0,${tremula})`);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, larg, alt);
+  if (poderes[2] > 0) { ctx.fillStyle = `rgba(160,10,10,${0.08 + 0.04 * Math.sin(tempoSim * 12)})`; ctx.fillRect(0, 0, larg, alt); }
+  // barra do chefe no alto da arena
+  let chefe = null; for (const s of estado.values()) if (s.chefe && s.viva && s.inimigo) chefe = s;
+  if (chefe) {
+    const bw = Math.min(larg * 0.7, 520 * (larg / tela.clientWidth)), bx = (larg - bw) / 2, by = alt * 0.105, bh = Math.max(8, alt * 0.022);
+    ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = '#7a0c14'; ctx.fillRect(bx, by, bw * Math.max(0, chefe.vida), bh);
+    ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 1; ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = '#e8d8b8'; ctx.textAlign = 'center'; ctx.font = `${Math.round(bh * 1.5)}px Georgia`; ctx.fillText(nomeDoChefe(chefe.especie), larg / 2, by - bh * 0.6);
+  }
+  ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, ty * esc);
   ctx.textAlign = 'center';
   for (const n of numeros) {
     const [px, py] = naTela(n.x, n.y); n.t -= dt;
@@ -267,13 +659,35 @@ function desenhar(dt) {
       oferta.slice(0, 3).map((id, i) => `<button data-o="${i}"><b>${escHtml(pactos[id].nome)}</b><span class="g">${escHtml(pactos[id].ganho)}</span><span class="p">${escHtml(pactos[id].preco)}</span></button>`).join('') + '</div>';
   }
   if (chave) { const t = $('enc-t'); if (t) t.textContent = Math.ceil(oferta[3]) + 's'; }
+  const NOMES_RITO = ['', 'Rito da Pressa', 'Rito da Colheita', 'Rito do Banquete'];
   const tp = ativos.length && pactos.length ? ativos.map((id) => pactos[id].nome.replace('Pacto d', 'd').replace(/^d[aeo] /, '')).join(' · ') : '';
-  if (tp !== desenhar.tp) { desenhar.tp = tp; $('t-pactos').textContent = tp ? 'Pactos: ' + tp : ''; }
+  const tp2 = [pressagio ? 'Presságio: ' + PRESSAGIOS[pressagio][0] : '', ritoEmCurso ? NOMES_RITO[ritoEmCurso] : '', tp ? 'Pactos: ' + tp : ''].filter(Boolean).join(' · ');
+  if (tp2 !== desenhar.tp) { desenhar.tp = tp2; $('t-pactos').textContent = tp2; }
+  const ts = sopro > 0 ? `Sopro ${Math.ceil(sopro)}s` : 'Sopro pronto'; if ($('b-sopro').textContent !== ts) $('b-sopro').textContent = ts;
+  const NOMES_FI = ['', 'Raio Sombrio', 'Ceifada', 'Chuva de Ossos', 'Escudo de Almas'];
+  for (let e = 0; e < 2; e++) {
+    const bi = $('b-item' + e), f = itens[e][0]; bi.hidden = !f; if (!f) continue;
+    const tx = itens[e][1] > 0 ? `${NOMES_FI[f]} ${Math.ceil(itens[e][1])}s` : NOMES_FI[f];
+    if (bi.textContent !== tx) bi.textContent = tx; bi.disabled = itens[e][1] > 0;
+  }
   const bd = $('b-detonar'), bf = $('b-frenesi');
   const td = poderes[0] > 0 ? `Detonar ${Math.ceil(poderes[0])}s` : `Detonar (${poderes[3]})`, tf = poderes[2] > 0 ? 'FRENESI!' : poderes[1] > 0 ? `Frenesi ${Math.ceil(poderes[1])}s` : 'Frenesi';
   if (bd.textContent !== td) bd.textContent = td; if (bf.textContent !== tf) bf.textContent = tf;
   bd.disabled = poderes[0] > 0 || poderes[3] === 0; bf.disabled = poderes[1] > 0; bf.classList.toggle('ligado', poderes[2] > 0);
   $('mana').firstElementChild.style.width = (mana * 100).toFixed(0) + '%';
+  // tira do grupo: retrato e vida de cada aliado; toque num ferido usa o Sopro Profano
+  desenhar.tg = (desenhar.tg || 0) + dt;
+  if (desenhar.tg > 0.25) {
+    desenhar.tg = 0;
+    const corQ = ['#9a9a9a', '#e6e0d0', '#6fa8ff', '#ffd84a', '#ff4d6a'];
+    let hg = '';
+    const grupo = [...estado.values()].filter((s) => !s.inimigo).sort((a, b) => (b.necro ? 1 : 0) - (a.necro ? 1 : 0) || a.id - b.id).slice(0, 24);
+    for (const s of grupo) {
+      const v = s.viva ? Math.max(0, Math.min(1, s.vida)) : 0, cor = s.necro ? '#6dffa8' : corQ[Math.max(0, s.qual)] || corQ[1];
+      hg += `<div class="ret ${s.viva ? '' : 'morto'} ${s.viva && v < 0.5 && sopro <= 0 ? 'cura' : ''}" data-ret="${s.id}" style="border-color:${cor}">${thumb(s.necro && deFoice && monstros.necromante_foice ? 'necromante_foice' : s.especie)}<i><b style="width:${Math.round(v * 100)}%;background:${v > 0.5 ? '#5a9f5a' : v > 0.25 ? '#c8a030' : '#c8323c'}"></b></i></div>`;
+    }
+    if (hg !== desenhar.hg) { desenhar.hg = hg; $('grupo').innerHTML = hg; }
+  }
 }
 
 // ---- laço principal ----
@@ -301,8 +715,7 @@ function laco(agora) {
 
 function ajustarTela() {
   const larg = $('cena').clientWidth, razao = Math.min(window.devicePixelRatio || 1, 2);
-  const alt = Math.max(220, Math.min(larg * chao.height / chao.width * 1.0, window.innerHeight * 0.5));
-  const altFinal = larg < 700 ? Math.min(window.innerHeight * 0.42, 340) : alt;
+  const altFinal = larg < 700 ? Math.min(window.innerHeight * 0.5, 430) : Math.max(260, Math.min(larg * 0.62, window.innerHeight * 0.56));
   tela.width = Math.round(larg * razao); tela.height = Math.round(Math.max(200, altFinal) * razao);
   tela.style.height = Math.max(200, altFinal) + 'px';
 }
@@ -310,12 +723,23 @@ function ajustarTela() {
 function salvar() { try { localStorage.setItem(CHAVE, J.Salvar()); localStorage.setItem(CHAVE + '-hora', String(Date.now())); } catch (e) { /* sem armazenamento: joga-se sem salvar */ } }
 
 // ---- painéis ----
-let aba = 'exercito', painelAnterior = '', missaoAnterior = '';
+const abasSel = { esq: 'exercito', dir: 'combate', baixo: 'necropole' }, LADO = { exercito: 'esq', equip: 'esq', combate: 'dir', masmorra: 'dir', bestiario: 'dir', necropole: 'baixo', talentos: 'baixo' };
+const ALVO = { esq: 'p-esq', dir: 'p-dir', baixo: 'painel' }, htmlAnterior = { esq: '', dir: '', baixo: '' };
+const botoesDeAba = () => document.querySelectorAll('.abas button[data-aba]');
+let painelAnterior = '', missaoAnterior = '', recursosAnterior = '', exFiltro = 'todos', exOrdem = 'campo';
+try { exFiltro = localStorage.getItem(CHAVE + '-filtro') || 'todos'; exOrdem = localStorage.getItem(CHAVE + '-ordem') || 'campo'; } catch (e) { /* padrão */ }
 const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : String(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ESPACOS = ['Arma', 'Mão secundária', 'Elmo', 'Peitoral', 'Luvas', 'Botas', 'Amuleto', 'Anel', 'Anel'];
 const TRACOS = { 0: ['Faminto', 'rouba vida a cada golpe'], 1: ['Frenético', 'ataca mais rápido'], 2: ['Pétreo', 'mais armadura'], 3: ['Rancoroso', 'explode ao morrer'],
   4: ['Leal', 'sofre menos dano perto do necromante'], 5: ['Incandescente', 'parte do dano vira fogo'], 11: ['Colosso', 'muito mais vida'], 12: ['Carniceiro', 'muito mais dano'], 13: ['Agourento', 'mais acertos críticos'] };
+const donsHtml = (dn) => dn && dn.some((x) => x) ? '<small>Dons: ' + ['Vida', 'Dano', 'Velocidade'].map((n, k) => dn[k] ? `<span style="color:${dn[k] > 0 ? '#8fd89f' : '#e08a8a'}">${n} ${dn[k] > 0 ? '+' : ''}${dn[k]}%</span>` : '').filter(Boolean).join(' · ') + '</small>' : '';
+// miniatura do sprite (quadro parado, de frente para a câmera) para as listas
+function thumb(sprite) {
+  const m = monstro(sprite, false), a = m.acoes.parado; if (!a) return '<div class="thumb"></div>';
+  const k = 46 / Math.min(m.W, m.H) * 1.9, x = 23 - m.pivo[0] * k, y = 40 - (m.H - m.pivo[1]) * k;
+  return `<div class="thumb" style="background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
+}
 const tracosHtml = (t) => t.length ? '<small>' + t.map((k) => TRACOS[k] ? `<b style="color:#c8a86a;font-weight:normal">${TRACOS[k][0]}</b>: ${TRACOS[k][1]}` : '').join(' · ') + '</small>' : '';
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
@@ -323,10 +747,22 @@ function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <s
 
 function atualizarPainel(forcar) {
   const d = JSON.parse(J.Painel());
-  pactos = d.pactos;
-  $('t-andar').textContent = `Andar ${d.andar}` + (d.recorde ? ` · recorde ${d.recorde}` : '');
-  $('t-nivel').textContent = d.nivel; $('t-ossos').textContent = fmt(d.ossos); $('t-ess').textContent = fmt(d.essencia);
-  $('t-cmd').textContent = `${d.comando}/${d.comandoMax}`;
+  pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
+  $('t-andar').textContent = `Andar ${d.andar}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
+  $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
+  const IC = {
+    ossos: '<path d="M5 5l14 14M4 7a2 2 0 1 1 3-3M17 20a2 2 0 1 0 3-3" stroke="#d8c9b4"/>', ess: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" stroke="#6dffa8"/>',
+    sangue: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" fill="#a01420" stroke="#ff5060"/>', frag: '<path d="M12 3l5 7-5 11-5-11z" stroke="#9a6aff"/>',
+    cmd: '<path d="M5 19V9l7-5 7 5v10M9 19v-6h6v6" stroke="#d9b25f"/>', cinzas: '<path d="M4 19h16M7 19c0-5 3-6 3-10M14 19c0-6 3-7 2-12" stroke="#aaa"/>',
+  };
+  const folga = d.poder / Math.max(1, d.poderSugerido), corP = folga >= 1 ? '#8fd89f' : folga >= 0.8 ? '#ffd84a' : '#ff6a6a';
+  IC.poder = `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7z" stroke="${corP}"/>`;
+  const fichas = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos']];
+  if (d.ascensao.cinzas || d.ascensao.vezes) fichas.push(['cinzas', fmt(d.ascensao.cinzas), 'Cinzas']);
+  if (d.sorte > 0) fichas.push(['frag', fmt(d.sorte), 'Sorte']);
+  if (d.cheats) fichas.push(['cmd', 'teste', 'save']);
+  const hr = fichas.map(([k, v, n]) => `<span class="rec" data-rec="${k}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg><b>${v}</b><small>${n}</small></span>`).join('');
+  if (hr !== recursosAnterior) { recursosAnterior = hr; $('recursos').innerHTML = hr; }
   // missão atual: objetivo sempre à vista
   const m = d.missao; let hm = '';
   if (!m) hm = '<div class="corpo"><span class="tit">Todas as missões cumpridas</span><div class="hist">O que foi roubado de ti continua mais abaixo.</div></div>';
@@ -338,32 +774,87 @@ function atualizarPainel(forcar) {
         : `<span class="nota">Prêmio:<br>${premio}</span>`);
   }
   if (hm !== missaoAnterior) { missaoAnterior = hm; $('missao').innerHTML = hm; }
-  const nomes = ['exercito', 'necropole', 'equip', 'bestiario'];
+  const nomes = ['exercito', 'necropole', 'equip', 'bestiario', 'talentos', 'combate', 'masmorra'];
+  d.abertos[5] = true; d.abertos[6] = true;
   d.abertos[3] = d.abertos[0];   // o Bestiário abre junto com o Exército
-  for (const b of $('abas').children) b.hidden = !d.abertos[nomes.indexOf(b.dataset.aba)];
-  if (!d.abertos[nomes.indexOf(aba)]) {
-    const prox = nomes.find((n, i) => d.abertos[i]);
-    if (prox) { aba = prox; for (const x of $('abas').children) x.classList.toggle('ativo', x.dataset.aba === aba); }
+  d.abertos[4] = d.nivel >= 1 + d.niveisPorPonto || d.talentos.some((t) => t.pts > 0);   // Talentos abrem com o primeiro ponto
+  const aberto = (n) => d.abertos[nomes.indexOf(n)];
+  // selos: quantas coisas dá para fazer em cada aba agora
+  const pend = {
+    exercito: d.almas.filter((a) => a.custo <= d.essencia).length + d.fusoes.filter((f) => f.pode).length + d.minions.filter((m) => (m.imbuir >= 0 && m.imbuir <= d.fragmentos) || (m.evoluir >= 0 && m.evoluir <= d.essencia)).length,
+    necropole: d.construcoes.filter((c) => c.pode).length + d.ascensao.legados.filter((l) => l.pode).length, talentos: d.pontos,
+  };
+  for (const b of botoesDeAba()) {
+    const n = b.dataset.aba, lado = b.parentElement.dataset.lado;
+    b.hidden = !aberto(n);
+    if (abasSel[lado] === n && !aberto(n)) { const prox = Object.keys(LADO).find((k) => LADO[k] === lado && aberto(k)); if (prox) abasSel[lado] = prox; }
+    if (pend[n]) b.dataset.n = pend[n] > 9 ? '9+' : pend[n]; else delete b.dataset.n;
   }
+  for (const b of botoesDeAba()) b.classList.toggle('ativo', abasSel[b.parentElement.dataset.lado] === b.dataset.aba);
+  { const be = $('doca').querySelector('[data-abre="esq"]'); if (pend.exercito) be.dataset.n = pend.exercito > 9 ? '9+' : pend.exercito; else delete be.dataset.n; }
+  invAberto = abasSel.esq === 'equip'; $('inventario').hidden = !invAberto; $('p-esq').hidden = invAberto;
+  const render = (aba) => {
   let h = '';
-  if (!d.abertos.some(Boolean)) h = '<p class="nota">Assista à descida e cumpra a primeira missão. O Exército, a Necrópole e o Equipamento se abrem conforme você avança.</p>';
+  if (!aberto(aba)) h = '<p class="nota">Assista à descida e cumpra a primeira missão. O Exército, a Necrópole e o Inventário se abrem conforme você avança.</p>';
   else if (aba === 'exercito') {
     h += `<h3>Minions (${d.comando}/${d.comandoMax} de comando)</h3>`;
     if (!d.minions.length) h += '<p class="nota">Nenhum minion ainda. Ceife almas na masmorra e erga-as aqui.</p>';
-    d.minions.forEach((m, i) => {
-      h += `<div class="linha"><div class="corpo"><span class="q${m.q}">${esc(m.nome)}</span> <span class="nota">nv ${m.nivel}/${m.max} · ${QUALIDADES[m.q]} · estágio ${m.estagio} · ${m.comando} de comando</span>${tracosHtml(m.tracos)}` +
+    // filtro e ordem da lista (as ações continuam usando o índice original de cada minion)
+    const papelDe = (m) => m.ficha.papel.split(':')[0];
+    const FILTROS = [['todos', 'Todos'], ['campo', 'Em campo'], ['reserva', 'Na reserva'], ['f:Morto-vivo', 'Mortos-vivos'], ['f:Demônio', 'Demônios'], ['f:Besta', 'Bestas'], ['f:Aberração', 'Aberrações'], ['f:Espírito', 'Espíritos'],
+      ['p:Tanque', 'Tanques'], ['p:Lutador', 'Lutadores'], ['p:Atirador', 'Atiradores'], ['p:Conjurador', 'Conjuradores'], ['p:Suporte', 'Suportes'], ['p:Enxame', 'Enxames'], ['q:2', 'Vigorosa ou melhor'], ['q:3', 'Ancestral ou melhor']];
+    const ORDENS = [['poder', 'Maior Poder'], ['nivel', 'Maior nível'], ['qualidade', 'Melhor qualidade'], ['dano', 'Mais dano por segundo'], ['vida', 'Mais vida'], ['especie', 'Espécie'], ['campo', 'Em campo primeiro'], ['ordem', 'Ordem de chegada']];
+    const passa = (m) => exFiltro === 'todos' || (exFiltro === 'campo' && m.ativo) || (exFiltro === 'reserva' && !m.ativo) || (exFiltro[1] === ':' && (
+      (exFiltro[0] === 'f' && m.ficha.familia === exFiltro.slice(2)) || (exFiltro[0] === 'p' && papelDe(m) === exFiltro.slice(2)) || (exFiltro[0] === 'q' && m.q >= +exFiltro.slice(2))));
+    const chave = { poder: (m) => -m.ficha.poder, nivel: (m) => -m.nivel, qualidade: (m) => -m.q * 1e9 - m.ficha.poder, dano: (m) => -m.ficha.dps, vida: (m) => -m.ficha.vida, campo: (m) => (m.ativo ? 0 : 1) * 1e12 - m.ficha.poder, ordem: () => 0 };
+    const lista = d.minions.map((m, i) => [m, i]).filter(([m]) => passa(m));
+    if (exOrdem === 'especie') lista.sort((a, b) => a[0].nome.localeCompare(b[0].nome) || b[0].ficha.poder - a[0].ficha.poder); else lista.sort((a, b) => chave[exOrdem](a[0]) - chave[exOrdem](b[0]) || a[1] - b[1]);
+    const somaPoder = lista.reduce((t, [m]) => t + m.ficha.poder, 0);
+    h += `<div class="linha"><select data-ex="filtro" style="max-width:none;flex:1">${FILTROS.map(([k, n]) => `<option value="${k}" ${k === exFiltro ? 'selected' : ''}>${n}</option>`).join('')}</select><select data-ex="ordem" style="max-width:none;flex:1">${ORDENS.map(([k, n]) => `<option value="${k}" ${k === exOrdem ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
+    h += `<p class="nota">${lista.length} de ${d.minions.length} minions · Poder somado ${fmt(somaPoder)}</p>`;
+    lista.forEach(([m, i]) => {
+      h += `<div class="linha">${thumb(m.ficha.sprite)}<div class="corpo toque" data-ficha="${i}" title="Ver a ficha"><span class="q${m.q}">${esc(m.nome)}</span> <span class="nota">nv ${m.nivel}/${m.max} · ${QUALIDADES[m.q]} · estágio ${m.estagio} · ${m.comando} de comando · <b style="color:var(--ouro);font-weight:normal">Poder ${fmt(m.ficha.poder)}</b></span>${donsHtml(m.ficha.dons)}${tracosHtml(m.tracos)}` +
         `<div class="xp"><div style="width:${Math.round(m.xp * 100)}%"></div></div></div>` +
+        (m.imbuir >= 0 ? `<button data-ac="imbuir" data-i="${i}" ${m.imbuir > d.fragmentos ? 'disabled' : ''} title="Sobe a qualidade da alma">Imbuir · ${fmt(m.imbuir)} Frag.</button>` : '') +
         (m.evoluir >= 0 ? `<button data-ac="evoluir" data-i="${i}" ${m.evoluir > d.essencia ? 'disabled' : ''}>Evoluir · ${fmt(m.evoluir)} Ess.</button>` : '') +
-        `<button data-ac="alternar" data-i="${i}" class="${m.ativo ? 'ativo' : ''}">${m.ativo ? 'Em campo' : 'Na reserva'}</button></div>`;
+        `<button data-ac="alternar" data-i="${i}" class="${m.ativo ? 'ativo' : ''}">${m.ativo ? 'Em campo' : 'Na reserva'}</button>` +
+        `<button data-ac="sacrificar" data-i="${i}" title="O minion some e vira Fragmentos de Alma">Sacrificar · +${fmt(m.frag)}</button></div>`;
     });
+    const opq = (v) => QUALIDADES.map((q, k) => `<option value="${k}" ${k === v ? 'selected' : ''}>${k === 0 ? 'nenhuma' : 'abaixo de ' + q}</option>`).join('');
+    h += `<h3>Postura do exército</h3><div class="linha"><div class="corpo">${['Agressiva', 'Defensiva', 'Escolta'][d.postura]}<small>${['Os minions caçam qualquer inimigo na arena', 'Só enfrentam quem chega perto do necromante', 'Ficam colados no necromante e o protegem'][d.postura]} · vale na próxima expedição</small></div><select data-postura="1">${['Agressiva', 'Defensiva', 'Escolta'].map((n, k) => `<option value="${k}" ${k === d.postura ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
+    h += `<h3>Regras automáticas</h3><div class="linha"><div class="corpo">Dissolver almas ao ceifar<small>viram Essência em vez de ocupar o Filactério (espécie nova nunca é dissolvida)</small></div><select data-regra="1">${opq(d.regras[1])}</select></div>` +
+      `<div class="linha"><div class="corpo">Sacrificar minions da reserva<small>ao fim de cada expedição viram Fragmentos de Alma; quem está em campo nunca é tocado</small></div><select data-regra="2">${opq(d.regras[2])}</select></div>`;
     if (d.fusoes.length) {
       h += '<h3>Fusão de almas</h3><p class="nota">Três almas iguais viram uma de qualidade acima, que herda os traços delas. Um corpo melhor ocupa o mesmo Comando que um fraco.</p>';
       d.fusoes.forEach((f) => { h += `<div class="linha"><div class="corpo">3 × <span class="q${f.q}">${esc(f.nome)} ${QUALIDADES[f.q]}</span> → <span class="q${f.q + 1}">${QUALIDADES[f.q + 1]}</span><small>você tem ${f.n}</small></div><button data-ac="fundir" data-e="${f.e}" data-q="${f.q}" ${f.pode ? '' : 'disabled'}>Fundir · ${fmt(f.custo)} Ess.</button></div>`; });
     }
     h += `<h3>Filactério (${d.almas.length}/${d.filacterioMax} almas)</h3>`;
     if (!d.almas.length) h += '<p class="nota">Vazio. As almas ceifadas chegam ao fim de cada expedição.</p>';
-    d.almas.forEach((a, i) => { h += `<div class="linha"><div class="corpo"><span class="q${a.q}">${esc(a.nome)}</span> <span class="nota">${QUALIDADES[a.q]} · ${a.comando} de comando</span>${tracosHtml(a.tracos)}</div><button data-ac="erguer" data-i="${i}" ${a.custo > d.essencia ? 'disabled' : ''}>Erguer · ${fmt(a.custo)} Ess.</button></div>`; });
+    d.almas.map((a, i) => [a, i]).sort((x, y) => y[0].q - x[0].q || x[1] - y[1]).forEach(([a, i]) => { h += `<div class="linha">${thumb(a.sprite)}<div class="corpo"><span class="q${a.q}">${esc(a.nome)}</span> <span class="nota">${QUALIDADES[a.q]} · ${a.comando} de comando</span>${donsHtml(a.dons)}${tracosHtml(a.tracos)}</div><button data-ac="erguer" data-i="${i}" ${a.custo > d.essencia ? 'disabled' : ''}>Erguer · ${fmt(a.custo)} Ess.</button></div>`; });
     h += '<p class="nota">Mudanças no exército valem a partir da próxima expedição.</p><div class="rodape"><button data-ac="recomecar">Recomeçar expedição agora</button></div>';
+  } else if (aba === 'talentos') {
+    h += `<p class="nota">Um ponto a cada ${d.niveisPorPonto} níveis do necromante. Os talentos mais fundos de um ramo pedem pontos no mesmo ramo. Valem a partir da próxima expedição.</p>`;
+    h += `<div class="linha"><div class="corpo">Pontos para gastar: <b style="color:var(--ouro);font-weight:normal">${d.pontos}</b></div>${d.redistribuir ? `<button data-ac="redistribuir" ${d.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(d.redistribuir)} Ess.</button>` : ''}</div>`;
+    ['Ossos · o exército', 'Sangue · o necromante', 'Sombras · almas e saque'].forEach((titulo, ramo) => {
+      h += `<h3>${titulo}</h3>`;
+      d.talentos.forEach((t, i) => {
+        if (t.ramo !== ramo) return;
+        const travado = t.noRamo < t.requer;
+        h += `<div class="linha" ${travado ? 'style="opacity:.55"' : ''}><div class="corpo">${esc(t.nome)} <span class="nota">${t.pts}/${t.max}</span>` +
+          `<small>${travado ? `Pede ${t.requer} pontos neste ramo (você tem ${t.noRamo})` : t.pts ? esc(t.agora) + (t.pts < t.max ? ' → ' + esc(t.prox) : '') : 'Próximo ponto: ' + esc(t.prox)}</small></div>` +
+          (t.pts < t.max ? `<button data-ac="investir" data-i="${i}" ${t.pode ? '' : 'disabled'}>+1</button>` : '<span class="nota">máx.</span>') + '</div>';
+      });
+    });
+  } else if (aba === 'masmorra') {
+    const t = masm.tipos[masm.sala];
+    h += mapaGrandeHtml();
+    if (masm.amb) h += `<div class="linha"><div class="corpo">Ambiente: ${AMBIENTES[masm.amb][0]}<small>${AMBIENTES[masm.amb][1]}</small></div></div>`;
+    if (masm.bencao) h += `<div class="linha"><div class="corpo">Bênção ativa<small>${BENCAOS[masm.bencao]} · até o fim do andar</small></div></div>`;
+    if (pressagio) h += `<div class="linha"><div class="corpo">Presságio: ${PRESSAGIOS[pressagio][0]}<small>${PRESSAGIOS[pressagio][1]}</small></div></div>`;
+    h += '<h3>Diário da descida</h3><div class="diario">' + (diario.length ? diario.map(([a, tx]) => `<div><small>andar ${a}</small>${tx}</div>`).join('') : '<p class="nota">Nada digno de nota ainda. Baús, santuários, emboscadas e achados raros aparecem aqui.</p>') + '</div>';
+    h += '<p class="nota">Entre os combates surgem salas especiais. Do andar 5 em diante, raramente, o fim de um andar abre um nível secreto.</p>';
+  } else if (aba === 'combate') {
+    h += estatHtml(estat, 'Expedição em curso') + estatHtml(estatAnterior, 'Expedição anterior');
   } else if (aba === 'bestiario') {
     h += `<h3>Bestiário</h3><p class="nota">Cada marco de mortes de uma espécie dá um nível de Domínio: seus minions dessa espécie ganham +${d.bestiario[0].porNivel}% de vida e dano por nível.</p>`;
     d.bestiario.forEach((b) => {
@@ -378,49 +869,260 @@ function atualizarPainel(forcar) {
       const custo = c.nivel >= c.max ? 'Máximo' : !c.aberta ? `Abre no andar ${c.andar}` : `${fmt(c.ossos)} Ossos` + (c.essencia ? ` · ${fmt(c.essencia)} Ess.` : '');
       h += `<div class="linha"><div class="corpo">${esc(c.nome)} <span class="nota">nv ${c.nivel}/${c.max}</span><small>${esc(c.efeito)}</small></div><button data-ac="melhorar" data-i="${i}" ${c.pode ? '' : 'disabled'}>${custo}</button></div>`;
     });
+    h += `<h3>Ritos de Sangue <span class="nota" style="text-transform:none;letter-spacing:0">· você tem ${fmt(d.sangue)} de Sangue</span></h3><p class="nota">O Sangue vem de elites, chefes e execuções. Um rito vale só para a próxima expedição.</p>`;
+    d.ritos.forEach((r) => { const prep = d.ritoPreparado === r.id; h += `<div class="linha"><div class="corpo">${esc(r.nome)}<small>${esc(r.efeito)}</small></div><button data-ac="rito" data-i="${r.id}" class="${prep ? 'ativo' : ''}" ${prep || r.sangue > d.sangue ? 'disabled' : ''}>${prep ? 'Preparado' : fmt(r.sangue) + ' Sangue'}</button></div>`; });
+    h += '<h3>Oferendas</h3><p class="nota">Cada inimigo deixa Restos conforme a morte que teve (queimado, congelado, mutilado…). Cada tipo alimenta um altar próprio, e os altares sobem sozinhos ao fim de cada expedição.</p>';
+    d.oferendas.forEach((o) => { const pc = o.nivel >= o.max ? 100 : Math.min(100, Math.round(100 * o.restos / o.custo)); h += `<div class="linha"><div class="corpo">${esc(o.nome)} <span class="nota">nível ${o.nivel}/${o.max}</span><small>${o.nivel ? esc(o.texto) : '+' + o.porNivel + '% por nível'}${o.nivel >= o.max ? ' · completo' : ` · ${fmt(o.restos)} de ${fmt(o.custo)} Restos para o próximo`}</small><div class="xp"><div style="width:${pc}%;background:#8a6a3a"></div></div></div></div>`; });
+    const as = d.ascensao;
+    h += `<h3>Ascensão${as.vezes ? ` <span class="nota" style="text-transform:none;letter-spacing:0">· ${as.vezes}ª vida · ${fmt(as.cinzas)} Cinzas</span>` : ''}</h3>`;
+    if (!as.pode && !as.vezes) h += '<p class="nota">Vença a chefe do Ato 1 (andar 10) para poder ascender: morrer de propósito, recomeçar e levar Cinzas que compram Legados permanentes.</p>';
+    else {
+      h += '<p class="nota">Ascender zera níveis, recursos, construções, exército, talentos e altares. Ficam o Bestiário, as missões, as regras, os Legados e os itens travados no inventário.</p>';
+      as.legados.forEach((l, i) => { h += `<div class="linha"><div class="corpo">${esc(l.nome)} <span class="nota">nível ${l.nivel}/${l.max}</span><small>${l.nivel ? esc(l.texto) + ' · ' : ''}+${l.porNivel}% por nível</small></div><button data-ac="legado" data-i="${i}" ${l.pode ? '' : 'disabled'}>${l.nivel >= l.max ? 'Máximo' : fmt(l.custo) + ' Cinzas'}</button></div>`; });
+      h += `<div class="rodape"><button data-ac="ascender" ${as.pode && as.renderia > 0 ? '' : 'disabled'}>${as.pode ? `Ascender agora · +${fmt(as.renderia)} Cinzas` : 'Vença a chefe do Ato 1 nesta vida para ascender de novo'}</button></div>`;
+    }
     h += '<div class="rodape"><button data-ac="novo">Apagar save e começar de novo</button></div>';
-  } else {
-    h += '<h3>Equipado</h3>';
-    d.equipados.forEach((it, i) => { h += `<div class="linha"><div class="corpo"><span class="nota">${ESPACOS[i]}</span> ${it ? itemHtml(it) : '<span class="nota">— vazio —</span>'}</div>${it ? `<button data-ac="desequipar" data-i="${i}">Tirar</button>` : ''}</div>`; });
-    h += `<h3>Inventário (${d.inventario.length}/${d.inventarioMax})</h3><div class="rodape" style="margin:0 0 8px"><button data-ac="auto">Equipar os melhores</button></div>`;
-    if (!d.inventario.length) h += '<p class="nota">Vazio. Os itens caem dos inimigos e chegam ao fim de cada expedição.</p>';
-    d.inventario.forEach((it, i) => { h += `<div class="linha"><div class="corpo">${itemHtml(it)}</div><button data-ac="equipar" data-i="${i}">Equipar</button><button data-ac="desmanchar" data-i="${i}">+${fmt(it.ess)} Ess.</button></div>`; });
-    h += '<p class="nota">Itens equipados valem a partir da próxima expedição.</p>';
   }
-  if (forcar || h !== painelAnterior) { painelAnterior = h; $('painel').innerHTML = h; }
+  return h;
+  };
+  // tira dos automáticos: cada feitiço pode disparar sozinho, com recarga maior
+  const nomesAuto = ['Detonar', 'Frenesi', 'Sopro', itens[0][0] ? ['', 'Raio Sombrio', 'Ceifada', 'Chuva de Ossos', 'Escudo de Almas'][itens[0][0]] : null, itens[1][0] ? ['', 'Raio Sombrio', 'Ceifada', 'Chuva de Ossos', 'Escudo de Almas'][itens[1][0]] : null];
+  const ha = `<span title="No automático a recarga é ${d.autoPenalidade}% maior">Automático (recarga +${d.autoPenalidade}%):</span>` + nomesAuto.map((n, i) => n ? `<button data-auto="${i}" class="${d.auto[i] ? 'ativo' : ''}">${n}</button>` : '').join('');
+  if (ha !== autosAnterior) { autosAnterior = ha; $('autos').innerHTML = ha; }
+  desenharInventario(d);
+  desenharFicha(d);
+  for (const lado of ['esq', 'dir', 'baixo']) {
+    if (lado === 'esq' && invAberto) continue;
+    const h = render(abasSel[lado]);
+    if (forcar || h !== htmlAnterior[lado]) { htmlAnterior[lado] = h; $(ALVO[lado]).innerHTML = h; }
+  }
 }
+
+// ---- inventário em grade (gaveta à esquerda) ----
+let invAberto = false, invSel = null, invAnterior = '';
+const RARIDADES = ['Comum', 'Mágico', 'Raro', 'Lendário', 'Profano'];
+const TIPOS = ['Cajado', 'Foice', 'Grimório', 'Relicário', 'Elmo', 'Peitoral', 'Luvas', 'Botas', 'Amuleto', 'Anel'];
+// arte dos itens: modelos do pipeline (blender/gerar_itens.py), um por tipo
+const ARTE_ITEM = ['cajado', 'foice', 'grimorio', 'relicario', 'elmo', 'peitoral', 'luvas', 'botas', 'amuleto', 'anel'];
+const icone = (t) => `<img alt="${TIPOS[t] || ''}" src="arte/itens/${ARTE_ITEM[t] || 'anel'}.webp" draggable="false">`;
+let venderAte = 1, venderOk = 0;
+
+function desenharInventario(d) {
+  if (!invAberto) return;
+  const g = d.grade, cel = 100 / g.w;
+  let h = `<div class="cab"><span>Inventário</span><button data-inv="fechar">Fechar</button></div>`;
+  h += `<p class="nota">Estilo de combate: <b style="color:var(--texto);font-weight:normal">${d.corpoACorpo ? 'corpo a corpo (foice): avança, corta em arco, mais vida' : 'à distância (cajado ou mãos vazias): fica atrás do exército'}</b></p>`;
+  h += '<div class="boneco">' + d.equipados.map((it, i) => `<div class="vaga ${it ? 'r' + it.r : ''} ${invSel === 'e' + i ? 'sel' : ''}" data-inv="e${i}" title="${ESPACOS[i]}">${it ? icone(it.tipo) : `<small>${ESPACOS[i]}</small>`}</div>`).join('') + '</div>';
+  h += `<div class="grade" style="aspect-ratio:${g.w}/${g.h};background-size:${cel}% ${100 / g.h}%">`;
+  const fora = [];
+  d.inventario.forEach((it, i) => {
+    const [x, y] = g.pos[i];
+    if (x < 0) { fora.push(i); return; }
+    h += `<div class="item r${it.r} ${invSel === 'i' + i ? 'sel' : ''}" data-inv="i${i}" style="left:${x * cel}%;top:${y * 100 / g.h}%;width:${it.w * cel}%;height:${it.h * 100 / g.h}%">${icone(it.tipo)}${it.trava ? '<span class="trava">travado</span>' : ''}</div>`;
+  });
+  h += '</div>';
+  if (fora.length) h += `<p class="nota">${fora.length} item(ns) sem lugar na grade: equipe ou desmanche algo.</p>`;
+  let sel = null, ehEquipado = false, idx = -1;
+  if (invSel) { ehEquipado = invSel[0] === 'e'; idx = +invSel.slice(1); sel = ehEquipado ? d.equipados[idx] : d.inventario[idx]; }
+  if (sel) {
+    h += `<div class="ficha r${sel.r}"><b>${esc(sel.nome)}</b><span class="nota">${RARIDADES[sel.r]} · ${TIPOS[sel.tipo]} · nível ${sel.nivel} · ocupa ${sel.w}×${sel.h} · <span style="color:var(--ouro)">Poder ${fmt(sel.poder)}</span></span>` +
+      sel.afixos.map((a) => `<div>${esc(a)}</div>`).join('') +
+      (sel.tipo === 0 ? '<div class="nota">Cajado: o necromante luta à distância.</div>' : sel.tipo === 1 ? '<div class="nota">Foice: o necromante luta corpo a corpo.</div>' : '') +
+      (sel.trava ? '<div class="nota">Travado: não é vendido nem desmanchado.</div>' : '') +
+      '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button><button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ess)} Ess.</button>`) +
+      `<button data-ac="travar" data-i="${idx}" data-eq="${ehEquipado ? 1 : 0}" class="${sel.trava ? 'ativo' : ''}">${sel.trava ? 'Destravar' : 'Travar'}</button></div></div>`;
+  } else h += '<p class="nota">Toque num item para ver a descrição.</p>';
+  let nV = 0, eV = 0; d.inventario.forEach((it) => { if (!it.trava && it.r <= venderAte) { nV++; eV += it.ess; } });
+  h += `<div class="rodape"><button data-ac="auto">Equipar os melhores</button></div>`;
+  h += `<div class="linha" style="margin-top:10px"><div class="corpo">Vender tudo<small>vira Essência; itens travados e equipados ficam</small></div><select data-vender="1">` +
+    RARIDADES.map((r, k) => `<option value="${k}" ${k === venderAte ? 'selected' : ''}>${k === 0 ? 'só Comuns' : 'até ' + r}</option>`).join('') +
+    `</select></div><div class="rodape" style="margin-top:0"><button data-ac="vender-tudo" ${nV ? '' : 'disabled'} class="${Date.now() - venderOk < 4000 ? 'ativo' : ''}">${Date.now() - venderOk < 4000 ? 'Confirmar: ' : ''}Vender ${nV} ${nV === 1 ? 'item' : 'itens'} · +${fmt(eV)} Ess.</button></div>`;
+  h += `<div class="linha" style="margin-top:10px"><div class="corpo">Desmanchar ao pegar<small>itens abaixo desta raridade viram Essência na hora</small></div><select data-regra="0">` +
+    RARIDADES.map((r, k) => `<option value="${k}" ${k === d.regras[0] ? 'selected' : ''}>${k === 0 ? 'nada' : 'abaixo de ' + r}</option>`).join('') + '</select></div>';
+  h += '<p class="nota">O que você equipa vale a partir da próxima expedição.</p>';
+  if (h !== invAnterior) { invAnterior = h; $('inventario').innerHTML = h; }
+}
+function acaoDoPainel(b) {
+  const i = +b.dataset.i;
+  switch (b.dataset.ac) {
+    case 'equipar': J.Equipar(i); invSel = null; break;
+    case 'desequipar': J.Desequipar(i); invSel = null; break;
+    case 'desmanchar': J.Desmanchar(i); invSel = null; break;
+    case 'auto': J.AutoEquipar(); invSel = null; break;
+    case 'travar': J.Travar(i, b.dataset.eq === '1'); break;
+    case 'vender-tudo':
+      if (Date.now() - venderOk > 4000) { venderOk = Date.now(); break; }
+      { const [n, e] = J.VenderTudo(venderAte).split(' '); venderOk = 0; invSel = null; aviso(`${n} itens vendidos · +${fmt(+e)} de Essência`); }
+      break;
+  }
+}
+$('inventario').addEventListener('click', (ev) => {
+  if (!J) return;
+  const b = ev.target.closest('button[data-ac]');
+  if (b) { acaoDoPainel(b); salvar(); atualizarPainel(true); return; }
+  const v = ev.target.closest('[data-inv]'); if (!v) return;
+  if (v.dataset.inv === 'fechar') { invAberto = false; $('inventario').classList.remove('aberto'); return; }
+  invSel = invSel === v.dataset.inv ? null : v.dataset.inv; atualizarPainel(true);
+});
+document.addEventListener('change', (ev) => {
+  const se = ev.target.closest('select[data-ex]'); if (se) { if (se.dataset.ex === 'filtro') exFiltro = se.value; else exOrdem = se.value; try { localStorage.setItem(CHAVE + '-filtro', exFiltro); localStorage.setItem(CHAVE + '-ordem', exOrdem); } catch (e) { /* tudo bem */ } if (J) atualizarPainel(true); return; }
+  const sp = ev.target.closest('select[data-postura]'); if (sp && J) { J.Postura(+sp.value); salvar(); atualizarPainel(true); return; }
+  const sv = ev.target.closest('select[data-vender]'); if (sv) { venderAte = +sv.value; venderOk = 0; if (J) atualizarPainel(true); return; }
+  const sl = ev.target.closest('select[data-regra]'); if (!sl || !J) return;
+  J.Regra(+sl.dataset.regra, +sl.value); salvar(); atualizarPainel(true);
+});
+
+// ---- ficha do minion: retrato animado, atributos, traços e ações ----
+let fichaIdx = -1, fichaAnterior = '', fichaMinion = null, fichaAcao = 0, fichaDir = 1, fichaT0 = 0;
+const ACOES_FICHA = ['parado', 'andar', 'atacar', 'morrer'];
+function desenharFicha(d) {
+  const el = $('ficha-minion');
+  if (fichaIdx < 0 || fichaIdx >= d.minions.length) { fichaIdx = -1; fichaMinion = null; el.hidden = true; return; }
+  const m = d.minions[fichaIdx], f = m.ficha; fichaMinion = m; el.hidden = false;
+  const num = (v) => v >= 100 ? fmt(Math.round(v)) : (Math.round(v * 10) / 10).toString();
+  let h = `<div class="nome q${m.q}">${esc(m.nome)}</div><div class="sub">${QUALIDADES[m.q]} (atributos ×${f.qmult}) · nível ${m.nivel}/${m.max} · estágio ${m.estagio}<br>${f.familia} · porte ${f.porte} · ${m.comando} de Comando</div>`;
+  h += `<div class="xp"><div style="width:${Math.round(m.xp * 100)}%"></div></div>`;
+  h += `<div class="attrs"><div><span>Vida</span><b>${num(f.vida)}</b></div><div><span>Dano por golpe</span><b>${num(f.dano)}</b></div>` +
+    `<div><span>Golpes por segundo</span><b>${num(f.vel)}</b></div><div><span>Dano por segundo</span><b>${num(f.dps)}</b></div>` +
+    `<div><span>Armadura</span><b>${num(f.armadura)}</b></div><div><span>Alcance</span><b>${num(f.alcance)}</b></div>` +
+    `<div><span>Movimento</span><b>${num(f.mov)}</b></div><div><span>Tipo de dano</span><b>${esc(f.tipoDano)}</b></div></div>`;
+  h += `<div class="tr" style="text-align:center;font-size:16px"><b>Poder ${fmt(f.poder)}</b></div>` + (f.dons.some((x) => x) ? `<div class="tr">${donsHtml(f.dons).replace(/<\/?small>/g, '')} <span class="nota">(de nascença, já nos números)</span></div>` : '');
+  h += `<div class="tr">${esc(f.papel)}</div>`;
+  if (f.dominio) h += `<div class="tr"><b>Domínio ${f.dominio}</b>: bônus do Bestiário já incluído nos números acima</div>`;
+  m.tracos.forEach((k) => { if (TRACOS[k]) h += `<div class="tr"><b>${TRACOS[k][0]}</b>: ${TRACOS[k][1]}</div>`; });
+  if (!m.tracos.length) h += '<div class="tr nota">Alma sem traços. Fundir ou Imbuir sobe a qualidade; almas melhores trazem traços.</div>';
+  h += '<p class="nota">Toque no retrato para trocar a animação. Os números valem para a próxima expedição.</p><div class="rodape">' +
+    `<button data-ac="alternar" data-i="${fichaIdx}" class="${m.ativo ? 'ativo' : ''}">${m.ativo ? 'Em campo' : 'Na reserva'}</button>` +
+    (m.imbuir >= 0 ? `<button data-ac="imbuir" data-i="${fichaIdx}" ${m.imbuir > d.fragmentos ? 'disabled' : ''}>Imbuir · ${fmt(m.imbuir)} Frag.</button>` : '') +
+    (m.evoluir >= 0 ? `<button data-ac="evoluir" data-i="${fichaIdx}" ${m.evoluir > d.essencia ? 'disabled' : ''}>Evoluir · ${fmt(m.evoluir)} Ess.</button>` : '') +
+    `<button data-ac="sacrificar" data-i="${fichaIdx}">Sacrificar · +${fmt(m.frag)}</button><button data-fechar="1">Fechar</button></div>`;
+  if (h !== fichaAnterior) { fichaAnterior = h; $('ficha-corpo').innerHTML = h; }
+}
+function animarRetrato(agora) {
+  requestAnimationFrame(animarRetrato);
+  if (!fichaMinion) return;
+  const c = $('retrato'), x = c.getContext('2d'), m = monstro(fichaMinion.ficha.sprite, false);
+  let nome = ACOES_FICHA[fichaAcao % ACOES_FICHA.length]; let a = m.acoes[nome] || m.acoes.conjurar || m.acoes.parado;
+  const t = (agora - fichaT0) / 1000; let fr = Math.floor(t * a.fps);
+  if (!a.loop && fr >= a.frames + 6) { fichaT0 = agora; fr = 0; }
+  fr = a.loop ? fr % a.frames : Math.min(fr, a.frames - 1);
+  x.clearRect(0, 0, c.width, c.height);
+  const k = Math.min(c.width / m.W, c.height / m.H) * 1.7;      // o quadro tem margem: amplia e ancora nos pés
+  x.imageSmoothingEnabled = true;
+  x.drawImage(a.img, fr * m.W, fichaDir * m.H, m.W, m.H, c.width / 2 - m.pivo[0] * k, c.height * 0.80 - (m.H - m.pivo[1]) * k, m.W * k, m.H * k);
+  x.fillStyle = '#8d7c6c'; x.font = '12px Georgia'; x.textAlign = 'center'; x.fillText(a.nome, c.width / 2, c.height - 8);
+}
+requestAnimationFrame(animarRetrato);
+$('retrato').addEventListener('click', () => { fichaAcao++; fichaT0 = performance.now(); if (fichaAcao % ACOES_FICHA.length === 0) fichaDir = (fichaDir + 1) % 8; });
+$('ficha-minion').addEventListener('click', (ev) => {
+  if (ev.target === $('ficha-minion') || ev.target.closest('[data-fechar]')) { fichaIdx = -1; atualizarPainel(true); return; }
+  const b = ev.target.closest('button[data-ac]'); if (!b || !J) return;
+  const i = +b.dataset.i;
+  if (b.dataset.ac === 'alternar') J.AlternarMinion(i);
+  else if (b.dataset.ac === 'imbuir') { if (J.Imbuir(i)) aviso('Alma imbuída'); }
+  else if (b.dataset.ac === 'evoluir') { if (J.Evoluir(i)) aviso('Minion evoluído'); }
+  else if (b.dataset.ac === 'sacrificar') {
+    if (b.dataset.ok !== '1') { b.dataset.ok = '1'; b.textContent = 'Confirmar sacrifício'; b.classList.add('ativo'); return; }
+    if (J.Sacrificar(i)) { aviso('Minion sacrificado'); fichaIdx = -1; }
+  }
+  salvar(); atualizarPainel(true);
+});
 
 let confirmarNovo = 0;
 // toque na arena: ceifa o orbe mais próximo do dedo
 tela.addEventListener('pointerdown', (ev) => {
-  if (!J || !orbes.length) return;
-  const r = tela.getBoundingClientRect(), k = chao.height / r.height;
-  const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k;
+  if (!J) return;
+  const r = tela.getBoundingClientRect(), k = VISTA_H / r.height;
+  const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k + camY;
+  if (objeto && !objeto.aberto && masm.fase === 'Explorando') { const [ox, oy] = naTela(objeto.x, objeto.y); if ((ox - ax) ** 2 + (oy - 30 - ay) ** 2 < 90 * 90) { J.Interagir(); if (!objeto.tocado) { objeto.tocado = true; aviso('Você pôs a mão: rende mais'); } return; } }
   let melhor = null, md = 70 * 70;
   for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); const d = (px - ax) ** 2 + (py - 30 - ay) ** 2; if (d < md) { md = d; melhor = o; } }
-  if (melhor) { J.Ceifar(melhor[2]); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } }
+  if (melhor) { J.Ceifar(melhor[2]); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } return; }
+  // toque num aliado ferido: Sopro Profano (se não estiver em recarga)
+  if (sopro <= 0) {
+    let al = null, mdA = 60 * 60;
+    for (const s of estado.values()) {
+      if (!s.viva || s.inimigo || s.vida > 0.85) continue;
+      const [px, py] = naTela(s.rx, s.ry), d = (px - ax) ** 2 + (py - 45 - ay) ** 2;
+      if (d < mdA) { mdA = d; al = s; }
+    }
+    if (al) { J.Curar(al.id); for (let i = 0; i < 18; i++) particulas.push([al.rx, al.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); if (!dicaSopro) { dicaSopro = true; aviso('Sopro Profano: aliado curado'); } return; }
+  }
+  // sem orbe por perto: o toque marca o inimigo mais próximo do dedo
+  let alvoM = null; md = 80 * 80;
+  for (const s of estado.values()) {
+    if (!s.viva || !s.inimigo) continue;
+    const [px, py] = naTela(s.rx, s.ry), d = (px - ax) ** 2 + (py - 45 - ay) ** 2;
+    if (d < (s.golpe > 0 ? md * 4 : md) && !(alvoM && alvoM.golpe > 0 && !(s.golpe > 0))) { md = s.golpe > 0 ? d / 4 : d; alvoM = s; }
+  }
+  if (alvoM) { J.Marcar(alvoM.id); if (!dicaMarca) { dicaMarca = true; aviso('Alvo marcado: os minions vão nele'); } }
 });
 // usado pelos testes automatizados: posição na página do primeiro orbe visível
 window.__orbeNaTela = () => {
   if (!orbes.length) return null;
-  const r = tela.getBoundingClientRect(), k = r.height / chao.height, [px, py] = naTela(orbes[0][0], orbes[0][1]);
-  const x = r.left + (px - camX) * k, y = r.top + (py - 30) * k;
+  const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(orbes[0][0], orbes[0][1]);
+  const x = r.left + (px - camX) * k, y = r.top + (py - 30 - camY) * k;
   return x > r.left + 4 && x < r.right - 4 ? [x, y] : null;
 };
+window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('encruzilhada').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-o]'); if (b && J) { J.Pacto(+b.dataset.o); aviso('Pacto selado'); } });
+$('resumo').addEventListener('click', () => { $('resumo').hidden = true; });
+$('missao').addEventListener('click', (ev) => { if (!ev.target.closest('button')) $('missao').classList.toggle('min'); });
+$('recursos').addEventListener('click', (ev) => { if (ev.target.closest('.rec')) $('ajuda').hidden = false; });
+// ---- painel de testes (cheats) ----
+const CAMPOS_CHEAT = [['ossos', 'Ossos', (d) => d.ossos], ['essencia', 'Essência', (d) => d.essencia], ['sangue', 'Sangue', (d) => d.sangue], ['fragmentos', 'Fragmentos de Alma', (d) => d.fragmentos],
+  ['cinzas', 'Cinzas', (d) => d.cinzas], ['nivel', 'Nível do necromante', (d) => d.nivel], ['comando', 'Comando base', (d) => d.comandoBase],
+  ['poder', 'Poder Necromântico (%)', (d) => d.poderNec, 'soma em todos os atributos dos minions'], ['sorte', 'Sorte (pontos)', (d) => d.sorte, 'cada ponto: +0,5% de itens e almas, e 1% de chance de vir melhor'],
+  ['andar', 'Maior andar concluído', (d) => d.recorde, 'a próxima expedição parte daí; chefes anteriores contam como vencidos']];
+function abrirCheats() {
+  const d = JSON.parse(J.Painel());
+  $('cheats-campos').innerHTML = CAMPOS_CHEAT.map(([k, n, f, dica]) => `<div class="campo"><span>${n}${dica ? `<small>${dica}</small>` : ''}</span><input type="number" min="0" data-campo="${k}" value="${f(d)}"><button data-cheat="${k}">Definir</button></div>`).join('');
+  $('cheats').hidden = false;
+}
+$('b-cheats').addEventListener('click', () => { if (J) abrirCheats(); });
+$('cheats').addEventListener('click', (ev) => {
+  if (ev.target === $('cheats') || ev.target.id === 'b-cheats-fechar') { $('cheats').hidden = true; return; }
+  const b = ev.target.closest('button[data-cheat]'); if (!b || !J) return;
+  const campo = $('cheats').querySelector(`input[data-campo="${b.dataset.cheat}"]`);
+  const v = campo ? +campo.value : +b.dataset.v;
+  if (!Number.isFinite(v)) return;
+  J.Cheat(b.dataset.cheat, v); limparArena(true); andar = 0; salvar(); atualizarPainel(true); abrirCheats(); aviso('Teste aplicado');
+});
+$('b-ajuda').addEventListener('click', () => { $('ajuda').hidden = false; });
+$('ajuda').addEventListener('click', (ev) => { if (ev.target === $('ajuda') || ev.target.id === 'b-ajuda-fechar') $('ajuda').hidden = true; });
+$('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
+$('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
+$('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) J.Detonar(); });
+$('salas').addEventListener('click', () => { $('mapa-corpo').innerHTML = mapaGrandeHtml(); $('mapa-grande').hidden = false; });
+$('mapa-grande').addEventListener('click', (ev) => { if (ev.target === $('mapa-grande') || ev.target.id === 'b-mapa-fechar') $('mapa-grande').hidden = true; });
+$('grupo').addEventListener('click', (ev) => { const r = ev.target.closest('[data-ret]'); if (!r || !J) return; const s = estado.get(+r.dataset.ret); if (s && s.viva && s.vida < 0.85 && sopro <= 0) { J.Curar(s.id); aviso('Sopro Profano'); for (let i = 0; i < 18; i++) particulas.push([s.rx, s.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); } else if (s && sopro > 0) aviso(`Sopro em recarga: ${Math.ceil(sopro)} s`); });
 $('b-frenesi').addEventListener('click', () => { if (J) J.Frenesi(); });
 $('missao').addEventListener('click', (ev) => {
   const b = ev.target.closest('button[data-ac="resgatar"]'); if (!b || !J) return;
   if (J.Resgatar()) { aviso('Missão cumprida'); salvar(); atualizarPainel(true); }
 });
-$('painel').addEventListener('click', (ev) => {
+for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click', (ev) => {
+  const fc = ev.target.closest('[data-ficha]'); if (fc && J && !ev.target.closest('button')) { fichaIdx = +fc.dataset.ficha; fichaAcao = 0; fichaDir = 1; fichaT0 = performance.now(); atualizarPainel(true); return; }
   const b = ev.target.closest('button[data-ac]'); if (!b || !J) return;
   const i = +b.dataset.i;
   switch (b.dataset.ac) {
     case 'alternar': J.AlternarMinion(i); break;
     case 'erguer': J.Erguer(i); break;
+    case 'legado': J.ComprarLegado(i); break;
+    case 'ascender':
+      if (b.dataset.ok !== '1') { b.dataset.ok = '1'; b.textContent = 'Confirmar: recomeçar a vida'; b.classList.add('ativo'); return; }
+      { const c = J.Ascender(); if (c > 0) { limparArena(true); andar = 0; aviso(`Ascensão: +${c} Cinzas`); } }
+      break;
+    case 'ofertar': J.Ofertar(i); break;
+    case 'rito': if (J.PrepararRito(i)) aviso('Rito preparado'); break;
+    case 'imbuir': if (J.Imbuir(i)) aviso('Alma imbuída'); break;
+    case 'sacrificar':
+      if (b.dataset.ok !== '1') { b.dataset.ok = '1'; b.textContent = 'Confirmar sacrifício'; b.classList.add('ativo'); return; }
+      if (J.Sacrificar(i)) aviso('Minion sacrificado'); break;
+    case 'investir': J.Investir(i); break;
+    case 'redistribuir': if (J.Redistribuir()) aviso('Talentos redistribuídos'); break;
     case 'fundir': if (J.Fundir(+b.dataset.e, +b.dataset.q)) aviso('Almas fundidas'); break;
     case 'evoluir': if (J.Evoluir(i)) aviso('Minion evoluído'); break;
     case 'melhorar': J.Melhorar(i); break;
@@ -428,17 +1130,20 @@ $('painel').addEventListener('click', (ev) => {
     case 'desequipar': J.Desequipar(i); break;
     case 'desmanchar': J.Desmanchar(i); break;
     case 'auto': J.AutoEquipar(); break;
-    case 'recomecar': J.Recomecar(); limparArena(); andar = 0; break;
+    case 'recomecar': J.Recomecar(); limparArena(true); andar = 0; break;
     case 'novo':
       if (Date.now() - confirmarNovo > 4000) { confirmarNovo = Date.now(); b.textContent = 'Toque de novo para confirmar'; return; }
-      J.NovoJogo(); limparArena(); andar = 0; break;
+      J.NovoJogo(); limparArena(true); andar = 0; break;
   }
   salvar(); atualizarPainel(true);
 });
-$('abas').addEventListener('click', (ev) => {
-  const b = ev.target.closest('button'); if (!b) return;
-  aba = b.dataset.aba; for (const x of $('abas').children) x.classList.toggle('ativo', x === b);
-  if (J) atualizarPainel(true);
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.abas button[data-aba]');
+  if (b) { abasSel[b.parentElement.dataset.lado] = b.dataset.aba; if (J) atualizarPainel(true); return; }
+  const f = ev.target.closest('[data-fecha]'); if (f) { $(f.dataset.fecha).classList.remove('aberto'); return; }
+  const a = ev.target.closest('[data-abre]'); if (a) { $(a.dataset.abre === 'esq' ? 'dir' : 'esq').classList.remove('aberto'); $(a.dataset.abre).classList.toggle('aberto'); return; }
+  // gaveta aberta no celular: toque fora fecha
+  if (!ev.composedPath().some((el) => el.classList && (el.classList.contains('lado') || el.id === 'ficha-minion' || el.id === 'cheats' || el.id === 'ajuda' || el.id === 'mapa-grande' || el.id === 'salas'))) { $('esq').classList.remove('aberto'); $('dir').classList.remove('aberto'); }
 });
 $('vel').addEventListener('click', (ev) => {
   const b = ev.target.closest('button'); if (!b) return;
@@ -452,6 +1157,7 @@ async function iniciar() {
     J = globalThis.NecroJogo;
     let save = ''; try { save = localStorage.getItem(CHAVE) || ''; } catch (e) { /* segue sem save */ }
     J.Iniciar(save);
+    if (!save) { $('ajuda').hidden = false; }
     ajustarTela(); window.addEventListener('resize', ajustarTela);
     $('carregando').remove();
     atualizarPainel(true);

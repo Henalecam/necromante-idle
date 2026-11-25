@@ -58,6 +58,10 @@ namespace Necro.Nucleo
         public bool Encerrada { get { return Fase == FaseExpedicao.Encerrada; } }
         /// <summary>Tempo restante do bônus de Sacrifício (+50% de dano dos minions).</summary>
         public float SacrificioTempo { get; private set; }
+        /// <summary>true = o necromante está de foice: combate corpo a corpo.</summary>
+        public bool NecromanteCorpoACorpo { get; private set; }
+        /// <summary>Rito de Sangue em vigor nesta expedição.</summary>
+        public Rito RitoDaExpedicao { get; private set; }
         public bool Ceifando { get { return _ceifaOrbe != null; } }
         public float ProgressoDaCeifa { get { return _ceifaOrbe == null ? 0f : _ceifaTempo / _tempoDeCeifa; } }
         /// <summary>Manto do Último Suspiro: true se equipado e ainda não usado neste andar.</summary>
@@ -94,6 +98,11 @@ namespace Necro.Nucleo
         private float _ceifaEspera;
         // Equipamento
         private readonly ulong _sementePactos;
+        private readonly Rng _rngPressagio;
+        private float _sorte;   // pontos de Sorte do progresso
+        private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f;
+        /// <summary>Presságio em vigor neste andar.</summary>
+        public Pressagio PressagioAtual { get; private set; }
         private readonly Rng _rngItens;        // fluxo próprio: sortear itens não desloca os sorteios do combate
         private readonly float _tempoDeCeifa;
         private readonly float _regenMana;
@@ -111,6 +120,8 @@ namespace Necro.Nucleo
             Rng = new Rng(semente);
             _rngItens = new Rng(semente ^ 0x4954454E53UL); // "ITENS"
             _sementePactos = semente ^ 0x50414354UL;       // "PACT"
+            _rngPressagio = new Rng(semente ^ 0x50524553UL);
+            _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
             _tempoDeCeifa = cfg.TempoDeCeifa / (1f + Bonus.VelocidadeDeCeifa);
             _regenMana = cfg.RegenManaPorSegundo + Bonus.RegenMana;
@@ -118,6 +129,12 @@ namespace Necro.Nucleo
             _poderTotal = progresso.PoderNecromantico + Bonus.PoderNecromantico;
             _nivelNecromante = progresso.NivelNecromante;
             _bonusAlmaNecropole = Necropole.BonusChanceDeAlma(progresso, cfg);
+            // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
+            PrepararFeiticosDeItem(progresso);
+            _sorte = Math.Max(0f, progresso.Sorte);
+            RitoDaExpedicao = progresso.RitoPreparado;
+            if (RitoDaExpedicao == Rito.Colheita) _pAlma += cfg.RitoColheitaChanceDeAlma;
+            if (RitoDaExpedicao == Rito.Banquete) _pOssos *= 1f + cfg.RitoBanqueteOssos;
             Modo = modo;
             Andar = andarInicial < 1 ? 1 : andarInicial;
             _fluxoAutomatico = fluxoAutomatico;
@@ -159,8 +176,10 @@ namespace Necro.Nucleo
             if (_fluxoAutomatico) AtualizarFluxo();
             if (Fase == FaseExpedicao.Encerrada) return;
             AtualizarEfeitosGlobais();
+            AtualizarAmbiente();
 
             AtualizarComandosDoJogador();
+            AtualizarFeiticosDeItem();
             if (Necromante.Viva && NecromanteAtivo) AtualizarNecromante();
 
             int n = Entidades.Count; // unidades criadas neste tick só agem no próximo
@@ -232,8 +251,19 @@ namespace Necro.Nucleo
             var d = TabelaEspecies.Obter(EspecieId.Necromante);
             var e = CriarBase(Faccao.Necromante, d, new Vec2(Cfg.NecromanteX, Cfg.AlturaArena * 0.5f));
             float f = Formulas.FatorNivelNecromante(p.NivelNecromante, Cfg);
-            e.VidaMax = d.Vida * f + Bonus.Vida;
+            e.VidaMax = d.Vida * f * (1f + Bonus.VidaDoNecromantePercentual) + Bonus.Vida;
             e.Dano = d.Dano * f;
+            // A arma define o estilo: cajado luta de longe; foice vai para a frente, bate em arco e aguenta mais.
+            var arma = Equipamento.Obter(p, EspacoEquipamento.Arma);
+            NecromanteCorpoACorpo = !Equipamento.Vazio(arma) && arma.Tipo == TipoItem.Foice;
+            if (NecromanteCorpoACorpo)
+            {
+                e.Alcance = Cfg.FoiceAlcance;
+                e.Dano *= 1f + Cfg.FoiceBonusDeDano;
+                e.VidaMax *= 1f + Cfg.FoiceBonusDeVida;
+                e.Armadura += Cfg.FoiceArmadura;
+                e.TipoDano = TipoDano.Fisico;
+            }
             e.ManaMax = 100f + 5f * (p.NivelNecromante - 1) + Bonus.Mana;
             e.Mana = e.ManaMax;
             e.Custo = 0;
@@ -253,7 +283,8 @@ namespace Necro.Nucleo
             //    A conta é feita em "meios de Comando": com a Coroa da Legião Muda os Pequenos custam 0,5
             //    e o total é arredondado para cima (meios <= 2 x máximo equivale a teto(meios / 2) <= máximo).
             int meios = 0;
-            int meiosMaximos = (p.ComandoMaximo + Bonus.Comando) * 2;
+            // o mesmo teto que a Necrópole usa para ativar (inclui a Cripta); antes a Cripta ficava de fora e os últimos ativos não entravam
+            int meiosMaximos = Progressao.ComandoMaximoEfetivo(p, Cfg) * 2;
             var contagemFamilia = new int[5];
             var escolhidos = new List<int>(16);
             for (int i = 0; i < p.Minions.Count; i++)
@@ -291,6 +322,7 @@ namespace Necro.Nucleo
                 e.Armadura = Formulas.AtributoMinion(d.Armadura, m.Alma.Qualidade, m.Nivel, _poderTotal, Cfg);
                 float dominio = Bestiario.MultMinion(p, m.Alma.Especie, Cfg);   // Bestiário: espécie bem conhecida luta melhor
                 e.VidaMax *= dominio; e.Dano *= dominio;
+                e.VidaMax *= 1f + m.Alma.DomVida; e.Dano *= 1f + m.Alma.DomDano; e.VelAtaque *= 1f + m.Alma.DomVelocidade;   // dons de nascença
                 AplicarEquipamentoAoMinion(e);
 
                 // Afixos
@@ -385,7 +417,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < Cfg.ItensDoChefe; i++)
                     SoltarItem(alvo, i == 0 && !chefeJaDerrotado ? RaridadeItem.Raro : RaridadeItem.Comum);
             }
-            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * _pItem))
+            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * _pItem * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
             {
                 SoltarItem(alvo, RaridadeItem.Comum);
             }
@@ -394,6 +426,12 @@ namespace Necro.Nucleo
         private void SoltarItem(Entidade origem, RaridadeItem raridadeMinima)
         {
             var item = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+            if (_sorte > 0f && _rngItens.Chance(_sorte * Cfg.SorteChanceDeMelhorPorPonto))
+            {
+                // sorte: sorteia outro e fica com o de maior raridade
+                var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+                if (outro.Raridade > item.Raridade) item = outro;
+            }
             Resultado.Itens.Add(item);
             Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = origem.Id, Alvo = Resultado.Itens.Count - 1, Pos = origem.Pos, Extra = (int)item.Raridade, Valor = item.Nivel, Especie = origem.Especie });
         }
@@ -458,13 +496,30 @@ namespace Necro.Nucleo
             _suspiroUsado = false; // Manto do Último Suspiro: uma vez por andar
             bool chefe = Formulas.AndarDeChefe(Andar, Cfg);
             _ondaEliteNesteAndar = !chefe && Rng.Chance(Cfg.ChanceOndaElite);
+            // Presságio do andar: sorteado num fluxo próprio; muda as regras só deste andar
+            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f;
+            if (!chefe && Andar >= Cfg.PressagioAPartirDoAndar && _rngPressagio.Chance(Cfg.ChanceDePressagio))
+            {
+                PressagioAtual = (Pressagio)(1 + _rngPressagio.Intervalo(0, 6));
+                switch (PressagioAtual)
+                {
+                    case Pressagio.Horda: _aOrcamento = 1.4f; _aOssos = 1.3f; break;
+                    case Pressagio.Ossario: _aOssos = 1.7f; break;
+                    case Pressagio.AlmasInquietas: _aAlma = 1.0f; break;
+                    case Pressagio.SedeDeSangue: _aDanoInimigo = 1.2f; _aOssos = 1.4f; break;
+                    case Pressagio.CampeaoErrante: _ondaEliteNesteAndar = true; break;
+                    case Pressagio.Calmaria: _aOrcamento = 0.7f; break;
+                }
+            }
             TotalDeOndas = chefe ? 1 : Cfg.OndasPorAndar + (_ondaEliteNesteAndar ? 1 : 0);
+            PlanejarSalas(chefe);
             int noAto = Formulas.AndarNoAto(Andar, Cfg);
             PortaisAtivos = noAto <= 3 ? 1 : noAto <= 7 ? 2 : 3;
             Resultado.AndarFinal = Andar;
             Fase = FaseExpedicao.EntreOndas;
             _temporizadorDeFase = 1.0f;
             Emitir(new EventoSim { Tipo = TipoEvento.AndarIniciado, Extra = Andar, Alvo = -1, Origem = -1 });
+            ComecarPelaPrimeiraSala();
         }
 
         private void AtualizarFluxo()
@@ -479,6 +534,9 @@ namespace Necro.Nucleo
                     _temporizadorDeFase -= DT;
                     if (_temporizadorDeFase <= 0f) IniciarOnda();
                     break;
+                case FaseExpedicao.Explorando:
+                    AtualizarExploracao();
+                    break;
                 case FaseExpedicao.EmOnda:
                     while (_filaDeSpawn.Count > 0 && _filaDeSpawn[0].TickDeSpawn <= TickAtual)
                     {
@@ -489,7 +547,7 @@ namespace Necro.Nucleo
                         CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                     }
                     // Fúria: garante que nenhum andar empate para sempre.
-                    float tempoNoAndar = (TickAtual - _tickInicioDoAndar) * DT;
+                    float tempoNoAndar = (TickAtual - _tickInicioDoAndar - _ticksDeExploracao) * DT;
                     if (tempoNoAndar > Cfg.TempoAteFuria)
                     {
                         _fatorFuria = 1f + Cfg.FuriaPorSegundo * (tempoNoAndar - Cfg.TempoAteFuria);
@@ -501,6 +559,7 @@ namespace Necro.Nucleo
                     }
                     if (_filaDeSpawn.Count == 0 && InimigosVivos == 0)
                     {
+                        if (AoLimparSala()) break;
                         if (Onda < TotalDeOndas)
                         {
                             Fase = FaseExpedicao.EntreOndas;
@@ -523,6 +582,7 @@ namespace Necro.Nucleo
             int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
             float orcamento = Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (Andar - 1) + Cfg.OrcamentoPorOnda * (Onda - 1);
             if (orcamento > Cfg.OrcamentoMaximo) orcamento = Cfg.OrcamentoMaximo;
+            orcamento *= _aOrcamento;
             int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo + 0.5f));
             int k = 0;
 
@@ -622,6 +682,7 @@ namespace Necro.Nucleo
             if (Andar > Resultado.MaiorAndarConcluido) Resultado.MaiorAndarConcluido = Andar;
             Emitir(new EventoSim { Tipo = TipoEvento.AndarConcluido, Extra = Andar, Valor = ticks * DT, Alvo = -1, Origem = -1 });
             TalvezAbrirEncruzilhada();
+            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f;   // o presságio acaba com o andar
 
             if (Andar % Cfg.AndaresPorAncoragem == 0 && Andar + 1 > Resultado.AncoragemAlcancada)
             {

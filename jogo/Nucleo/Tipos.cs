@@ -29,6 +29,9 @@ namespace Necro.Nucleo
     [Flags]
     public enum ModificadorElite { Nenhum = 0, Vampirico = 1, Explosivo = 2, Veloz = 4, EscudoDeOssos = 8 }
 
+    /// <summary>Presságio: condição sorteada que vale por um andar.</summary>
+    public enum Pressagio { Nenhum = 0, Horda = 1, Ossario = 2, AlmasInquietas = 3, SedeDeSangue = 4, CampeaoErrante = 5, Calmaria = 6 }
+
     public enum EstadoAnimacao { Parado, Andando, Atacando, Conjurando, Morrendo }
 
     public enum Faccao { Necromante, Minion, Inimigo }
@@ -36,14 +39,16 @@ namespace Necro.Nucleo
     public enum EspecieId
     {
         Necromante = 0, Esqueleto = 1, ArqueiroOssudo = 2, Zumbi = 3, CaoDeCripta = 4,
-        Diabrete = 5, AcolitoCaido = 6, AbadessaCosturada = 7
+        Diabrete = 5, AcolitoCaido = 6, AbadessaCosturada = 7,
+        Carnical = 8, DiaboDeGuerra = 9, Aparicao = 10, ColossoDeOssos = 11,
+        ResProfana = 12
     }
 
     public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5 }
 
     public enum ModoExpedicao { Avancar, Cacar }
 
-    public enum FaseExpedicao { Preparando, EntreOndas, EmOnda, EntreAndares, Encerrada }
+    public enum FaseExpedicao { Preparando, EntreOndas, EmOnda, EntreAndares, Encerrada, Explorando }
 
     public enum MotivoFim { EmAndamento, NecromanteMorreu, LimiteDeAndares, LimiteDeTempo, Retirada }
 

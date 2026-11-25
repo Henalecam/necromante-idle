@@ -1,0 +1,24 @@
+{
+ "nome": "necromante_foice",
+ "modelo": "../modelos/necromante_foice/necromante_foice.blend",
+ "saida": "../saida/necromante_foice_morrer",
+ "estilo": "diablo",
+ "acoes": [
+  {
+   "nome": "morrer",
+   "acao_blender": "Morrer",
+   "lista_frames": [
+    1,
+    5,
+    9,
+    12,
+    16,
+    20,
+    28
+   ],
+   "fps": 10,
+   "loop": false
+  }
+ ],
+ "altura_px": 104
+}

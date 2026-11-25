@@ -1,0 +1,63 @@
+{
+  "nome": "necromante_foice",
+  "largura_frame": 288,
+  "altura_frame": 252,
+  "pivo_px": [
+    105,
+    81
+  ],
+  "pivo_normalizado": [
+    0.3646,
+    0.3214
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "sombra": true,
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "necromante_foice_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "necromante_foice_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "conjurar",
+      "arquivo": "necromante_foice_conjurar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "atacar",
+      "arquivo": "necromante_foice_atacar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "necromante_foice_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}

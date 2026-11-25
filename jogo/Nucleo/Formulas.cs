@@ -47,6 +47,9 @@ namespace Necro.Nucleo
             float e = MathF.Pow(1f + cfg.CrescimentoPorAndar, andar - 1);
             int ato = (andar - 1) / cfg.AndaresPorAto;      // 0 no Ato 1
             if (ato > 0 && cfg.DegrauPorAto != 1f) e *= MathF.Pow(cfg.DegrauPorAto, ato);
+            // segunda metade de cada Ato é mais íngreme (e alivia no primeiro andar do Ato seguinte)
+            int pos = (andar - 1) % cfg.AndaresPorAto + 1;
+            if (cfg.InclinacaoFimDeAto != 0f && pos > cfg.AndarDaInclinacao) e *= MathF.Pow(1f + cfg.InclinacaoFimDeAto, pos - cfg.AndarDaInclinacao);
             return e;
         }
 

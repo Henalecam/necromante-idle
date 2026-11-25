@@ -23,6 +23,8 @@ namespace Necro.Nucleo
         public float ReducaoDeRecarga;      // já limitada a cfg.TetoReducaoDeRecarga
         public float ChanceDeAlma;          // chance de orbe x (1 + valor)
         public int Comando;
+        public float VidaDoNecromantePercentual;   // talentos: vida base x (1 + valor)
+        public float ToqueMelhoraAlma;             // talentos: somado à chance de a ceifa por toque melhorar a alma
 
         // ---- Minions ----
         public float PoderNecromantico;     // somado ao Poder Necromântico do progresso
@@ -145,11 +147,73 @@ namespace Necro.Nucleo
             return anterior;
         }
 
+        // ---------------------------------------------------------------------
+        //  Inventário em grade (estilo Diablo): cada item ocupa largura x altura
+        // ---------------------------------------------------------------------
+
+        /// <summary>Tamanho do item na grade do inventário, em espaços.</summary>
+        public static void Tamanho(TipoItem tipo, out int largura, out int altura)
+        {
+            switch (tipo)
+            {
+                case TipoItem.Cajado: largura = 1; altura = 3; break;
+                case TipoItem.Foice: case TipoItem.Peitoral: largura = 2; altura = 3; break;
+                case TipoItem.Relicario: largura = 1; altura = 2; break;
+                case TipoItem.Amuleto: case TipoItem.Anel: largura = 1; altura = 1; break;
+                default: largura = 2; altura = 2; break;   // Grimório, Elmo, Luvas, Botas
+            }
+        }
+
+        /// <summary>
+        /// Arruma os itens na grade (maiores primeiro, depois na ordem do inventário) e devolve a posição de cada um
+        /// em xs/ys (-1 = não coube). "extra" é um item a mais, testado junto. Retorna true se tudo coube.
+        /// </summary>
+        public static bool Arrumar(IList<Item> itens, ConfigJogo cfg, int[] xs, int[] ys, Item extra = null)
+        {
+            int W = cfg.LarguraDoInventario, H = cfg.AlturaDoInventario, n = itens.Count + (extra != null ? 1 : 0);
+            var ocupado = new bool[W * H];
+            var ordem = new int[n];
+            for (int i = 0; i < n; i++) ordem[i] = i;
+            // ordenação estável por área decrescente (inserção: n é pequeno)
+            for (int i = 1; i < n; i++)
+            {
+                int k = ordem[i], j = i - 1; int ak = Area(k < itens.Count ? itens[k] : extra);
+                while (j >= 0 && Area(ordem[j] < itens.Count ? itens[ordem[j]] : extra) < ak) { ordem[j + 1] = ordem[j]; j--; }
+                ordem[j + 1] = k;
+            }
+            bool tudo = true;
+            for (int o = 0; o < n; o++)
+            {
+                int idx = ordem[o]; var it = idx < itens.Count ? itens[idx] : extra;
+                int w, h; Tamanho(it.Tipo, out w, out h);
+                int px = -1, py = -1;
+                for (int y = 0; y + h <= H && px < 0; y++)
+                    for (int x = 0; x + w <= W && px < 0; x++)
+                    {
+                        bool livre = true;
+                        for (int dy = 0; dy < h && livre; dy++) for (int dx = 0; dx < w; dx++) if (ocupado[(y + dy) * W + x + dx]) { livre = false; break; }
+                        if (livre) { px = x; py = y; }
+                    }
+                if (px >= 0) for (int dy = 0; dy < h; dy++) for (int dx = 0; dx < w; dx++) ocupado[(py + dy) * W + px + dx] = true;
+                else tudo = false;
+                if (xs != null && idx < xs.Length) { xs[idx] = px; ys[idx] = py; }
+            }
+            return tudo;
+        }
+
+        private static int Area(Item it) { int w, h; Tamanho(it.Tipo, out w, out h); return w * h; }
+
+        /// <summary>O item cabe no inventário? (há espaço na grade e o limite de itens não foi atingido)</summary>
+        public static bool Cabe(EstadoProgresso p, Item item, ConfigJogo cfg)
+        {
+            return p.Inventario.Count < cfg.CapacidadeInventario && Arrumar(p.Inventario, cfg, null, null, item);
+        }
+
         /// <summary>Tira o item do espaço e o guarda no inventário. Devolve o item, ou null se o espaço estava vazio ou o inventário está cheio.</summary>
         public static Item Desequipar(EstadoProgresso p, EspacoEquipamento espaco, ConfigJogo cfg)
         {
             Item item = Obter(p, espaco);
-            if (item == null || p.Inventario.Count >= cfg.CapacidadeInventario) return null;
+            if (item == null || !Cabe(p, item, cfg)) return null;
             p.Equipados[(int)espaco] = null;
             p.Inventario.Add(item);
             return item;
@@ -167,9 +231,34 @@ namespace Necro.Nucleo
         /// <summary>Desmancha um item do inventário em Essência. Devolve a Essência ganha (0 se o item não estava no inventário; itens equipados precisam ser desequipados antes).</summary>
         public static long Desmanchar(EstadoProgresso p, Item item, ConfigJogo cfg)
         {
-            if (item == null || !p.Inventario.Remove(item)) return 0;
+            if (item == null || item.Bloqueado || !p.Inventario.Remove(item)) return 0;
             Missoes.Registrar(p, AcaoDeMissao.Desmanchar, cfg);
             return Necropole.GanharEssencia(p, ValorEmEssencia(item, cfg), cfg);
+        }
+
+        /// <summary>
+        /// "Vender tudo": desmancha de uma vez todo item do inventário que não esteja travado e cuja raridade seja no máximo
+        /// "ate". Devolve a Essência ganha; "quantos" recebe o número de itens desmanchados.
+        /// </summary>
+        public static long DesmancharTudo(EstadoProgresso p, ConfigJogo cfg, RaridadeItem ate, out int quantos)
+        {
+            long total = 0; quantos = 0;
+            for (int i = p.Inventario.Count - 1; i >= 0; i--)
+            {
+                var it = p.Inventario[i];
+                if (it.Bloqueado || it.Raridade > ate) continue;
+                total += Desmanchar(p, it, cfg); quantos++;
+            }
+            return total;
+        }
+
+        /// <summary>Quanto o "vender tudo" renderia agora (sem o bônus da Mesa de Dissecação).</summary>
+        public static long ValorDeTudo(EstadoProgresso p, ConfigJogo cfg, RaridadeItem ate, out int quantos)
+        {
+            long total = 0; quantos = 0;
+            for (int i = 0; i < p.Inventario.Count; i++)
+                if (!p.Inventario[i].Bloqueado && p.Inventario[i].Raridade <= ate) { total += ValorEmEssencia(p.Inventario[i], cfg); quantos++; }
+            return total;
         }
 
         /// <summary>
@@ -184,27 +273,39 @@ namespace Necro.Nucleo
                 Necropole.GanharEssencia(p, ValorEmEssencia(item, cfg), cfg);
                 return DestinoDoItem.Desmanchado;
             }
-            if (p.Inventario.Count < cfg.CapacidadeInventario)
+            if (Cabe(p, item, cfg))
             {
                 p.Inventario.Add(item);
                 return DestinoDoItem.Guardado;
             }
-            int pior = 0;
-            float pontosDoPior = Pontuacao(p.Inventario[0], cfg);
-            for (int i = 1; i < p.Inventario.Count; i++)
+            // Cheio: abre espaço desmanchando os piores (menor raridade, depois menor pontuação), mas só os que são
+            // piores que o item novo. Se nem assim couber, é o novo que vira Essência e nada mais muda.
+            var removidos = new List<Item>(); var posicoes = new List<int>();
+            float pontosDoNovo = Pontuacao(item, cfg);
+            bool coube = false;
+            while (!coube)
             {
-                float pontos = Pontuacao(p.Inventario[i], cfg);
-                if (p.Inventario[i].Raridade < p.Inventario[pior].Raridade
-                    || (p.Inventario[i].Raridade == p.Inventario[pior].Raridade && pontos < pontosDoPior)) { pior = i; pontosDoPior = pontos; }
+                int pior = -1; float pontosDoPior = 0f;
+                for (int i = 0; i < p.Inventario.Count; i++)
+                {
+                    var c = p.Inventario[i]; float pontos = Pontuacao(c, cfg);
+                    if (c.Bloqueado) continue;       // travado nunca sai para abrir espaço
+                    bool piorQueONovo = c.Raridade < item.Raridade || (c.Raridade == item.Raridade && pontos < pontosDoNovo);
+                    if (!piorQueONovo) continue;
+                    if (pior < 0 || c.Raridade < p.Inventario[pior].Raridade || (c.Raridade == p.Inventario[pior].Raridade && pontos < pontosDoPior)) { pior = i; pontosDoPior = pontos; }
+                }
+                if (pior < 0) break;
+                removidos.Add(p.Inventario[pior]); posicoes.Add(pior);
+                p.Inventario.RemoveAt(pior);
+                coube = Cabe(p, item, cfg);
             }
-            if (p.Inventario.Count == 0 || item.Raridade < p.Inventario[pior].Raridade
-                || (item.Raridade == p.Inventario[pior].Raridade && Pontuacao(item, cfg) <= pontosDoPior))
+            if (!coube)
             {
+                for (int k = removidos.Count - 1; k >= 0; k--) p.Inventario.Insert(posicoes[k], removidos[k]);
                 Necropole.GanharEssencia(p, ValorEmEssencia(item, cfg), cfg);
                 return DestinoDoItem.Desmanchado;
             }
-            Necropole.GanharEssencia(p, ValorEmEssencia(p.Inventario[pior], cfg), cfg);
-            p.Inventario.RemoveAt(pior);
+            for (int k = 0; k < removidos.Count; k++) Necropole.GanharEssencia(p, ValorEmEssencia(removidos[k], cfg), cfg);
             p.Inventario.Add(item);
             return DestinoDoItem.GuardadoDesmanchandoOutro;
         }
@@ -215,7 +316,11 @@ namespace Necro.Nucleo
         /// </summary>
         public static BonusEquipamento CalcularBonus(EstadoProgresso p, ConfigJogo cfg)
         {
-            return CalcularBonus(p.Equipados, cfg);
+            var b = CalcularBonus(p.Equipados, cfg);
+            Talentos.Aplicar(p, cfg, b);     // talentos somam no mesmo agregado
+            Oferendas.Aplicar(p, cfg, b);    // oferendas também
+            Ascensao.Aplicar(p, cfg, b);     // e os Legados da Ascensão
+            return b;
         }
 
         public static BonusEquipamento CalcularBonus(IList<Item> equipados, ConfigJogo cfg)

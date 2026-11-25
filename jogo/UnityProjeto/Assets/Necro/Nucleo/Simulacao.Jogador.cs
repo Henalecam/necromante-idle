@@ -26,6 +26,26 @@ namespace Necro.Nucleo
             get { int n = 0; for (int i = 0; i < Cadaveres.Count; i++) if (!Cadaveres[i].DeMinion) n++; return n; }
         }
 
+        // ---- Marca do Ceifador: o jogador aponta um inimigo; os minions largam o que estão fazendo e vão nele ----
+        private int _pedidoMarca = -1;
+        /// <summary>Id do inimigo marcado, ou -1.</summary>
+        public int MarcadoId { get; private set; } = -1;
+        public float MarcaTempo { get; private set; }
+        /// <summary>Toque num inimigo: ele fica marcado (um por vez). Minions o priorizam e todo dano aliado nele aumenta.</summary>
+        public void ComandoMarcar(int entidadeId) { _pedidoMarca = entidadeId; }
+        private Entidade Marcado()
+        {
+            if (MarcadoId < 0) return null;
+            var m = AcharEntidade(MarcadoId);
+            return m != null && m.Viva && m.Faccao == Faccao.Inimigo ? m : null;
+        }
+
+        // ---- Sopro Profano: toque num aliado ferido para remendá-lo ----
+        private int _pedidoCura = -1;
+        public float RecargaSopro { get; private set; }
+        /// <summary>Toque num minion (ou no necromante): cura uma fração da vida. Tem recarga própria; vale no próximo tick.</summary>
+        public void ComandoCurar(int entidadeId) { _pedidoCura = entidadeId; }
+
         /// <summary>Toque num orbe: ceifa imediata no próximo tick.</summary>
         public void ComandoCeifar(int orbeId) { if (!_toquesEmOrbes.Contains(orbeId)) _toquesEmOrbes.Add(orbeId); }
         /// <summary>Detonar: explode de uma vez os cadáveres de inimigos na arena.</summary>
@@ -88,6 +108,36 @@ namespace Necro.Nucleo
                 else { TempoDaOferta -= DT; if (TempoDaOferta <= 0f) PactosOferecidos = null; }
             }
             _pedidoPacto = -1;
+            if (_pedidoMarca >= 0)
+            {
+                var alvoMarca = AcharEntidade(_pedidoMarca);
+                if (alvoMarca != null && alvoMarca.Viva && alvoMarca.Faccao == Faccao.Inimigo && Necromante.Viva)
+                {
+                    MarcadoId = alvoMarca.Id; MarcaTempo = Cfg.MarcaDuracao; Resultado.MarcasFeitas++;
+                    if (alvoMarca.PreparandoGolpe > 0f)
+                    {
+                        // marcar durante o aviso quebra o Golpe Brutal e atordoa
+                        alvoMarca.PreparandoGolpe = 0f; alvoMarca.TempoAcao = Cfg.GolpeBrutalAtordoamento; alvoMarca.Animacao = EstadoAnimacao.Parado;
+                        Resultado.GolpesInterrompidos++;
+                        Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 10, Alvo = alvoMarca.Id, Origem = Necromante.Id, Valor = Cfg.GolpeBrutalAtordoamento, Pos = alvoMarca.Pos });
+                    }
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 8, Alvo = alvoMarca.Id, Origem = Necromante.Id, Valor = Cfg.MarcaDuracao, Pos = alvoMarca.Pos });
+                }
+                _pedidoMarca = -1;
+            }
+            if (RecargaSopro > 0f) RecargaSopro -= DT * _pRecarga;
+            if (_pedidoCura >= 0)
+            {
+                var ferido = AcharEntidade(_pedidoCura);
+                if (RecargaSopro <= 0f && ferido != null && ferido.Viva && ferido.Faccao != Faccao.Inimigo && ferido.Vida < ferido.VidaMax && Necromante.Viva)
+                {
+                    RecargaSopro = Cfg.SoproRecarga; Resultado.SoprosUsados++;
+                    Curar(Necromante, ferido, ferido.VidaMax * Cfg.SoproCura);
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 11, Alvo = ferido.Id, Origem = Necromante.Id, Valor = Cfg.SoproCura, Pos = ferido.Pos });
+                }
+                _pedidoCura = -1;
+            }
+            if (MarcadoId >= 0) { MarcaTempo -= DT; if (MarcaTempo <= 0f || Marcado() == null) MarcadoId = -1; }
             if (RecargaDetonar > 0f) RecargaDetonar -= DT * _pRecarga;
             if (RecargaFrenesi > 0f) RecargaFrenesi -= DT * _pRecarga;
             if (FrenesiTempo > 0f) FrenesiTempo -= DT;
@@ -99,7 +149,7 @@ namespace Necro.Nucleo
                 if (o == null || !Necromante.Viva) continue;
                 if (_ceifaOrbe == o) { _ceifaOrbe = null; _ceifaTempo = 0f; _ceifaDano = 0f; }   // a canalização vira ceifa pronta
                 bool melhorou = false;
-                if (o.Alma.Qualidade < Qualidade.Ancestral && Rng.Chance(Cfg.ToqueChanceDeMelhorarAlma)) { o.Alma.Qualidade++; melhorou = true; }
+                if (o.Alma.Qualidade < Qualidade.Ancestral && Rng.Chance(Cfg.ToqueChanceDeMelhorarAlma + Bonus.ToqueMelhoraAlma)) { o.Alma.Qualidade++; melhorou = true; }
                 Resultado.CeifasPorToque++;
                 EntregarAlma(o, melhorou);
             }

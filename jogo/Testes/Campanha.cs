@@ -47,6 +47,24 @@ namespace Necro.Testes
             while (p.Filacterio.Count > 0 && p.Minions.Count < 40)
                 if (Progressao.ErguerMinion(p, 0, cfg) == null) break;     // faltou Essência: fica para depois
             while (Missoes.Resgatar(p, cfg)) { }          // resgata toda missão completa
+            // oferendas: gasta os Restos sempre que der; rito: Banquete quando sobra Sangue
+            if (UsarOferendas)
+            {
+                bool ofertou = true;
+                while (ofertou) { ofertou = false; for (int t = 0; t < Oferendas.Tipos; t++) if (Oferendas.Ofertar(p, t, cfg)) ofertou = true; }
+                if (p.RitoPreparado == Rito.Nenhum) Oferendas.PrepararRito(p, Rito.Banquete, cfg);
+            }
+            // talentos: política simples, um ponto por vez na ordem de preferência, respeitando os pré-requisitos
+            if (UsarTalentos)
+                while (Talentos.Disponiveis(p, cfg) > 0)
+                {
+                    int[] pref = { 1, 0, 2, 3, 4, 11, 12, 14, 10, 5, 6, 7, 8, 9, 13 };
+                    int escolhido = -1, menor = int.MaxValue;
+                    for (int k = 0; k < pref.Length; k++)
+                        if (Talentos.PodeInvestir(p, pref[k], cfg) && Talentos.Pontos(p, pref[k]) < menor && k < 5 + Talentos.GastosNoRamo(p, RamoDeTalento.Ossos, cfg)) { menor = Talentos.Pontos(p, pref[k]); escolhido = pref[k]; }
+                    if (escolhido < 0) for (int k = 0; k < pref.Length && escolhido < 0; k++) if (Talentos.PodeInvestir(p, pref[k], cfg)) escolhido = pref[k];
+                    if (escolhido < 0 || !Talentos.Investir(p, escolhido, cfg)) break;
+                }
             // 1b) Necrópole: compra sempre a melhoria mais barata que couber no bolso
             while (true)
             {
@@ -66,6 +84,23 @@ namespace Necro.Testes
             for (int i = 0; i < p.Minions.Count; i++) ordem.Add(i);
             ordem.Sort((a, b) => Valor(p.Minions[b], cfg).CompareTo(Valor(p.Minions[a], cfg)));
             for (int k = 0; k < ordem.Count; k++) Progressao.Ativar(p, ordem[k], cfg);
+            // 2b) reserva além de 4 suplentes vira Fragmentos; os Fragmentos sobem a qualidade do melhor minion em campo
+            if (UsarSacrificio)
+            {
+                int reserva = 0;
+                for (int k = 0; k < ordem.Count; k++) if (!p.Minions[ordem[k]].Ativo) reserva++;
+                var fora = new List<MinionSalvo>();
+                for (int k = ordem.Count - 1; k >= 0 && reserva > 4; k--) if (!p.Minions[ordem[k]].Ativo) { fora.Add(p.Minions[ordem[k]]); reserva--; }
+                for (int k = 0; k < fora.Count; k++) Sacrificio.Sacrificar(p, p.Minions.IndexOf(fora[k]), cfg);
+                bool imbuiu = true;
+                while (imbuiu)
+                {
+                    imbuiu = false; int melhor = -1;
+                    for (int i = 0; i < p.Minions.Count; i++)
+                        if (p.Minions[i].Ativo && Sacrificio.PodeImbuir(p, i, cfg) && (melhor < 0 || Valor(p.Minions[i], cfg) > Valor(p.Minions[melhor], cfg))) melhor = i;
+                    if (melhor >= 0) imbuiu = Sacrificio.Imbuir(p, melhor, cfg);
+                }
+            }
             // 3) evolui de estágio quem chegou ao teto, e equipa
             for (int i = 0; i < p.Minions.Count; i++) if (p.Minions[i].Ativo) Progressao.EvoluirEstagio(p, i, cfg);
             Equipamento.AutoEquipar(p, cfg);
@@ -76,26 +111,65 @@ namespace Necro.Testes
         public static bool JogadorAtivo;
         /// <summary>true = o robô funde trincas de almas quando o banco de minions já passa do Comando.</summary>
         public static bool UsarFusao = true;
+        /// <summary>true = o robô gasta os pontos de talento.</summary>
+        public static bool UsarTalentos = true;
+        /// <summary>true = o robô sacrifica a reserva excedente e imbui os melhores minions.</summary>
+        public static bool UsarSacrificio = true;
+        /// <summary>true = o robô faz oferendas e prepara ritos.</summary>
+        public static bool UsarOferendas = true;
 
         /// <summary>Expedição com um jogador presente: ceifa por toque todo orbe e usa os dois poderes quando valem a pena.</summary>
         public static ResultadoExpedicao RodarComJogador(ConfigJogo cfg, EstadoProgresso p, ulong semente, int inicio)
         {
             var sim = new Simulacao(cfg, p, semente, ModoExpedicao.Avancar, inicio);
             sim.EmitirEventos = false;
+            Oferendas.ConsumirRito(p);
             while (!sim.Encerrada)
             {
                 if (sim.TickAtual >= ExecutorSemTela.TicksMaximosPadrao) sim.EncerrarPorTempo();
                 for (int i = 0; i < sim.Orbes.Count; i++) sim.ComandoCeifar(sim.Orbes[i].Id);
                 if (sim.RecargaDetonar <= 0f && sim.CadaveresDetonaveis >= 3 && sim.InimigosVivos >= 2) sim.ComandoDetonar();
                 if (sim.RecargaFrenesi <= 0f && sim.InimigosVivos >= 3) sim.ComandoFrenesi();
+                if (sim.InimigosVivos >= 2) { sim.ComandoFeiticoDeItem(0); sim.ComandoFeiticoDeItem(1); }
+                if (sim.RecargaSopro <= 0f)
+                {
+                    // Sopro no aliado mais ferido, se alguém está abaixo de 45%
+                    Entidade pior = null;
+                    for (int i = 0; i < sim.Entidades.Count; i++)
+                    {
+                        var al = sim.Entidades[i];
+                        if (al.Viva && al.Faccao != Faccao.Inimigo && al.Vida < al.VidaMax * 0.45f && (pior == null || al.Vida / al.VidaMax < pior.Vida / pior.VidaMax)) pior = al;
+                    }
+                    if (pior != null) sim.ComandoCurar(pior.Id);
+                }
+                if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();   // toca no baú/santuário/fonte
+                // interrompe o Golpe Brutal: marca quem está armando (com meio segundo de reação)
+                for (int i = 0; i < sim.Entidades.Count; i++)
+                {
+                    var eg = sim.Entidades[i];
+                    if (eg.Viva && eg.PreparandoGolpe > 0f && eg.PreparandoGolpe < cfg.GolpeBrutalAviso - 0.5f) { sim.ComandoMarcar(eg.Id); break; }
+                }
+                if (sim.MarcadoId < 0 && sim.InimigosVivos > 0)
+                {
+                    // marca o chefe ou elite; senão, o inimigo mais ferido
+                    Entidade alvoM = null;
+                    for (int i = 0; i < sim.Entidades.Count; i++)
+                    {
+                        var e = sim.Entidades[i];
+                        if (!e.Viva || e.Faccao != Faccao.Inimigo) continue;
+                        bool esp = e.Chefe || e.Elite, espM = alvoM != null && (alvoM.Chefe || alvoM.Elite);
+                        if (alvoM == null || (esp && !espM) || (esp == espM && e.Vida < alvoM.Vida)) alvoM = e;
+                    }
+                    if (alvoM != null) sim.ComandoMarcar(alvoM.Id);
+                }
                 if (sim.PactosOferecidos != null)
                 {
                     // preferência fixa do robô: trégua se o necromante está mal; senão dano, almas, ossos, pressa, itens
-                    int[] pref = sim.Necromante.Vida < sim.Necromante.VidaMax * 0.4f ? new[] { 3, 0, 2, 1, 4, 5 } : new[] { 0, 2, 1, 4, 5, 3 };
+                    int[] pref = sim.Necromante.Vida < sim.Necromante.VidaMax * 0.4f ? new[] { 3, 8, 0, 2, 1, 4, 5, 6, 7, 9 } : new[] { 0, 6, 2, 1, 7, 9, 4, 5, 8, 3 };
                     int melhor = 0, pos = 99;
                     for (int o = 0; o < 3; o++) { int k = System.Array.IndexOf(pref, sim.PactosOferecidos[o]); if (k < pos) { pos = k; melhor = o; } }
                     // com o necromante ferido só aceita a trégua; inteiro, aceita a melhor oferta
-                    if (sim.Necromante.Vida >= sim.Necromante.VidaMax * 0.6f || sim.PactosOferecidos[melhor] == 3) sim.ComandoPacto(melhor);
+                    if (sim.Necromante.Vida >= sim.Necromante.VidaMax * 0.6f || sim.PactosOferecidos[melhor] == 3 || sim.PactosOferecidos[melhor] == 8) sim.ComandoPacto(melhor);
                 }
                 sim.Tick();
             }
@@ -154,7 +228,7 @@ namespace Necro.Testes
             var spa = new List<double>(); var exp = new List<double>(); var tent = new List<double>(); var fim = new List<double>();
             int venceu = 0;
             var nc = new List<double>[Necropole.TotalDeConstrucoes]; for (int c = 0; c < nc.Length; c++) nc[c] = new List<double>();
-            var pe = new List<double>();
+            var pe = new List<double>(); var niveis = new List<double>();
             var lo = new List<double>(); var le = new List<double>(); var lc = new List<double>();
             var porAndar = new List<double>[41];
             for (int i = 0; i < 41; i++) porAndar[i] = new List<double>();
@@ -168,6 +242,7 @@ namespace Necro.Testes
                 h20.Add(double.IsNaN(r.HorasAteAndar[20]) ? 999 : r.HorasAteAndar[20]);
                 if (!double.IsNaN(r.HorasChefe1)) venceu++;
                 for (int c = 0; c < nc.Length; c++) nc[c].Add(r.Construcoes[c]);
+                niveis.Add(r.NivelNecromante);
                 pe.Add(r.AndarDaPrimeiraExpedicao);
                 lo.Add(r.OssosSobrando); le.Add(r.EssenciaSobrando); lc.Add(r.Comando);
                 spa.Add(r.SegPorAndar); exp.Add(r.ExpedicaoMediaMin); tent.Add(r.TentativasNoChefe1); fim.Add(r.MaiorAndar);
@@ -185,7 +260,7 @@ namespace Necro.Testes
                                   FracaoVenceChefe = venceu / (double)n, AndarEm8h = Mediana(fim) };
             m.PrimeiraExpedicao = Mediana(pe);
             m.Necropole = "Ao fim da campanha (medianas): Altar nível " + Mediana(nc[0]) + ", Cripta nível " + Mediana(nc[1]) + ", Torre das Almas nível " + Mediana(nc[2]) + ", Ossuário nível " + Mediana(nc[3]) + ", Mesa de Dissecação nível " + Mediana(nc[4])
-                + "; Comando " + Mediana(lc) + "; sobrando " + Mediana(lo) + " Ossos e " + Mediana(le) + " de Essência.";
+                + "; Comando " + Mediana(lc) + "; sobrando " + Mediana(lo) + " Ossos e " + Mediana(le) + " de Essência. Nível do necromante: " + Mediana(niveis) + ".";
             if (sb != null)
             {
                 sb.AppendLine("| Andar concluído | Horas de jogo (mediana) |").AppendLine("|---|---|");

@@ -8,19 +8,68 @@
   :root { --fundo:#0b080a; --painel:#151014; --borda:#3a2a2c; --texto:#d8c9b4; --fraco:#8d7c6c; --sangue:#a01420; --alma:#6dffa8; --ouro:#d9b25f; }
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; background:var(--fundo); color:var(--texto); font-family: Georgia, "Times New Roman", serif; }
-  body { display:flex; flex-direction:column; max-width:1100px; margin:0 auto; }
-  #topo { display:flex; flex-wrap:wrap; gap:4px 14px; align-items:center; padding:6px 10px; background:linear-gradient(#1c1317,#120c0f); border-bottom:1px solid var(--borda); font-size:14px; }
+  body { display:flex; flex-direction:column; max-width:1800px; margin:0 auto; overflow:hidden; }
+  #jogo { flex:1; min-height:0; display:grid; grid-template-columns:340px minmax(0,1fr) 330px; }
+  .lado { display:flex; flex-direction:column; min-height:0; background:var(--painel); }
+  #esq { border-right:1px solid var(--borda); } #dir { border-left:1px solid var(--borda); }
+  .lado .pn { flex:1; overflow-y:auto; padding:10px; }
+  #centro { display:flex; flex-direction:column; min-height:0; overflow-y:auto; } #centro > * { flex:none; }
+  #doca { display:none; gap:6px; padding:6px 8px; background:#100a0d; border-top:1px solid #2a1f22; }
+  #doca button { flex:1; padding:9px 4px; font-size:13px; position:relative; }
+  #doca button[data-n]::after { content:attr(data-n); position:absolute; top:-5px; right:4px; min-width:16px; height:16px; line-height:16px; font-size:11px; border-radius:8px; background:var(--sangue); color:#fff; padding:0 3px; }
+  .abas .fecha { display:none; flex:none !important; color:var(--ouro); }
+  #grupo { display:flex; gap:4px; padding:5px 8px; background:#0d080a; border-top:1px solid #2a1f22; overflow-x:auto; scrollbar-width:none; min-height:50px; }
+  #grupo::-webkit-scrollbar { display:none; }
+  .ret { position:relative; flex:none; width:40px; height:44px; border:1px solid #3a2a2c; border-radius:4px; overflow:hidden; cursor:pointer; background:#0c0809; }
+  .ret .thumb { border:0; transform:scale(.86); transform-origin:0 0; }
+  .ret i { position:absolute; left:0; right:0; bottom:0; height:5px; background:#000c; } .ret i b { display:block; height:100%; }
+  .ret.morto { opacity:.3; filter:grayscale(1); } .ret.cura { box-shadow:0 0 8px #6dffa8; animation:pulso 1.2s infinite; }
+  #salas { position:absolute; right:6px; top:6px; padding:4px; background:#0b0709cc; border:1px solid #4a3a3c; border-radius:5px; cursor:pointer; max-width:46%; max-height:40%; overflow:hidden; line-height:0; }
+  #salas svg { max-width:100%; height:auto; }
+  #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
+  .diario div { font-size:13px; padding:4px 0; border-bottom:1px solid #2a1f22; } .diario small { color:var(--fraco); margin-right:6px; }
+  @media (max-width:1050px) {
+    html, body { height:auto; min-height:100%; } body { overflow:visible; }
+    #jogo { display:block; } #centro { overflow:visible; }
+    .lado { position:fixed; top:0; bottom:0; width:min(390px, 94vw); z-index:20; transition:transform .25s; box-shadow:0 0 24px #000a; }
+    #esq { left:0; transform:translateX(-103%); border-right:1px solid var(--ouro); } #dir { right:0; transform:translateX(103%); border-left:1px solid var(--ouro); }
+    #esq.aberto, #dir.aberto { transform:none; }
+    #doca { display:flex; } .abas .fecha { display:block; }
+  }
+  #topo { padding:6px 10px 5px; background:linear-gradient(#1c1317,#120c0f); border-bottom:1px solid var(--borda); font-size:14px; }
+  #topo .l1 { display:flex; gap:8px; align-items:center; }
+  #topo .andar { white-space:nowrap; font-size:13px; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+  #topo .xpn { width:34px; }
+  #vel { display:flex; gap:3px; flex:none; } #vel button { padding:3px 7px; }
+  #topo .nv { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  #topo .xpn { display:inline-block; width:46px; height:5px; background:#0008; border:1px solid #3a2a2c; border-radius:3px; overflow:hidden; }
+  #topo .xpn span { display:block; height:100%; width:0; background:#6dffa8; }
+  #recursos { display:flex; gap:5px; margin-top:6px; overflow-x:auto; scrollbar-width:none; }
+  #recursos::-webkit-scrollbar { display:none; }
+  .rec { display:flex; align-items:center; gap:5px; padding:3px 8px 3px 5px; background:#1b1317; border:1px solid #2e2225; border-radius:12px; white-space:nowrap; cursor:pointer; flex:none; }
+  .rec svg { width:15px; height:15px; flex:none; } .rec b { color:#fff; font-weight:normal; } .rec small { color:var(--fraco); font-size:11px; }
+  .rec.sobe { border-color:var(--ouro); }
+  .thumb { width:46px; height:46px; flex:none; border:1px solid #3a2a2c; border-radius:4px; background-color:#0c0809; background-repeat:no-repeat; }
+  #resumo { position:absolute; left:8%; right:8%; top:16%; background:#120a0df2; border:1px solid var(--ouro); border-radius:6px; padding:12px; text-align:center; cursor:pointer; }
+  #resumo[hidden] { display:none; }
+  #resumo .t { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; font-size:14px; } #resumo .g { display:flex; justify-content:space-around; margin:10px 0 4px; }
+  #resumo .g div b { display:block; font-size:22px; color:#fff; font-weight:normal; } #resumo .g div span { font-size:12px; color:var(--fraco); }
+  #autos { display:flex; gap:5px; align-items:center; padding:5px 10px; background:#100a0d; border-top:1px solid #2a1f22; font-size:12px; color:var(--fraco); overflow-x:auto; white-space:nowrap; }
+  #autos button { padding:2px 8px; font-size:12px; border-radius:10px; flex:none; }
+  #missao.min .hist, #missao.min .barra { display:none; } #missao { cursor:pointer; }
   #topo b { color:#fff; font-weight:normal; }
   #topo .andar { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
   #topo .espaco { flex:1; }
   #cena { position:relative; background:#000; }
   canvas { display:block; width:100%; touch-action:pan-y; cursor:pointer; }
   #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
-  #poderes { position:absolute; right:8px; bottom:14px; display:flex; gap:8px; }
-  #poderes button { min-width:84px; padding:9px 8px; font-size:14px; background:#2a1216e6; border-color:#6a2a2e; position:relative; overflow:hidden; }
+  #poderes { position:absolute; right:6px; left:6px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap-reverse; justify-content:flex-end; pointer-events:none; }
+  #poderes > * { pointer-events:auto; }
+  #poderes button[hidden] { display:none; }
+  #poderes button { min-width:76px; padding:8px 6px; font-size:13px; background:#2a1216e6; border-color:#6a2a2e; position:relative; overflow:hidden; }
   #poderes button:not(:disabled) { border-color:var(--ouro); color:#fff; box-shadow:0 0 10px #a0142088; }
   #poderes button.ligado { background:#7a1a12; }
-  #encruzilhada { position:absolute; left:6px; right:6px; top:26px; background:#120a0dee; border:1px solid var(--ouro); border-radius:6px; padding:8px; }
+  #encruzilhada { position:absolute; left:6px; right:6px; top:50px; background:#120a0dee; border:1px solid var(--ouro); border-radius:6px; padding:8px; }
   #encruzilhada[hidden] { display:none; }
   #encruzilhada .cab { color:var(--ouro); font-size:13px; letter-spacing:1px; text-transform:uppercase; display:flex; justify-content:space-between; margin-bottom:6px; }
   #encruzilhada .ops { display:flex; gap:6px; }
@@ -45,15 +94,68 @@
   #missao .barra div { height:100%; background:linear-gradient(90deg,#6a0f18,#c8323c); }
   #missao button.pronta { background:#5a1a10; border-color:var(--ouro); color:#fff; animation:pulso 1.2s infinite; }
   @keyframes pulso { 50% { box-shadow:0 0 12px #d9b25f88; } }
-  #abas button[hidden] { display:none; }
-  #abas { display:flex; border-bottom:1px solid var(--borda); background:var(--painel); }
-  #abas button { flex:1; border:0; border-radius:0; border-bottom:2px solid transparent; background:none; padding:10px 2px; font-size:14px; }
-  #abas button.ativo { border-bottom-color:var(--sangue); color:#fff; background:#1d1418; }
+  .abas button[hidden] { display:none; }
+  .abas { overflow-x:auto; scrollbar-width:none; }
+  .abas button { flex:1 0 auto !important; padding-left:10px !important; padding-right:10px !important; }
+  .est { display:grid; grid-template-columns:1fr auto; gap:2px 8px; font-size:13px; margin-bottom:7px; padding:6px 8px; background:#1b1418; border:1px solid #2a1f22; border-radius:4px; }
+  .est .b { grid-column:1 / 3; height:5px; background:#0008; border-radius:3px; overflow:hidden; display:flex; }
+  .est .b i { display:block; height:100%; } .est small { color:var(--fraco); grid-column:1 / 3; }
+  .abas { display:flex; border-bottom:1px solid var(--borda); background:var(--painel); }
+  .abas button { flex:1; border:0; border-radius:0; border-bottom:2px solid transparent; background:none; padding:10px 1px; font-size:13px; }
+  .abas button .pt { color:var(--ouro); }
+  .abas button.ativo { border-bottom-color:var(--sangue); color:#fff; background:#1d1418; }
   #painel { flex:1; overflow-y:auto; padding:10px; background:var(--painel); min-height:180px; }
+  select { font:inherit; color:var(--texto); background:#241a1d; border:1px solid var(--borda); border-radius:4px; padding:6px; max-width:46%; }
+  #inventario { flex:1; padding:10px; overflow-y:auto; } #inventario[hidden], .pn[hidden] { display:none; }
+  #inventario .cab button { display:none; }
+  #inventario .cab { display:flex; justify-content:space-between; align-items:center; color:var(--ouro); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+  #inventario .boneco { display:grid; grid-template-columns:repeat(9, 1fr); gap:3px; margin:8px 0; }
+  #inventario .vaga { aspect-ratio:1; border:1px solid #3a2a2c; background:#1a1216; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+  #inventario .vaga small { font-size:8px; color:var(--fraco); text-align:center; line-height:1; }
+  #inventario .grade { position:relative; width:100%; border:1px solid #3a2a2c; background-color:#0c0809; background-image:linear-gradient(#2a1f22 1px, transparent 1px), linear-gradient(90deg, #2a1f22 1px, transparent 1px); }
+  #inventario .item { position:absolute; box-sizing:border-box; border:1px solid currentColor; background:#1d1418; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:2px; }
+  #inventario .item.r1, #inventario .vaga.r1 { background:#141b2a; } #inventario .item.r2, #inventario .vaga.r2 { background:#2a2410; }
+  #inventario .item.r3, #inventario .vaga.r3 { background:#2c1a0c; } #inventario .item.r4, #inventario .vaga.r4 { background:#2c0f16; }
+  #inventario .vaga.r0, #inventario .vaga.r1, #inventario .vaga.r2, #inventario .vaga.r3, #inventario .vaga.r4 { border-color:currentColor; }
+  #inventario .item img, #inventario .vaga img { width:100%; height:100%; object-fit:contain; pointer-events:none; filter:drop-shadow(0 0 3px currentColor); }
+  #inventario .item.r0 img, #inventario .vaga.r0 img { filter:none; }
+  #inventario .item .trava { position:absolute; left:1px; bottom:1px; font-size:8px; line-height:1; padding:1px 2px; background:#000c; color:var(--ouro); border:1px solid var(--ouro); letter-spacing:.3px; }
+  #inventario .sel { outline:2px solid #fff; z-index:2; }
+  #inventario .ficha { margin-top:8px; padding:8px; border:1px solid currentColor; background:#1b1418; font-size:13px; }
+  #inventario .ficha b { display:block; font-weight:normal; font-size:15px; } #inventario .ficha div { color:var(--texto); margin-top:3px; }
+  #inventario .ficha .nota { display:block; }
+  #ficha-minion { position:fixed; inset:0; background:#000c; z-index:30; display:flex; align-items:center; justify-content:center; padding:12px; }
+  #ficha-minion[hidden] { display:none; }
+  #ficha-minion .caixa { width:min(420px, 100%); max-height:96vh; overflow-y:auto; background:#150e12; border:1px solid var(--ouro); border-radius:6px; padding:12px; }
+  #retrato { display:block; margin:0 auto; width:232px; height:232px; background:radial-gradient(#3a2a22, #0b0709 72%); border:1px solid #3a2a2c; image-rendering:auto; cursor:pointer; }
+  #ficha-corpo .nome { font-size:19px; text-align:center; margin:8px 0 2px; } #ficha-corpo .sub { text-align:center; color:var(--fraco); font-size:13px; margin-bottom:8px; }
+  #ficha-corpo .attrs { display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:14px; margin:8px 0; }
+  #ficha-corpo .attrs span { color:var(--fraco); } #ficha-corpo .attrs b { color:#fff; font-weight:normal; float:right; }
+  #ficha-corpo .tr { font-size:13px; margin:3px 0; } #ficha-corpo .tr b { color:#c8a86a; font-weight:normal; }
+  .linha .corpo.toque { cursor:pointer; }
+  #cheats { position:fixed; inset:0; background:#000c; z-index:41; display:flex; align-items:center; justify-content:center; padding:12px; }
+  #cheats[hidden] { display:none; }
+  #cheats .caixa { width:min(440px, 100%); max-height:94vh; overflow-y:auto; background:#150e12; border:1px dashed #7ab030; border-radius:6px; padding:14px; }
+  #cheats .campo { display:flex; gap:6px; align-items:center; margin-bottom:5px; font-size:14px; }
+  #cheats .campo span { flex:1; } #cheats .campo small { display:block; color:var(--fraco); font-size:11px; }
+  #cheats input { width:96px; font:inherit; color:var(--texto); background:#241a1d; border:1px solid var(--borda); border-radius:4px; padding:5px; }
+  #b-cheats { padding:3px 8px; color:#7ab030; border-color:#3a4a2a; }
+  #ajuda { position:fixed; inset:0; background:#000c; z-index:40; display:flex; align-items:center; justify-content:center; padding:12px; }
+  #ajuda[hidden] { display:none; }
+  #ajuda .caixa { width:min(460px, 100%); max-height:94vh; overflow-y:auto; background:#150e12; border:1px solid var(--ouro); border-radius:6px; padding:14px; }
+  #mapa-grande { position:fixed; inset:0; background:#000c; z-index:40; display:flex; align-items:center; justify-content:center; padding:12px; }
+  #mapa-grande[hidden] { display:none; }
+  #mapa-grande .caixa { width:min(560px, 100%); max-height:94vh; overflow-y:auto; background:#150e12; border:1px solid var(--ouro); border-radius:6px; padding:14px; }
+  #ajuda .tr { font-size:14px; margin:5px 0; } #ajuda .tr b { color:#e8d8b8; font-weight:normal; }
+  #b-ajuda { padding:3px 10px; border-radius:50%; color:var(--ouro); border-color:var(--ouro); }
+  #b-sopro { align-self:center; font-size:12px; color:#8fd89f; text-shadow:0 0 4px #000; margin-right:2px; }
+  .abas button { position:relative; }
+  .abas button[data-n]::after { content:attr(data-n); position:absolute; top:4px; right:6%; min-width:16px; height:16px; line-height:16px; font-size:11px; border-radius:8px; background:var(--sangue); color:#fff; padding:0 3px; }
   h3 { margin:12px 0 6px; font-size:14px; font-weight:normal; color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
   h3:first-child { margin-top:0; }
   .linha { display:flex; align-items:center; gap:8px; padding:7px 8px; margin-bottom:5px; background:#1b1418; border:1px solid #2a1f22; border-radius:4px; font-size:14px; }
-  .linha .corpo { flex:1; min-width:0; }
+  .linha { flex-wrap:wrap; }
+  .linha .corpo { flex:1 1 170px; min-width:0; }
   .linha small { display:block; color:var(--fraco); font-size:12px; margin-top:2px; }
   .xp { height:3px; background:#0008; border-radius:2px; margin-top:5px; } .xp div { height:100%; background:#5a8f6a; border-radius:2px; }
   .linha button { white-space:nowrap; }
@@ -64,33 +166,90 @@
 </head>
 <body>
 <div id="topo">
-  <span class="andar" id="t-andar">Andar –</span>
-  <span>Nível <b id="t-nivel">–</b></span>
-  <span>Ossos <b id="t-ossos">–</b></span>
-  <span>Essência <b id="t-ess">–</b></span>
-  <span>Comando <b id="t-cmd">–</b></span>
-  <span class="espaco"></span>
-  <span id="vel"><button data-v="0">❚❚</button> <button data-v="1" class="ativo">1x</button> <button data-v="2">2x</button> <button data-v="4">4x</button></span>
+  <div class="l1">
+    <span class="andar" id="t-andar">Andar –</span>
+    <span class="nv">Nv <b id="t-nivel">–</b><span class="xpn"><span id="t-xp"></span></span></span>
+    <button id="b-cheats" title="Painel de testes">⚙</button>
+    <button id="b-ajuda" title="Como jogar">?</button>
+    <span id="vel"><button data-v="0">❚❚</button> <button data-v="1" class="ativo">1x</button> <button data-v="2">2x</button> <button data-v="4">4x</button></span>
+  </div>
+  <div class="l2" id="recursos"></div>
 </div>
+<div id="jogo">
+<aside id="esq" class="lado">
+  <div class="abas" data-lado="esq"><button data-aba="exercito" class="ativo">Exército</button><button data-aba="equip">Inventário</button><button class="fecha" data-fecha="esq">✕</button></div>
+  <div id="p-esq" class="pn"></div>
+  <div id="inventario" hidden></div>
+</aside>
+<main id="centro">
 <div id="cena">
   <canvas id="tela" width="900" height="420"></canvas>
   <div id="mana"><div></div></div>
   <div id="t-saque"></div>
   <div id="t-pactos"></div>
-  <div id="poderes"><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
+  <div id="salas"></div>
+  <div id="t-sala"></div>
+  <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
+  <div id="resumo" hidden></div>
   <div id="encruzilhada" hidden></div>
   <div id="aviso"></div>
   <div id="ausente" style="display:none"></div>
   <div id="carregando">Despertando os mortos…</div>
 </div>
+<div id="grupo"></div>
+<div id="autos"></div>
 <div id="missao"></div>
-<div id="abas">
-  <button data-aba="exercito" class="ativo">Exército</button>
-  <button data-aba="necropole">Necrópole</button>
-  <button data-aba="equip">Equipamento</button>
-  <button data-aba="bestiario">Bestiário</button>
+<div id="doca"><button data-abre="esq">◧ Exército · Inventário</button><button data-abre="dir">Estatísticas · Diário ◨</button></div>
+<div class="abas" data-lado="baixo"><button data-aba="necropole" class="ativo">Necrópole</button><button data-aba="talentos">Talentos</button></div>
+<div id="painel" class="pn"></div>
+</main>
+<aside id="dir" class="lado">
+  <div class="abas" data-lado="dir"><button data-aba="combate" class="ativo">Combate</button><button data-aba="masmorra">Masmorra</button><button data-aba="bestiario">Bestiário</button><button class="fecha" data-fecha="dir">✕</button></div>
+  <div id="p-dir" class="pn"></div>
+</aside>
 </div>
-<div id="painel"></div>
+<div id="cheats" hidden><div class="caixa">
+  <h3>Painel de testes</h3>
+  <p class="nota">Só para testar: muda o save direto e recomeça a expedição. O save fica marcado como "teste".</p>
+  <div id="cheats-campos"></div>
+  <h3>Ações</h3>
+  <div class="rodape" style="margin-top:0">
+    <button data-cheat="itens" data-v="8">+8 itens raros</button><button data-cheat="almas" data-v="8">+8 almas</button>
+    <button data-cheat="restos" data-v="200">+200 de cada Resto</button><button data-cheat="missao" data-v="1">Pular missão</button><button data-cheat="secreto" data-v="1">Abrir nível secreto</button>
+  </div>
+  <div class="rodape"><button id="b-cheats-fechar">Fechar</button></div>
+</div></div>
+<div id="ajuda" hidden><div class="caixa">
+  <h3>Na batalha, toque em…</h3>
+  <div class="tr"><b>Orbe verde</b>: ceifa a alma na hora, com chance de ela vir melhor.</div>
+  <div class="tr"><b>Inimigo</b>: marca o alvo. Os minions vão nele e ele sofre +25% de dano.</div>
+  <div class="tr"><b>Inimigo com “!”</b>: interrompe o golpe brutal e o atordoa.</div>
+  <div class="tr"><b>Retratos abaixo da arena</b>: mostram a vida de cada aliado; toque num ferido para usar o Sopro Profano nele.</div>
+  <div class="tr"><b>Aliado ferido</b>: Sopro Profano, cura 40% da vida (recarga de 14 s).</div>
+  <div class="tr"><b>Detonar</b>: explode os cadáveres de inimigos. <b>Frenesi</b>: minions batem mais forte por 8 s.</div>
+  <div class="tr"><b>Encruzilhada</b>: do andar 5 em diante aparecem três pactos; cada um dá algo e cobra algo.</div>
+  <div class="tr"><b>Baú, santuário, fonte, almas presas</b>: entre os combates o necromante encontra salas especiais. Ele resolve sozinho; se você tocar no objeto antes, rende 50% a mais (e o baú nunca é um mímico).</div>
+  <div class="tr"><b>Mercador</b>: troca Ossos da própria expedição por um item (40% de desconto com o seu toque). <b>Altar de sangue</b>: cobra 15% da vida de todos por +80% de chance de alma no andar; se você tocar, não cobra.</div>
+  <div class="tr"><b>Mapa</b>: cada andar é uma masmorra sorteada. O grupo explora todas as salas antes de descer. Toque no mapa do canto para vê-lo inteiro.</div>
+  <div class="tr"><b>Sala do chefe</b>: cada luta tem um ambiente sorteado (lava, névoa pútrida, geada) que vale para os dois lados.</div>
+  <h3>As cores</h3>
+  <div class="tr">Anel dos seus minions: <span class="q0">cinza Fraca</span>, <span class="q1">branco Comum</span>, <span class="q2">azul Vigorosa</span>, <span class="q3">dourado Ancestral</span>, <span class="q4">vermelho Profana</span>.</div>
+  <div class="tr">Inimigos: sem anel é comum, <span class="q3">anel dourado é elite</span>, <span class="q4">anel vermelho é chefe</span>.</div>
+  <h3>Os recursos</h3>
+  <div class="tr"><b>Ossos</b>: de todo inimigo morto. Pagam as construções da Necrópole.</div>
+  <div class="tr"><b>Essência</b>: de vender itens e dissolver almas. Paga erguer, fundir e evoluir minions.</div>
+  <div class="tr"><b>Sangue</b>: de elites, chefes e execuções. Paga os Ritos da próxima expedição.</div>
+  <div class="tr"><b>Fragmentos</b>: de sacrificar minions. Servem para Imbuir (subir a qualidade de um minion).</div>
+  <div class="tr"><b>Poder</b>: a força do seu exército em um número, calculada da vida e do dano reais. Verde cobre o que o andar pede; amarelo está perto; vermelho está abaixo. É estimativa: jogando com a mão você passa com menos.</div>
+  <div class="tr"><b>Dons</b>: cada alma nasce um pouco diferente em vida, dano e velocidade. Vale a pena comparar duas almas iguais.</div>
+  <div class="tr"><b>Presságio</b>: do andar 7 em diante, um em cada três andares muda as regras (horda, ossário, almas inquietas…).</div>
+  <div class="tr"><b>Comando</b>: quantos minions cabem em campo. Sobe com a Cripta e com talentos.</div>
+  <div class="tr"><b>Cinzas</b>: da Ascensão. Compram Legados permanentes.</div>
+  <div class="rodape"><button id="b-ajuda-fechar">Entendi</button></div>
+</div></div>
+
+<div id="mapa-grande" hidden><div class="caixa"><div id="mapa-corpo"></div><div class="rodape"><button id="b-mapa-fechar">Fechar</button></div></div></div>
+<div id="ficha-minion" hidden><div class="caixa"><canvas id="retrato" width="232" height="232"></canvas><div id="ficha-corpo"></div></div></div>
 <script type="module" src="main.js"></script>
 <script type="module" src="jogo.js"></script>
 </body>

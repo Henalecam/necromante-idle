@@ -11,6 +11,8 @@ namespace Necro.Nucleo
         public Qualidade Qualidade;
         public List<Afixo> Afixos = new List<Afixo>();
         public TracoProfano Traco;
+        /// <summary>Dons: variação aleatória de nascença, em fração (0.10 = +10%). Cada alma é um pouco diferente.</summary>
+        public float DomVida, DomDano, DomVelocidade;
 
         public bool Tem(Afixo a) { return Afixos != null && Afixos.Contains(a); }
 
@@ -63,6 +65,11 @@ namespace Necro.Nucleo
                 if (!alma.Afixos.Contains(a)) alma.Afixos.Add(a);
             }
             if (qualidade == Qualidade.Profana) alma.Traco = (TracoProfano)(1 + rng.Intervalo(0, TotalTracos));
+            // dons: três sorteios independentes; a faixa cresce com a qualidade e pende para cima
+            float faixa = cfg.DomBase + cfg.DomPorQualidade * q;
+            alma.DomVida = rng.Intervalo(-faixa * cfg.DomParteNegativa, faixa);
+            alma.DomDano = rng.Intervalo(-faixa * cfg.DomParteNegativa, faixa);
+            alma.DomVelocidade = rng.Intervalo(-faixa * cfg.DomParteNegativa, faixa) * 0.6f;
             return alma;
         }
     }

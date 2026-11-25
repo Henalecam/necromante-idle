@@ -153,6 +153,127 @@ namespace Necro.Testes
                 s3.ComandoPacto(1); s3.Tick();
                 Afirmar(s3.PactosAtivos.Count == 0, "comando sem oferta aberta não faz nada");
             });
+            Teste("arma define o estilo: de cajado o necromante fica atrás; de foice avança, tem mais vida e bate de perto", () =>
+            {
+                var rng = new Rng(8);
+                var pc = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pc, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Cajado));
+                var pf = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pf, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Foice));
+                var semSalas = new ConfigJogo { ChanceDeSalaEspecial = 0f, ChanceDeSalaVazia = 0f };   // sem baús no caminho: o teste mede só o combate
+                var sc = new Simulacao(semSalas, pc, 12, ModoExpedicao.Avancar, 1);
+                var sf = new Simulacao(semSalas, pf, 12, ModoExpedicao.Avancar, 1);
+                Afirmar(!sc.NecromanteCorpoACorpo && sf.NecromanteCorpoACorpo, "foice liga o corpo a corpo");
+                Afirmar(sf.Necromante.VidaMax > sc.Necromante.VidaMax * 1.2f && sf.Necromante.Alcance < 3f && sc.Necromante.Alcance > 5f, "foice: mais vida, alcance curto");
+                float x0 = sf.Necromante.Pos.X, maxF = x0, maxC = x0;
+                for (int t = 0; t < 600 && !sf.Encerrada && !sc.Encerrada; t++)
+                {
+                    sc.Tick(); sf.Tick();
+                    if (sf.Necromante.Pos.X > maxF) maxF = sf.Necromante.Pos.X;
+                    if (sc.Necromante.Pos.X > maxC) maxC = sc.Necromante.Pos.X;
+                }
+                Afirmar(maxF > x0 + 2f, "de foice o necromante avança: " + (maxF - x0));
+                Afirmar(maxC < x0 + 1f, "de cajado ele fica no posto: " + (maxC - x0));
+            });
+            Teste("marca do ceifador: inimigo marcado vira o alvo dos minions, sofre mais dano e a marca some quando ele morre", () =>
+            {
+                var s = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 33, ModoExpedicao.Avancar, 1);
+                Entidade alvo = null; int marcas = 0; bool morreuMarcado = false;
+                for (int t = 0; t < 1500 && !s.Encerrada; t++)
+                {
+                    if (s.MarcadoId < 0)
+                    {
+                        if (alvo != null && !alvo.Viva) morreuMarcado = true;
+                        alvo = null;
+                        // marca o inimigo MAIS LONGE do necromante: sem a marca, ninguém iria nele primeiro
+                        foreach (var e in s.Entidades) if (e.Viva && e.Faccao == Faccao.Inimigo && (alvo == null || e.Pos.X > alvo.Pos.X)) alvo = e;
+                        if (alvo != null) { s.ComandoMarcar(alvo.Id); marcas++; }
+                    }
+                    s.Tick();
+                }
+                Afirmar(marcas > 0 && s.Resultado.MarcasFeitas > 0, "marcou");
+                Afirmar(morreuMarcado, "um inimigo marcado morreu e a marca foi liberada");
+                var s2 = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 33, ModoExpedicao.Avancar, 1);
+                s2.ComandoMarcar(s2.Necromante.Id); s2.Tick();
+                Afirmar(s2.MarcadoId < 0, "não dá para marcar um aliado");
+            });
+            Teste("golpe brutal: elite avisa antes de bater; marcar durante o aviso interrompe e atordoa", () =>
+            {
+                Func<bool, Simulacao> rodar = interrompe =>
+                {
+                    var s = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 55, ModoExpedicao.Avancar, 1);
+                    // um elite quase imortal plantado no meio do exército
+                    Entidade minion = null; foreach (var e in s.Entidades) if (e.Faccao == Faccao.Minion) { minion = e; break; }
+                    var elite = s.CriarInimigo(EspecieId.Zumbi, minion.Pos + new Vec2(1f, 0f), true);
+                    elite.VidaMax = 1e7f; elite.Vida = 1e7f; elite.Dano = 0.01f;
+                    for (int t = 0; t < 1200 && !s.Encerrada && s.Resultado.GolpesBrutais + s.Resultado.GolpesInterrompidos < 3; t++)
+                    {
+                        if (interrompe) foreach (var e in s.Entidades) if (e.Viva && e.PreparandoGolpe > 0f) { s.ComandoMarcar(e.Id); break; }
+                        s.Tick();
+                        foreach (var e in s.Entidades) if (e.PreparandoGolpe > 0f) Afirmar(e.Elite || e.Chefe, "só elite ou chefe arma o golpe");
+                    }
+                    return s;
+                };
+                var livre = rodar(false); var cortado = rodar(true);
+                Afirmar(livre.Resultado.GolpesBrutais > 0 && livre.Resultado.GolpesInterrompidos == 0, "sem o jogador, o golpe sai: " + livre.Resultado.GolpesBrutais);
+                Afirmar(cortado.Resultado.GolpesInterrompidos > 0 && cortado.Resultado.GolpesBrutais == 0, "com a marca no aviso, o golpe não sai: " + cortado.Resultado.GolpesInterrompidos + " interrompidos, " + cortado.Resultado.GolpesBrutais + " desferidos");
+            });
+            Teste("todo minion ativo entra em campo: o Comando da Cripta vale na simulação (caso da Abadessa)", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                p.Construcoes[(int)Construcao.Cripta] = 10 * Cfg.NiveisDeCriptaPorComando;     // +10 de Comando só pela Cripta
+                p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.AbadessaCosturada, Qualidade = Qualidade.Comum } });
+                Afirmar(Progressao.PodeAtivar(p, p.Minions.Count - 1, Cfg), "a Necrópole deixa ativar a Abadessa");
+                Progressao.Ativar(p, p.Minions.Count - 1, Cfg);
+                var s = new Simulacao(Cfg, p, 4, ModoExpedicao.Avancar, 1);
+                int ativos = 0, emCampo = 0; bool abadessa = false;
+                foreach (var m in p.Minions) if (m.Ativo) ativos++;
+                foreach (var e in s.Entidades) if (e.Faccao == Faccao.Minion) { emCampo++; if (e.Especie == EspecieId.AbadessaCosturada) abadessa = true; }
+                Afirmar(abadessa && emCampo == ativos, "em campo " + emCampo + " de " + ativos + " ativos; Abadessa presente: " + abadessa);
+            });
+            Teste("sopro profano: cura o aliado tocado, respeita a recarga e não cura inimigo", () =>
+            {
+                var s = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 21, ModoExpedicao.Avancar, 1);
+                Entidade m = null, ini = null;
+                foreach (var e in s.Entidades) { if (e.Faccao == Faccao.Minion && m == null) m = e; if (e.Faccao == Faccao.Inimigo && ini == null) ini = e; }
+                m.Vida = m.VidaMax * 0.2f; float antes = m.Vida;
+                s.ComandoCurar(m.Id); s.Tick();
+                Afirmar(m.Vida > antes + m.VidaMax * Cfg.SoproCura * 0.8f && s.RecargaSopro > 0f && s.Resultado.SoprosUsados == 1, "curou e entrou em recarga");
+                m.Vida = m.VidaMax * 0.2f; antes = m.Vida; s.ComandoCurar(m.Id); s.Tick();
+                Afirmar(s.Resultado.SoprosUsados == 1, "em recarga não cura de novo");
+                var s2 = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 21, ModoExpedicao.Avancar, 1);
+                foreach (var e in s2.Entidades) if (e.Faccao == Faccao.Inimigo) { e.Vida = e.VidaMax * 0.5f; s2.ComandoCurar(e.Id); break; }
+                s2.Tick(); Afirmar(s2.Resultado.SoprosUsados == 0 && s2.RecargaSopro <= 0f, "inimigo não recebe o sopro");
+            });
+            Teste("feitiços de item: cada arma dá o seu, a raridade pesa, o automático tem recarga maior e nada acontece sem comando", () =>
+            {
+                var rng = new Rng(9);
+                Func<TipoItem, RaridadeItem, EstadoProgresso> com = (tipo, r) => { var p = Progressao.NovoJogo(Cfg); Equipamento.Equipar(p, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, r, tipo)); return p; };
+                var pc = com(TipoItem.Cajado, RaridadeItem.Comum);
+                var s = new Simulacao(Cfg, pc, 14, ModoExpedicao.Avancar, 1);
+                Afirmar(s.FeiticoDoEspaco(0) == FeiticoDeItem.RaioSombrio && s.FeiticoDoEspaco(1) == FeiticoDeItem.Nenhum, "cajado dá Raio Sombrio; mão vazia não dá nada");
+                Afirmar(new Simulacao(Cfg, com(TipoItem.Foice, RaridadeItem.Comum), 14, ModoExpedicao.Avancar, 1).FeiticoDoEspaco(0) == FeiticoDeItem.Ceifada, "foice dá Ceifada");
+                Afirmar(new Simulacao(Cfg, com(TipoItem.Grimorio, RaridadeItem.Comum), 14, ModoExpedicao.Avancar, 1).FeiticoDoEspaco(1) == FeiticoDeItem.ChuvaDeOssos, "grimório dá Chuva de Ossos");
+                Afirmar(new Simulacao(Cfg, com(TipoItem.Relicario, RaridadeItem.Comum), 14, ModoExpedicao.Avancar, 1).FeiticoDoEspaco(1) == FeiticoDeItem.EscudoDeAlmas, "relicário dá Escudo de Almas");
+                var parado = new Simulacao(Cfg, pc, 14, ModoExpedicao.Avancar, 1);
+                for (int t = 0; t < 400; t++) parado.Tick();
+                Afirmar(parado.Resultado.FeiticosDeItem == 0, "sem comando e sem automático, o feitiço não sai");
+                for (int t = 0; t < 200 && s.InimigosVivos == 0; t++) s.Tick();     // espera a primeira onda entrar
+                s.ComandoFeiticoDeItem(0); s.Tick();
+                Afirmar(s.Resultado.FeiticosDeItem == 1, "o comando lança");
+                Perto(s.RecargaDoFeiticoDeItem(0), Cfg.RaioSombrioRecarga, 0.2f, "recarga manual");
+                s.ComandoFeiticoDeItem(0); s.Tick(); Afirmar(s.Resultado.FeiticosDeItem == 1, "em recarga não lança");
+                var pa = com(TipoItem.Cajado, RaridadeItem.Comum); pa.AutoFeiticos[Simulacao.AutoArma] = true;
+                var sa = new Simulacao(Cfg, pa, 14, ModoExpedicao.Avancar, 1);
+                float recargaAuto = 0f;
+                for (int t = 0; t < 300 && recargaAuto == 0f; t++) { sa.Tick(); if (sa.Resultado.FeiticosDeItem > 0) recargaAuto = sa.RecargaDoFeiticoDeItem(0); }
+                Perto(recargaAuto, Cfg.RaioSombrioRecarga * Cfg.AutoFeiticoPenalidade, 0.3f, "no automático a recarga é maior");
+                // Escudo de Almas protege
+                var pe = com(TipoItem.Relicario, RaridadeItem.Raro);
+                var se = new Simulacao(Cfg, pe, 14, ModoExpedicao.Avancar, 1);
+                for (int t = 0; t < 200 && se.InimigosVivos == 0; t++) se.Tick();
+                se.ComandoFeiticoDeItem(1); se.Tick();
+                float esperado = se.Necromante.VidaMax * Cfg.EscudoDeAlmasFracao * (1f + Cfg.FeiticoDeItemPorRaridade * (int)RaridadeItem.Raro);
+                Afirmar(se.Necromante.Escudo > esperado * 0.5f && se.Necromante.Escudo <= esperado * 1.01f, "escudo no necromante: " + se.Necromante.Escudo + " de " + esperado);
+            });
             Teste("Atirador dispara projétil: o dano só chega depois do voo, e todo projétil termina", () =>
             {
                 var p = Progressao.NovoJogo(Cfg);
@@ -621,7 +742,7 @@ namespace Necro.Testes
                 var sc = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 1, ModoExpedicao.Cacar, 10);
                 Afirmar(sc.TotalDeOndas == 1, "andar de chefe tem uma onda");
                 Entidade chefe = null;
-                for (int t = 0; t < 30 && chefe == null; t++)
+                for (int t = 0; t < 120 && chefe == null; t++)
                 {
                     sc.Tick();
                     for (int i = 0; i < sc.Entidades.Count; i++) if (sc.Entidades[i].Chefe) chefe = sc.Entidades[i];
@@ -906,8 +1027,72 @@ namespace Necro.Testes
                 Afirmar(JsonSerializer.Serialize(p, opcoes) == antes, "RodarExpedicao mexeu no progresso");
                 var resumo = ExecutorSemTela.SimularOffline(Cfg, p, 1800f, ModoExpedicao.Avancar);
                 Perto(resumo.SegundosSimulados, 1800f, 1f, "tempo simulado");
-                Afirmar(resumo.Expedicoes >= 2 && p.Ossos == resumo.Ossos && p.Ossos > 0 && p.MaiorAndarConcluido == resumo.MaiorAndar && p.NivelNecromante > 1, "resultados não aplicados");
+                Afirmar(resumo.Expedicoes >= 2 && p.Ossos >= resumo.Ossos && p.Ossos <= resumo.Ossos * 1.5 && p.Ossos > 0 && p.MaiorAndarConcluido == resumo.MaiorAndar && p.NivelNecromante > 1, "resultados não aplicados");
                 Afirmar(p.Filacterio.Count + (int)p.Essencia >= 0 && p.ContadorDeSementes == (ulong)resumo.Expedicoes + 1, "contador de sementes");
+            });
+
+            Teste("masmorra: salas especiais aparecem, resolvem e o andar continua", () =>
+            {
+                var cfg = new ConfigJogo { ChanceDeSalaEspecial = 1f };
+                int salas = 0, resolvidas = 0, baus = 0; bool explorou = false;
+                for (ulong s = 1; s <= 12; s++)
+                {
+                    var p = Progressao.NovoJogo(cfg); p.PoderNecromantico = 6f;
+                    var sim = new Simulacao(cfg, p, s, ModoExpedicao.Avancar, 2) { LimiteDeAndares = 2 };
+                    int guarda = 0;
+                    while (!sim.Encerrada && guarda++ < 20000)
+                    {
+                        sim.Tick();
+                        if (sim.Fase == FaseExpedicao.Explorando) explorou = true;
+                        foreach (var ev in sim.Eventos) { if (ev.Tipo == TipoEvento.SalaIniciada) salas++; if (ev.Tipo == TipoEvento.SalaResolvida) resolvidas++; }
+                    }
+                    baus += sim.Resultado.BausAbertos;
+                    Afirmar(sim.Resultado.Motivo == MotivoFim.LimiteDeAndares || sim.Resultado.Motivo == MotivoFim.NecromanteMorreu, "expedição travou: " + sim.Resultado.Motivo + " fase " + sim.Fase);
+                }
+                Afirmar(explorou && salas >= 24 && resolvidas >= salas - 2 && baus > 0, "salas " + salas + " resolvidas " + resolvidas + " baús " + baus);
+            });
+            Teste("masmorra: nível secreto forçado solta a horda e paga o tesouro", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 40f;
+                var sim = new Simulacao(Cfg, p, 5, ModoExpedicao.Avancar, 1) { LimiteDeAndares = 1, ForcarNivelSecreto = true };
+                int guarda = 0; bool viu = false;
+                while (!sim.Encerrada && guarda++ < 30000) { sim.Tick(); if (sim.EmNivelSecreto) viu = true; }
+                Afirmar(viu && sim.Resultado.NiveisSecretos == 1 && sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] >= 15 && sim.Resultado.Itens.Count >= 2, "secreto " + sim.Resultado.NiveisSecretos + " reses " + sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] + " itens " + sim.Resultado.Itens.Count);
+            });
+            Teste("masmorra: a sala do chefe tem ambiente e ele fere os dois lados", () =>
+            {
+                bool lava = false, dano = false;
+                for (ulong s = 1; s <= 30 && !(lava && dano); s++)
+                {
+                    var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 5f;
+                    var sim = new Simulacao(Cfg, p, s, ModoExpedicao.Avancar, 10) { LimiteDeAndares = 1 };
+                    Afirmar(sim.Ambiente != AmbienteDeChefe.Nenhum, "chefe sem ambiente");
+                    if (sim.Ambiente != AmbienteDeChefe.Lava) continue;
+                    lava = true; int guarda = 0;
+                    while (!sim.Encerrada && guarda++ < 3000) { sim.Tick(); foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.Dano && ev.Origem == -1 && ev.TipoDano == TipoDano.Fogo) dano = true; }
+                }
+                Afirmar(lava && dano, "lava " + lava + " dano " + dano);
+            });
+
+            Teste("masmorra: o mapa tem uma célula por sala, sem sobreposição, e todas são visitadas", () =>
+            {
+                var cfg = new ConfigJogo { ChanceDeSalaEspecial = 1f, ChanceDeSalaVazia = 1f };
+                for (ulong s = 1; s <= 20; s++)
+                {
+                    var p = Progressao.NovoJogo(cfg); p.PoderNecromantico = 8f;
+                    var sim = new Simulacao(cfg, p, s, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 };
+                    Afirmar(sim.Mapa.Count == sim.Salas.Count && sim.Salas.Count >= 5, "mapa " + sim.Mapa.Count + " salas " + sim.Salas.Count);
+                    var vistos = new System.Collections.Generic.HashSet<long>();
+                    for (int i = 0; i < sim.Mapa.Count; i++)
+                    {
+                        var c = sim.Mapa[i];
+                        Afirmar(vistos.Add(c.X * 1000L + c.Y), "duas salas na mesma célula");
+                        if (i > 0) Afirmar(c.Pai >= 0 && c.Pai < i && Math.Abs(c.X - sim.Mapa[c.Pai].X) + Math.Abs(c.Y - sim.Mapa[c.Pai].Y) == 1, "sala não é vizinha do pai");
+                    }
+                    int maior = 0, guarda = 0, total = sim.Salas.Count;
+                    while (!sim.Encerrada && guarda++ < 20000) { sim.Tick(); if (sim.SalaAtual > maior) maior = sim.SalaAtual; }
+                    Afirmar(sim.Resultado.Motivo != MotivoFim.LimiteDeAndares || maior >= total - 1, "andar concluído sem visitar tudo: " + maior + "/" + total);
+                }
             });
 
             RodarLoot();

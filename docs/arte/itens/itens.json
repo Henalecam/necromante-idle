@@ -1,0 +1,65 @@
+{
+  "px_por_espaco": 128,
+  "itens": [
+    {
+      "tipo": "cajado",
+      "arquivo": "cajado.png",
+      "largura": 1,
+      "altura": 3
+    },
+    {
+      "tipo": "foice",
+      "arquivo": "foice.png",
+      "largura": 2,
+      "altura": 3
+    },
+    {
+      "tipo": "grimorio",
+      "arquivo": "grimorio.png",
+      "largura": 2,
+      "altura": 2
+    },
+    {
+      "tipo": "relicario",
+      "arquivo": "relicario.png",
+      "largura": 1,
+      "altura": 2
+    },
+    {
+      "tipo": "elmo",
+      "arquivo": "elmo.png",
+      "largura": 2,
+      "altura": 2
+    },
+    {
+      "tipo": "peitoral",
+      "arquivo": "peitoral.png",
+      "largura": 2,
+      "altura": 3
+    },
+    {
+      "tipo": "luvas",
+      "arquivo": "luvas.png",
+      "largura": 2,
+      "altura": 2
+    },
+    {
+      "tipo": "botas",
+      "arquivo": "botas.png",
+      "largura": 2,
+      "altura": 2
+    },
+    {
+      "tipo": "amuleto",
+      "arquivo": "amuleto.png",
+      "largura": 1,
+      "altura": 1
+    },
+    {
+      "tipo": "anel",
+      "arquivo": "anel.png",
+      "largura": 1,
+      "altura": 1
+    }
+  ]
+}

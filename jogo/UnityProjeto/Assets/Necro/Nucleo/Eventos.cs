@@ -56,7 +56,15 @@ namespace Necro.Nucleo
         /// <summary>Projétil chegou ao destino. Alvo=id do projétil, Origem=entidade atingida (ou -1 se errou), Pos.</summary>
         ProjetilTerminou,
         /// <summary>Um item caiu e já foi para o resultado da expedição (não há orbe para coletar). Origem=entidade morta, Alvo=índice em Resultado.Itens, Pos, Extra=(int)RaridadeItem, Valor=nível do item.</summary>
-        ItemCaiu
+        ItemCaiu,
+        /// <summary>O grupo entrou numa sala especial. Extra=(int)TipoSala, Valor=índice da sala, Alvo=total de salas, Pos=objeto da sala.</summary>
+        SalaIniciada,
+        /// <summary>A sala especial deu seu resultado. Extra=(int)TipoSala, Valor=quantidade principal, Origem=detalhe (baú: 1 mímico, 2 dourado; santuário: bênção; almas: qualidade), Critico=melhorado por toque ou raro.</summary>
+        SalaResolvida,
+        /// <summary>Ambiente da sala do chefe. Extra=(int)AmbienteDeChefe.</summary>
+        AmbienteDefinido,
+        /// <summary>Aviso de perigo no chão (lava). Pos, Valor=raio, Extra=ticks até estourar.</summary>
+        PerigoAnunciado
     }
 
     /// <summary>

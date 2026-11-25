@@ -37,17 +37,19 @@ namespace Necro.Nucleo
         public float ArmaduraPorAndar = 20f;
 
         // ---- Escala dos inimigos ----
-        public float CrescimentoPorAndar = 0.26f;
-        public float DegrauPorAto = 1.0f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
-        public float FatorVidaInimigo = 0.24f;      // inimigo comum = base da espécie x fator
+        public float CrescimentoPorAndar = 0.275f;
+        public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
+        public float FatorVidaInimigo = 0.245f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
         public float EliteMultVida = 3.5f;
         public float EliteMultDano = 1.4f;
-        public float ChefeMultVida = 2.1f;
+        public float ChefeMultVida = 2.2f;
         public float ChefeMultDano = 1.0f;
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
+        public float InclinacaoFimDeAto = 0.075f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
         public int AndaresPorAncoragem = 5;
@@ -111,6 +113,68 @@ namespace Necro.Nucleo
         public int[] AfixosMax = { 0, 1, 2, 3, 3 };
         public int[] EssenciaPorQualidade = { 1, 3, 8, 20, 60 };
         public int CapacidadeFilacterio = 20;
+        // ---- Talentos do necromante ----
+        public int NiveisPorPontoDeTalento = 2;            // nível 10 em ~1 h e ~126 em 14 h: a árvore (67 pontos) enche perto do fim do Ato 2
+        public long EssenciaPorPontoRedistribuido = 10;
+        public DadosTalento[] Talentos =
+        {
+            // Ossos: o exército
+            new DadosTalento { Ramo = RamoDeTalento.Ossos, Nome = "Ossatura", Texto = "+{0}% de vida dos minions", Efeito = EfeitoDeTalento.VidaDosMinions, PorPonto = 0.03f },
+            new DadosTalento { Ramo = RamoDeTalento.Ossos, Nome = "Fio de Osso", Texto = "+{0}% de dano dos minions", Efeito = EfeitoDeTalento.DanoDosMinions, PorPonto = 0.03f },
+            new DadosTalento { Ramo = RamoDeTalento.Ossos, Nome = "Marcha Fúnebre", Texto = "+{0}% de velocidade de ataque dos minions", Efeito = EfeitoDeTalento.VelAtaqueDosMinions, PorPonto = 0.02f, PontosNoRamo = 4 },
+            new DadosTalento { Ramo = RamoDeTalento.Ossos, Nome = "Sede dos Mortos", Texto = "Minions roubam {0}% do dano como vida", Efeito = EfeitoDeTalento.RouboDeVidaDosMinions, PorPonto = 0.01f, PontosNoRamo = 8 },
+            new DadosTalento { Ramo = RamoDeTalento.Ossos, Nome = "Senhor da Legião", Texto = "+{0} de Comando", Efeito = EfeitoDeTalento.Comando, PorPonto = 1f, Maximo = 2, PontosNoRamo = 14 },
+            // Sangue: o próprio necromante
+            new DadosTalento { Ramo = RamoDeTalento.Sangue, Nome = "Carne Velha", Texto = "+{0}% de vida do necromante", Efeito = EfeitoDeTalento.VidaDoNecromante, PorPonto = 0.06f },
+            new DadosTalento { Ramo = RamoDeTalento.Sangue, Nome = "Verbo Sombrio", Texto = "+{0}% de dano de feitiços", Efeito = EfeitoDeTalento.DanoDeFeiticos, PorPonto = 0.06f },
+            new DadosTalento { Ramo = RamoDeTalento.Sangue, Nome = "Poço Profundo", Texto = "+{0} de mana por segundo", Efeito = EfeitoDeTalento.RegenMana, PorPonto = 0.4f, PontosNoRamo = 4 },
+            new DadosTalento { Ramo = RamoDeTalento.Sangue, Nome = "Olho do Agouro", Texto = "+{0}% de chance de crítico do necromante", Efeito = EfeitoDeTalento.ChanceCritico, PorPonto = 0.02f, PontosNoRamo = 8 },
+            new DadosTalento { Ramo = RamoDeTalento.Sangue, Nome = "Pressa do Túmulo", Texto = "Feitiços recarregam {0}% mais rápido", Efeito = EfeitoDeTalento.ReducaoDeRecarga, PorPonto = 0.03f, PontosNoRamo = 14 },
+            // Sombras: almas e saque
+            new DadosTalento { Ramo = RamoDeTalento.Sombras, Nome = "Mão Leve", Texto = "Ceifa {0}% mais rápida", Efeito = EfeitoDeTalento.VelocidadeDeCeifa, PorPonto = 0.08f },
+            new DadosTalento { Ramo = RamoDeTalento.Sombras, Nome = "Isca de Almas", Texto = "+{0}% de chance de alma", Efeito = EfeitoDeTalento.ChanceDeAlma, PorPonto = 0.05f },
+            new DadosTalento { Ramo = RamoDeTalento.Sombras, Nome = "Avareza", Texto = "+{0}% de Ossos por expedição", Efeito = EfeitoDeTalento.Ossos, PorPonto = 0.05f, PontosNoRamo = 4 },
+            new DadosTalento { Ramo = RamoDeTalento.Sombras, Nome = "Toque Certeiro", Texto = "+{0}% de chance de a ceifa por toque melhorar a alma", Efeito = EfeitoDeTalento.ToqueMelhoraAlma, PorPonto = 0.05f, PontosNoRamo = 8 },
+            new DadosTalento { Ramo = RamoDeTalento.Sombras, Nome = "Vontade Profana", Texto = "+{0}% de Poder Necromântico (todos os atributos dos minions)", Efeito = EfeitoDeTalento.PoderNecromantico, PorPonto = 0.02f, PontosNoRamo = 14 },
+        };
+
+        // ---- Sacrifício e Fragmentos de Alma ----
+        public long[] FragmentosPorQualidade = { 2, 5, 12, 30, 80 };   // por qualidade do minion sacrificado
+        public float FragmentosPorNivel = 0.05f;                     // +5% por nível do minion acima do 1º
+        public long[] FragmentosParaImbuir = { 15, 60, 240, 900 };   // subir de Fraca, Comum, Vigorosa, Ancestral
+
+        // ---- Oferendas (Restos de cadáver) e Ritos de Sangue ----
+        public long RestosPorOferenda = 20;
+        public float CrescimentoDaOferenda = 1.30f;
+        public int NivelMaximoDaOferenda = 20;
+        /// <summary>Uma por CondicaoCadaver, na ordem do enum: Intacto, Mutilado, Queimado, Congelado, Eletrizado, Putrefato, Oco.</summary>
+        public DadosOferenda[] Oferendas =
+        {
+            new DadosOferenda { Nome = "Corpos intactos", Texto = "+{0}% de vida dos minions", Efeito = EfeitoDeTalento.VidaDosMinions, PorNivel = 0.02f },
+            new DadosOferenda { Nome = "Corpos mutilados", Texto = "+{0}% de dano dos minions", Efeito = EfeitoDeTalento.DanoDosMinions, PorNivel = 0.02f },
+            new DadosOferenda { Nome = "Corpos queimados", Texto = "+{0}% de dano de feitiços", Efeito = EfeitoDeTalento.DanoDeFeiticos, PorNivel = 0.03f },
+            new DadosOferenda { Nome = "Corpos congelados", Texto = "+{0}% de vida do necromante", Efeito = EfeitoDeTalento.VidaDoNecromante, PorNivel = 0.03f },
+            new DadosOferenda { Nome = "Corpos eletrizados", Texto = "+{0}% de velocidade de ataque dos minions", Efeito = EfeitoDeTalento.VelAtaqueDosMinions, PorNivel = 0.01f },
+            new DadosOferenda { Nome = "Corpos putrefatos", Texto = "+{0}% de chance de alma", Efeito = EfeitoDeTalento.ChanceDeAlma, PorNivel = 0.03f },
+            new DadosOferenda { Nome = "Corpos ocos", Texto = "+{0}% de Ossos por expedição", Efeito = EfeitoDeTalento.Ossos, PorNivel = 0.03f },
+        };
+        public float RitoColheitaChanceDeAlma = 1.0f;       // +100% de chance de alma na expedição
+        public float RitoBanqueteOssos = 1.0f;              // +100% de Ossos na expedição
+        public DadosRito[] Ritos =
+        {
+            new DadosRito { Id = Rito.Pressa, Nome = "Rito da Pressa", Efeito = "A próxima expedição parte direto do Ponto de Ancoragem, sem recuar 2 andares", Sangue = 15 },
+            new DadosRito { Id = Rito.Colheita, Nome = "Rito da Colheita", Efeito = "+100% de chance de alma na próxima expedição", Sangue = 20 },
+            new DadosRito { Id = Rito.Banquete, Nome = "Rito do Banquete", Efeito = "+100% de Ossos na próxima expedição", Sangue = 20 },
+        };
+
+        // ---- Ascensão (Legados comprados com Cinzas; custo do próximo nível = nível + 1) ----
+        public DadosLegado[] Legados =
+        {
+            new DadosLegado { Nome = "Legado de Ossos", Texto = "+{0}% de Ossos por expedição", PorNivel = 0.06f, Maximo = 25 },
+            new DadosLegado { Nome = "Legado de Sangue", Texto = "+{0}% em todos os atributos dos minions", PorNivel = 0.04f, Maximo = 25 },
+            new DadosLegado { Nome = "Legado de Sombras", Texto = "+{0}% de chance de alma", PorNivel = 0.06f, Maximo = 15 },
+        };
+
         // ---- Bestiário ----
         public long[] MarcosDoBestiario = { 100, 400, 1500, 5000, 15000 };   // mortes de uma espécie para cada nível de Domínio
         public float BonusPorDominio = 0.03f;               // vida e dano dos minions da espécie, por nível de Domínio
@@ -146,14 +210,22 @@ namespace Necro.Nucleo
             new DadosMissao { Titulo = "Carne para o trabalho", Historia = "Uma alma presa é só um peso. De pé, ela luta por ti.", Objetivo = "Erga 1 minion no Exército", Tipo = TipoMissao.ErguerMinions, Quantidade = 1, Ossos = 80 },
             new DadosMissao { Titulo = "Fundações", Historia = "Sob a abadia há espaço para uma cidade dos mortos. Começa pela primeira pedra.", Objetivo = "Melhore construções da Necrópole 2 vezes", Tipo = TipoMissao.MelhorarConstrucoes, Quantidade = 2, Essencia = 20 },
             new DadosMissao { Titulo = "Âncora", Historia = "No quinto andar o véu é fino: dá para fincar um ponto de retorno.", Objetivo = "Conclua o andar 5", Tipo = TipoMissao.AlcancarAndar, Alvo = 5, Ossos = 150 },
+            new DadosMissao { Titulo = "Saque", Historia = "Os monges trancaram o que tinham de valor. As trancas apodreceram antes deles.", Objetivo = "Abra 3 baús na masmorra", Tipo = TipoMissao.AbrirBaus, Quantidade = 3, Ossos = 120 },
             new DadosMissao { Titulo = "Espólios", Historia = "Os monges enterraram relíquias com os seus. Já não lhes servem.", Objetivo = "Tenha 3 itens equipados", Tipo = TipoMissao.ItensEquipados, Quantidade = 3, Essencia = 25 },
+            new DadosMissao { Titulo = "A mão do ceifador", Historia = "A alma escapa depressa. A tua mão é mais rápida que a reza.", Objetivo = "Ceife 5 almas tocando nos orbes", Tipo = TipoMissao.CeifarPorToque, Quantidade = 5, Essencia = 30 },
             new DadosMissao { Titulo = "Praga de diabretes", Historia = "Alguém abriu uma fresta para baixo. Os pequenos passaram primeiro.", Objetivo = "Mate 40 Diabretes", Tipo = TipoMissao.MatarEspecie, Alvo = (int)EspecieId.Diabrete, Quantidade = 40, Ossos = 200 },
+            new DadosMissao { Titulo = "Três em uma", Historia = "Três almas fracas, bem costuradas, fazem uma que presta.", Objetivo = "Faça 1 fusão de almas no Exército", Tipo = TipoMissao.FundirAlmas, Quantidade = 1, Ossos = 150 },
             new DadosMissao { Titulo = "Alma de valor", Historia = "Nem toda alma é igual. Algumas ainda queimam.", Objetivo = "Ceife 1 alma Vigorosa ou melhor", Tipo = TipoMissao.CeifarAlmas, Alvo = (int)Qualidade.Vigorosa, Quantidade = 1, Essencia = 40 },
             new DadosMissao { Titulo = "Legião", Historia = "Um necromante sozinho é um homem com um cajado.", Objetivo = "Tenha 6 minions em campo", Tipo = TipoMissao.MinionsEmCampo, Quantidade = 6, Ossos = 300 },
+            new DadosMissao { Titulo = "Sangue por poder", Historia = "Nas encruzilhadas alguma coisa oferece ajuda. Nunca de graça.", Objetivo = "Aceite 2 pactos nas encruzilhadas (do andar 5 em diante)", Tipo = TipoMissao.AceitarPactos, Quantidade = 2, Essencia = 40 },
             new DadosMissao { Titulo = "Caça aos campeões", Historia = "Os que brilham guardam o caminho. Apaga-os.", Objetivo = "Mate 5 elites", Tipo = TipoMissao.MatarElites, Quantidade = 5, Essencia = 60 },
+            new DadosMissao { Titulo = "Frestas", Historia = "Entre um salão e outro há sempre uma porta que ninguém vigia.", Objetivo = "Atravesse 10 salas especiais (baús, santuários, fontes...)", Tipo = TipoMissao.SalasEspeciais, Quantidade = 10, Essencia = 60 },
             new DadosMissao { Titulo = "Desmanche", Historia = "O que não te serve inteiro serve em pedaços.", Objetivo = "Desmanche 10 itens", Tipo = TipoMissao.DesmancharItens, Quantidade = 10, Ossos = 250 },
+            new DadosMissao { Titulo = "O preço", Historia = "Nem todo servo merece o lugar. Os fracos alimentam os fortes.", Objetivo = "Sacrifique 2 minions", Tipo = TipoMissao.SacrificarMinions, Quantidade = 2, Essencia = 60 },
             new DadosMissao { Titulo = "Cripta funda", Historia = "Mais nichos, mais mortos sob o teu comando.", Objetivo = "Leve a Cripta ao nível 5", Tipo = TipoMissao.NivelDeConstrucao, Alvo = (int)Construcao.Cripta, Quantidade = 5, Essencia = 50 },
+            new DadosMissao { Titulo = "Oferenda", Historia = "Queimados, partidos, ocos: cada morte serve a um altar.", Objetivo = "Faça 3 oferendas na Necrópole", Tipo = TipoMissao.FazerOferendas, Quantidade = 3, Ossos = 300 },
             new DadosMissao { Titulo = "Descida", Historia = "O canto que sobe do fundo não é reza. É costura.", Objetivo = "Conclua o andar 9", Tipo = TipoMissao.AlcancarAndar, Alvo = 9, Ossos = 500 },
+            new DadosMissao { Titulo = "Conhece o teu inimigo", Historia = "Quem já abriu mil esqueletos sabe onde cada osso cede.", Objetivo = "Chegue ao Domínio 2 de Esqueleto no Bestiário", Tipo = TipoMissao.DominioDeEspecie, Alvo = (int)EspecieId.Esqueleto, Quantidade = 2, Essencia = 80 },
             new DadosMissao { Titulo = "A Abadessa Costurada", Historia = "Ela remendou as irmãs em si mesma para não morrer sozinha. O teu filactério está no peito dela.", Objetivo = "Derrote a chefe do Ato 1 (andar 10)", Tipo = TipoMissao.DerrotarChefe, Alvo = 1, Ossos = 1000, Essencia = 150 },
             new DadosMissao { Titulo = "Além da abadia", Historia = "O filactério estava vazio. Alguém levou o que havia dentro, mais para baixo.", Objetivo = "Conclua o andar 15", Tipo = TipoMissao.AlcancarAndar, Alvo = 15, Ossos = 2000 },
             new DadosMissao { Titulo = "Caçador de ancestrais", Historia = "Há almas aqui mais velhas do que a pedra.", Objetivo = "Ceife 1 alma Ancestral ou melhor", Tipo = TipoMissao.CeifarAlmas, Alvo = (int)Qualidade.Ancestral, Quantidade = 1, Essencia = 200 },
@@ -172,18 +244,95 @@ namespace Necro.Nucleo
         public int NiveisPorComandoExtra = 30;              // +Comando vale 1, e +1 a cada N níveis de item (0 = sempre 1)
         public float TetoReducaoDeRecarga = 0.50f;          // teto da soma de Redução de recarga
         public int CapacidadeInventario = 40;
+        public int LarguraDoInventario = 10;                // grade do inventário, em espaços
+        public int AlturaDoInventario = 8;
         public int[] EssenciaPorRaridadeItem = { 1, 3, 10, 40, 100 };
         public float EssenciaItemPorNivel = 0.10f;          // +10% de Essência por nível do item ao desmanchar
 
         // ---- Lendários ----
+        // ---- Estilo de combate pela arma (cajado = à distância, sem mudanças; foice = corpo a corpo) ----
+        public float FoiceAlcance = 1.9f;
+        public float FoiceBonusDeDano = 0.4f;            // "mais" dano do ataque básico e dos feitiços que usam o dano do necromante
+        public float FoiceBonusDeVida = 0.25f;
+        public float FoiceArmadura = 15f;
+        public int FoiceAlvosExtras = 1;                 // inimigos a mais feridos por golpe
+
+        // ---- Feitiços vinculados ao equipamento (dano em múltiplos do dano do necromante) ----
+        public float FeiticoDeItemPorRaridade = 0.15f;   // +15% de potência por degrau de raridade do item
+        public float AutoFeiticoPenalidade = 1.5f;       // no automático a recarga é 50% maior
+        public float RaioSombrioPotencia = 4f;  public float RaioSombrioRecarga = 12f;      // Cajado: um alvo
+        public float CeifadaPotencia = 2.5f;      public float CeifadaRaio = 3.0f; public float CeifadaRecarga = 10f;   // Foice: em volta do necromante
+        public float ChuvaDeOssosPotencia = 1.8f; public float ChuvaDeOssosRaio = 3.5f; public float ChuvaDeOssosRecarga = 16f;  // Grimório: área
+        public float EscudoDeAlmasFracao = 0.10f; public float EscudoDeAlmasRecarga = 25f;  // Relicário: escudo em todos os aliados
+
+        // ---- Aleatoriedade ----
+        public float DomBase = 0.06f;                    // dons das almas: faixa = DomBase + DomPorQualidade x qualidade
+        public float DomPorQualidade = 0.03f;
+        public float DomParteNegativa = 0.6f;            // o piso da faixa é -faixa x isto (pende para cima)
+        // ---- Masmorra: salas especiais entre os combates ----
+        public float ChanceDeSalaEspecial = 0.45f;       // por intervalo entre duas salas de combate
+        public int SalasEspeciaisAPartirDoAndar = 2;
+        public float TempoDeSalaEspecial = 3.2f;         // s: o necromante anda até o objeto e interage
+        public float PausaAposSalaEspecial = 0.8f;
+        public float ChanceDeSegundaSalaVazia = 0.35f;
+        public float ChanceDeSalaVazia = 0.7f;           // câmaras e corredores sem evento: dão corpo ao mapa
+        public float TempoDeSalaVazia = 1.2f;
+        public float SalaVaziaChanceDeOssos = 0.3f;
+        public float ToqueBonusDeSala = 0.5f;            // o toque do jogador melhora o resultado da sala
+        public float BauOssos = 14f;                     // x (1 + 10% por andar)
+        public float BauChanceDeItem = 0.30f;
+        public float BauChanceDeItemComToque = 0.75f;
+        public float BauChanceDeMimico = 0.12f;
+        public float BauChanceDourado = 0.06f;
+        public int BauDouradoSangue = 3;
+        public float BencaoForca = 0.10f;                // Fúria: +dano; Proteção: -dano sofrido; Colheita: +ossos (x2,5)
+        public float FonteCura = 0.20f;
+        public float AlmasPresasChanceDeMelhorar = 0.5f;
+        public float EmboscadaOrcamento = 0.5f;
+        public float MercadorPreco = 40f;                // Ossos da própria expedição, x (1 + 10% por andar)
+        public float MercadorDescontoComToque = 0.4f;
+        public float MercadorChanceDeRaro = 0.2f;
+        public float AltarCustoDeVida = 0.15f;           // o toque do jogador evita o custo
+        public float AltarBonusDeAlma = 0.8f;            // até o fim do andar
+        // nível secreto (o Pasto Profano)
+        public float ChanceDeNivelSecreto = 0.025f;
+        public int SecretoAPartirDoAndar = 5;
+        public int SecretoHordaBase = 14, SecretoHordaMaxima = 26;
+        public float SecretoOssos = 2f;
+        public int SecretoSangue = 5;
+        // ambientes da sala do chefe (fração da vida máxima)
+        public float LavaIntervalo = 5f, LavaAviso = 1.5f, LavaRaio = 1.7f;
+        public float LavaDanoEmAliados = 0.10f, LavaDanoNoNecromante = 0.06f, LavaDanoEmInimigos = 0.18f, LavaDanoNoChefe = 0.03f;
+        public float NevoaIntervalo = 2f, NevoaDanoEmAliados = 0.012f, NevoaDanoEmInimigos = 0.02f, NevoaReducaoDeCura = 0.25f;
+        public float GeadaIntervalo = 6f, GeadaDuracao = 1.8f;
+
+        public float ChanceDePressagio = 0.35f;          // chance de um andar comum ter um presságio
+        public int PressagioAPartirDoAndar = 7;         // a primeira expedição (até o andar 6) fica sem surpresas
+        public float FolgaDoPoderSugerido = 0.6f;        // o Poder sugerido do andar é a escala dos inimigos x isto
+
+        public float SorteMaisDropsPorPonto = 0.005f;        // Sorte: +0,5% de itens e almas por ponto
+        public float SorteChanceDeMelhorPorPonto = 0.01f;   // Sorte: 1% por ponto de sortear duas vezes e ficar com o melhor (100 pontos = sempre)
+
+        // ---- Tática ----
+        public float RaioDeFoco = 1.6f;                  // minions trocam o alvo mais próximo pelo mais ferido dentro deste raio dele
+        public float GolpeBrutalAviso = 1.4f;            // s de aviso antes do golpe de elite/chefe (janela para o jogador interromper)
+        public float GolpeBrutalRaio = 2.3f;
+        public float GolpeBrutalMult = 2.0f;             // x o dano do inimigo, em todos no raio
+        public float GolpeBrutalRecarga = 11f;
+        public float GolpeBrutalAtordoamento = 2.0f;     // s parado quando o jogador interrompe
+
         // ---- Mão do jogador (comandos de toque; ausente, nada disto acontece) ----
+        public float SoproCura = 0.25f;                  // Sopro Profano: fração da vida máxima curada no aliado tocado
+        public float SoproRecarga = 22f;
+        public float MarcaDuracao = 10f;                 // Marca do Ceifador: toque num inimigo
+        public float MarcaBonusDeDano = 0.25f;           // "mais" dano aliado no inimigo marcado
         public float ToqueChanceDeMelhorarAlma = 0.25f;  // ceifa por toque: chance de a alma subir uma qualidade (até Ancestral)
-        public float DetonarRecarga = 25f;               // s
+        public float DetonarRecarga = 20f;               // s
         public int DetonarMaxCorpos = 8;
-        public float DetonarPotencia = 1.0f;             // x o dano por cadáver da Explosão de Cadáver
-        public float FrenesiRecarga = 40f;               // s
-        public float FrenesiDuracao = 6f;                // s
-        public float FrenesiBonusDeDano = 0.35f;         // "mais" dano dos minions enquanto dura
+        public float DetonarPotencia = 2.0f;             // x o dano por cadáver da Explosão de Cadáver
+        public float FrenesiRecarga = 30f;               // s
+        public float FrenesiDuracao = 8f;                // s
+        public float FrenesiBonusDeDano = 0.50f;         // "mais" dano dos minions enquanto dura
         // ---- Encruzilhadas (pactos de expedição; só o jogador presente aceita) ----
         public int AndaresPorEncruzilhada = 2;           // a cada N andares concluídos na expedição abre uma oferta
         public int EncruzilhadaAPartirDoAndar = 5;       // antes disso o jogador novo ainda está aprendendo o básico
@@ -196,6 +345,10 @@ namespace Necro.Nucleo
             new DadosPacto { Nome = "Pacto da Trégua", Ganho = "Cura total do exército agora", Preco = "-25% de Ossos", CuraAgora = true, Ossos = 0.75f },
             new DadosPacto { Nome = "Pacto da Pressa", Ganho = "Detonar e Frenesi recarregam 60% mais rápido", Preco = "Inimigos novos têm +12% de vida", RecargaDosPoderes = 1.60f, VidaInimigo = 1.12f },
             new DadosPacto { Nome = "Pacto do Avarento", Ganho = "+80% de chance de item", Preco = "Inimigos novos têm +15% de vida e causam +10% de dano", ChanceDeItem = 1.80f, VidaInimigo = 1.15f, DanoInimigo = 1.10f },
+            new DadosPacto { Nome = "Pacto do Carniceiro", Ganho = "Minions causam +50% de dano", Preco = "Inimigos novos têm +25% de vida", DanoMinion = 1.50f, VidaInimigo = 1.25f },
+            new DadosPacto { Nome = "Pacto da Fartura", Ganho = "+40% de Ossos e +40% de chance de item", Preco = "Inimigos causam +20% de dano", Ossos = 1.40f, ChanceDeItem = 1.40f, DanoInimigo = 1.20f },
+            new DadosPacto { Nome = "Pacto do Covarde", Ganho = "Inimigos causam -20% de dano", Preco = "-40% de Ossos", DanoInimigo = 0.80f, Ossos = 0.60f },
+            new DadosPacto { Nome = "Pacto das Mil Almas", Ganho = "+120% de chance de alma", Preco = "Inimigos novos têm +30% de vida", ChanceDeAlma = 1.20f, VidaInimigo = 1.30f },
         };
 
         public float CeifeiroFamintoCura = 0.05f;   // fração da vida máxima curada em cada minion por alma ceifada

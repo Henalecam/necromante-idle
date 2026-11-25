@@ -28,16 +28,19 @@ namespace Necro.Nucleo
             if (!Pode(p, especie, q, cfg)) return null;
             p.Essencia -= Custo(q, cfg);
             var heranca = new List<Afixo>();
+            float hv = -1f, hd = -1f, hvel = -1f;   // a fundida fica com o melhor dom de cada tipo entre as três
             int tirar = cfg.AlmasPorFusao;
             for (int i = p.Filacterio.Count - 1; i >= 0 && tirar > 0; i--)
             {
                 var a = p.Filacterio[i];
                 if (a.Especie != especie || a.Qualidade != q) continue;
                 if (a.Afixos != null) for (int k = 0; k < a.Afixos.Count; k++) if (!heranca.Contains(a.Afixos[k])) heranca.Add(a.Afixos[k]);
+                if (a.DomVida > hv) hv = a.DomVida; if (a.DomDano > hd) hd = a.DomDano; if (a.DomVelocidade > hvel) hvel = a.DomVelocidade;
                 p.Filacterio.RemoveAt(i); tirar--;
             }
             var rng = new Rng(p.ContadorDeSementes++ * 0x9E3779B97F4A7C15UL + 0xF05A0UL);
             var nova = new Alma { Especie = especie, Qualidade = q + 1 };
+            nova.DomVida = hv; nova.DomDano = hd; nova.DomVelocidade = hvel;
             int nq = (int)nova.Qualidade;
             // herda primeiro (em ordem sorteada) o que as três tinham; completa com sorteio se faltar para o mínimo da qualidade
             int alvo = heranca.Count < cfg.AfixosMin[nq] ? cfg.AfixosMin[nq] : (heranca.Count > cfg.AfixosMax[nq] ? cfg.AfixosMax[nq] : heranca.Count);
@@ -54,6 +57,7 @@ namespace Necro.Nucleo
             if (nova.Qualidade == Qualidade.Profana) nova.Traco = (TracoProfano)(1 + rng.Intervalo(0, 3));
             p.Filacterio.Add(nova);
             p.FusoesFeitas++;
+            Missoes.Registrar(p, AcaoDeMissao.Fundir, cfg);
             return nova;
         }
     }

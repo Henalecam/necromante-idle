@@ -10,7 +10,7 @@ ergue-as como minions e as evolui. Combate automático e visual, com gore; o jog
 | Pasta | Conteúdo |
 |---|---|
 | `jogo/Nucleo` | Regras do jogo em C# puro (.NET Standard 2.1), determinístico, 10 ticks/s. Sem Unity. |
-| `jogo/Testes` | Testes (80) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
+| `jogo/Testes` | Testes (100) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
 | `jogo/Web` | Versão de navegador: o núcleo compilado para WebAssembly + cliente em canvas. `./montar.sh` gera o site. |
 | `jogo/UnityProjeto` | Projeto Unity 6.3 LTS (camada visual). Conferido só por compilação; ainda não aberto numa Unity. |
 | `jogo/Replay` | Exporta um replay da simulação para as prévias em vídeo. |
@@ -23,6 +23,11 @@ Combate automático com feitiços · ceifa de almas (automática ou por toque, c
 exército com Comando, níveis e estágios · fusão de almas · bestiário com Domínio por espécie · equipamento (9 espaços,
 5 raridades, lendários) · Necrópole (5 construções) · missões com história · encruzilhadas com pactos · save local e
 progresso ausente.
+
+Masmorra explorada sala por sala, em vista isométrica: cada andar é um mapa sorteado (combates, baús, santuários, fontes,
+almas presas, emboscadas, mercador, altar de sangue, câmaras vazias), sala do chefe com ambiente (lava, névoa, geada) e um
+nível secreto raro. Também: talentos, sacrifício e Fragmentos, oferendas e ritos, Ascensão com Legados, feitiços de item com
+modo automático, dons aleatórios, presságios, Sorte, estatísticas de combate e painel de testes.
 
 ## Rodar
 

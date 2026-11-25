@@ -177,6 +177,242 @@ namespace Necro.Testes
                 p.MortesPorEspecie = null;
                 Afirmar(Bestiario.Mortes(p, EspecieId.Esqueleto) == 0, "save antigo sem bestiário não quebra");
             });
+            Teste("talentos: 1 ponto a cada 2 níveis, pré-requisito no ramo, efeito na simulação e redistribuição paga", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                Afirmar(Talentos.Disponiveis(p, Cfg) == 0 && !Talentos.Investir(p, 0, Cfg), "nível 1 não tem ponto");
+                p.NivelNecromante = 1 + 5 * Cfg.NiveisPorPontoDeTalento;
+                Afirmar(Talentos.Disponiveis(p, Cfg) == 5, "5 pontos");
+                Afirmar(!Talentos.PodeInvestir(p, 2, Cfg), "Marcha Fúnebre pede 4 pontos em Ossos");
+                for (int i = 0; i < 4; i++) Afirmar(Talentos.Investir(p, 0, Cfg), "investe em Ossatura");
+                Afirmar(Talentos.Investir(p, 2, Cfg) && Talentos.Disponiveis(p, Cfg) == 0 && !Talentos.Investir(p, 1, Cfg), "abre o nó seguinte e acaba o saldo");
+                var b = Equipamento.CalcularBonus(p, Cfg);
+                Perto(b.VidaDosMinions, 4 * Cfg.Talentos[0].PorPonto, 1e-5f, "bônus de vida dos minions");
+                var sem = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 5, ModoExpedicao.Avancar, 1);
+                var p2 = Progressao.NovoJogo(Cfg); p2.NivelNecromante = 1; p2.Talentos[0] = 4;
+                var com = new Simulacao(Cfg, p2, 5, ModoExpedicao.Avancar, 1);
+                float v0 = 0, v1 = 0;
+                foreach (var e in sem.Entidades) if (e.Faccao == Faccao.Minion) { v0 = e.VidaMax; break; }
+                foreach (var e in com.Entidades) if (e.Faccao == Faccao.Minion) { v1 = e.VidaMax; break; }
+                Perto(v1 / v0, 1f + 4 * Cfg.Talentos[0].PorPonto, 0.005f, "minion nasce com mais vida");
+                p.NivelNecromante = 1 + 39 * Cfg.NiveisPorPontoDeTalento; for (int i = 0; i < 5; i++) Talentos.Investir(p, 1, Cfg);
+                for (int i = 0; i < 5; i++) Talentos.Investir(p, 3, Cfg);
+                Afirmar(Talentos.Investir(p, 4, Cfg) && Talentos.Investir(p, 4, Cfg) && !Talentos.Investir(p, 4, Cfg), "Senhor da Legião tem máximo 2");
+                Afirmar(Progressao.ComandoMaximoEfetivo(p, Cfg) == p.ComandoMaximo + 2, "o Comando sobe com o talento");
+                p.Essencia = 0; Afirmar(!Talentos.Redistribuir(p, Cfg), "sem Essência não redistribui");
+                long custo = Talentos.CustoDeRedistribuir(p, Cfg); p.Essencia = custo;
+                Afirmar(Talentos.Redistribuir(p, Cfg) && p.Essencia == 0 && Talentos.Gastos(p) == 0 && Talentos.Disponiveis(p, Cfg) == 39, "redistribui, paga e devolve os pontos");
+                p.Talentos = null; Afirmar(Talentos.Gastos(p) == 0 && Equipamento.CalcularBonus(p, Cfg) != null, "save antigo sem talentos não quebra");
+            });
+            Teste("inventário em grade: cada item ocupa o seu tamanho, nada se sobrepõe, e cheio é quando não cabe", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); var rng = new Rng(31);
+                int total = Cfg.LarguraDoInventario * Cfg.AlturaDoInventario;
+                int cabem = (Cfg.LarguraDoInventario / 2) * (Cfg.AlturaDoInventario / 3), guardados = 0;
+                for (int i = 0; i < cabem + 5; i++)
+                    if (Equipamento.GuardarItem(p, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Raro, TipoItem.Peitoral), Cfg) == DestinoDoItem.Guardado) guardados++;
+                Afirmar(guardados == cabem && p.Inventario.Count == cabem, "peitorais 2x3: cabem " + cabem + ", guardou " + guardados);
+                var anel = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Raro, TipoItem.Anel);
+                Afirmar(Equipamento.Cabe(p, anel, Cfg), "sobraram duas fileiras: o anel 1x1 cabe");
+                p.Inventario.RemoveAt(0);
+                p.Inventario.Add(GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Raro, TipoItem.Cajado));
+                p.Inventario.Add(GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Raro, TipoItem.Elmo));
+                var xs = new int[p.Inventario.Count]; var ys = new int[p.Inventario.Count];
+                Afirmar(Equipamento.Arrumar(p.Inventario, Cfg, xs, ys), "tudo coube depois de trocar um peitoral por cajado + elmo");
+                var usado = new bool[total];
+                for (int i = 0; i < p.Inventario.Count; i++)
+                {
+                    int w, h; Equipamento.Tamanho(p.Inventario[i].Tipo, out w, out h);
+                    Afirmar(xs[i] >= 0 && xs[i] + w <= Cfg.LarguraDoInventario && ys[i] + h <= Cfg.AlturaDoInventario, "dentro da grade");
+                    for (int dy = 0; dy < h; dy++) for (int dx = 0; dx < w; dx++)
+                    {
+                        int c = (ys[i] + dy) * Cfg.LarguraDoInventario + xs[i] + dx;
+                        Afirmar(!usado[c], "dois itens no mesmo espaço"); usado[c] = true;
+                    }
+                }
+            });
+            Teste("sacrifício: minion vira Fragmentos, a regra automática só toca na reserva, e Imbuir sobe a qualidade", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                int n0 = p.Minions.Count;
+                p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Zumbi, Qualidade = Qualidade.Fraca }, Nivel = 11, Ativo = false });
+                p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Zumbi, Qualidade = Qualidade.Vigorosa }, Ativo = false });
+                long esperado = (long)Math.Round(Cfg.FragmentosPorQualidade[0] * (1.0 + Cfg.FragmentosPorNivel * 10));
+                Afirmar(Sacrificio.Fragmentos(p.Minions[n0], Cfg) == esperado, "Fragmentos crescem com o nível");
+                p.SacrificarAbaixoDe = Qualidade.Vigorosa;
+                Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg);
+                Afirmar(p.Minions.Count == n0 + 1 && p.FragmentosDeAlma == esperado, "a regra sacrificou só o Fraco da reserva; os Comuns em campo ficaram");
+                foreach (var m in p.Minions) Afirmar(m.Ativo || m.Alma.Qualidade >= Qualidade.Vigorosa, "ninguém em campo foi tocado");
+                Afirmar(!Sacrificio.PodeImbuir(p, 0, Cfg), "sem Fragmentos suficientes não imbui");
+                p.FragmentosDeAlma = Cfg.FragmentosParaImbuir[(int)Qualidade.Comum];
+                int nivel = p.Minions[0].Nivel;
+                Afirmar(Sacrificio.Imbuir(p, 0, Cfg) && p.Minions[0].Alma.Qualidade == Qualidade.Vigorosa && p.FragmentosDeAlma == 0 && p.Minions[0].Nivel == nivel, "imbui: sobe um degrau, paga e mantém o nível");
+                p.Minions[0].Alma.Qualidade = Qualidade.Ancestral; p.FragmentosDeAlma = 100000;
+                Afirmar(Sacrificio.Imbuir(p, 0, Cfg) && p.Minions[0].Alma.Traco != TracoProfano.Nenhum && !Sacrificio.Imbuir(p, 0, Cfg), "Profana ganha traço e é o teto");
+                Afirmar(Sacrificio.Sacrificar(p, 99, Cfg) == 0, "índice inválido não faz nada");
+            });
+            Teste("oferendas gastam Restos por bônus permanente; ritos gastam Sangue e valem por uma expedição", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                var rr = new ResultadoExpedicao(); rr.Restos[0] = Cfg.RestosPorOferenda;
+                Progressao.AplicarResultado(p, rr, Cfg);
+                Afirmar(Oferendas.Nivel(p, 0) == 1 && p.Restos[0] == 0, "oferenda automática ao fim da expedição");
+                p.OferendasAutomaticas = false;
+                Afirmar(!Oferendas.Ofertar(p, 1, Cfg), "sem Restos não oferta");
+                p.Restos[1] = Cfg.RestosPorOferenda;
+                long c0 = Oferendas.Custo(p, 1, Cfg);
+                Afirmar(Oferendas.Ofertar(p, 1, Cfg) && p.Restos[1] == 0 && Oferendas.Nivel(p, 1) == 1 && Oferendas.Custo(p, 1, Cfg) > c0, "oferta, paga e o custo cresce");
+                Perto(Equipamento.CalcularBonus(p, Cfg).DanoDosMinions, Cfg.Oferendas[1].PorNivel, 1e-5f, "bônus de dano dos minions");
+                p.Restos[6] = 100000; for (int i = 0; i < 99; i++) Oferendas.Ofertar(p, 6, Cfg);
+                p.Restos[6] = long.MaxValue / 4; for (int i = 0; i < 99; i++) Oferendas.Ofertar(p, 6, Cfg);
+                Afirmar(Oferendas.Nivel(p, 6) == Cfg.NivelMaximoDaOferenda, "teto de nível");
+                p.Ossos = 0; Progressao.AplicarResultado(p, new ResultadoExpedicao { Ossos = 1000 }, Cfg);
+                Afirmar(p.Ossos == (long)Math.Round(1000 * (1.0 + Cfg.Oferendas[6].PorNivel * Cfg.NivelMaximoDaOferenda)), "Ossos com a oferenda: " + p.Ossos);
+
+                p.AndarDeAncoragem = 6; p.Sangue = 0;
+                Afirmar(!Oferendas.PrepararRito(p, Rito.Pressa, Cfg), "sem Sangue não prepara");
+                p.Sangue = 100; int semRito = Progressao.AndarDePartida(p, Cfg);
+                Afirmar(Oferendas.PrepararRito(p, Rito.Pressa, Cfg) && p.Sangue == 100 - Oferendas.DadosDoRito(Rito.Pressa, Cfg).Sangue, "prepara e paga");
+                Afirmar(Progressao.AndarDePartida(p, Cfg) == semRito + Cfg.AndaresDeRecuo, "Pressa: parte sem recuar");
+                var res = ExecutorSemTela.RodarExpedicao(Cfg, p, 3, ModoExpedicao.Avancar, Progressao.AndarDePartida(p, Cfg), 1);
+                Afirmar(p.RitoPreparado == Rito.Nenhum && Progressao.AndarDePartida(p, Cfg) == semRito, "o rito some ao partir");
+                Oferendas.PrepararRito(p, Rito.Banquete, Cfg);
+                var comRito = new Simulacao(Cfg, p, 9, ModoExpedicao.Avancar, 1); Oferendas.ConsumirRito(p);
+                var semR = new Simulacao(Cfg, p, 9, ModoExpedicao.Avancar, 1);
+                for (int t = 0; t < 600; t++) { comRito.Tick(); semR.Tick(); }
+                Afirmar(comRito.RitoDaExpedicao == Rito.Banquete && comRito.Resultado.Ossos > semR.Resultado.Ossos * 1.5, "Banquete: " + comRito.Resultado.Ossos + " contra " + semR.Resultado.Ossos);
+                p.Oferendas = null; Afirmar(Oferendas.Nivel(p, 0) == 0 && Equipamento.CalcularBonus(p, Cfg) != null, "save antigo não quebra");
+            });
+            Teste("item travado nunca é desmanchado; vender tudo respeita a trava e o teto de raridade", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); var rng = new Rng(77);
+                var comum = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Anel);
+                var magico = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Magico, TipoItem.Anel);
+                var raro = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Raro, TipoItem.Elmo);
+                var travado = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Botas); travado.Bloqueado = true;
+                p.Inventario.AddRange(new[] { comum, magico, raro, travado });
+                Afirmar(Equipamento.Desmanchar(p, travado, Cfg) == 0 && p.Inventario.Contains(travado), "travado não desmancha");
+                int n; long previsto = Equipamento.ValorDeTudo(p, Cfg, RaridadeItem.Magico, out n);
+                Afirmar(n == 2 && previsto == Equipamento.ValorEmEssencia(comum, Cfg) + Equipamento.ValorEmEssencia(magico, Cfg), "prévia conta só Comum e Mágico destravados");
+                long ganho = Equipamento.DesmancharTudo(p, Cfg, RaridadeItem.Magico, out n);
+                Afirmar(n == 2 && ganho == previsto && p.Essencia == previsto, "vendeu os dois e ganhou o previsto");
+                Afirmar(p.Inventario.Count == 2 && p.Inventario.Contains(raro) && p.Inventario.Contains(travado), "o Raro e o travado ficaram");
+                // inventário cheio só de travados: o item novo é que vira Essência
+                p.Inventario.Clear();
+                while (true) { var b = GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Peitoral); b.Bloqueado = true; if (!Equipamento.Cabe(p, b, Cfg)) break; p.Inventario.Add(b); }
+                int antes = p.Inventario.Count;
+                var lend = GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Raro, TipoItem.Peitoral);
+                Afirmar(Equipamento.GuardarItem(p, lend, Cfg) == DestinoDoItem.Desmanchado && p.Inventario.Count == antes, "travados não saem nem para um item melhor");
+            });
+            Teste("ascensão: só depois da chefe do Ato 1; zera a vida, rende Cinzas, mantém bestiário, missões e itens travados", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); var rng = new Rng(4);
+                Afirmar(!Ascensao.Pode(p) && Ascensao.Ascender(p, Cfg) == 0, "antes da chefe não ascende");
+                p.ChefesDerrotados.Add(1); p.MaiorAndarConcluido = 15; p.AndarDeAncoragem = 16; p.NivelNecromante = 40; p.Ossos = 9999; p.Essencia = 500;
+                p.Construcoes[1] = 12; p.Talentos[0] = 5; p.MissaoAtual = 9; p.MortesPorEspecie[1] = 700; p.Oferendas[0] = 3;
+                var travado = GeradorDeItens.GerarDoTipo(rng, Cfg, 9, RaridadeItem.Raro, TipoItem.Elmo); travado.Bloqueado = true;
+                var solto = GeradorDeItens.GerarDoTipo(rng, Cfg, 9, RaridadeItem.Raro, TipoItem.Anel);
+                Equipamento.Equipar(p, travado); p.Inventario.Add(solto);
+                p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Zumbi, Qualidade = Qualidade.Profana }, Nivel = 30, Ativo = true });
+                long esperado = Ascensao.CinzasDestaVida(p);
+                Afirmar(esperado == 9 && Ascensao.Ascender(p, Cfg) == 9 && p.Cinzas == 9 && p.Ascensoes == 1, "andar 15 rende 9 Cinzas");
+                var novo = Progressao.NovoJogo(Cfg);
+                Afirmar(p.NivelNecromante == 1 && p.Ossos == 0 && p.Essencia == 0 && p.MaiorAndarConcluido == 0 && p.ChefesDerrotados.Count == 0 && p.AndarDeAncoragem == novo.AndarDeAncoragem, "a vida recomeça");
+                Afirmar(p.Construcoes[1] == 0 && p.Talentos[0] == 0 && p.Oferendas[0] == 0 && p.Minions.Count == novo.Minions.Count, "construções, talentos, altares e exército zerados");
+                Afirmar(p.MissaoAtual == 9 && p.MortesPorEspecie[1] == 700, "missões e bestiário ficam");
+                Afirmar(p.Inventario.Count == 1 && p.Inventario[0] == travado && Equipamento.Obter(p, EspacoEquipamento.Elmo) == null, "só o item travado atravessa, de volta ao inventário");
+                Afirmar(!Ascensao.Comprar(p, 1, Cfg) == false && Ascensao.Nivel(p, 1) == 1 && p.Cinzas == 8, "primeiro nível do Legado custa 1");
+                Afirmar(Ascensao.Comprar(p, 1, Cfg) && p.Cinzas == 6, "o segundo custa 2");
+                Perto(Equipamento.CalcularBonus(p, Cfg).PoderNecromantico, 2 * Cfg.Legados[1].PorNivel, 1e-5f, "Legado de Sangue vira Poder Necromântico");
+                p.Cinzas = 0; Afirmar(!Ascensao.Comprar(p, 0, Cfg), "sem Cinzas não compra");
+                var sim = new Simulacao(Cfg, p, 3, ModoExpedicao.Avancar, Progressao.AndarDePartida(p, Cfg));
+                for (int t = 0; t < 300; t++) sim.Tick();
+                Afirmar(sim.Andar >= 1 && sim.Necromante != null, "a vida nova joga normalmente");
+                p.Legados = null; Afirmar(Ascensao.Nivel(p, 0) == 0 && Equipamento.CalcularBonus(p, Cfg) != null, "save antigo não quebra");
+            });
+            Teste("Comando que cai tira de campo os últimos ativos, e a simulação concorda com a Necrópole", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                p.Construcoes[(int)Construcao.Cripta] = 2 * Cfg.NiveisDeCriptaPorComando;
+                for (int i = 0; i < 2; i++) { p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Esqueleto, Qualidade = Qualidade.Comum } }); }
+                while (Progressao.ComandoEmUso(p, Cfg) < Progressao.ComandoMaximoEfetivo(p, Cfg) && p.Minions.Count < 60)
+                { p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Esqueleto, Qualidade = Qualidade.Comum } }); Progressao.Ativar(p, p.Minions.Count - 1, Cfg); }
+                p.Construcoes[(int)Construcao.Cripta] = 0;     // o teto cai 2
+                Afirmar(Progressao.ComandoEmUso(p, Cfg) > Progressao.ComandoMaximoEfetivo(p, Cfg), "ficou acima do teto");
+                Afirmar(Progressao.AjustarAoComando(p, Cfg) == 2 && Progressao.ComandoEmUso(p, Cfg) == Progressao.ComandoMaximoEfetivo(p, Cfg), "saem exatamente os 2 últimos");
+                var s = new Simulacao(Cfg, p, 4, ModoExpedicao.Avancar, 1); int campo = 0, ativos = 0;
+                foreach (var e in s.Entidades) if (e.Faccao == Faccao.Minion) campo++;
+                foreach (var m in p.Minions) if (m.Ativo) ativos++;
+                Afirmar(campo == ativos, "em campo " + campo + " de " + ativos);
+            });
+            Teste("dons das almas variam dentro da faixa, valem na simulação e entram no Poder; a fusão herda o melhor", () =>
+            {
+                var rng = new Rng(123); float minV = 9, maxV = -9; int diferentes = 0; float ultimo = 99;
+                for (int i = 0; i < 400; i++)
+                {
+                    var a = GeradorDeAlmas.Gerar(rng, Cfg, EspecieId.Esqueleto, Qualidade.Vigorosa);
+                    float faixa = Cfg.DomBase + Cfg.DomPorQualidade * 2;
+                    Afirmar(a.DomVida <= faixa + 1e-5f && a.DomVida >= -faixa * Cfg.DomParteNegativa - 1e-5f && Math.Abs(a.DomVelocidade) <= faixa, "dom fora da faixa");
+                    if (a.DomVida < minV) minV = a.DomVida; if (a.DomVida > maxV) maxV = a.DomVida;
+                    if (a.DomVida != ultimo) diferentes++; ultimo = a.DomVida;
+                }
+                Afirmar(diferentes > 390 && maxV > 0.10f && minV < -0.05f, "os dons variam de verdade: " + minV + " a " + maxV);
+                var p = Progressao.NovoJogo(Cfg);
+                long antes = Poder.DoMinion(p, p.Minions[0], Cfg);
+                p.Minions[0].Alma.DomVida = 0.5f; p.Minions[0].Alma.DomDano = 0.5f;
+                long depois = Poder.DoMinion(p, p.Minions[0], Cfg);
+                Perto(depois / (float)antes, 1.5f, 0.02f, "Poder acompanha os dons (raiz de 1,5 x 1,5)");
+                var s = new Simulacao(Cfg, p, 4, ModoExpedicao.Avancar, 1); var s0 = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), 4, ModoExpedicao.Avancar, 1);
+                float v = 0, v0 = 0;
+                foreach (var e in s.Entidades) if (e.Faccao == Faccao.Minion) { v = e.VidaMax; break; }
+                foreach (var e in s0.Entidades) if (e.Faccao == Faccao.Minion) { v0 = e.VidaMax; break; }
+                Perto(v / v0, 1.5f, 0.01f, "o dom de vida vale na simulação");
+                Afirmar(Poder.Total(p, Cfg) > Poder.Total(Progressao.NovoJogo(Cfg), Cfg) && Poder.SugeridoParaOAndar(10, Cfg) > Poder.SugeridoParaOAndar(1, Cfg) * 3, "Poder total e sugerido crescem");
+                var pf = Progressao.NovoJogo(Cfg); pf.Filacterio.Clear(); pf.Essencia = 1000;
+                float[] dv = { 0.01f, 0.09f, -0.02f };
+                for (int i = 0; i < 3; i++) pf.Filacterio.Add(new Alma { Especie = EspecieId.Zumbi, Qualidade = Qualidade.Comum, DomVida = dv[i], DomDano = -dv[i] });
+                var nova = Fusao.Fundir(pf, EspecieId.Zumbi, Qualidade.Comum, Cfg);
+                Perto(nova.DomVida, 0.09f, 1e-5f, "fusão herda o melhor dom de vida"); Perto(nova.DomDano, 0.02f, 1e-5f, "e o melhor de dano");
+            });
+            Teste("presságios: andares sorteiam condições; fluxo próprio de sorteio; o Ossário rende mais Ossos", () =>
+            {
+                var vistos = new System.Collections.Generic.HashSet<Pressagio>(); int andares = 0, com = 0;
+                for (ulong sem = 1; sem <= 30; sem++)
+                {
+                    var forte = Progressao.NovoJogo(Cfg); forte.PoderNecromantico = 6f;
+                    var s = new Simulacao(Cfg, forte, sem, ModoExpedicao.Avancar, Cfg.PressagioAPartirDoAndar);
+                    var comPressagio = new System.Collections.Generic.HashSet<int>(); var todos = new System.Collections.Generic.HashSet<int>();
+                    for (int t = 0; t < 5000 && !s.Encerrada; t++)
+                    {
+                        s.Tick();
+                        if (Formulas.AndarDeChefe(s.Andar, Cfg)) { Afirmar(s.PressagioAtual == Pressagio.Nenhum || s.Fase != FaseExpedicao.EmOnda, "andar de chefe não tem presságio"); continue; }
+                        if (s.InimigosVivos > 0) { todos.Add(s.Andar); if (s.PressagioAtual != Pressagio.Nenhum) { comPressagio.Add(s.Andar); vistos.Add(s.PressagioAtual); } }
+                    }
+                    andares += todos.Count; com += comPressagio.Count;
+                }
+                float fr = com / (float)andares;
+                Afirmar(vistos.Count >= 5 && fr > Cfg.ChanceDePressagio * 0.6f && fr < Cfg.ChanceDePressagio * 1.4f, "presságios em " + (fr * 100).ToString("0") + "% dos andares, " + vistos.Count + " tipos vistos");
+            });
+            Teste("sorte: mais itens e almas, e melhores; sem sorte nada muda", () =>
+            {
+                Func<float, ResultadoExpedicao> rodar = sorte =>
+                {
+                    var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 5f; p.Sorte = sorte;
+                    var total = new ResultadoExpedicao();
+                    for (ulong sem = 1; sem <= 30; sem++)
+                    {
+                        var r = ExecutorSemTela.RodarExpedicao(Cfg, p, sem, ModoExpedicao.Avancar, 1, 8);
+                        total.Itens.AddRange(r.Itens); total.Almas.AddRange(r.Almas); total.OrbesCaidos += r.OrbesCaidos;
+                    }
+                    return total;
+                };
+                var sem0 = rodar(0f); var com = rodar(300f);
+                double mi0 = 0, mi1 = 0, ma0 = 0, ma1 = 0;
+                foreach (var it in sem0.Itens) mi0 += (int)it.Raridade; foreach (var it in com.Itens) mi1 += (int)it.Raridade;
+                foreach (var a in sem0.Almas) ma0 += (int)a.Qualidade; foreach (var a in com.Almas) ma1 += (int)a.Qualidade;
+                Afirmar(com.Itens.Count > sem0.Itens.Count * 1.5 && com.OrbesCaidos > sem0.OrbesCaidos * 1.3, "mais quedas: itens " + sem0.Itens.Count + " -> " + com.Itens.Count + ", orbes " + sem0.OrbesCaidos + " -> " + com.OrbesCaidos);
+                Afirmar(mi1 / com.Itens.Count > mi0 / sem0.Itens.Count * 1.15 && ma1 / com.Almas.Count > ma0 / sem0.Almas.Count * 1.08, "raridade média " + (mi0 / sem0.Itens.Count) + " -> " + (mi1 / com.Itens.Count) + "; qualidade média " + (ma0 / sem0.Almas.Count) + " -> " + (ma1 / com.Almas.Count) + " (" + sem0.Almas.Count + "/" + com.Almas.Count + " almas)");
+            });
             Teste("distribuição de raridade 70 / 22 / 7 / 0,9 / 0,1 % (400 mil sorteios)", () =>
             {
                 var rng = new Rng(2024);
@@ -555,7 +791,7 @@ namespace Necro.Testes
                 var p = Progressao.NovoJogo(Cfg);
                 var resumo = ExecutorSemTela.SimularOffline(Cfg, p, 3600f, ModoExpedicao.Avancar);
                 Afirmar(resumo.ItensEncontrados > 0, "1 hora deveria render itens");
-                Afirmar(p.Inventario.Count == Math.Min(resumo.ItensEncontrados, Cfg.CapacidadeInventario), "inventário: " + p.Inventario.Count + " de " + resumo.ItensEncontrados);
+                Afirmar(p.Inventario.Count > 0 && p.Inventario.Count <= Math.Min(resumo.ItensEncontrados, Cfg.CapacidadeInventario) && Equipamento.Arrumar(p.Inventario, Cfg, null, null), "inventário: " + p.Inventario.Count + " de " + resumo.ItensEncontrados + ", tudo dentro da grade");
                 Afirmar(Equipamento.CalcularBonus(p, Cfg).ItensEquipados == 0, "nada é equipado automaticamente");
             });
 

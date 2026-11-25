@@ -30,6 +30,16 @@ namespace Necro.Nucleo
             if (n.FraquezaTempo > 0f) n.FraquezaTempo -= DT;
             if (_ceifaEspera > 0f) _ceifaEspera -= DT;
 
+            // Sala especial: caminha até o objeto (baú, santuário...) se não houver alma para ceifar.
+            if (Fase == FaseExpedicao.Explorando && _ceifaOrbe == null && Orbes.Count == 0)
+            {
+                var alvoSala = new Vec2(PosDoObjeto.X - 1.1f, PosDoObjeto.Y);
+                if (!_temPosto) { _postoNecro = n.Pos; _temPosto = true; }   // depois da sala ele volta para trás do exército
+                if (Vec2.Dist2(n.Pos, alvoSala) > 0.04f) { MoverPara(n, alvoSala); n.Animacao = EstadoAnimacao.Andando; }
+                else { n.Animacao = EstadoAnimacao.Conjurando; n.Olhar = new Vec2(1f, 0f); }
+                return;
+            }
+
             // Canalizando a ceifa: não faz mais nada até concluir, ser interrompido ou o orbe sumir.
             if (_ceifaOrbe != null)
             {
@@ -65,7 +75,15 @@ namespace Necro.Nucleo
                 for (int i = 0; i < OrdensPadrao.Length && !agiu; i++)
                     if (CondicaoVerdadeira(OrdensPadrao[i])) agiu = TentarAcao(OrdensPadrao[i].Acao);
             }
-            if (_temPosto && Orbes.Count == 0)
+            if (NecromanteCorpoACorpo && !agiu)
+            {
+                // de foice: sem nada melhor a fazer, avança no inimigo mais próximo; sem inimigos, volta para perto do exército
+                var perto = HostilMaisProximo(n, n.Pos, float.MaxValue);
+                Vec2 destino = perto != null ? perto.Pos : new Vec2(Cfg.NecromanteX + 2f, Cfg.AlturaArena * 0.5f);
+                Vec2 dd = destino - n.Pos;
+                if (dd.X * dd.X + dd.Y * dd.Y > (perto != null ? n.Alcance * n.Alcance * 0.6f : 0.25f)) { MoverPara(n, destino); n.Animacao = EstadoAnimacao.Andando; agiu = true; }
+            }
+            if (!NecromanteCorpoACorpo && _temPosto && Orbes.Count == 0)
             {
                 Vec2 volta = _postoNecro - n.Pos;
                 if (volta.X * volta.X + volta.Y * volta.Y > 0.09f && !agiu) { MoverPara(n, _postoNecro); n.Animacao = EstadoAnimacao.Andando; agiu = true; }
@@ -210,6 +228,17 @@ namespace Necro.Nucleo
             Olhar(n, alvo.Pos);
             Emitir(new EventoSim { Tipo = TipoEvento.Ataque, Origem = n.Id, Alvo = alvo.Id, Pos = n.Pos, Dir = n.Olhar, TipoDano = n.TipoDano });
             CausarDano(n, alvo, n.Dano, n.TipoDano, true);
+            if (NecromanteCorpoACorpo)
+            {
+                // a foice corta em arco: fere também os outros inimigos ao alcance (até FoiceAlvosExtras)
+                int extras = 0, total = Entidades.Count; float a2 = n.Alcance * n.Alcance;
+                for (int i = 0; i < total && extras < Cfg.FoiceAlvosExtras; i++)
+                {
+                    var o = Entidades[i];
+                    if (o == alvo || !o.Viva || o.Faccao != Faccao.Inimigo || Vec2.Dist2(o.Pos, n.Pos) > a2) continue;
+                    CausarDano(n, o, n.Dano, n.TipoDano, true); extras++;
+                }
+            }
             return true;
         }
 

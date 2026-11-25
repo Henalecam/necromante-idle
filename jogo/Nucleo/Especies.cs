@@ -39,6 +39,9 @@ namespace Necro.Nucleo
         public static DadosEspecie[] Todas { get { return _porId; } }
 
         /// <summary>Substitui a tabela inteira (ex.: dados vindos de ScriptableObjects). Índice = (int)EspecieId.</summary>
+        /// <summary>Quantas espécies existem (índices 0..Total-1; 0 é o necromante).</summary>
+        public static int Total { get { return _porId.Length; } }
+
         public static void Substituir(DadosEspecie[] tabela) { _porId = tabela; }
 
         public static void RestaurarPadrao() { _porId = CriarPadrao(); }
@@ -50,7 +53,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[8];
+            var t = new DadosEspecie[13];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -98,6 +101,38 @@ namespace Necro.Nucleo
                 Id = EspecieId.AbadessaCosturada, Nome = "A Abadessa Costurada", Familia = Familia.Aberracao, Porte = Porte.Colossal, Papel = Papel.Suporte,
                 Vida = 700f, Dano = 24f, VelAtaque = 0.7f, Armadura = 60f, Alcance = 1.8f, VelMovimento = 1.5f, TipoDano = TipoDano.Fisico,
                 Resistencias = Res(0.1f, 0f, 0f, 0f, 0.3f, 0.3f), Chefe = true, AndarMinimo = 10, PesoOnda = 0f, CustoOnda = 10f
+            };
+            // ---- segunda leva: mais variedade de ondas ----
+            t[(int)EspecieId.Carnical] = new DadosEspecie
+            {
+                Id = EspecieId.Carnical, Nome = "Carniçal", Familia = Familia.MortoVivo, Porte = Porte.Pequeno, Papel = Papel.Lutador,
+                Vida = 45f, Dano = 7f, VelAtaque = 1.7f, Armadura = 0f, Alcance = 1.0f, VelMovimento = 3.8f, TipoDano = TipoDano.Veneno,
+                Resistencias = Res(0f, -0.2f, 0f, 0f, 0.4f, 0f), AndarMinimo = 3, PesoOnda = 5f, CustoOnda = 1f
+            };
+            t[(int)EspecieId.DiaboDeGuerra] = new DadosEspecie
+            {
+                Id = EspecieId.DiaboDeGuerra, Nome = "Diabo de Guerra", Familia = Familia.Demonio, Porte = Porte.Grande, Papel = Papel.Tanque,
+                Vida = 260f, Dano = 14f, VelAtaque = 0.6f, Armadura = 25f, Alcance = 1.3f, VelMovimento = 1.6f, TipoDano = TipoDano.Fogo,
+                Resistencias = Res(0.1f, 0.5f, -0.2f, 0f, 0f, 0f), AndarMinimo = 6, PesoOnda = 2f, CustoOnda = 4f
+            };
+            t[(int)EspecieId.Aparicao] = new DadosEspecie
+            {
+                Id = EspecieId.Aparicao, Nome = "Aparição", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Atirador,
+                Vida = 55f, Dano = 11f, VelAtaque = 0.7f, Armadura = 0f, Alcance = 7.0f, VelMovimento = 2.4f, TipoDano = TipoDano.Sombra,
+                Resistencias = Res(0.3f, 0f, 0f, 0f, 0f, 0.5f), AndarMinimo = 7, PesoOnda = 3f, CustoOnda = 2f
+            };
+            t[(int)EspecieId.ColossoDeOssos] = new DadosEspecie
+            {
+                Id = EspecieId.ColossoDeOssos, Nome = "Colosso de Ossos", Familia = Familia.MortoVivo, Porte = Porte.Grande, Papel = Papel.Lutador,
+                Vida = 220f, Dano = 18f, VelAtaque = 0.55f, Armadura = 20f, Alcance = 1.5f, VelMovimento = 1.5f, TipoDano = TipoDano.Fisico,
+                Resistencias = Res(0.1f, 0f, 0.2f, 0f, 0.3f, 0f), AndarMinimo = 8, PesoOnda = 2f, CustoOnda = 4f
+            };
+            // Só aparece no nível secreto (PesoOnda 0): fraca, numerosa e furiosa.
+            t[(int)EspecieId.ResProfana] = new DadosEspecie
+            {
+                Id = EspecieId.ResProfana, Nome = "Rês Profana", Familia = Familia.Besta, Porte = Porte.Medio, Papel = Papel.Lutador,
+                Vida = 60f, Dano = 6f, VelAtaque = 0.9f, Armadura = 5f, Alcance = 1.1f, VelMovimento = 2.6f, TipoDano = TipoDano.Fisico,
+                Resistencias = Res(0.1f, 0f, 0f, 0f, 0f, 0f), AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 1f
             };
             return t;
         }

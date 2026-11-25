@@ -50,6 +50,8 @@ namespace Necro.Nucleo
         public int ProvocadoPor = -1;
         public float ProvocadoTempo;
         public float TempoHabilidade;   // recarga da habilidade especial (chefe)
+        public float PreparandoGolpe;   // > 0: elite/chefe armando o Golpe Brutal (aviso para o jogador interromper)
+        public float RecargaGolpe = 5f; // s até poder armar o próximo
 
         // ---- Minion ----
         public Postura Postura;

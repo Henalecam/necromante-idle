@@ -80,6 +80,8 @@ namespace Necro.Nucleo
         public List<AfixoRolado> Afixos = new List<AfixoRolado>();
         public EfeitoLendario Efeito;
         public ConjuntoId Conjunto;
+        /// <summary>Travado pelo jogador: nunca é desmanchado (nem pelo "vender tudo", nem para abrir espaço).</summary>
+        public bool Bloqueado;
 
         public bool Tem(AfixoItem a)
         {

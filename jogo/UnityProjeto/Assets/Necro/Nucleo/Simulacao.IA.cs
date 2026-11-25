@@ -12,6 +12,12 @@ namespace Necro.Nucleo
         /// <summary>Hostil vivo mais próximo de "referencia". filtro2 = raio² em volta do necromante (posturas).</summary>
         private Entidade HostilMaisProximo(Entidade e, Vec2 referencia, float filtro2)
         {
+            if (MarcadoId >= 0 && e.Faccao == Faccao.Minion)
+            {
+                // alvo marcado pelo jogador tem prioridade sobre o mais próximo
+                var marcado = Marcado();
+                if (marcado != null && (filtro2 == float.MaxValue || Vec2.Dist2(marcado.Pos, Necromante.Pos) <= filtro2)) return marcado;
+            }
             Entidade melhor = null;
             float melhorD = float.MaxValue;
             for (int i = 0; i < Entidades.Count; i++)
@@ -196,6 +202,7 @@ namespace Necro.Nucleo
             if (e.TempoAcao > 0f) { e.TempoAcao -= DT; return; } // presa na animação de ataque/conjuração
 
             bool inimigo = e.Faccao == Faccao.Inimigo;
+            if (inimigo && (e.Elite || e.Chefe) && GolpeBrutal(e)) return;
             if (inimigo && e.Chefe && HabilidadeDoChefe(e)) return;
 
             // Posturas (só minions): limitam quais inimigos contam como alvo.
@@ -234,8 +241,9 @@ namespace Necro.Nucleo
                         // Minion tanque intercepta o inimigo mais próximo do necromante.
                         alvo = HostilMaisProximo(e, inimigo ? e.Pos : Necromante.Pos, filtro2);
                         break;
-                    default: // Lutador e Enxame: o mais próximo
+                    default: // Lutador e Enxame: o mais próximo; minions concentram no mais ferido dali
                         alvo = HostilMaisProximo(e, e.Pos, filtro2);
+                        if (!inimigo && alvo != null && alvo.Id != MarcadoId) alvo = MaisFeridoPerto(e, alvo);
                         break;
                 }
             }
@@ -265,6 +273,54 @@ namespace Necro.Nucleo
             {
                 MoverPara(e, alvo.Pos);
             }
+        }
+
+        /// <summary>Foco: entre os hostis colados no alvo mais próximo, prefere o de menor vida (o exército termina o que começou).</summary>
+        private Entidade MaisFeridoPerto(Entidade e, Entidade proximo)
+        {
+            Entidade melhor = proximo;
+            float r2 = Cfg.RaioDeFoco * Cfg.RaioDeFoco;
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var o = Entidades[i];
+                if (o == proximo || !o.Viva || !Hostil(e, o) || Vec2.Dist2(o.Pos, proximo.Pos) > r2) continue;
+                if (o.Vida < melhor.Vida) melhor = o;
+            }
+            return melhor;
+        }
+
+        /// <summary>
+        /// Golpe Brutal de elites e chefes: param, avisam por GolpeBrutalAviso segundos e então ferem todos em volta.
+        /// O jogador interrompe marcando o inimigo durante o aviso (ele fica atordoado). Retorna true se gastou o tick.
+        /// </summary>
+        private bool GolpeBrutal(Entidade e)
+        {
+            if (e.PreparandoGolpe > 0f)
+            {
+                e.Animacao = EstadoAnimacao.Conjurando;
+                e.PreparandoGolpe -= DT;
+                if (e.PreparandoGolpe > 0f) return true;
+                float r2 = Cfg.GolpeBrutalRaio * Cfg.GolpeBrutalRaio;
+                Emitir(new EventoSim { Tipo = TipoEvento.Explosao, Origem = e.Id, Alvo = -1, Pos = e.Pos, Valor = Cfg.GolpeBrutalRaio, TipoDano = e.TipoDano });
+                int n = Entidades.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    var o = Entidades[i];
+                    if (o.Viva && Hostil(e, o) && Vec2.Dist2(o.Pos, e.Pos) <= r2) CausarDano(e, o, e.Dano * Cfg.GolpeBrutalMult, e.TipoDano, true);
+                }
+                Resultado.GolpesBrutais++;
+                e.TempoAcao = 0.4f;
+                return true;
+            }
+            e.RecargaGolpe -= DT;
+            if (e.RecargaGolpe > 0f) return false;
+            var perto = HostilMaisProximo(e, e.Pos, float.MaxValue);
+            if (perto == null || Vec2.Dist2(perto.Pos, e.Pos) > Cfg.GolpeBrutalRaio * Cfg.GolpeBrutalRaio) return false;
+            e.RecargaGolpe = Cfg.GolpeBrutalRecarga;
+            e.PreparandoGolpe = Cfg.GolpeBrutalAviso;
+            e.Animacao = EstadoAnimacao.Conjurando;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 9, Alvo = e.Id, Origem = e.Id, Valor = Cfg.GolpeBrutalAviso, Pos = e.Pos });
+            return true;
         }
 
         /// <summary>Conjurador: dano em área centrado onde há mais inimigos.</summary>

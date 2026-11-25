@@ -32,6 +32,7 @@ namespace Necro.Nucleo
             var sim = new Simulacao(cfg, progresso, semente, modo, andarInicial);
             sim.EmitirEventos = false;
             sim.LimiteDeAndares = limiteDeAndares;
+            Oferendas.ConsumirRito(progresso);
             while (!sim.Encerrada)
             {
                 sim.Tick();

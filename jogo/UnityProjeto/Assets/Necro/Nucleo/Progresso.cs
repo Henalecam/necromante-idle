@@ -97,9 +97,35 @@ namespace Necro.Nucleo
         public List<Ordem> Ordens = new List<Ordem>();          // vazia = prioridade padrão
 
         // ---- Missões ----
+        public int VersaoDasMissoes;        // 0 = save anterior às missões de masmorra (ver Missoes.Migrar)
         public int MissaoAtual;             // índice em ConfigJogo.Missoes; = total quando todas foram resgatadas
         public long ProgressoMissao;
         public int FusoesFeitas;
+        /// <summary>Sorte, em pontos (100 = +100%): mais itens e almas caem, e com mais chance de virem melhores.</summary>
+        public float Sorte;
+        /// <summary>O save já usou o painel de testes (cheats).</summary>
+        public bool UsouCheats;
+        /// <summary>Feitiços no automático: Detonar, Frenesi, Sopro, feitiço da Arma, feitiço da Mão secundária.</summary>
+        public bool[] AutoFeiticos = new bool[5];
+        // ---- Ascensão ----
+        public int Ascensoes;
+        public long Cinzas;
+        public long CinzasGanhas;
+        /// <summary>Nível de cada Legado (0 Ossos, 1 Sangue, 2 Sombras).</summary>
+        public int[] Legados = new int[3];
+        /// <summary>Nível de cada Oferenda, indexado por CondicaoCadaver (o tipo de Resto que ela consome).</summary>
+        public int[] Oferendas = new int[7];
+        /// <summary>Rito de Sangue preparado para a próxima expedição.</summary>
+        public Rito RitoPreparado;
+        /// <summary>Oferendas automáticas: ao fim de cada expedição os Restos viram níveis de altar sem o jogador clicar.</summary>
+        public bool OferendasAutomaticas = true;
+        /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
+        public long FragmentosDeAlma;
+        public int MinionsSacrificados;
+        /// <summary>Regra automática: minions NA RESERVA com qualidade abaixo desta são sacrificados ao fim de cada expedição.</summary>
+        public Qualidade SacrificarAbaixoDe = Qualidade.Fraca;
+        /// <summary>Pontos em cada talento, indexado como ConfigJogo.Talentos.</summary>
+        public int[] Talentos = new int[15];
         /// <summary>Bestiário: inimigos mortos de cada espécie desde o começo do jogo, indexado por EspecieId.</summary>
         public long[] MortesPorEspecie = new long[16];        // contador da missão atual (missões de estado não usam)
 
@@ -132,6 +158,15 @@ namespace Necro.Nucleo
         public int CeifasInterrompidas;
         public int CeifasPorToque;
         public int PactosAceitos;
+        public int MarcasFeitas;
+        public int GolpesBrutais;
+        public int SoprosUsados;
+        public int FeiticosDeItem;
+        public int GolpesInterrompidos;
+        public int SalasEspeciais;
+        public int BausAbertos;
+        public int NiveisSecretos;
+        public int InteracoesPorToque;
         public int InimigosMortos;
         public int[] MortesPorEspecie = new int[16];   // indexado por EspecieId
         public int ElitesMortos;
@@ -151,7 +186,7 @@ namespace Necro.Nucleo
         /// <summary>Novo jogo: necromante nível 1 com 3 Esqueletos comuns ativos.</summary>
         public static EstadoProgresso NovoJogo(ConfigJogo cfg)
         {
-            var p = new EstadoProgresso { ComandoMaximo = cfg.ComandoInicial, EspacosDeOrdem = cfg.EspacosDeOrdemIniciais };
+            var p = new EstadoProgresso { VersaoDasMissoes = 2, ComandoMaximo = cfg.ComandoInicial, EspacosDeOrdem = cfg.EspacosDeOrdemIniciais };
             for (int i = 0; i < 3; i++)
                 p.Minions.Add(new MinionSalvo { Alma = new Alma { Especie = EspecieId.Esqueleto, Qualidade = Qualidade.Comum }, Ativo = true });
             p.EspeciesConhecidas.Add(EspecieId.Esqueleto);
@@ -197,7 +232,8 @@ namespace Necro.Nucleo
         /// <summary>Andar de onde o modo Avançar parte: o Ponto de Ancoragem menos o recuo configurado.</summary>
         public static int AndarDePartida(EstadoProgresso p, ConfigJogo cfg)
         {
-            return Math.Max(1, p.AndarDeAncoragem - cfg.AndaresDeRecuo);
+            // Rito da Pressa: parte direto do Ponto de Ancoragem, sem o recuo
+            return Math.Max(1, p.AndarDeAncoragem - (p.RitoPreparado == Rito.Pressa ? 0 : cfg.AndaresDeRecuo));
         }
 
         public static int ComandoMaximoEfetivo(EstadoProgresso p, ConfigJogo cfg)
@@ -222,6 +258,18 @@ namespace Necro.Nucleo
         }
 
         public static void Desativar(EstadoProgresso p, int indiceMinion) { p.Minions[indiceMinion].Ativo = false; }
+
+        /// <summary>
+        /// Se o Comando máximo caiu (troca de equipamento, talentos redistribuídos), tira de campo os últimos ativos até caber.
+        /// Sem isto a Necrópole mostraria em campo minions que a simulação deixa de fora. Devolve quantos saíram.
+        /// </summary>
+        public static int AjustarAoComando(EstadoProgresso p, ConfigJogo cfg)
+        {
+            int n = 0;
+            for (int i = p.Minions.Count - 1; i >= 0 && ComandoEmUso(p, cfg) > ComandoMaximoEfetivo(p, cfg); i--)
+                if (p.Minions[i].Ativo) { p.Minions[i].Ativo = false; n++; }
+            return n;
+        }
 
         /// <summary>Ergue um minion a partir de uma alma do Filactério (a alma sai do inventário), pagando Essência
         /// (Necropole.CustoDeErguer). Ativa se houver Comando. Retorna null, sem mudar nada, se faltar Essência.</summary>
@@ -310,7 +358,7 @@ namespace Necro.Nucleo
         {
             Missoes.RegistrarExpedicao(p, r, cfg);
             Bestiario.Registrar(p, r);
-            p.Ossos += (long)Math.Round(r.Ossos * (double)Necropole.MultOssos(p, cfg));
+            p.Ossos += (long)Math.Round(r.Ossos * (double)(Necropole.MultOssos(p, cfg) + Talentos.Total(p, EfeitoDeTalento.Ossos, cfg) + Oferendas.Total(p, EfeitoDeTalento.Ossos, cfg) + Ascensao.Valor(p, 0, cfg)));
             p.Sangue += r.Sangue;
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;
@@ -336,6 +384,8 @@ namespace Necro.Nucleo
                 for (int i = 0; i < p.Minions.Count; i++)
                     if (p.Minions[i].Ativo) DarXp(p.Minions[i], parte, cfg);
             }
+            Sacrificio.AplicarRegra(p, cfg);   // regra automática do jogador: reserva fraca vira Fragmentos
+            if (p.OferendasAutomaticas) Oferendas.OfertarTudo(p, cfg);   // os Restos novos sobem os altares sozinhos
         }
     }
 }
