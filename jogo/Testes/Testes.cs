@@ -344,8 +344,8 @@ namespace Necro.Testes
             });
             Teste("escala dos inimigos: composta por andar (Config.CrescimentoPorAndar)", () =>
             {
-                Perto(Formulas.EscalaInimigo(1, Cfg), 1f, 1e-6f, "andar 1");
-                Perto(Formulas.EscalaInimigo(2, Cfg), 1f + Cfg.CrescimentoPorAndar, 1e-5f, "andar 2");
+                Perto(Formulas.EscalaInimigo(1, Cfg), Cfg.AlivioInicial, 1e-6f, "andar 1 (com o alívio inicial)");
+                Perto(Formulas.EscalaInimigo(2, Cfg), (1f + Cfg.CrescimentoPorAndar) * Cfg.AlivioInicial, 1e-5f, "andar 2");
                 Perto(Formulas.EscalaInimigo(11, Cfg), (float)Math.Pow(1.0 + Cfg.CrescimentoPorAndar, 10) * Cfg.DegrauPorAto, 1e-2f, "andar 11 (com o degrau do Ato 2)");
                 var s1 = Arena(1, null, 1); var s5 = Arena(1, null, 5);
                 var e1 = s1.CriarInimigo(EspecieId.Zumbi, new Vec2(10, 6)); var e5 = s5.CriarInimigo(EspecieId.Zumbi, new Vec2(10, 6));

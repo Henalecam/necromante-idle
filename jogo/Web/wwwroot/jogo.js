@@ -252,7 +252,7 @@ function aviso(texto) {
 }
 
 function ler(texto) {
-  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = [];
+  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null;
   for (const ln of texto.split('\n')) {
     if (!ln) continue;
     const p = ln.split(' ');
@@ -287,6 +287,7 @@ function ler(texto) {
       case 'A': ativos = p.slice(1).map(Number); break;
       case 'M': lerMasmorra(p); break;
       case 'G': lerMapa(p); break;
+      case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'V': evento(p); break;
       case 'F': fimDeExpedicao(p); break;
     }
@@ -444,7 +445,8 @@ let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = f
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['?', 'Inexplorada']];
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
-const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos'];
+const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
+let bencaos = null, bencaosMostradas = '';
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
 function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.pop(); }
@@ -506,7 +508,7 @@ function eventoDeSala(tipo, v, x, y) {
   if (ts === 3) {
     if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
     else { aviso((sub === 2 ? 'Baú dourado! ' : 'Baú: ') + '+' + fmt(Math.round(val)) + ' Ossos'); anotar(`${sub === 2 ? '<b style="color:#ffd84a">Baú dourado</b>' : 'Baú'}: +${fmt(Math.round(val))} Ossos${sub === 2 ? ', item Raro e Sangue' : ''}${toque ? ' (aberto por você)' : ''}.`); brilho('#ffd84a', sub === 2 ? 60 : 26); if (sub === 2) clarao = 0.5; }
-  } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * (sub === 3 ? 250 : 100))}%) até o fim do andar.`); brilho('#7fd8ff', 34); }
+  } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * [0, 100, 100, 250, 400, 300][sub])}%) até o fim do andar${toque ? ', escolhida por você' : ''}.`); brilho('#7fd8ff', 34); }
   else if (ts === 5) { aviso('Alma libertada: ' + QUALIDADES[sub]); anotar(`Almas presas: uma alma <span class="q${sub}">${QUALIDADES[sub]}</span> se soltou${toque ? ' (melhorada pelo seu toque?)' : ''}.`); brilho('#78ffaa', 30); }
   else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
@@ -748,6 +750,14 @@ function desenhar(dt) {
       oferta.slice(0, 3).map((id, i) => `<button data-o="${i}"><b>${escHtml(pactos[id].nome)}</b><span class="g">${escHtml(pactos[id].ganho)}</span><span class="p">${escHtml(pactos[id].preco)}</span></button>`).join('') + '</div>';
   }
   if (chave) { const t = $('enc-t'); if (t) t.textContent = Math.ceil(oferta[3]) + 's'; }
+  // santuário: três bênçãos à escolha
+  const chB = bencaos ? bencaos.slice(0, 3).join(',') : '';
+  if (chB !== bencaosMostradas) {
+    bencaosMostradas = chB; $('bencaos').hidden = !chB;
+    if (chB) $('bencaos').innerHTML = '<div class="cab"><span>Santuário · escolha uma bênção</span><span id="ben-t"></span></div><div class="ops">' +
+      bencaos.slice(0, 3).map((id, i) => `<button data-b="${i}"><b>${BENCAOS[id].split(':')[0]}</b><span class="g">${escHtml(BENCAOS[id].split(': ')[1])}</span><span class="p" style="color:var(--fraco)">até o fim do andar</span></button>`).join('') + '</div>';
+  }
+  if (chB) { const t = $('ben-t'); if (t) t.textContent = Math.ceil(bencaos[3]) + 's'; }
   const NOMES_RITO = ['', 'Rito da Pressa', 'Rito da Colheita', 'Rito do Banquete'];
   const tp = ativos.length && pactos.length ? ativos.map((id) => pactos[id].nome.replace('Pacto d', 'd').replace(/^d[aeo] /, '')).join(' · ') : '';
   const tp2 = [pressagio ? 'Presságio: ' + PRESSAGIOS[pressagio][0] : '', ritoEmCurso ? NOMES_RITO[ritoEmCurso] : '', tp ? 'Pactos: ' + tp : ''].filter(Boolean).join(' · ');
@@ -1156,6 +1166,7 @@ window.__orbeNaTela = () => {
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
+$('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
 $('encruzilhada').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-o]'); if (b && J) { J.Pacto(+b.dataset.o); aviso('Pacto selado'); } });
 $('resumo').addEventListener('click', () => { $('resumo').hidden = true; });
 $('missao').addEventListener('click', (ev) => { if (!ev.target.closest('button')) $('missao').classList.toggle('min'); });

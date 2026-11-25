@@ -50,6 +50,8 @@ namespace Necro.Nucleo
             // segunda metade de cada Ato é mais íngreme (e alivia no primeiro andar do Ato seguinte)
             int pos = (andar - 1) % cfg.AndaresPorAto + 1;
             if (cfg.InclinacaoFimDeAto != 0f && pos > cfg.AndarDaInclinacao) e *= MathF.Pow(1f + cfg.InclinacaoFimDeAto, pos - cfg.AndarDaInclinacao);
+            // os primeiros andares do jogo são um pouco mais leves: a primeira expedição precisa passar da âncora
+            if (andar <= cfg.AlivioAteOAndar) e *= cfg.AlivioInicial;
             return e;
         }
 

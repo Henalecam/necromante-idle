@@ -142,7 +142,8 @@ namespace Necro.Testes
                     }
                     if (pior != null) sim.ComandoCurar(pior.Id);
                 }
-                if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();   // toca no baú/santuário/fonte
+                if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();
+                if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao(0);   // toca no baú/santuário/fonte
                 // interrompe o Golpe Brutal: marca quem está armando (com meio segundo de reação)
                 for (int i = 0; i < sim.Entidades.Count; i++)
                 {

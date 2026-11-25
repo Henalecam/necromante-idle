@@ -17,7 +17,7 @@ namespace Necro.Nucleo
     public enum NivelSecreto { Nenhum = 0, PastoProfano = 1, CamaraDoTesouro = 2 }
 
     /// <summary>Bênção de santuário: vale até o fim do andar.</summary>
-    public enum Bencao { Nenhuma = 0, Furia = 1, Protecao = 2, Colheita = 3 }
+    public enum Bencao { Nenhuma = 0, Furia = 1, Protecao = 2, Colheita = 3, Fartura = 4, Devocao = 5 }
 
     /// <summary>
     /// A masmorra: cada andar é uma sequência de salas. O necromante atravessa salas de combate (as ondas) e, entre
@@ -45,7 +45,13 @@ namespace Necro.Nucleo
         private readonly Rng _rngMasmorra;
         private readonly List<Perigo> _perigos = new List<Perigo>(4);
         private bool _toqueNaSala, _emEmboscada, _mimico, _emSecreto, _secretoTestado;
-        private float _bDanoAliado = 1f, _bProtecao = 1f, _bOssos = 1f, _bAlma;
+        private float _bDanoAliado = 1f, _bProtecao = 1f, _bOssos = 1f, _bAlma, _bItem;
+        /// <summary>Santuário: três bênçãos à escolha (null quando não há oferta). Sem escolha no prazo, o necromante pega uma ao acaso.</summary>
+        public int[] BencaosOferecidas { get; private set; }
+        public float TempoDaBencao { get; private set; }
+        private int _escolhaDeBencao = -1;
+        /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
+        public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 3 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
         private int _ticksDeExploracao;
 
@@ -57,7 +63,7 @@ namespace Necro.Nucleo
         private void PlanejarSalas(bool chefe)
         {
             Salas.Clear(); SalaAtual = 0;
-            BencaoAtual = Bencao.Nenhuma; _bDanoAliado = 1f; _bProtecao = 1f; _bOssos = 1f; _bAlma = 0f;
+            BencaoAtual = Bencao.Nenhuma; _bDanoAliado = 1f; _bProtecao = 1f; _bOssos = 1f; _bAlma = 0f; _bItem = 0f; BencaosOferecidas = null; _escolhaDeBencao = -1;
             _emEmboscada = false; _mimico = false; _emSecreto = false; _secretoTestado = false; _toqueNaSala = false;
             _perigos.Clear(); _tempoAmbiente = 0f; _ticksDeExploracao = 0;
             Ambiente = AmbienteDeChefe.Nenhum;
@@ -258,7 +264,25 @@ namespace Necro.Nucleo
             _ticksDeExploracao++;      // explorar não conta para a Fúria
             if (_temporizadorDeFase > 0f) return;
             var t = TipoDaSalaAtual;
-            bool toque = _toqueNaSala;
+            if (t == TipoSala.Santuario)
+            {
+                if (BencaosOferecidas == null)
+                {
+                    // três bênçãos diferentes, das cinco
+                    var op = new int[3]; int postas = 0;
+                    while (postas < 3)
+                    {
+                        int b = 1 + Rng.Intervalo(0, 5); bool repetida = false;
+                        for (int i = 0; i < postas; i++) if (op[i] == b) repetida = true;
+                        if (!repetida) op[postas++] = b;
+                    }
+                    BencaosOferecidas = op; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1;
+                    return;
+                }
+                TempoDaBencao -= DT;
+                if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+            }
+            bool toque = _toqueNaSala || _escolhaDeBencao >= 0;
             float valor = 0f; int sub = 0; bool especial = toque;
             switch (t)
             {
@@ -282,10 +306,13 @@ namespace Necro.Nucleo
                 case TipoSala.Santuario:
                 {
                     float f = Cfg.BencaoForca * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
-                    BencaoAtual = (Bencao)(1 + Rng.Intervalo(0, 3));
+                    BencaoAtual = (Bencao)BencaosOferecidas[_escolhaDeBencao >= 0 ? _escolhaDeBencao : Rng.Intervalo(0, 3)];
+                    BencaosOferecidas = null; _escolhaDeBencao = -1;
                     if (BencaoAtual == Bencao.Furia) _bDanoAliado = 1f + f;
                     else if (BencaoAtual == Bencao.Protecao) _bProtecao = 1f - f;
-                    else _bOssos = 1f + f * 2.5f;
+                    else if (BencaoAtual == Bencao.Colheita) _bOssos = 1f + f * 2.5f;
+                    else if (BencaoAtual == Bencao.Fartura) _bItem = f * 4f;
+                    else _bAlma += f * 3f;
                     sub = (int)BencaoAtual; valor = f;
                     break;
                 }

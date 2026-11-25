@@ -75,6 +75,7 @@ public static partial class Jogo
            .Append(_sim.EmNivelSecreto ? (int)_sim.SecretoAtual : 0).Append(' ').Append(F(_sim.PosDoObjeto.X)).Append(' ').Append(F(_sim.PosDoObjeto.Y));
         foreach (var ts in _sim.Salas) _sb.Append(' ').Append((int)ts);
         _sb.Append('\n');
+        if (_sim.BencaosOferecidas != null) _sb.Append("B ").Append(_sim.BencaosOferecidas[0]).Append(' ').Append(_sim.BencaosOferecidas[1]).Append(' ').Append(_sim.BencaosOferecidas[2]).Append(' ').Append(F(Math.Max(0f, _sim.TempoDaBencao))).Append('\n');
         _sb.Append('G'); foreach (var c in _sim.Mapa) _sb.Append(' ').Append(c.X).Append(' ').Append(c.Y).Append(' ').Append(c.Pai);
         _sb.Append('\n');
         if (_sim.PactosOferecidos != null)
@@ -288,6 +289,7 @@ public static partial class Jogo
     [JSExport] public static void Pacto(int opcao) { _sim.ComandoPacto(opcao); }
     [JSExport] public static void Marcar(int entidadeId) { _sim.ComandoMarcar(entidadeId); }
     [JSExport] public static void Curar(int entidadeId) { _sim.ComandoCurar(entidadeId); }
+    [JSExport] public static void EscolherBencao(int opcao) { _sim.ComandoEscolherBencao(opcao); }
     [JSExport] public static void Interagir() { _sim.ComandoInteragir(); }
     [JSExport] public static void Detonar() { _sim.ComandoDetonar(); }
     [JSExport] public static void Frenesi() { _sim.ComandoFrenesi(); }

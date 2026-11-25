@@ -72,13 +72,13 @@
   #poderes button { min-width:76px; padding:8px 6px; font-size:13px; background:#2a1216e6; border-color:#6a2a2e; position:relative; overflow:hidden; }
   #poderes button:not(:disabled) { border-color:var(--ouro); color:#fff; box-shadow:0 0 10px #a0142088; }
   #poderes button.ligado { background:#7a1a12; }
-  #encruzilhada { position:absolute; left:6px; right:6px; top:50px; background:#120a0dee; border:1px solid var(--ouro); border-radius:6px; padding:8px; }
-  #encruzilhada[hidden] { display:none; }
-  #encruzilhada .cab { color:var(--ouro); font-size:13px; letter-spacing:1px; text-transform:uppercase; display:flex; justify-content:space-between; margin-bottom:6px; }
-  #encruzilhada .ops { display:flex; gap:6px; }
-  #encruzilhada button { flex:1; text-align:left; padding:7px; font-size:12px; line-height:1.3; }
-  #encruzilhada button b { display:block; color:#fff; font-weight:normal; font-size:13px; margin-bottom:3px; }
-  #encruzilhada .g { color:#8fd89f; display:block; } #encruzilhada .p { color:#e08a8a; display:block; }
+  #encruzilhada, #bencaos { position:absolute; left:6px; right:6px; top:50px; background:#120a0dee; border:1px solid var(--ouro); border-radius:6px; padding:8px; }
+  #encruzilhada[hidden], #bencaos[hidden] { display:none; }
+  #encruzilhada .cab, #bencaos .cab { color:var(--ouro); font-size:13px; letter-spacing:1px; text-transform:uppercase; display:flex; justify-content:space-between; margin-bottom:6px; }
+  #encruzilhada .ops, #bencaos .ops { display:flex; gap:6px; }
+  #encruzilhada button, #bencaos button { flex:1; text-align:left; padding:7px; font-size:12px; line-height:1.3; }
+  #encruzilhada button b, #bencaos button b { display:block; color:#fff; font-weight:normal; font-size:13px; margin-bottom:3px; }
+  #encruzilhada .g, #bencaos .g { color:#8fd89f; display:block; } #encruzilhada .p, #bencaos .p { color:#e08a8a; display:block; }
   #t-pactos { position:absolute; left:8px; top:22px; font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
   #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:17px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
   #ausente { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--ouro); background:#000a; }
@@ -197,6 +197,7 @@
   <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
   <div id="resumo" hidden></div>
   <div id="encruzilhada" hidden></div>
+  <div id="bencaos" hidden></div>
   <div id="aviso"></div>
   <div id="ausente" style="display:none"></div>
   <div id="carregando">Despertando os mortos…</div>
@@ -233,7 +234,8 @@
   <div class="tr"><b>Aliado ferido</b>: Sopro Profano, cura 40% da vida (recarga de 14 s).</div>
   <div class="tr"><b>Detonar</b>: explode os cadáveres de inimigos. <b>Frenesi</b>: minions batem mais forte por 8 s.</div>
   <div class="tr"><b>Encruzilhada</b>: do andar 5 em diante aparecem três pactos; cada um dá algo e cobra algo.</div>
-  <div class="tr"><b>Baú, santuário, fonte, almas presas</b>: entre os combates o necromante encontra salas especiais. Ele resolve sozinho; se você tocar no objeto antes, rende 50% a mais (e o baú nunca é um mímico).</div>
+  <div class="tr"><b>Santuário</b>: oferece três bênçãos; escolha uma em 4 segundos (vem 50% mais forte) ou o necromante pega uma ao acaso.</div>
+  <div class="tr"><b>Baú, fonte, almas presas</b>: entre os combates o necromante encontra salas especiais. Ele resolve sozinho; se você tocar no objeto antes, rende 50% a mais (e o baú nunca é um mímico).</div>
   <div class="tr"><b>Mercador</b>: troca Ossos da própria expedição por um item (40% de desconto com o seu toque). <b>Altar de sangue</b>: cobra 15% da vida de todos por +80% de chance de alma no andar; se você tocar, não cobra. <b>Armadilha</b>: fere todo o grupo; tocando nela antes, você a desarma e ainda leva Ossos.</div>
   <div class="tr"><b>Mapa</b>: cada andar é uma masmorra sorteada. O grupo explora todas as salas antes de descer. Toque no mapa do canto para vê-lo inteiro.</div>
   <div class="tr"><b>Sala do chefe</b>: cada luta tem um ambiente sorteado (lava, névoa pútrida, geada, desabamento) que vale para os dois lados.</div>

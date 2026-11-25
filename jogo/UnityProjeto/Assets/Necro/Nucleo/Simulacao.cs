@@ -417,7 +417,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < Cfg.ItensDoChefe; i++)
                     SoltarItem(alvo, i == 0 && !chefeJaDerrotado ? RaridadeItem.Raro : RaridadeItem.Comum);
             }
-            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * _pItem * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
+            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * _pItem * (1f + _bItem) * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
             {
                 SoltarItem(alvo, RaridadeItem.Comum);
             }
