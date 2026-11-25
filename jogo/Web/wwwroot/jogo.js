@@ -352,6 +352,8 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
   if (tipo === 'AndarConcluido') anotar(`Andar ${v[14]} concluído em ${Math.round(+v[4])} s.`);
+  if (tipo === 'EntidadeSurgiu' && +v[14] > 0 && v[6] !== '1') { batizar(+v[3], +v[14], v[15] || ''); return; }
+  if (tipo === 'Morte' && campeoes.has(+v[3])) { const cp = campeoes.get(+v[3]); campeoes.delete(+v[3]); if (!silencio) { aviso(cp.nome + ' tombou'); anotar(`<b style="color:#ffd84a">${cp.nome}</b> tombou.`); } }
   if (tipo === 'Dano' && +v[4] > 0) {
     som(v[6] === '1' ? 'critico' : 'golpe');
     if (Math.random() < 0.6) mancha(x + rnd(-0.3, 0.3), y + rnd(-0.2, 0.2), 5, 2);
@@ -428,6 +430,16 @@ function quadro(m, acao, dir, tempo) {
 }
 
 let saidaAtual = '', viagem = [1, 0];
+// ---- campeões: todo elite ganha nome próprio e epíteto conforme os modificadores ----
+const campeoes = new Map();
+const NOME_A = ['Gor', 'Vel', 'Mor', 'Kaz', 'Ul', 'Thar', 'Bel', 'Nox', 'Sar', 'Dru', 'Hex', 'Ruk', 'Zul', 'Ael', 'Org'], NOME_B = ['vax', 'drin', 'goth', 'mund', 'rak', 'thas', 'zeth', 'gan', 'vor', 'lith', 'mor', 'kul', 'nar', 'dûm', 'iel'];
+const EPITETOS = [[1, 'o Sedento'], [2, 'o Volátil'], [4, 'o Veloz'], [8, 'o Couraçado']];
+function batizar(id, mods, especie) {
+  const a = NOME_A[(id * 7 + mods * 3) % NOME_A.length], b = NOME_B[(id * 13 + mods) % NOME_B.length], ep = EPITETOS.filter(([m]) => mods & m).map(([, e]) => e);
+  const nome = a + b + (ep.length ? ', ' + ep[(id + mods) % ep.length] : ', o Maldito');
+  campeoes.set(id, { nome, especie }); if (campeoes.size > 40) campeoes.delete(campeoes.keys().next().value);
+  if (!silencio) { aviso('Campeão: ' + nome); anotar(`Surge o campeão <b style="color:#ffd84a">${nome}</b>.`); som('perigo'); }
+}
 // ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
 const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
@@ -723,14 +735,16 @@ function desenhar(dt) {
   if (poderes[2] > 0) { ctx.fillStyle = `rgba(160,10,10,${0.08 + 0.04 * Math.sin(tempoSim * 12)})`; ctx.fillRect(0, 0, larg, alt); }
   // barra do chefe no alto da arena
   let chefe = null; for (const s of estado.values()) if (s.chefe && s.viva && s.inimigo) chefe = s;
+  let campeao = null; if (!chefe) for (const s of estado.values()) if (s.elite && s.viva && s.inimigo && campeoes.has(s.id)) { campeao = s; break; }
+  if (campeao) chefe = campeao;
   if (chefe) {
     const bw = Math.min(larg * 0.7, 520 * (larg / tela.clientWidth)), bx = (larg - bw) / 2, by = alt * 0.105, bh = Math.max(8, alt * 0.022);
     ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.fillStyle = '#7a0c14'; ctx.fillRect(bx, by, bw * Math.max(0, chefe.vida), bh);
+    ctx.fillStyle = campeao ? '#8a6a14' : '#7a0c14'; ctx.fillRect(bx, by, bw * Math.max(0, chefe.vida), bh);
     ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 1; ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.fillStyle = '#e8d8b8'; ctx.textAlign = 'center'; ctx.font = `${Math.round(bh * 1.5)}px Georgia`; ctx.fillText(nomeDoChefe(chefe.especie), larg / 2, by - bh * 0.6);
+    ctx.fillStyle = '#e8d8b8'; ctx.textAlign = 'center'; ctx.font = `${Math.round(bh * 1.5)}px Georgia`; ctx.fillText(campeao ? campeoes.get(campeao.id).nome : nomeDoChefe(chefe.especie), larg / 2, by - bh * 0.6);
   }
-  ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, ty * esc);
+  ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
   ctx.textAlign = 'center';
   for (const n of numeros) {
     const [px, py] = naTela(n.x, n.y); n.t -= dt;
