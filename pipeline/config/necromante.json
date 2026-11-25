@@ -1,0 +1,52 @@
+{
+  "nome": "necromante",
+  "modelo": "../modelos/necromante/necromante.blend",
+  "saida": "../saida/necromante",
+  "estilo": "diablo",
+  "acoes": [
+    {
+      "nome": "parado",
+      "acao_blender": "Parado",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "acao_blender": "Andar",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "conjurar",
+      "acao_blender": "Conjurar",
+      "lista_frames": [
+        1,
+        4,
+        7,
+        11,
+        15,
+        19
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "acao_blender": "Morrer",
+      "lista_frames": [
+        1,
+        5,
+        9,
+        12,
+        16,
+        20,
+        28
+      ],
+      "fps": 10,
+      "loop": false
+    }
+  ],
+  "altura_px": 104
+}

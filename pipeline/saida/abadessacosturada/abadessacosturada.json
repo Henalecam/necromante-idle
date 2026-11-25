@@ -1,0 +1,55 @@
+{
+  "nome": "abadessacosturada",
+  "largura_frame": 294,
+  "altura_frame": 368,
+  "pivo_px": [
+    147,
+    158
+  ],
+  "pivo_normalizado": [
+    0.5,
+    0.4293
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "abadessacosturada_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "abadessacosturada_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "arquivo": "abadessacosturada_atacar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "abadessacosturada_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}

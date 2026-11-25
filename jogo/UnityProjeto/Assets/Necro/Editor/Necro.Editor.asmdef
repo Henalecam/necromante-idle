@@ -1,0 +1,1 @@
+{ "name": "Necro.Editor", "references": ["Necro.Visual", "Necro.Nucleo"], "includePlatforms": ["Editor"] }

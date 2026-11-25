@@ -1,0 +1,56 @@
+{
+  "nome": "arqueiroossudo",
+  "largura_frame": 248,
+  "altura_frame": 168,
+  "pivo_px": [
+    112,
+    56
+  ],
+  "pivo_normalizado": [
+    0.4516,
+    0.3333
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "sombra": true,
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "arqueiroossudo_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "arqueiroossudo_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "arquivo": "arqueiroossudo_atacar.png",
+      "frames": 6,
+      "fps": 10,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "arqueiroossudo_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}

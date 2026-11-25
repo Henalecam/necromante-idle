@@ -1,0 +1,118 @@
+namespace Necro.Nucleo
+{
+    /// <summary>Qualquer unidade viva na arena: necromante, minion ou inimigo. Estado legível pela camada visual.</summary>
+    public sealed class Entidade
+    {
+        // ---- Identidade ----
+        public int Id;
+        public Faccao Faccao;
+        public EspecieId Especie;
+        public Papel Papel;
+        public Porte Porte;
+        public Familia Familia;
+        public bool Elite;
+        public bool Chefe;
+        public ModificadorElite Modificadores;
+
+        // ---- Estado visual ----
+        public Vec2 Pos;
+        public Vec2 Olhar;
+        public EstadoAnimacao Animacao;
+        public bool Viva = true;
+
+        // ---- Atributos ----
+        public float Vida;
+        public float VidaMax;
+        public float Mana;
+        public float ManaMax;
+        public float Dano;
+        public float VelAtaque;
+        public float Armadura;
+        public float Alcance;
+        public float VelMovimento;
+        public TipoDano TipoDano;
+        public readonly float[] Resistencias = new float[6];
+        public float ChanceCritico;
+        public float MultCritico;
+        public float AumentoDano;       // soma dos "aumentos" (aditivos)
+        public float MaisDano = 1f;     // produto dos "mais" permanentes (família, traço)
+        public float RouboDeVida;
+        public float FracaoFogo;        // Incandescente
+        public bool Rancoroso;
+        public bool Leal;
+        public float Escudo;            // Escudo de Ossos restante
+
+        // ---- Estado de combate ----
+        public float Recarga;           // s até o próximo ataque
+        public float TempoAcao;         // s presa na animação atual
+        public float TempoMorrendo;
+        public float FraquezaTempo;     // Maldição da Fraqueza
+        public int ProvocadoPor = -1;
+        public float ProvocadoTempo;
+        public float TempoHabilidade;   // recarga da habilidade especial (chefe)
+
+        // ---- Minion ----
+        public Postura Postura;
+        public Vec2 Posto;              // posição na formação
+        public int IndiceMinion = -1;   // índice em EstadoProgresso.Minions
+        public int Custo;
+        /// <summary>Minion temporário (Grimório da Mãe Carniça): some quando TempoDeVida zera, não deixa cadáver e não volta por Reerguer.</summary>
+        public bool Temporario;
+        public float TempoDeVida;
+
+        internal bool NaLista;
+    }
+
+    /// <summary>Cadáver na arena (recurso para feitiços e fonte de Restos).</summary>
+    public sealed class Cadaver
+    {
+        public int Id;
+        public int EntidadeId;
+        public EspecieId Especie;
+        public Vec2 Pos;
+        public CondicaoCadaver Condicao;
+        public float VidaMax;
+        public bool DeMinion;
+        public int Custo;
+        internal Entidade Minion; // referência para Reerguer
+    }
+
+    /// <summary>Orbe de alma aguardando a ceifa.</summary>
+    public sealed class OrbeDeAlma
+    {
+        public int Id;
+        public Vec2 Pos;
+        public Alma Alma;
+        public float TempoRestante;
+    }
+
+    /// <summary>Poça de sangue invocada pela Abadessa; cura o chefe enquanto ele estiver dentro do raio.</summary>
+    public sealed class PocaDeSangue
+    {
+        public int Id;
+        public int DonoId;
+        public Vec2 Pos;
+        public float Raio;
+        public float TempoRestante;
+    }
+
+    /// <summary>Projétil em voo (flecha de Atirador). Persegue o alvo; se o alvo morrer, segue até o último ponto e some.</summary>
+    public sealed class Projetil
+    {
+        public int Id;
+        public Entidade Origem;
+        public Entidade Alvo;
+        public EspecieId EspecieOrigem;
+        public Vec2 Pos;
+        public Vec2 Destino;
+        public Vec2 Dir;
+        public float Dano;
+        public TipoDano TipoDano;
+        // Perfurante (Lança de Ossos): voa em linha reta por "Restante" unidades e fere uma vez cada inimigo a até "Raio".
+        public bool Perfurante;
+        public float Restante;
+        public float Raio;
+        public float Velocidade;
+        public readonly System.Collections.Generic.List<int> Atingidos = new System.Collections.Generic.List<int>(8);
+    }
+}

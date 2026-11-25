@@ -1,0 +1,56 @@
+{
+  "nome": "esqueleto",
+  "largura_frame": 232,
+  "altura_frame": 206,
+  "pivo_px": [
+    82,
+    72
+  ],
+  "pivo_normalizado": [
+    0.3534,
+    0.3495
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "sombra": true,
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "esqueleto_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "esqueleto_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "arquivo": "esqueleto_atacar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "esqueleto_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}

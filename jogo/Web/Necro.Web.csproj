@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TrimMode>partial</TrimMode>
+    <WasmEnableThreads>false</WasmEnableThreads>
+    <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nucleo/Necro.Nucleo.csproj" />
+    <TrimmerRootAssembly Include="Necro.Nucleo" />
+    <WasmExtraFilesToDeploy Include="wwwroot/**/*" Exclude="wwwroot/main.js" />
+  </ItemGroup>
+</Project>

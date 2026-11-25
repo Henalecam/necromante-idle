@@ -1,0 +1,56 @@
+{
+  "nome": "zumbi",
+  "largura_frame": 192,
+  "altura_frame": 180,
+  "pivo_px": [
+    73,
+    69
+  ],
+  "pivo_normalizado": [
+    0.3802,
+    0.3833
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "sombra": true,
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "zumbi_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "zumbi_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "arquivo": "zumbi_atacar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "zumbi_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Necromante Idle</title>
+<style>
+  :root { --fundo:#0b080a; --painel:#151014; --borda:#3a2a2c; --texto:#d8c9b4; --fraco:#8d7c6c; --sangue:#a01420; --alma:#6dffa8; --ouro:#d9b25f; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--fundo); color:var(--texto); font-family: Georgia, "Times New Roman", serif; }
+  body { display:flex; flex-direction:column; max-width:1100px; margin:0 auto; }
+  #topo { display:flex; flex-wrap:wrap; gap:4px 14px; align-items:center; padding:6px 10px; background:linear-gradient(#1c1317,#120c0f); border-bottom:1px solid var(--borda); font-size:14px; }
+  #topo b { color:#fff; font-weight:normal; }
+  #topo .andar { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
+  #topo .espaco { flex:1; }
+  #cena { position:relative; background:#000; }
+  canvas { display:block; width:100%; touch-action:pan-y; cursor:pointer; }
+  #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
+  #poderes { position:absolute; right:8px; bottom:14px; display:flex; gap:8px; }
+  #poderes button { min-width:84px; padding:9px 8px; font-size:14px; background:#2a1216e6; border-color:#6a2a2e; position:relative; overflow:hidden; }
+  #poderes button:not(:disabled) { border-color:var(--ouro); color:#fff; box-shadow:0 0 10px #a0142088; }
+  #poderes button.ligado { background:#7a1a12; }
+  #encruzilhada { position:absolute; left:6px; right:6px; top:26px; background:#120a0dee; border:1px solid var(--ouro); border-radius:6px; padding:8px; }
+  #encruzilhada[hidden] { display:none; }
+  #encruzilhada .cab { color:var(--ouro); font-size:13px; letter-spacing:1px; text-transform:uppercase; display:flex; justify-content:space-between; margin-bottom:6px; }
+  #encruzilhada .ops { display:flex; gap:6px; }
+  #encruzilhada button { flex:1; text-align:left; padding:7px; font-size:12px; line-height:1.3; }
+  #encruzilhada button b { display:block; color:#fff; font-weight:normal; font-size:13px; margin-bottom:3px; }
+  #encruzilhada .g { color:#8fd89f; display:block; } #encruzilhada .p { color:#e08a8a; display:block; }
+  #t-pactos { position:absolute; left:8px; top:22px; font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
+  #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:17px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
+  #ausente { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--ouro); background:#000a; }
+  #carregando { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--fraco); background:#000c; }
+  #mana { height:5px; background:#0c1420; } #mana div { height:100%; width:0; background:linear-gradient(90deg,#2b6fd0,#7fd8ff); }
+  button { font:inherit; color:var(--texto); background:#241a1d; border:1px solid var(--borda); border-radius:4px; padding:6px 10px; cursor:pointer; }
+  button:hover:not(:disabled) { border-color:var(--ouro); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.ativo { background:#4a1218; border-color:var(--sangue); color:#fff; }
+  #vel button { padding:3px 9px; font-size:13px; }
+  #missao { padding:8px 10px; background:linear-gradient(#1d1216,#150e11); border-top:1px solid var(--borda); display:flex; gap:10px; align-items:center; font-size:13px; }
+  #missao .corpo { flex:1; min-width:0; }
+  #missao .tit { color:var(--ouro); letter-spacing:.5px; }
+  #missao .hist { color:var(--fraco); font-style:italic; margin:2px 0 4px; }
+  #missao .barra { height:5px; background:#0008; border-radius:3px; margin-top:5px; overflow:hidden; }
+  #missao .barra div { height:100%; background:linear-gradient(90deg,#6a0f18,#c8323c); }
+  #missao button.pronta { background:#5a1a10; border-color:var(--ouro); color:#fff; animation:pulso 1.2s infinite; }
+  @keyframes pulso { 50% { box-shadow:0 0 12px #d9b25f88; } }
+  #abas button[hidden] { display:none; }
+  #abas { display:flex; border-bottom:1px solid var(--borda); background:var(--painel); }
+  #abas button { flex:1; border:0; border-radius:0; border-bottom:2px solid transparent; background:none; padding:10px 2px; font-size:14px; }
+  #abas button.ativo { border-bottom-color:var(--sangue); color:#fff; background:#1d1418; }
+  #painel { flex:1; overflow-y:auto; padding:10px; background:var(--painel); min-height:180px; }
+  h3 { margin:12px 0 6px; font-size:14px; font-weight:normal; color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
+  h3:first-child { margin-top:0; }
+  .linha { display:flex; align-items:center; gap:8px; padding:7px 8px; margin-bottom:5px; background:#1b1418; border:1px solid #2a1f22; border-radius:4px; font-size:14px; }
+  .linha .corpo { flex:1; min-width:0; }
+  .linha small { display:block; color:var(--fraco); font-size:12px; margin-top:2px; }
+  .xp { height:3px; background:#0008; border-radius:2px; margin-top:5px; } .xp div { height:100%; background:#5a8f6a; border-radius:2px; }
+  .linha button { white-space:nowrap; }
+  .nota { color:var(--fraco); font-size:13px; margin:6px 0; }
+  .q0,.r0 { color:#9a9a9a; } .q1 { color:#e6e0d0; } .q2,.r1 { color:#6fa8ff; } .q3,.r2 { color:#ffd84a; } .q4,.r4 { color:#ff4d6a; } .r3 { color:#ff9a2e; }
+  .rodape { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+</style>
+</head>
+<body>
+<div id="topo">
+  <span class="andar" id="t-andar">Andar –</span>
+  <span>Nível <b id="t-nivel">–</b></span>
+  <span>Ossos <b id="t-ossos">–</b></span>
+  <span>Essência <b id="t-ess">–</b></span>
+  <span>Comando <b id="t-cmd">–</b></span>
+  <span class="espaco"></span>
+  <span id="vel"><button data-v="0">❚❚</button> <button data-v="1" class="ativo">1x</button> <button data-v="2">2x</button> <button data-v="4">4x</button></span>
+</div>
+<div id="cena">
+  <canvas id="tela" width="900" height="420"></canvas>
+  <div id="mana"><div></div></div>
+  <div id="t-saque"></div>
+  <div id="t-pactos"></div>
+  <div id="poderes"><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
+  <div id="encruzilhada" hidden></div>
+  <div id="aviso"></div>
+  <div id="ausente" style="display:none"></div>
+  <div id="carregando">Despertando os mortos…</div>
+</div>
+<div id="missao"></div>
+<div id="abas">
+  <button data-aba="exercito" class="ativo">Exército</button>
+  <button data-aba="necropole">Necrópole</button>
+  <button data-aba="equip">Equipamento</button>
+  <button data-aba="bestiario">Bestiário</button>
+</div>
+<div id="painel"></div>
+<script type="module" src="main.js"></script>
+<script type="module" src="jogo.js"></script>
+</body>
+</html>

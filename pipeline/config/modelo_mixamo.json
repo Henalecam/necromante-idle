@@ -1,0 +1,15 @@
+{
+  "nome": "acolito",
+  "modelo": "../modelos/acolito/acolito.fbx",
+  "saida": "../saida/acolito",
+  "altura_px": 46,
+  "rotacao_inicial_graus": 0,
+  "paleta": "../paletas/abismo32.hex",
+  "ajuste_cor": { "saturacao": 0.7, "brilho": 0.95, "contraste": 1.15 },
+  "acoes": [
+    { "nome": "parado",   "arquivo_animacao": "../modelos/acolito/parado.fbx",   "frames": 4, "fps": 6,  "loop": true },
+    { "nome": "andar",    "arquivo_animacao": "../modelos/acolito/andar.fbx",    "frames": 8, "fps": 10, "loop": true },
+    { "nome": "conjurar", "arquivo_animacao": "../modelos/acolito/conjurar.fbx", "frames": 6, "fps": 12, "loop": false },
+    { "nome": "morrer",   "arquivo_animacao": "../modelos/acolito/morrer.fbx",   "frames": 6, "fps": 10, "loop": false }
+  ]
+}

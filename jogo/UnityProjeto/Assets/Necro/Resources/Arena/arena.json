@@ -1,0 +1,9 @@
+{
+  "arquivo": "arena_chao.png",
+  "largura_sim": 20.0,
+  "profundidade_sim": 12.0,
+  "margem_sim": 2.0,
+  "topo_px": 172,
+  "px_por_unidade_x": 56,
+  "px_por_unidade_y": 27.999999999999996
+}

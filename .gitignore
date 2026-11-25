@@ -1,0 +1,11 @@
+bin/
+obj/
+dist/
+__pycache__/
+*.blend1
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+*.csproj.user
