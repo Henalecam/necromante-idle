@@ -250,3 +250,4 @@ Dono pediu ciclos a cada 5 minutos.
 82. Sala Armadilha (8% da vida de todos; o toque desarma e rende Ossos). Portão 9/9 (andar 37,5 s; chefe Ato 1 1,12 h, 7 tentativas).
 83. Santuário oferece 3 de 5 bênçãos (Fúria, Proteção, Colheita, Fartura, Devoção); o jogador escolhe em 4 s (vem 50% mais forte) ou sai uma ao acaso. Alívio inicial (andares 1 a 5 com escala 0,88) para a primeira expedição passar da âncora com folga. Portão 9/9: FatorVidaInimigo 0,24, InclinacaoFimDeAto 0,085; chefe Ato 1 1,11 h (7 tentativas), andar 15 2,88 h, chefe Ato 2 9,11 h.
 84. Campeões: cada elite recebe nome e epíteto pelos modificadores, barra de vida própria no topo e entradas no diário. Corrigida a transformação da câmera depois da barra do chefe (faltava o eixo vertical).
+85. Arte: Diabo de Guerra com sprites próprios (render com superamostragem 2 para caber num ciclo). Aparição em render.

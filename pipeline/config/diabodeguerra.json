@@ -48,5 +48,7 @@
       "loop": false
     }
   ],
-  "altura_px": 132
+  "altura_px": 132,
+  "superamostragem": 2,
+  "amostras": 16
 }
