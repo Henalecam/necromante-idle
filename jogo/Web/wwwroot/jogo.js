@@ -218,6 +218,33 @@ function limparArena(tudo) {
   sctx.save(); sctx.globalCompositeOperation = 'destination-out'; sctx.fillStyle = 'rgba(0,0,0,0.5)'; sctx.fillRect(0, 0, sangue.width, sangue.height); sctx.restore();
 }
 
+// ---- som: tudo sintetizado no navegador (sem arquivos); começa no primeiro toque do jogador ----
+let actx = null, somLigado = true, ultimoSom = {}; try { somLigado = localStorage.getItem('necromante-idle-save-v1-som') !== '0'; } catch (e) { /* padrão: ligado */ }
+function som(tipo) {
+  if (!actx || !somLigado || silencio || actx.state !== 'running') return;
+  const agora = actx.currentTime, min = { golpe: 0.05, morte: 0.07, osso: 0.1 }[tipo] || 0.12;
+  if (agora - (ultimoSom[tipo] || 0) < min) return; ultimoSom[tipo] = agora;
+  const tom = (f0, f1, dur, vol, forma = 'sine', atraso = 0) => { const o = actx.createOscillator(), g = actx.createGain(), t0 = agora + atraso; o.type = forma; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02); };
+  const chiado = (dur, vol, freq, atraso = 0) => { const n = Math.floor(actx.sampleRate * dur), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); src.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol; src.connect(f).connect(g).connect(actx.destination); src.start(agora + atraso); };
+  switch (tipo) {
+    case 'golpe': chiado(0.06, 0.10, 1400 + Math.random() * 800); break;
+    case 'critico': chiado(0.09, 0.2, 2600); tom(220, 110, 0.12, 0.08, 'square'); break;
+    case 'morte': chiado(0.16, 0.16, 520); tom(130, 50, 0.2, 0.10, 'sawtooth'); break;
+    case 'explosao': chiado(0.4, 0.3, 300); tom(90, 30, 0.4, 0.2); break;
+    case 'alma': tom(520, 1040, 0.25, 0.07); tom(780, 1560, 0.3, 0.04, 'sine', 0.05); break;
+    case 'bau': [523, 659, 784, 1047].forEach((f, i) => tom(f, f, 0.18, 0.07, 'triangle', i * 0.07)); break;
+    case 'bencao': [392, 494, 587].forEach((f, i) => tom(f, f * 1.01, 0.5, 0.05, 'sine', i * 0.1)); break;
+    case 'porta': chiado(0.3, 0.08, 220); tom(70, 55, 0.35, 0.10); break;
+    case 'chefe': tom(55, 41, 1.2, 0.22, 'sawtooth'); tom(82, 62, 1.2, 0.12, 'sawtooth', 0.05); chiado(0.8, 0.12, 180); break;
+    case 'perigo': tom(880, 660, 0.12, 0.05, 'square'); break;
+    case 'secreto': [262, 330, 392, 523, 659].forEach((f, i) => tom(f, f, 0.3, 0.07, 'triangle', i * 0.09)); break;
+    case 'fim': tom(196, 98, 0.9, 0.14, 'triangle'); tom(147, 73, 1.1, 0.10, 'triangle', 0.15); break;
+    case 'feitico': tom(300, 900, 0.18, 0.06, 'sawtooth'); chiado(0.15, 0.06, 3000); break;
+    case 'toque': tom(660, 880, 0.08, 0.05, 'triangle'); break;
+  }
+}
+function ligarSom() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
+document.addEventListener('pointerdown', ligarSom, { passive: true });
 function aviso(texto) {
   if (silencio) return;
   const a = $('aviso'); a.textContent = texto; a.style.opacity = 1;
@@ -325,6 +352,7 @@ function evento(v) {
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
   if (tipo === 'AndarConcluido') anotar(`Andar ${v[14]} concluído em ${Math.round(+v[4])} s.`);
   if (tipo === 'Dano' && +v[4] > 0) {
+    som(v[6] === '1' ? 'critico' : 'golpe');
     if (Math.random() < 0.6) mancha(x + rnd(-0.3, 0.3), y + rnd(-0.2, 0.2), 5, 2);
     for (let i = 0; i < 3; i++) particulas.push([x, y, 0.9, rnd(-1.5, 1.5), rnd(-1, 1), rnd(1, 3.5), '#78080c', 0.6]);
     const alvo = estado.get(+v[3]);
@@ -332,7 +360,7 @@ function evento(v) {
     if (alvo && (v[6] === '1' || +v[4] >= 1)) numeros.push({ x, y, v: Math.round(+v[4]), crit: v[6] === '1', t: 0.8, amigo: alvo && !alvo.inimigo });
   } else if (tipo === 'Morte') {
     const id = +v[3], s = estado.get(id); if (!s) return;
-    const over = v[8] === '1';
+    const over = v[8] === '1'; som(over ? 'explosao' : 'morte');
     mortos.set(id, { ...s, t: tempoSim, over, cond: v[7] });
     mancha(x, y, over ? 26 : 16, over ? 14 : 8);
     marcaDeCondicao(x, y, v[7], over || s.chefe);
@@ -353,6 +381,7 @@ function evento(v) {
       mortos.delete(id);
     }
   } else if (tipo === 'FeiticoLancado' && +v[14] >= 100) {
+    som('feitico');
     const f = +v[14] - 100; clarao = Math.max(clarao, 0.25);
     if (f === 1) { const n = necro; if (n) raios.push([n.x, n.y, x, y, 0.4]); for (let i = 0; i < 26; i++) particulas.push([x, y, 1, rnd(-3, 3), rnd(-2, 2), rnd(2, 7), '#9a6aff', rnd(0.5, 1)]); }
     else if (f === 2) { raios.push([x, y, x, y, 0.35, +v[4] || 3]); for (let i = 0; i < 30; i++) { const a = rnd(0, 6.28); particulas.push([x + Math.cos(a) * 2, y + Math.sin(a) * 1.4, 0.8, Math.cos(a) * 3, Math.sin(a) * 2, rnd(1, 3), '#c8bea0', rnd(0.3, 0.6)]); } }
@@ -362,6 +391,7 @@ function evento(v) {
     const n = estado.get(+v[2]);
     if (n && v[14] !== '0') raios.push([n.x, n.y, x, y, 0.4]);
   } else if (tipo === 'Explosao') {
+    som('explosao');
     raios.push([x, y, x, y, 0.35, +v[4] || 1.5]);
     marcaDeCondicao(x, y, 'Queimado', true); clarao = Math.max(clarao, 0.5);
     tremor = Math.max(tremor, 0.15);
@@ -369,6 +399,7 @@ function evento(v) {
     aviso('Golpe interrompido!'); clarao = Math.max(clarao, 0.35);
     for (let i = 0; i < 18; i++) particulas.push([x, y, 1.2, rnd(-3, 3), rnd(-2, 2), rnd(2, 5), '#ffd84a', rnd(0.4, 0.8)]);
   } else if (tipo === 'AlmaCeifada') {
+    som('alma');
     if (necro) almasVoando.push({ x, y, t: 0 });
     if (v[6] === '1') { aviso('Alma melhorada pelo toque!'); for (let i = 0; i < 24; i++) particulas.push([x, y, 1, rnd(-3, 3), rnd(-2, 2), rnd(3, 7), '#78ffaa', rnd(0.6, 1.1)]); }
     for (let i = 0; i < 14; i++) particulas.push([x, y, 1, rnd(-1.5, 1.5), rnd(-1, 1), rnd(2, 5), '#78ffaa', rnd(0.4, 0.8)]);
@@ -377,6 +408,7 @@ function evento(v) {
 
 function fimDeExpedicao(p) {
   if (estat) { estat.fim = tempoSim; estatAnterior = estat; } estat = null;
+  som('fim');
   if (!silencio) {
     const r = $('resumo');
     r.innerHTML = `<div class="t">Expedição encerrada · andar ${p[1]}</div><div class="g"><div><b>${fmt(+p[4])}</b><span>Ossos</span></div><div><b>${p[2]}</b><span>almas</span></div><div><b>${p[3]}</b><span>itens</span></div><div><b>${p[5]}</b><span>mortes</span></div></div>` + (explor.salas ? `<div class="nota" style="color:var(--texto)">Salas especiais: ${explor.salas} · baús: ${explor.baus} · com a sua mão: ${explor.toques}${explor.secretos ? ' · <span style="color:#ff9ad0">nível secreto limpo</span>' : ''}</div>` : '') + `<div class="nota">As almas foram para o Filactério e os itens para o Inventário. Toque para fechar.</div>`;
@@ -419,10 +451,10 @@ function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.
 function lerMasmorra(p) {
   const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
-  if (masm.sala !== antes && !silencio) { transicao = 1; objeto = null; viagem = masm.sala === 0 ? [1, 0] : ({ l: [1, 0], o: [-1, 0], n: [0, 1], s: [0, -1] }[saidaAtual] || [1, 0]); }
+  if (masm.sala !== antes && !silencio) { som('porta'); transicao = 1; objeto = null; viagem = masm.sala === 0 ? [1, 0] : ({ l: [1, 0], o: [-1, 0], n: [0, 1], s: [0, -1] }[saidaAtual] || [1, 0]); }
   if (masm.sala !== antes) salaSuja = true;
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
-  if (masm.secreto && !secAntes && !silencio) { aviso('NÍVEL SECRETO · ' + NOME_SECRETO[masm.qualSecreto]); clarao = 0.8; tremor = 0.4; }
+  if (masm.secreto && !secAntes && !silencio) { som('secreto'); aviso('NÍVEL SECRETO · ' + NOME_SECRETO[masm.qualSecreto]); clarao = 0.8; tremor = 0.4; }
   const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · Bênção: ' + BENCAOS[masm.bencao].split(':')[0] : '');
   if (rot !== lerMasmorra.rot) { lerMasmorra.rot = rot; $('t-sala').textContent = rot; }
 }
@@ -461,14 +493,15 @@ function mapaGrandeHtml() {
 }
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
-  if (tipo === 'AmbienteDefinido') { const a = AMBIENTES[ts]; if (a) { aviso('Sala do chefe · ' + a[0]); anotar(`Sala do chefe: <b>${a[0]}</b>, ${a[1]}.`); } return; }
-  if (tipo === 'PerigoAnunciado') { perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS, pedra: v[5] === 'Fisico' }); return; }
+  if (tipo === 'AmbienteDefinido') { som('chefe'); const a = AMBIENTES[ts]; if (a) { aviso('Sala do chefe · ' + a[0]); anotar(`Sala do chefe: <b>${a[0]}</b>, ${a[1]}.`); } return; }
+  if (tipo === 'PerigoAnunciado') { som('perigo'); perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS, pedra: v[5] === 'Fisico' }); return; }
   if (tipo === 'SalaResolvida' && ts === 11) { if (+v[4] > 0) aviso('Ossos esquecidos: +' + fmt(Math.round(+v[4]))); return; }
   if (tipo === 'SalaIniciada') { if (ts === 6) { aviso('Emboscada!'); tremor = 0.25; anotar('Emboscada: inimigos por todos os lados.'); } else if (ts === 8) anotar(`<b style="color:#ff9ad0">Nível secreto: ${NOME_SECRETO[+v[2]] || 'desconhecido'}.</b>`); return; }
   // SalaResolvida
   const sub = +v[2], toque = v[6] === '1', val = +v[4];
   if (!(ts === 3 && sub === 1)) { explor.salas++; if (ts === 3) explor.baus++; if (ts === 8) explor.secretos++; if (toque && ts !== 8 && ts !== 6) explor.toques++; }
   if (objeto) { objeto.aberto = 0.01; }
+  som(ts === 3 || ts === 9 ? 'bau' : ts === 8 ? 'secreto' : ts === 11 ? 'toque' : 'bencao');
   const brilho = (cor, n) => { for (let i = 0; i < n; i++) particulas.push([x, y, 0.6, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(3, 8), cor, rnd(0.6, 1.2)]); };
   if (ts === 3) {
     if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
@@ -1142,6 +1175,9 @@ $('cheats').addEventListener('click', (ev) => {
   J.Cheat(b.dataset.cheat, v); limparArena(true); andar = 0; salvar(); atualizarPainel(true); abrirCheats(); aviso('Teste aplicado');
 });
 $('b-ajuda').addEventListener('click', () => { $('ajuda').hidden = false; });
+const pintarSom = () => { $('b-som').textContent = somLigado ? '♪' : '♪̸'; $('b-som').style.opacity = somLigado ? 1 : 0.45; };
+$('b-som').addEventListener('click', () => { somLigado = !somLigado; try { localStorage.setItem('necromante-idle-save-v1-som', somLigado ? '1' : '0'); } catch (e) { /* tudo bem */ } pintarSom(); if (somLigado) { ligarSom(); setTimeout(() => som('bau'), 60); } });
+pintarSom();
 $('ajuda').addEventListener('click', (ev) => { if (ev.target === $('ajuda') || ev.target.id === 'b-ajuda-fechar') $('ajuda').hidden = true; });
 $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });

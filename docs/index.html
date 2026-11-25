@@ -37,6 +37,7 @@
     #esq { left:0; transform:translateX(-103%); border-right:1px solid var(--ouro); } #dir { right:0; transform:translateX(103%); border-left:1px solid var(--ouro); }
     #esq.aberto, #dir.aberto { transform:none; }
     #doca { display:flex; } .abas .fecha { display:block; }
+    #topo .xpn { display:none; } #topo .l1 { gap:5px; } #vel button { padding:3px 6px; } #b-som, #b-cheats, #b-ajuda { padding:3px 7px !important; }
   }
   #topo { padding:6px 10px 5px; background:linear-gradient(#1c1317,#120c0f); border-bottom:1px solid var(--borda); font-size:14px; }
   #topo .l1 { display:flex; gap:8px; align-items:center; }
@@ -172,6 +173,7 @@
     <span class="andar" id="t-andar">Andar –</span>
     <span class="nv">Nv <b id="t-nivel">–</b><span class="xpn"><span id="t-xp"></span></span></span>
     <button id="b-cheats" title="Painel de testes">⚙</button>
+    <button id="b-som" title="Som" style="padding:3px 8px">♪</button>
     <button id="b-ajuda" title="Como jogar">?</button>
     <span id="vel"><button data-v="0">❚❚</button> <button data-v="1" class="ativo">1x</button> <button data-v="2">2x</button> <button data-v="4">4x</button></span>
   </div>
