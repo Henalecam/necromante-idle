@@ -59,6 +59,7 @@ function construirSala() {
   // por qual porta o grupo sai: para a próxima sala se for vizinha; senão volta pelo caminho de onde veio
   let saida = ''; const prox = mapa[masm.sala + 1];
   if (eu) { const alvo = prox && prox[2] === masm.sala ? prox : prox && eu[2] >= 0 ? mapa[eu[2]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
+  saidaAtual = saida;
   const ultima = masm.sala >= masm.tipos.length - 1 && tipo !== 2;
   // espessura da laje nas duas bordas da frente
   const A = P(-1, -1), B = P(21, -1), C = P(21, 13), D = P(-1, 13), esp = 26;
@@ -175,7 +176,7 @@ function ambiente(dt, larg, alt) {
   else if (masm.amb === 2) tom = `rgba(70,140,30,${0.16 + 0.04 * Math.sin(tempoSim * 1.3)})`;
   else if (masm.amb === 3) tom = 'rgba(120,180,255,0.14)';
   if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
-  if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${transicao * transicao})`; ctx.fillRect(0, 0, larg, alt); }
+  if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, 1.25 * (1 - Math.abs(2 * transicao - 1)))})`; ctx.fillRect(0, 0, larg, alt); }
   ctx.globalCompositeOperation = 'lighter';
   for (const p of poeira) {
     p.y -= dt * 0.02 * p.v * (p.brasa ? 2.2 : 1); p.x += dt * 0.008 * Math.sin(tempoSim * 0.7 + p.z * 9);
@@ -392,6 +393,7 @@ function quadro(m, acao, dir, tempo) {
   return [a.img, f * m.W, dir * m.H];
 }
 
+let saidaAtual = '', viagem = [1, 0];
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia']];
@@ -403,7 +405,7 @@ function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.
 function lerMasmorra(p) {
   const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: p[5] === '1', ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
-  if (masm.sala !== antes && !silencio) { transicao = 1; limparArena(); objeto = null; }
+  if (masm.sala !== antes && !silencio) { transicao = 1; objeto = null; viagem = masm.sala === 0 ? [1, 0] : ({ l: [1, 0], o: [-1, 0], n: [0, 1], s: [0, -1] }[saidaAtual] || [1, 0]); }
   if (masm.sala !== antes) salaSuja = true;
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
   if (masm.secreto && !secAntes && !silencio) { aviso('NÍVEL SECRETO · O Pasto Profano'); clarao = 0.8; tremor = 0.4; }
@@ -509,7 +511,7 @@ function desenharObjeto(dt) {
 }
 try { dica = localStorage.getItem(CHAVE + '-dica') === '1'; } catch (e) { /* sem armazenamento */ }
 function desenhar(dt) {
-  if (salaSuja) { salaSuja = false; construirSala(); }
+  if (salaSuja && transicao <= 0.5) { salaSuja = false; limparArena(); construirSala(); }
   const larg = tela.width, alt = tela.height, esc = alt / VISTA_H, visivel = larg / esc;
   {
     let sx = 0, sy = 0, n = 0;
@@ -525,7 +527,7 @@ function desenhar(dt) {
   const tx = tremor > 0 ? rnd(-1, 1) * tremor * 14 : 0, ty = tremor > 0 ? rnd(-1, 1) * tremor * 9 : 0; tremor = Math.max(0, tremor - dt);
   ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
   ctx.drawImage(chao, 0, 0); ctx.drawImage(sangue, 0, 0);
-  if (transicao > 0) transicao = Math.max(0, transicao - dt * 1.4);
+  if (transicao > 0) transicao = Math.max(0, transicao - dt * 1.1);
   desenharObjeto(dt);
 
   for (const [x, y, r] of pocas) {
@@ -542,7 +544,7 @@ function desenhar(dt) {
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
   for (const [s, acao, tempo, morto] of lista) {
-    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), [px, py] = naTela(s.rx, s.ry);
+    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dv = transicao > 0 && !s.inimigo && !morto ? (transicao > 0.5 ? (1 - transicao) * 2 * 7 : -transicao * 2 * 7) : 0, [px, py] = naTela(s.rx + viagem[0] * dv, s.ry + viagem[1] * dv);
     if (!morto) {
       // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
       const corQ = ['160,160,160', '235,228,210', '110,168,255', '255,216,74', '255,77,106'];
@@ -569,7 +571,7 @@ function desenhar(dt) {
       ctx.strokeStyle = '#ff3040'; ctx.lineWidth = 3; ctx.setLineDash([14, 9]); ctx.beginPath(); ctx.arc(0, 0, s.chefe ? 60 : 34, 0, 7); ctx.stroke(); ctx.restore();
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
-    const [img, sx, sy] = quadro(m, acao, s.dir, tempo);
+    const [img, sx, sy] = quadro(m, acao, transicao > 0 && !s.inimigo && !morto ? direcao(viagem[0], viagem[1]) : s.dir, tempo);
     const prov = s.necro ? null : visual(s.especie), e = prov ? prov[1] : 1;
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (prov && !(morto && COR_MORTE[s.cond])) {

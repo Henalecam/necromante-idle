@@ -243,3 +243,4 @@ Dono pediu ciclos a cada 5 minutos.
 75. Portão 9/9: FatorVidaInimigo 0,245, ChefeMultVida 2,2, CrescimentoPorAndar 0,275, DegrauPorAto 1,42. Medido: andar 39,2 s; expedição 3,43 min; chefe Ato 1 1,19 h (8 tentativas, teto 8); andar 15 2,99 h; chefe Ato 2 8,90 h.
 76. Git retomado: repositório Henalecam/necromante-idle.
 77. Salas decoradas por tipo (selo do chefe, tapetes, moedas, runas, entulho, grades), pilares e estandartes, escada na última sala, saída acesa.
+78. Troca de sala: o grupo caminha até a porta de saída, a tela escurece e ele entra pela porta oposta da sala seguinte.
