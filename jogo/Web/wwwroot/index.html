@@ -26,6 +26,8 @@
   .ret.morto { opacity:.3; filter:grayscale(1); } .ret.cura { box-shadow:0 0 8px #6dffa8; animation:pulso 1.2s infinite; }
   #salas { position:absolute; right:6px; top:6px; padding:4px; background:#0b0709cc; border:1px solid #4a3a3c; border-radius:5px; cursor:pointer; max-width:46%; max-height:40%; overflow:hidden; line-height:0; }
   #salas svg { max-width:100%; height:auto; }
+  #licao { position:absolute; left:8px; right:8px; bottom:58px; padding:6px 10px; text-align:center; font-size:13px; color:#fff; background:#2a1216e6; border:1px solid var(--ouro); border-radius:14px; pointer-events:none; animation:pulso 1.2s infinite; }
+  #licao[hidden] { display:none; }
   #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
   .diario div { font-size:13px; padding:4px 0; border-bottom:1px solid #2a1f22; } .diario small { color:var(--fraco); margin-right:6px; }
   @media (max-width:1050px) {
@@ -188,6 +190,7 @@
   <div id="t-saque"></div>
   <div id="t-pactos"></div>
   <div id="salas"></div>
+  <div id="licao" hidden></div>
   <div id="t-sala"></div>
   <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
   <div id="resumo" hidden></div>

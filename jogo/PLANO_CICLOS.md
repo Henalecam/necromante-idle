@@ -244,3 +244,4 @@ Dono pediu ciclos a cada 5 minutos.
 76. Git retomado: repositório Henalecam/necromante-idle.
 77. Salas decoradas por tipo (selo do chefe, tapetes, moedas, runas, entulho, grades), pilares e estandartes, escada na última sala, saída acesa.
 78. Troca de sala: o grupo caminha até a porta de saída, a tela escurece e ele entra pela porta oposta da sala seguinte.
+79. Névoa no mapa (salas distantes aparecem como '?'), lições de toque uma por vez (orbe, objeto, golpe, cura, marca, detonar, mapa). Doc de design atualizado com o ciclo 13.

@@ -394,9 +394,21 @@ function quadro(m, acao, dir, tempo) {
 }
 
 let saidaAtual = '', viagem = [1, 0];
+// ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
+const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende 50% a mais', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
+  ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
+  ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
+  ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
+  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Toque no mapa do canto para ver o andar inteiro', () => mapa.length >= 4]];
+let licoes = {}; try { licoes = JSON.parse(localStorage.getItem('necromante-idle-save-v1-licoes') || '{}'); } catch (e) { /* começa do zero */ }
+function aprendeu(k) { if (licoes[k]) return; licoes[k] = 1; try { localStorage.setItem('necromante-idle-save-v1-licoes', JSON.stringify(licoes)); } catch (e) { /* tudo bem */ } }
+function atualizarLicao() {
+  const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '';
+  if (c.textContent !== tx) { c.textContent = tx; c.hidden = !tx; }
+}
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['?', 'Inexplorada']];
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam']];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos'];
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
@@ -429,7 +441,9 @@ function mapaSvg(c, rotulos) {
   let h = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
   mapa.forEach((m, i) => { if (m[2] < 0 || !mapa[m[2]]) return; const [ax, ay] = pos(m), [bx, by] = pos(mapa[m[2]]); h += `<line x1="${ax + c / 2}" y1="${ay + c / 2}" x2="${bx + c / 2}" y2="${by + c / 2}" stroke="${i <= masm.sala ? '#8a744a' : '#4a3a3c'}" stroke-width="${Math.max(2, c * 0.22)}"/>`; });
   mapa.forEach((m, i) => {
-    const [x, y] = pos(m), t = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
+    const [x, y] = pos(m), real = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
+    // névoa: só se conhece o que já foi visitado, a sala seguinte e o covil do chefe
+    const oculto = i > masm.sala + 1 && real !== 2, t = oculto ? 12 : real;
     const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
     h += `<rect x="${x}" y="${y}" width="${c}" height="${c}" rx="${c * 0.18}" fill="${atual ? '#5a1a20' : feita ? '#241a1d' : '#120c0f'}" stroke="${atual ? '#ffd84a' : feita ? '#5c4c30' : '#4a3a3c'}" stroke-width="${atual ? 2 : 1}"><title>${SALAS[t][1]}</title></rect>`;
     h += `<text x="${x + c / 2}" y="${y + c * 0.72}" text-anchor="middle" font-size="${c * 0.62}" fill="${cor}" opacity="${feita ? 0.4 : 1}">${SALAS[t][0]}</text>`;
@@ -440,7 +454,7 @@ function mapaSvg(c, rotulos) {
 function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
-    `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
+    `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer; o que há nas salas distantes só se descobre chegando perto.</p>` +
     '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
 }
 function eventoDeSala(tipo, v, x, y) {
@@ -722,6 +736,7 @@ function desenhar(dt) {
       hg += `<div class="ret ${s.viva ? '' : 'morto'} ${s.viva && v < 0.5 && sopro <= 0 ? 'cura' : ''}" data-ret="${s.id}" style="border-color:${cor}">${thumb(s.necro && deFoice && monstros.necromante_foice ? 'necromante_foice' : s.especie)}<i><b style="width:${Math.round(v * 100)}%;background:${v > 0.5 ? '#5a9f5a' : v > 0.25 ? '#c8a030' : '#c8323c'}"></b></i></div>`;
     }
     if (hg !== desenhar.hg) { desenhar.hg = hg; $('grupo').innerHTML = hg; }
+    atualizarLicao();
   }
 }
 
@@ -1069,10 +1084,10 @@ tela.addEventListener('pointerdown', (ev) => {
   if (!J) return;
   const r = tela.getBoundingClientRect(), k = VISTA_H / r.height;
   const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k + camY;
-  if (objeto && !objeto.aberto && masm.fase === 'Explorando') { const [ox, oy] = naTela(objeto.x, objeto.y); if ((ox - ax) ** 2 + (oy - 30 - ay) ** 2 < 90 * 90) { J.Interagir(); if (!objeto.tocado) { objeto.tocado = true; aviso('Você pôs a mão: rende mais'); } return; } }
+  if (objeto && !objeto.aberto && masm.fase === 'Explorando') { const [ox, oy] = naTela(objeto.x, objeto.y); if ((ox - ax) ** 2 + (oy - 30 - ay) ** 2 < 90 * 90) { J.Interagir(); aprendeu('sala'); if (!objeto.tocado) { objeto.tocado = true; aviso('Você pôs a mão: rende mais'); } return; } }
   let melhor = null, md = 70 * 70;
   for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); const d = (px - ax) ** 2 + (py - 30 - ay) ** 2; if (d < md) { md = d; melhor = o; } }
-  if (melhor) { J.Ceifar(melhor[2]); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } return; }
+  if (melhor) { J.Ceifar(melhor[2]); aprendeu('orbe'); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } return; }
   // toque num aliado ferido: Sopro Profano (se não estiver em recarga)
   if (sopro <= 0) {
     let al = null, mdA = 60 * 60;
@@ -1081,7 +1096,7 @@ tela.addEventListener('pointerdown', (ev) => {
       const [px, py] = naTela(s.rx, s.ry), d = (px - ax) ** 2 + (py - 45 - ay) ** 2;
       if (d < mdA) { mdA = d; al = s; }
     }
-    if (al) { J.Curar(al.id); for (let i = 0; i < 18; i++) particulas.push([al.rx, al.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); if (!dicaSopro) { dicaSopro = true; aviso('Sopro Profano: aliado curado'); } return; }
+    if (al) { J.Curar(al.id); aprendeu('cura'); for (let i = 0; i < 18; i++) particulas.push([al.rx, al.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); if (!dicaSopro) { dicaSopro = true; aviso('Sopro Profano: aliado curado'); } return; }
   }
   // sem orbe por perto: o toque marca o inimigo mais próximo do dedo
   let alvoM = null; md = 80 * 80;
@@ -1090,7 +1105,7 @@ tela.addEventListener('pointerdown', (ev) => {
     const [px, py] = naTela(s.rx, s.ry), d = (px - ax) ** 2 + (py - 45 - ay) ** 2;
     if (d < (s.golpe > 0 ? md * 4 : md) && !(alvoM && alvoM.golpe > 0 && !(s.golpe > 0))) { md = s.golpe > 0 ? d / 4 : d; alvoM = s; }
   }
-  if (alvoM) { J.Marcar(alvoM.id); if (!dicaMarca) { dicaMarca = true; aviso('Alvo marcado: os minions vão nele'); } }
+  if (alvoM) { J.Marcar(alvoM.id); aprendeu(alvoM.golpe > 0 ? 'golpe' : 'marca'); if (!dicaMarca) { dicaMarca = true; aviso('Alvo marcado: os minions vão nele'); } }
 });
 // usado pelos testes automatizados: posição na página do primeiro orbe visível
 window.__orbeNaTela = () => {
@@ -1129,10 +1144,10 @@ $('ajuda').addEventListener('click', (ev) => { if (ev.target === $('ajuda') || e
 $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
-$('b-detonar').addEventListener('click', () => { if (J) J.Detonar(); });
-$('salas').addEventListener('click', () => { $('mapa-corpo').innerHTML = mapaGrandeHtml(); $('mapa-grande').hidden = false; });
+$('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
+$('salas').addEventListener('click', () => { aprendeu('mapa'); $('mapa-corpo').innerHTML = mapaGrandeHtml(); $('mapa-grande').hidden = false; });
 $('mapa-grande').addEventListener('click', (ev) => { if (ev.target === $('mapa-grande') || ev.target.id === 'b-mapa-fechar') $('mapa-grande').hidden = true; });
-$('grupo').addEventListener('click', (ev) => { const r = ev.target.closest('[data-ret]'); if (!r || !J) return; const s = estado.get(+r.dataset.ret); if (s && s.viva && s.vida < 0.85 && sopro <= 0) { J.Curar(s.id); aviso('Sopro Profano'); for (let i = 0; i < 18; i++) particulas.push([s.rx, s.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); } else if (s && sopro > 0) aviso(`Sopro em recarga: ${Math.ceil(sopro)} s`); });
+$('grupo').addEventListener('click', (ev) => { const r = ev.target.closest('[data-ret]'); if (!r || !J) return; const s = estado.get(+r.dataset.ret); if (s && s.viva && s.vida < 0.85 && sopro <= 0) { J.Curar(s.id); aprendeu('cura'); aviso('Sopro Profano'); for (let i = 0; i < 18; i++) particulas.push([s.rx, s.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); } else if (s && sopro > 0) aviso(`Sopro em recarga: ${Math.ceil(sopro)} s`); });
 $('b-frenesi').addEventListener('click', () => { if (J) J.Frenesi(); });
 $('missao').addEventListener('click', (ev) => {
   const b = ev.target.closest('button[data-ac="resgatar"]'); if (!b || !J) return;
