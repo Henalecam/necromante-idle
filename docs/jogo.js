@@ -56,6 +56,10 @@ function construirSala() {
   // portas: vizinhos no mapa (pai e filhos). leste = borda da frente à direita; oeste = parede esquerda; norte = parede direita; sul = borda da frente à esquerda
   const eu = mapa[masm.sala], portas = { l: false, o: false, n: false, s: false };
   if (eu) mapa.forEach((m, i) => { if (i === masm.sala) return; const liga = m[2] === masm.sala || eu[2] === i; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
+  // por qual porta o grupo sai: para a próxima sala se for vizinha; senão volta pelo caminho de onde veio
+  let saida = ''; const prox = mapa[masm.sala + 1];
+  if (eu) { const alvo = prox && prox[2] === masm.sala ? prox : prox && eu[2] >= 0 ? mapa[eu[2]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
+  const ultima = masm.sala >= masm.tipos.length - 1 && tipo !== 2;
   // espessura da laje nas duas bordas da frente
   const A = P(-1, -1), B = P(21, -1), C = P(21, 13), D = P(-1, 13), esp = 26;
   poli([A, B, [B[0], B[1] + esp], [A[0], A[1] + esp]], '#141012'); poli([B, C, [C[0], C[1] + esp], [B[0], B[1] + esp]], '#0e0b0d');
@@ -70,6 +74,31 @@ function construirSala() {
     if (r01() < 0.22) { const [x, y] = P(i + 0.4 + r01() * 1.2, j + 0.4 + r01() * 1.2); c.strokeStyle = 'rgba(0,0,0,0.5)'; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r01() - 0.5) * 50, y + (r01() - 0.5) * 22); c.lineTo(x + (r01() - 0.5) * 70, y + (r01() - 0.5) * 30); c.stroke(); }
     if (r01() < 0.10) { const [x, y] = P(i + 1, j + 1); c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(x, y, 30 + r01() * 30, 12 + r01() * 12, 0, 0, 7); c.fill(); }
   }
+  // ---- decoração do chão conforme a sala ----
+  const elipse = (x, y, rx, ry, cor) => { const [px, py] = P(x, y); c.fillStyle = cor; c.beginPath(); c.ellipse(px, py, rx, ry, 0, 0, 7); c.fill(); };
+  const anel = (x, y, r, cor, larg) => { const [px, py] = P(x, y); c.strokeStyle = cor; c.lineWidth = larg; c.beginPath(); c.ellipse(px, py, r * K * Math.SQRT2, r * K * Math.SQRT1_2, 0, 0, 7); c.stroke(); c.lineWidth = 1; };
+  const tapete = (x0, y0, x1, y1, cor, borda) => { poli([P(x0, y0), P(x1, y0), P(x1, y1), P(x0, y1)], cor, null); c.lineWidth = 3; poli([P(x0 + 0.3, y0 + 0.3), P(x1 - 0.3, y0 + 0.3), P(x1 - 0.3, y1 - 0.3), P(x0 + 0.3, y1 - 0.3)], null, borda); c.lineWidth = 1; };
+  const entulho = (n) => { for (let q = 0; q < n; q++) { const x = r01() * 20, y = r01() * 12, [px, py] = P(x, y); for (let z = 0; z < 5; z++) { c.fillStyle = r01() < 0.4 ? '#b8ae94' : '#3a3436'; c.beginPath(); c.ellipse(px + (r01() - 0.5) * 34, py + (r01() - 0.5) * 16, 2 + r01() * 5, 1.5 + r01() * 3, r01() * 3, 0, 7); c.fill(); } } };
+  if (tipo === 2) {            // covil do chefe: selo de sangue no centro
+    anel(10, 6, 4.2, 'rgba(160,20,32,0.55)', 5); anel(10, 6, 3.2, 'rgba(160,20,32,0.35)', 2);
+    c.strokeStyle = 'rgba(160,20,32,0.5)'; c.lineWidth = 3; c.beginPath(); for (let q = 0; q < 5; q++) { const a = (q * 144 - 90) * Math.PI / 180, [px, py] = P(10 + Math.cos(a) * 4.2, 6 + Math.sin(a) * 4.2); q ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath(); c.stroke(); c.lineWidth = 1;
+    entulho(8);
+  } else if (tipo === 4) { anel(10, 6, 2.6, 'rgba(110,200,255,0.5)', 4); anel(10, 6, 1.9, 'rgba(110,200,255,0.3)', 2); }
+  else if (tipo === 3) { tapete(6, 3.5, 14, 8.5, 'rgba(70,24,28,0.75)', 'rgba(217,178,95,0.6)'); for (let q = 0; q < 26; q++) elipse(7 + r01() * 6, 4 + r01() * 4, 3, 1.6, 'rgba(255,216,74,0.8)'); }
+  else if (tipo === 9) tapete(5, 3, 15, 9, 'rgba(60,44,70,0.7)', 'rgba(217,178,95,0.5)');
+  else if (tipo === 7 || tipo === 10) { for (let q = 0; q < 7; q++) elipse(6 + r01() * 8, 3 + r01() * 6, 26 + r01() * 40, 10 + r01() * 14, 'rgba(110,8,16,0.35)'); }
+  else if (tipo === 5) { anel(10, 6, 2.4, 'rgba(120,255,170,0.35)', 3); }
+  else if (tipo === 11) { entulho(14); for (let q = 0; q < 3; q++) { const [px, py] = P(1 + r01() * 2, 9 + r01() * 3); c.strokeStyle = 'rgba(220,220,220,0.18)'; for (let z = 0; z < 6; z++) { c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(z) * 46, py + Math.sin(z) * 24); c.stroke(); } } }
+  else { entulho(4); if (r01() < 0.5) tapete(3, 4.5, 17, 7.5, 'rgba(60,20,24,0.5)', 'rgba(120,90,50,0.4)'); if (r01() < 0.6) for (let q = 0; q < 2; q++) { const gx = 4 + r01() * 12, gy = 2 + r01() * 8; poli([P(gx, gy), P(gx + 1.4, gy), P(gx + 1.4, gy + 1.4), P(gx, gy + 1.4)], '#0a0809', '#3a3436'); c.strokeStyle = '#3a3436'; for (let z = 1; z < 5; z++) { const a = P(gx + z * 0.28, gy), b2 = P(gx + z * 0.28, gy + 1.4); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b2[0], b2[1]); c.stroke(); } } }
+  // escada para o próximo andar, no canto do fundo da última sala
+  if (ultima) {
+    for (let q = 0; q < 6; q++) { const v = 60 - q * 9; poli([P(17 + q * 0.45, 9.2), P(17.45 + q * 0.45, 9.2), P(17.45 + q * 0.45, 12), P(17 + q * 0.45, 12)], `rgb(${v},${v - 4},${v - 6})`, '#000'); }
+    poli([P(17, 9.2), P(19.7, 9.2), P(19.7, 12), P(17, 12)], null, 'rgba(217,178,95,0.8)');
+    const [gx, gy] = P(18.3, 10.6); c.globalCompositeOperation = 'lighter'; const gl = c.createRadialGradient(gx, gy, 0, gx, gy, 120); gl.addColorStop(0, 'rgba(120,255,170,0.22)'); gl.addColorStop(1, 'rgba(120,255,170,0)'); c.fillStyle = gl; c.beginPath(); c.ellipse(gx, gy, 120, 60, 0, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over';
+  }
+  // brilho na soleira da saída (portas da frente)
+  const brilhoSaida = (x, y) => { const [gx, gy] = P(x, y); c.globalCompositeOperation = 'lighter'; const gl = c.createRadialGradient(gx, gy, 0, gx, gy, 150); gl.addColorStop(0, 'rgba(255,216,74,0.30)'); gl.addColorStop(1, 'rgba(255,216,74,0)'); c.fillStyle = gl; c.beginPath(); c.ellipse(gx, gy, 150, 75, 0, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; };
+  if (saida === 'l') brilhoSaida(21, 6); else if (saida === 's') brilhoSaida(10, -1); else if (saida === 'o') brilhoSaida(-0.6, 6); else if (saida === 'n') brilhoSaida(10, 12.6);
   // paredes do fundo (esquerda: x = -1; direita: y = 13)
   const parede = (p0, p1, escura, porta) => {
     const g = c.createLinearGradient(0, Math.min(p0[1], p1[1]) - PAREDE, 0, Math.max(p0[1], p1[1]));
@@ -81,9 +110,13 @@ function construirSala() {
     for (let h = 22; h < PAREDE; h += 22) { c.beginPath(); c.moveTo(p0[0], p0[1] - h); c.lineTo(p1[0], p1[1] - h); c.stroke(); }
     const n = 22; for (let q = 0; q <= n; q++) for (let h = 0; h < PAREDE; h += 22) { const t = (q + ((h / 22) % 2) * 0.5) / n; if (t > 1) continue; const x = p0[0] + (p1[0] - p0[0]) * t, y = p0[1] + (p1[1] - p0[1]) * t; c.beginPath(); c.moveTo(x, y - h); c.lineTo(x, y - h - 22); c.stroke(); }
     const em = (t, h) => [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t - h];
+    // pilares de pedra e estandartes
+    for (const t of [0.04, 0.34, 0.66, 0.96]) { const [x, y] = em(t, 0); c.fillStyle = escura ? '#1c1618' : '#2a2224'; c.fillRect(x - 11, y - PAREDE, 22, PAREDE + 6); c.fillStyle = 'rgba(255,255,255,0.05)'; c.fillRect(x - 11, y - PAREDE, 5, PAREDE + 6); c.fillStyle = '#120e10'; c.fillRect(x - 14, y - 8, 28, 14); }
+    if (!porta || true) for (const t of porta ? [0.19, 0.81] : [0.19, 0.5, 0.81]) { const [x, y] = em(t, 122), corB = tipo === 2 ? '#5a0c14' : tipo === 4 ? '#1c3a5a' : tipo === 8 ? '#5a1c44' : '#3a1418'; c.fillStyle = corB; c.beginPath(); c.moveTo(x - 13, y); c.lineTo(x + 13, y); c.lineTo(x + 13, y + 52); c.lineTo(x, y + 64); c.lineTo(x - 13, y + 52); c.closePath(); c.fill(); c.strokeStyle = 'rgba(217,178,95,0.5)'; c.stroke(); }
     if (porta) {   // arco escuro com moldura
       const a0 = em(0.42, 0), a1 = em(0.58, 0), a2 = em(0.58, 104), a3 = em(0.5, 124), a4 = em(0.42, 104);
-      poli([a0, a1, a2, a3, a4], '#020102', '#8a744a'); c.lineWidth = 3; c.strokeStyle = '#5c4c30'; c.stroke(); c.lineWidth = 1;
+      poli([a0, a1, a2, a3, a4], '#020102', '#8a744a'); c.lineWidth = 3; c.strokeStyle = porta === 2 ? '#ffd84a' : '#5c4c30'; c.stroke(); c.lineWidth = 1;
+      if (porta === 2) { c.globalCompositeOperation = 'lighter'; const [gx, gy] = em(0.5, 50), gl = c.createRadialGradient(gx, gy, 0, gx, gy, 110); gl.addColorStop(0, 'rgba(255,216,74,0.35)'); gl.addColorStop(1, 'rgba(255,216,74,0)'); c.fillStyle = gl; c.beginPath(); c.arc(gx, gy, 110, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; }
     }
     for (const t of porta ? [0.3, 0.7] : [0.25, 0.5, 0.75]) {   // tochas
       const [x, y] = em(t, 86); c.fillStyle = '#2a2018'; c.fillRect(x - 2, y, 4, 18);
@@ -91,7 +124,7 @@ function construirSala() {
     }
     c.restore();
   };
-  parede(A, D, false, portas.o); parede(D, C, true, portas.n);
+  parede(A, D, false, portas.o ? (saida === 'o' ? 2 : 1) : 0); parede(D, C, true, portas.n ? (saida === 'n' ? 2 : 1) : 0);
   // luz das tochas no chão e escuridão nas bordas
   c.globalCompositeOperation = 'lighter';
   for (const [x, y] of [P(-0.5, 3), P(-0.5, 9), P(5, 12.5), P(15, 12.5)]) { const gl = c.createRadialGradient(x, y, 0, x, y, 200); gl.addColorStop(0, 'rgba(255,150,60,0.16)'); gl.addColorStop(1, 'rgba(255,150,60,0)'); c.fillStyle = gl; c.beginPath(); c.ellipse(x, y, 200, 110, 0, 0, 7); c.fill(); }
