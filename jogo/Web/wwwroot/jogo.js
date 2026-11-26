@@ -858,7 +858,7 @@ function desenhar(dt) {
   }
   const dvg = deltaDaViagem();
   const larg = tela.width, alt = tela.height, escPerto = alt / VISTA_H;
-  const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt * 0.7 / (lim[3] - lim[1] + 90));   // sobra espaço para os botões e avisos da base
+  const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt * 0.7 / (lim[3] - lim[1] + 190));   // sobra espaço para os botões e avisos da base
   if (zoomLivre) zoomLivre = Math.max(escTudo * 0.7, Math.min(escPerto * 1.4, zoomLivre));
   const escSala = Math.max(escTudo, Math.min(escPerto * 0.8, Math.max(larg / (CW * 0.96), alt / (CH * 1.04))));   // modo Sala: a sala atual cabe na altura (ou na largura, em tela larga)
   const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : escSala);
@@ -869,7 +869,7 @@ function desenhar(dt) {
     for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? (zoomModo === 1 ? 1.5 : 3) : 1; sx += px * w; sy += py * w; n += w; }
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
-    if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
+    if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.085; }
     else if (zoomModo === 1 && !zoomLivre && mapa.length) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); cy = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
@@ -1148,7 +1148,7 @@ function desenhar(dt) {
   let campeao = null; if (!chefe) for (const s of estado.values()) if (s.elite && s.viva && s.inimigo && campeoes.has(s.id)) { campeao = s; break; }
   if (campeao) chefe = campeao;
   if (chefe) {
-    const bw = Math.min(larg * 0.7, 520 * (larg / tela.clientWidth)), bx = (larg - bw) / 2, by = alt * 0.105, bh = Math.max(8, alt * 0.022);
+    const bw = Math.min(larg * 0.7, 520 * (larg / tela.clientWidth)), bx = (larg - bw) / 2, by = alt * 0.18, bh = Math.max(8, alt * 0.022);
     ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
     ctx.fillStyle = campeao ? '#8a6a14' : '#7a0c14'; ctx.fillRect(bx, by, bw * Math.max(0, chefe.vida), bh);
     ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 1; ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);

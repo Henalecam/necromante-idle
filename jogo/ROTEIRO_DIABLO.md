@@ -25,7 +25,7 @@ battle.net clássico (pacotes de campeões/únicos).
 8. [feito] Atributos do necromante (Força/Magia/Destreza/Vitalidade) com pontos por nível.
 9. [feito: Biblioteca, Fosso de monstros, Sala de tortura, Arsenal] Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
 10. [feito] Santuários de efeito incerto: 10 tipos de nome críptico (Misterioso, Sombrio, Estranho, Reluzente, Oculto, Religioso, Mágico, Ornado, Tétrico, Profano), usar ou seguir adiante, efeito só revelado depois de usado e anotado no Livro dos Santuários. Fontes: diablo2.diablowiki.net/D1_Shrines, strategywiki, gamebanshee, valarguild.
-11. [feito parte 1: tema a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com paleta, fogo e família da casa; faltam objetos próprios por tema e andares maiores/irregulares] Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
+11. [feito: tema a cada 4 andares com paleta, fogo, família da casa e decoração própria; Cavernas e Inferno com andares maiores e irregulares] Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
 12. Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
 13. Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
 14. Árvore de ascensão muito maior.

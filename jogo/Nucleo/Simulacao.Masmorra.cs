@@ -87,6 +87,7 @@ namespace Necro.Nucleo
                 GerarMapa();
                 return;
             }
+            float vaziaExtra = Cfg.TemasDeAndar && Temas.Do(Andar) >= TemaDeAndar.Cavernas ? Cfg.TemaFundoSalaVaziaExtra : 0f;
             bool temCofre = false;
             for (int w = 1; w <= TotalDeOndas; w++)
             {
@@ -96,16 +97,16 @@ namespace Necro.Nucleo
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
                 {
                     float r = forcar ? 99f : _rngMasmorra.Proximo01() * 100f;
-                    if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
+                    if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia + vaziaExtra)) Salas.Add(TipoSala.Vazia);
+                    if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia + vaziaExtra)) Salas.Add(TipoSala.Vazia);
                     Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 48f ? TipoSala.AlmasPresas : r < 52f ? TipoSala.FossoDeMonstros : r < 60f ? TipoSala.Fonte : r < 65f ? TipoSala.Biblioteca : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 81f ? TipoSala.Mercador : r < 84f ? TipoSala.Arsenal : r < 88f ? TipoSala.AltarDeSangue : r < 91f ? TipoSala.SalaDeTortura : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
                     if (forcarTipo) Salas[Salas.Count - 1] = (TipoSala)Cfg.ForcarSalaEspecial;
                     if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
                 else if (w < TotalDeOndas)
                 {
-                    if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
+                    if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia + vaziaExtra)) Salas.Add(TipoSala.Vazia);
+                    if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia + vaziaExtra)) Salas.Add(TipoSala.Vazia);
                 }
             }
             // cofre trancado: a chave fica com os inimigos de uma sala de combate comum. Na ordem sorteada o cofre pode vir antes
@@ -186,6 +187,7 @@ namespace Necro.Nucleo
             // andar mais próximo de um bloco, com preferência por continuar da sala anterior (o grupo anda menos).
             int x0 = int.MaxValue, x1 = int.MinValue, y0 = int.MaxValue, y1 = int.MinValue;
             for (int j = 0; j < Mapa.Count; j++) { x0 = Math.Min(x0, Mapa[j].X); x1 = Math.Max(x1, Mapa[j].X); y0 = Math.Min(y0, Mapa[j].Y); y1 = Math.Max(y1, Mapa[j].Y); }
+            bool fundo = Cfg.MapaIrregularNosTemasFundos && Cfg.TemasDeAndar && Temas.Do(Andar) >= TemaDeAndar.Cavernas;
             float melhor = float.MaxValue; var escolha = new CelulaDoMapa { X = Mapa[i - 1].X + 1, Y = Mapa[i - 1].Y, Pai = i - 1 };
             for (int pai = i - 1; pai >= 0; pai--)
             {
@@ -200,7 +202,10 @@ namespace Necro.Nucleo
                     }
                     if (!livre) continue;
                     int larg = Math.Max(x1, x) - Math.Min(x0, x) + 1, alt = Math.Max(y1, y) - Math.Min(y0, y) + 1;
-                    float nota = Math.Max(larg, alt) * 10f + (larg + alt) - vizinhas * 0.8f + (pai == i - 1 ? 0f : 2.5f) + _rngMasmorra.Proximo01() * 1.5f;
+                    // Cavernas e Inferno: o andar deixa de ser um bloco. Galerias tortas, com ramais e becos, até o limite de 5 salas de lado
+                    float nota = fundo
+                        ? (Math.Max(larg, alt) > Cfg.MapaFundoLadoMaximo ? 1000f : 0f) + Math.Max(larg, alt) * 1.5f + vizinhas * 1.2f + (pai == i - 1 ? 0f : 1.2f) + _rngMasmorra.Proximo01() * 6f
+                        : Math.Max(larg, alt) * 10f + (larg + alt) - vizinhas * 0.8f + (pai == i - 1 ? 0f : 2.5f) + _rngMasmorra.Proximo01() * 1.5f;
                     if (nota < melhor) { melhor = nota; escolha = new CelulaDoMapa { X = x, Y = y, Pai = pai }; }
                 }
             }

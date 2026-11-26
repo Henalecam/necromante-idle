@@ -319,6 +319,9 @@ namespace Necro.Nucleo
         public float BauChanceDeMimico = 0.12f;
         public float BauChanceDourado = 0.06f;
         public int BauDouradoSangue = 3;
+        public bool MapaIrregularNosTemasFundos = true;  // Cavernas e Inferno: galerias tortas com ramais em vez do bloco compacto
+        public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
+        public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool TemasDeAndar = true;                 // tema a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno): puxa o elenco para a família da casa
         public float TemaAfinidade = 1.8f;               // peso de sorteio das espécies da casa
         public float TemaForaDeCasa = 0.8f;              // peso das demais

@@ -1423,6 +1423,32 @@ namespace Necro.Testes
                 Afirmar(com > sem * 1.2f, "nas Cavernas (andar 9) deveria haver mais bestas com o tema ligado (" + com + " vs " + sem + ")");
             });
 
+            Teste("Cavernas e Inferno: o andar é irregular (menos compacto), conexo e cabe em 5 salas de lado", () =>
+            {
+                float Compacto(int andar, out int lado, out bool conexo)
+                {
+                    float soma = 0f; int n = 0; lado = 0; conexo = true;
+                    for (ulong sm = 1; sm <= 12; sm++)
+                    {
+                        var s = new Simulacao(Cfg, ProgressoCom(EspecieId.Esqueleto), sm, ModoExpedicao.Avancar, andar);
+                        int x0 = 99, x1 = -99, y0 = 99, y1 = -99;
+                        for (int i = 0; i < s.Mapa.Count; i++)
+                        {
+                            var c = s.Mapa[i]; x0 = Math.Min(x0, c.X); x1 = Math.Max(x1, c.X); y0 = Math.Min(y0, c.Y); y1 = Math.Max(y1, c.Y);
+                            if (i > 0) { bool viz = false; for (int j = 0; j < i; j++) if (Math.Abs(s.Mapa[j].X - c.X) + Math.Abs(s.Mapa[j].Y - c.Y) == 1) viz = true; if (!viz) conexo = false; }
+                            for (int j = 0; j < i; j++) if (s.Mapa[j].X == c.X && s.Mapa[j].Y == c.Y) conexo = false;
+                        }
+                        int w = x1 - x0 + 1, h = y1 - y0 + 1; lado = Math.Max(lado, Math.Max(w, h)); soma += (float)s.Mapa.Count / (w * h); n++;
+                    }
+                    return soma / n;
+                }
+                int ladoC, ladoF; bool okC, okF;
+                float catedral = Compacto(3, out ladoC, out okC), caverna = Compacto(11, out ladoF, out okF);
+                Afirmar(okC && okF, "todas as salas deveriam estar ligadas e sem sobreposição");
+                Afirmar(caverna < catedral - 0.05f, "o andar das Cavernas deveria preencher menos o seu retângulo (" + caverna + " vs " + catedral + ")");
+                Afirmar(ladoF <= Cfg.MapaFundoLadoMaximo, "o andar irregular não deveria passar de " + Cfg.MapaFundoLadoMaximo + " salas de lado (" + ladoF + ")");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)
