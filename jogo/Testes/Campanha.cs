@@ -142,6 +142,13 @@ namespace Necro.Testes
                     }
                     if (pior != null) sim.ComandoCurar(pior.Id);
                 }
+                // rota: passa pela sala da chave antes do cofre; santuário o quanto antes (a bênção vale por mais salas)
+                {
+                    int cofre = sim.Salas.IndexOf(TipoSala.Cofre);
+                    if (cofre > sim.SalaAtual && sim.ChaveNaSala > cofre && !sim.TemChave) sim.ComandoIrPara(sim.ChaveNaSala);
+                    int sant = sim.Salas.IndexOf(TipoSala.Santuario);
+                    if (sant > sim.SalaAtual + 1 && sant < sim.Salas.Count - 1 && sim.BencaoAtual == Bencao.Nenhuma && !(cofre > sim.SalaAtual && !sim.TemChave)) sim.ComandoIrPara(sant);
+                }
                 if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();
                 if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao(0);   // toca no baú/santuário/fonte
                 // interrompe o Golpe Brutal: marca quem está armando (com meio segundo de reação)
