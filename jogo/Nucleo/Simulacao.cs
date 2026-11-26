@@ -18,7 +18,16 @@ namespace Necro.Nucleo
             public ModificadorElite Mods;
             public int Portal;
             public int TickDeSpawn;
+            public InimigoPlanejado Planejado;   // null = entra por um portal (emboscadas, nível secreto)
         }
+
+        /// <summary>Um inimigo que já está numa sala do andar, à espera do grupo.</summary>
+        public sealed class InimigoPlanejado
+        {
+            public int Sala; public EspecieId Especie; public bool Elite, Chefe; public ModificadorElite Mods; public Vec2 Pos; public int Atraso; public bool Desperto;
+        }
+        /// <summary>Quem está em cada sala de combate do andar (uma lista por onda).</summary>
+        public readonly List<List<InimigoPlanejado>> PlanoDasOndas = new List<List<InimigoPlanejado>>(4);
 
         private struct ExplosaoPendente
         {
@@ -519,6 +528,7 @@ namespace Necro.Nucleo
             Fase = FaseExpedicao.EntreOndas;
             _temporizadorDeFase = 1.0f;
             Emitir(new EventoSim { Tipo = TipoEvento.AndarIniciado, Extra = Andar, Alvo = -1, Origem = -1 });
+            PlanejarInimigos();
             ComecarPelaPrimeiraSala();
         }
 
@@ -544,6 +554,7 @@ namespace Necro.Nucleo
                         _filaDeSpawn.RemoveAt(0);
                         var portal = Portais[s.Portal];
                         var pos = new Vec2(portal.X, portal.Y + Rng.Intervalo(-0.8f, 0.8f));
+                        if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
                         CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                     }
                     // Fúria: garante que nenhum andar empate para sempre.
@@ -579,38 +590,58 @@ namespace Necro.Nucleo
             Onda++;
             bool ondaDeChefe = Formulas.AndarDeChefe(Andar, Cfg);
             bool ondaDeElite = _ondaEliteNesteAndar && Onda == TotalDeOndas;
-            int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
-            float orcamento = Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (Andar - 1) + Cfg.OrcamentoPorOnda * (Onda - 1);
-            if (orcamento > Cfg.OrcamentoMaximo) orcamento = Cfg.OrcamentoMaximo;
-            orcamento *= _aOrcamento;
-            int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo + 0.5f));
-            int k = 0;
-
-            if (ondaDeChefe)
+            // os inimigos desta sala foram sorteados e postos nela quando o andar começou (ver PlanejarInimigos): agora despertam, um a um
+            if (Onda - 1 < PlanoDasOndas.Count)
             {
-                _filaDeSpawn.Add(new SpawnPendente { Especie = TabelaEspecies.ChefeDoAto(Formulas.AtoDoAndar(Andar, Cfg)), Chefe = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
-                orcamento *= 0.5f;
-                k = 4; // os lacaios chegam um pouco depois
+                var plano = PlanoDasOndas[Onda - 1];
+                for (int i = 0; i < plano.Count; i++)
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
+                _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }
-            else if (ondaDeElite)
-            {
-                var esp = SortearEspecie(noAto, 99f);
-                _filaDeSpawn.Add(new SpawnPendente { Especie = esp, Elite = true, Mods = SortearModificadores(), Portal = 0, TickDeSpawn = TickAtual + 1 });
-                orcamento *= 0.5f;
-                k = 2;
-            }
-
-            while (orcamento > 0.01f)
-            {
-                EspecieId esp = SortearEspecie(noAto, orcamento);
-                if (esp == EspecieId.Necromante) break; // nada cabe no orçamento
-                orcamento -= TabelaEspecies.Obter(esp).CustoOnda;
-                _filaDeSpawn.Add(new SpawnPendente { Especie = esp, Portal = k % PortaisAtivos, TickDeSpawn = TickAtual + 1 + k * intervalo / PortaisAtivos });
-                k++;
-            }
-
             Fase = FaseExpedicao.EmOnda;
             Emitir(new EventoSim { Tipo = TipoEvento.OndaIniciada, Extra = Onda, Valor = TotalDeOndas, Critico = ondaDeChefe || ondaDeElite, Alvo = -1, Origem = -1 });
+        }
+
+        /// <summary>Sorteia, no começo do andar, quem está em cada sala de combate e onde. Assim o mapa inteiro já mostra o que espera o grupo.</summary>
+        private void PlanejarInimigos()
+        {
+            PlanoDasOndas.Clear();
+            bool chefe = Formulas.AndarDeChefe(Andar, Cfg);
+            int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
+            int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo + 0.5f));
+            int sala = -1;
+            for (int onda = 1; onda <= TotalDeOndas; onda++)
+            {
+                // a sala desta onda: a próxima sala de combate do plano
+                do { sala++; } while (sala < Salas.Count && Salas[sala] != TipoSala.Combate && Salas[sala] != TipoSala.Elite && Salas[sala] != TipoSala.Chefe);
+                var lista = new List<InimigoPlanejado>();
+                bool ondaDeElite = _ondaEliteNesteAndar && onda == TotalDeOndas;
+                float orcamento = Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (Andar - 1) + Cfg.OrcamentoPorOnda * (onda - 1);
+                if (orcamento > Cfg.OrcamentoMaximo) orcamento = Cfg.OrcamentoMaximo;
+                orcamento *= _aOrcamento;
+                int k = 0;
+                if (chefe)
+                {
+                    lista.Add(new InimigoPlanejado { Sala = sala, Especie = TabelaEspecies.ChefeDoAto(Formulas.AtoDoAndar(Andar, Cfg)), Chefe = true, Atraso = 0, Pos = new Vec2(Cfg.LarguraArena * 0.74f, Cfg.AlturaArena * 0.5f) });
+                    orcamento *= 0.5f; k = 4;
+                }
+                else if (ondaDeElite)
+                {
+                    lista.Add(new InimigoPlanejado { Sala = sala, Especie = SortearEspecie(noAto, 99f), Elite = true, Mods = SortearModificadores(), Atraso = 0, Pos = new Vec2(Cfg.LarguraArena * 0.74f, Cfg.AlturaArena * 0.5f) });
+                    orcamento *= 0.5f; k = 2;
+                }
+                while (orcamento > 0.01f)
+                {
+                    EspecieId esp = SortearEspecie(noAto, orcamento);
+                    if (esp == EspecieId.Necromante) break;
+                    orcamento -= TabelaEspecies.Obter(esp).CustoOnda;
+                    // espalhados pela metade do fundo da sala; despertam aos poucos, como antes chegavam pelos portais
+                    var pos = new Vec2(_rngMasmorra.Intervalo(Cfg.LarguraArena * 0.56f, Cfg.LarguraArena - 1.2f), _rngMasmorra.Intervalo(1.2f, Cfg.AlturaArena - 1.2f));
+                    lista.Add(new InimigoPlanejado { Sala = sala, Especie = esp, Atraso = k * intervalo / PortaisAtivos, Pos = pos });
+                    k++;
+                }
+                PlanoDasOndas.Add(lista);
+            }
         }
 
         /// <summary>Sorteia uma espécie comum por peso, entre as liberadas no andar e que cabem no orçamento.</summary>

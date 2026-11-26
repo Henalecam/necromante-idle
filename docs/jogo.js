@@ -266,7 +266,7 @@ function aviso(texto) {
 }
 
 function ler(texto) {
-  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null;
+  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null; aEspera = [];
   for (const ln of texto.split('\n')) {
     if (!ln) continue;
     const p = ln.split(' ');
@@ -301,6 +301,7 @@ function ler(texto) {
       case 'A': ativos = p.slice(1).map(Number); break;
       case 'M': lerMasmorra(p); break;
       case 'G': lerMapa(p); break;
+      case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'V': evento(p); break;
       case 'F': fimDeExpedicao(p); break;
@@ -520,7 +521,7 @@ const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', '
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
-let bencaos = null, bencaosMostradas = '';
+let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
 function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.pop(); }
@@ -605,12 +606,23 @@ function desenharObjeto(dt) {
     if (Math.random() < 0.4) particulas.push(pg.pedra ? [pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 7, 0, 0, -9, '#8a8078', 0.7] : [pg.x + rnd(-pg.r, pg.r) * 0.6, pg.y + rnd(-pg.r, pg.r) * 0.4, 0.1, 0, 0, rnd(2, 5), '#ff8a30', rnd(0.3, 0.7)]);
   }
   perigos = perigos.filter((pg) => pg.t < pg.dur + 0.1);
+  // o que espera nas salas ainda não visitadas: o baú, o santuário, o mercador... já estão lá, à vista
+  mapa.forEach((m, i) => {
+    const t = masm.tipos[i];
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12)) return;
+    if (objeto && i === masm.sala) return;
+    const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
+    pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
+  });
   if (!objeto) return;
   const o = objeto; o.t += dt; if (o.aberto) { o.aberto += dt; if (o.aberto > 1.6 && masm.fase !== 'Explorando') { objeto = null; return; } }
-  const [px, py] = naTela(o.x, o.y), ab = o.aberto > 0, pulso = 0.6 + 0.4 * Math.sin(o.t * 5);
+  { const [px, py] = naTela(o.x, o.y); pintarObjeto(o, px, py); }
+}
+function pintarObjeto(o, px, py) {
+  const ab = o.aberto > 0, pulso = 0.6 + 0.4 * Math.sin(o.t * 5);
   ctx.save(); ctx.translate(px, py);
   ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(0, 4, 34, 12, 0, 0, 7); ctx.fill();
-  if (!ab) { ctx.strokeStyle = `rgba(217,178,95,${0.4 + 0.5 * pulso})`; ctx.lineWidth = o.tocado ? 4 : 2; ctx.beginPath(); ctx.ellipse(0, 4, 44 + 4 * pulso, 16 + 2 * pulso, 0, 0, 7); ctx.stroke(); }
+  if (!ab && !o.futuro) { ctx.strokeStyle = `rgba(217,178,95,${0.4 + 0.5 * pulso})`; ctx.lineWidth = o.tocado ? 4 : 2; ctx.beginPath(); ctx.ellipse(0, 4, 44 + 4 * pulso, 16 + 2 * pulso, 0, 0, 7); ctx.stroke(); }
   if (o.tipo === 3) {           // baú
     ctx.fillStyle = '#4a2c16'; ctx.fillRect(-26, -30, 52, 32); ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 3; ctx.strokeRect(-26, -30, 52, 32);
     ctx.fillStyle = '#d9b25f'; ctx.fillRect(-4, -20, 8, 10);
@@ -639,7 +651,7 @@ function desenharObjeto(dt) {
   } else if (o.tipo === 7) {    // fonte
     ctx.fillStyle = '#3a3438'; ctx.beginPath(); ctx.ellipse(0, -6, 36, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#2a2428'; ctx.fillRect(-7, -6, 14, 10);
     ctx.fillStyle = `rgba(170,20,32,${0.8 + 0.2 * pulso})`; ctx.beginPath(); ctx.ellipse(0, -8, 30, 10, 0, 0, 7); ctx.fill();
-    if (Math.random() < 0.5) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.5, rnd(-0.4, 0.4), 0, rnd(3, 6), '#c8202c', rnd(0.4, 0.8)]);
+    if (!o.futuro && Math.random() < 0.5) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.5, rnd(-0.4, 0.4), 0, rnd(3, 6), '#c8202c', rnd(0.4, 0.8)]);
   }
   ctx.restore();
 }
@@ -711,6 +723,16 @@ function desenhar(dt) {
     lista.push([s, dvg && !s.inimigo ? 'andar' : ACAO[s.anim] || 'parado', dvg && !s.inimigo ? tempoSim * 1.6 : tempoSim - s.t, false]);
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
+  // inimigos à espera nas salas: parados, virados para a entrada, um pouco apagados até despertarem
+  for (const [sala, especie, ix, iy, elite, ehChefe] of [...aEspera].sort((a, b) => b[3] - a[3] + (a[2] - b[2]))) {
+    const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * reforco;
+    if (px < camX - 300 || px > camX + visivel + 300 || py < camY - 300 || py > camY + visAlt + 300) continue;
+    const [img, sx, sy] = quadro(m, 'parado', direcao(-1, 0), tempoSim * 0.6 + ix);
+    if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
+    ctx.globalAlpha = sala === masm.sala ? 0.95 : 0.8;
+    ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
+    ctx.globalAlpha = 1;
+  }
   for (const [s, acao, tempo, morto] of lista) {
     const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, [px, py] = naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
     if (reforco > 1.01) { ctx.save(); ctx.translate(px, py); ctx.scale(reforco, reforco); ctx.translate(-px, -py); }
@@ -781,7 +803,7 @@ function desenhar(dt) {
     ctx.textAlign = 'center';
     mapa.forEach((m, i) => {
       if (i === masm.sala && zoomModo !== 2) return;
-      const o = offDaSala(i), [lx, ly] = W(o[0] + 10, o[1] + 6), t = masm.tipos[i] || 0, k = 1 / esc, feita = i < masm.sala;
+      const o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), t = masm.tipos[i] || 0, k = 1 / esc, feita = i < masm.sala, ly = ly0 - (feita ? 0 : 62 * k + 40);   // acima do que há na sala, para não cobrir
       const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
       ctx.globalAlpha = feita ? 0.4 : i === masm.sala ? 0.55 : 0.95;
       ctx.fillStyle = 'rgba(8,5,7,0.8)'; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, 15 * k, 0, 7); ctx.fill(); ctx.strokeStyle = cor; ctx.lineWidth = 1.5 * k; ctx.stroke();
