@@ -547,12 +547,12 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
@@ -627,6 +627,7 @@ function eventoDeSala(tipo, v, x, y) {
     else { aviso((sub === 2 ? 'Baú dourado! ' : 'Baú: ') + '+' + fmt(Math.round(val)) + ' Ossos'); anotar(`${sub === 2 ? '<b style="color:#ffd84a">Baú dourado</b>' : 'Baú'}: +${fmt(Math.round(val))} Ossos${sub === 2 ? ', item Raro e Sangue' : ''}${toque ? ' (aberto por você)' : ''}.`); brilho('#ffd84a', sub === 2 ? 60 : 26); if (sub === 2) clarao = 0.5; }
   } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * [0, 100, 100, 250, 400, 300][sub])}%) até o fim do andar${toque ? ', escolhida por você' : ''}.`); brilho('#7fd8ff', 34); }
   else if (ts === 5) { aviso('Alma libertada: ' + QUALIDADES[sub]); anotar(`Almas presas: uma alma <span class="q${sub}">${QUALIDADES[sub]}</span> se soltou${toque ? ' (melhorada pelo seu toque?)' : ''}.`); brilho('#78ffaa', 30); }
+  else if (ts === 15) { if (sub === 2) { aviso('Os ovos chocaram!'); tremor = 0.3; anotar('<b style="color:#c8e06a">Ninho</b>: ninguém esmagou os ovos e as crias chocaram.'); brilho('#c8e06a', 26); } else { aviso('Ninho esmagado · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Ninho esmagado por você: +${fmt(Math.round(val))} Ossos.`); brilho('#e8e0a0', 30); for (let i = 0; i < 8; i++) mancha(x + rnd(-0.8, 0.8), y + rnd(-0.5, 0.5), 6, 3); } }
   else if (ts === 14) { aviso('Forja de ossos: couraça para todos'); anotar(`Forja de ossos: cada aliado sai com uma couraça de ${Math.round(val * 100)}% da vida${toque ? ' (reforçada pelo seu toque)' : ''}.`); brilho('#e8e0c8', 34); for (const g of estado.values()) if (g.viva && !g.inimigo) g.flash = 0.25; }
   else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
@@ -649,7 +650,7 @@ function desenharObjeto(dt) {
   // o que espera nas salas ainda não visitadas: o baú, o santuário, o mercador... já estão lá, à vista
   mapa.forEach((m, i) => {
     const t = masm.tipos[i];
-    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14)) return;
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14 || t === 15)) return;
     if (objeto && i === masm.sala) return;
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
@@ -693,6 +694,14 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#34282c'; ctx.fillRect(-30, -22, 60, 24); ctx.fillStyle = '#463a3e'; ctx.fillRect(-36, -30, 72, 10);
     ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 15) {    // ninho: ovos pálidos numa cama de teia e ossos, pulsando
+    ctx.fillStyle = 'rgba(30,24,20,0.9)'; ctx.beginPath(); ctx.ellipse(0, 0, 40, 15, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(210,200,170,0.35)'; ctx.lineWidth = 1; for (let q = 0; q < 9; q++) { const a0 = q * 0.7; ctx.beginPath(); ctx.moveTo(Math.cos(a0) * 40, Math.sin(a0) * 15); ctx.lineTo(Math.cos(a0 + 2.4) * 34, Math.sin(a0 + 2.4) * 12); ctx.stroke(); }
+    if (!ab) for (const [ex, ey, er, f] of [[-18, -6, 9, 0], [-2, -9, 11, 1.3], [15, -6, 9, 2.6], [-9, -1, 7, 3.9], [8, -1, 7, 5.1]]) {
+      const p2 = 1 + 0.06 * Math.sin(o.t * 6 + f), g2 = ctx.createRadialGradient(ex - 2, ey - er, 1, ex, ey - er * 0.6, er * 1.3); g2.addColorStop(0, '#f4f0d0'); g2.addColorStop(0.7, '#a8b060'); g2.addColorStop(1, '#4a5a20');
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.ellipse(ex, ey - er * 0.7, er * 0.75 * p2, er * p2, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#1c2408'; ctx.lineWidth = 1; ctx.stroke();
+    } else { ctx.fillStyle = '#c8cc90'; for (const [ex, ey] of [[-20, -3], [-6, -5], [10, -4], [22, -1], [0, 2]]) { ctx.beginPath(); ctx.moveTo(ex - 5, ey); ctx.lineTo(ex - 2, ey - 6); ctx.lineTo(ex + 1, ey - 2); ctx.lineTo(ex + 5, ey - 5); ctx.lineTo(ex + 6, ey); ctx.closePath(); ctx.fill(); } }
+    if (!ab) { ctx.globalCompositeOperation = 'lighter'; const gn = ctx.createRadialGradient(0, -10, 0, 0, -10, 44); gn.addColorStop(0, `rgba(190,220,90,${0.18 + 0.14 * pulso})`); gn.addColorStop(1, 'rgba(190,220,90,0)'); ctx.fillStyle = gn; ctx.beginPath(); ctx.arc(0, -10, 44, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 14) {    // forja de ossos: bigorna de pedra, brasa e ossos empilhados
     ctx.fillStyle = '#4a4246'; ctx.fillRect(-22, -14, 44, 14); ctx.fillStyle = '#62585c'; ctx.fillRect(-28, -24, 56, 10); ctx.strokeStyle = '#0a0808'; ctx.lineWidth = 1.5; ctx.strokeRect(-28, -24, 56, 10); ctx.strokeRect(-22, -14, 44, 14); ctx.fillStyle = '#1c181a'; ctx.fillRect(-12, -4, 24, 6);
     ctx.fillStyle = '#d8d0b8'; for (const [bx, by, bw] of [[-40, -6, 18], [-38, -11, 14], [24, -5, 16], [27, -10, 12]]) { ctx.fillRect(bx, by, bw, 3); ctx.beginPath(); ctx.arc(bx, by + 1.5, 2.6, 0, 7); ctx.arc(bx + bw, by + 1.5, 2.6, 0, 7); ctx.fill(); }

@@ -294,6 +294,8 @@ namespace Necro.Nucleo
         public float TempoDeEscolhaDaBencao = 4f;        // s para o jogador escolher; depois o necromante pega uma ao acaso
         public float FonteCura = 0.20f;
         public float ForjaEscudo = 0.25f;                 // Forja de Ossos: couraça = fração da vida máxima de cada aliado
+        public int NinhoCrias = 4, NinhoCriasMaximo = 8; public float NinhoPremioDaLuta = 0.4f;   // Ninho sem toque: diabretes que chocam (+1 a cada 6 andares)
+        public float NinhoOssos = 1.5f;                    // Ninho com toque: Ossos = BauOssos x isto
         public float AlmasPresasChanceDeMelhorar = 0.5f;
         public float EmboscadaOrcamento = 0.5f;
         public float MercadorPreco = 40f;                // Ossos da própria expedição, x (1 + 10% por andar)

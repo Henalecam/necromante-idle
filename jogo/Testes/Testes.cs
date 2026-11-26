@@ -1243,6 +1243,33 @@ namespace Necro.Testes
                 Afirmar(viu, "nenhuma Forja de Ossos resolvida em 400 sementes");
             });
 
+            Teste("Ninho: sem toque as crias chocam e viram luta; com toque os ovos rendem Ossos", () =>
+            {
+                bool chocou = false, esmagou = false;
+                for (int semente = 1; semente < 600 && !(chocou && esmagou); semente++)
+                {
+                    for (int modo = 0; modo < 2; modo++)
+                    {
+                        var sim = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), (ulong)semente, ModoExpedicao.Avancar, 3);
+                        sim.Tick();
+                        if (!sim.Salas.Contains(TipoSala.Ninho)) break;
+                        int guarda = 0; bool fim = false;
+                        while (!sim.Encerrada && guarda++ < 6000 && !fim)
+                        {
+                            if (modo == 1 && sim.Fase == FaseExpedicao.Explorando && sim.Salas[sim.SalaAtual] == TipoSala.Ninho) sim.ComandoInteragir();
+                            sim.Tick();
+                            foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.Ninho)
+                            {
+                                fim = true;
+                                if (modo == 0) { Afirmar(ev.Origem == 2 && sim.Fase == FaseExpedicao.EmOnda, "sem toque o ninho deveria chocar e virar luta"); chocou = true; }
+                                else { Afirmar(ev.Origem == 1 && ev.Valor > 0f, "com toque o ninho deveria render Ossos"); esmagou = true; }
+                            }
+                        }
+                    }
+                }
+                Afirmar(chocou && esmagou, "ninho não exercitado nos dois modos: " + chocou + "/" + esmagou);
+            });
+
             RodarLoot();
 
             Console.WriteLine();
