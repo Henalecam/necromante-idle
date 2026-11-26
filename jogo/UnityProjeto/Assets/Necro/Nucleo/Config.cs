@@ -302,6 +302,10 @@ namespace Necro.Nucleo
         public bool HabilidadesDeEspecie = true;
         public float MiasmaMult = 1.5f, MiasmaRaio = 1.6f;      // Zumbi
         public float SedeBonus = 0.25f, SedeDuracao = 4f;        // Cão de Cripta
+        public float OlhoMortoBonus = 0.3f, OlhoMortoLimiar = 0.95f;   // Arqueiro Ossudo: dano extra em alvo (quase) inteiro
+        public float MatilhaBonus = 0.08f; public int MatilhaMaximo = 3; // Diabrete: por outro diabrete vivo
+        public float AgouroDuracao = 2.5f;                               // Acólito Caído: fraqueza no alvo (não chefe)
+        public float BanqueteCura = 0.15f;                               // Carniçal: fração da vida máxima ao matar
         // patrulha errante
         public float ChanceDePatrulha = 0.3f, PatrulhaIntervalo = 9f;
         public int PatrulhaAPartirDoAndar = 6, PatrulhaTamanho = 3;

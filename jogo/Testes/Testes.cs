@@ -1199,6 +1199,16 @@ namespace Necro.Testes
                 Afirmar(miasma, "o zumbi deveria soltar miasma ao morrer");
             });
 
+            Teste("habilidades de espécie, lote 2: o Carniçal se cura ao matar e o Acólito enfraquece o alvo", () =>
+            {
+                var sc = new Simulacao(Cfg, ProgressoCom(EspecieId.Carnical, EspecieId.Carnical), 3, ModoExpedicao.Avancar, 5); bool banquete = false; int guarda = 0;
+                while (!sc.Encerrada && guarda++ < 6000 && !banquete) { sc.Tick(); foreach (var ev in sc.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 18 && ev.Valor > 0f) banquete = true; }
+                Afirmar(banquete, "o carniçal deveria se curar ao matar");
+                var sa = new Simulacao(Cfg, ProgressoCom(EspecieId.AcolitoCaido, EspecieId.Esqueleto), 2, ModoExpedicao.Avancar, 5); bool fraco = false; guarda = 0;
+                while (!sa.Encerrada && guarda++ < 6000 && !fraco) { sa.Tick(); foreach (var e in sa.Entidades) if (e.Viva && e.Faccao == Faccao.Inimigo && e.FraquezaTempo > 0f) fraco = true; }
+                Afirmar(fraco, "o acólito deveria deixar o alvo enfraquecido");
+            });
+
             RodarLoot();
 
             Console.WriteLine();

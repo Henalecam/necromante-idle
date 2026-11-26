@@ -38,6 +38,21 @@ namespace Necro.Nucleo
                 if (alvo.Id == MarcadoId && atacante.Faccao != Faccao.Inimigo) mais *= 1f + Cfg.MarcaBonusDeDano;
                 if (atacante.Faccao == Faccao.Inimigo) mais *= _fatorFuria * _pDanoInimigo * _aDanoInimigo * _bProtecao;
                 else mais *= _bDanoAliado;
+                if (golpe && Cfg.HabilidadesDeEspecie && atacante.Faccao == Faccao.Minion)
+                {
+                    // Arqueiro Ossudo: a primeira flecha num alvo ainda inteiro entra mais fundo
+                    if (atacante.Especie == EspecieId.ArqueiroOssudo && alvo.Vida >= alvo.VidaMax * Cfg.OlhoMortoLimiar) mais *= 1f + Cfg.OlhoMortoBonus;
+                    // Diabrete: cada outro diabrete vivo ao lado o deixa mais atrevido
+                    else if (atacante.Especie == EspecieId.Diabrete)
+                    {
+                        int outros = 0;
+                        for (int i = 0; i < _minions.Count; i++) { var o = _minions[i]; if (o != atacante && o.Viva && o.Especie == EspecieId.Diabrete) outros++; }
+                        if (outros > Cfg.MatilhaMaximo) outros = Cfg.MatilhaMaximo;
+                        mais *= 1f + outros * Cfg.MatilhaBonus;
+                    }
+                    // Acólito Caído: o golpe deixa um agouro que enfraquece quem não é chefe
+                    else if (atacante.Especie == EspecieId.AcolitoCaido && !alvo.Chefe && alvo.FraquezaTempo < Cfg.AgouroDuracao) alvo.FraquezaTempo = Cfg.AgouroDuracao;
+                }
                 // Anel do Rei Solitário: +100% de dano do necromante enquanto não houver nenhum minion vivo.
                 if (Bonus.ReiSolitario && atacante == Necromante && !HaMinionVivo()) mais *= 1f + Cfg.ReiSolitarioBonus;
                 if (golpe)
@@ -180,6 +195,13 @@ namespace Necro.Nucleo
                     matador.SedeTempo = Cfg.SedeDuracao;
                     Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 17, Alvo = matador.Id, Origem = -1, Valor = Cfg.SedeDuracao, Pos = matador.Pos });
                 }
+            }
+            // Carniçal erguido: devora o que mata e recupera parte da vida
+            if (Cfg.HabilidadesDeEspecie && matador != null && matador.Viva && matador.Faccao == Faccao.Minion && matador.Especie == EspecieId.Carnical && alvo.Faccao == Faccao.Inimigo && matador.Vida < matador.VidaMax)
+            {
+                float cura = Math.Min(matador.VidaMax - matador.Vida, matador.VidaMax * Cfg.BanqueteCura);
+                matador.Vida += cura;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 18, Alvo = matador.Id, Origem = -1, Valor = cura, Pos = matador.Pos });
             }
             if (overkill) Resultado.Overkills++;
             else if (alvo != Necromante && !alvo.Temporario) CriarCadaver(alvo, condicao);
