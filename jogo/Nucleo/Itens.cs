@@ -82,6 +82,7 @@ namespace Necro.Nucleo
         public ConjuntoId Conjunto;
         /// <summary>Travado pelo jogador: nunca é desmanchado (nem pelo "vender tudo", nem para abrir espaço).</summary>
         public bool Bloqueado;
+        public bool NaoIdentificado;   // caiu sem identificar (Diablo 1): não equipa nem mostra as propriedades até pagar a identificação
 
         public bool Tem(AfixoItem a)
         {

@@ -107,7 +107,7 @@ namespace Necro.Nucleo
 
         public static bool PodeEquipar(Item item, EspacoEquipamento espaco)
         {
-            if (Vazio(item)) return false;
+            if (Vazio(item) || item.NaoIdentificado) return false;
             var e = TabelaItens.EspacoDoTipo(item.Tipo);
             if (e == EspacoEquipamento.Anel1) return espaco == EspacoEquipamento.Anel1 || espaco == EspacoEquipamento.Anel2;
             return e == espaco;
@@ -411,7 +411,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < p.Inventario.Count; i++)
                 {
                     var item = p.Inventario[i];
-                    if (Vazio(item)) continue;
+                    if (Vazio(item) || item.NaoIdentificado) continue;
                     var espaco = TabelaItens.EspacoDoTipo(item.Tipo);
                     if (espaco == EspacoEquipamento.Anel1
                         && Pontuacao(Obter(p, EspacoEquipamento.Anel2), cfg) < Pontuacao(Obter(p, EspacoEquipamento.Anel1), cfg))

@@ -434,6 +434,27 @@ namespace Necro.Testes
                 alvo.Bloqueado = true; Afirmar(Ferreiro.Vender(p, alvo, Cfg) == 0, "item travado não se vende"); alvo.Bloqueado = false;
                 Afirmar(Ferreiro.Vender(p, alvo, Cfg) == venda && p.Ouro == 7 + venda && !p.Inventario.Contains(alvo), "venda feita");
             });
+            Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;
+                var achados = new List<Item>();
+                for (ulong sem = 1; sem <= 12; sem++) achados.AddRange(ExecutorSemTela.RodarExpedicao(Cfg, p, sem, ModoExpedicao.Avancar, 1, 6).Itens);
+                bool viuRaro = false;
+                foreach (var it in achados) { if (it.Raridade >= RaridadeItem.Raro) viuRaro = true; Afirmar(it.NaoIdentificado == (it.Raridade >= RaridadeItem.Raro), "só Raro para cima cai sem identificar: " + it.Raridade + " " + it.NaoIdentificado); }
+                Afirmar(viuRaro, "nenhum raro caiu no teste");
+                var raro = achados.Find(i => i.Raridade >= RaridadeItem.Raro);
+                p.Inventario.Add(raro);
+                Afirmar(!Equipamento.PodeEquipar(raro, TabelaItens.EspacoDoTipo(raro.Tipo)), "não identificado não equipa");
+                Afirmar(Equipamento.AutoEquipar(p, Cfg) == 0 || p.Inventario.Contains(raro), "o auto-equipar ignora o não identificado");
+                long cheio; raro.NaoIdentificado = false; cheio = Ferreiro.PrecoDeVenda(raro, Cfg); raro.NaoIdentificado = true;
+                Afirmar(Ferreiro.PrecoDeVenda(raro, Cfg) < cheio, "vender sem identificar rende menos");
+                long custo = Ferreiro.CustoDeIdentificar(raro, Cfg); Afirmar(custo > 0, "identificar custa ouro");
+                p.Ouro = custo - 1; Afirmar(!Ferreiro.Identificar(p, raro, Cfg) && raro.NaoIdentificado, "sem ouro não identifica");
+                p.Ouro = custo; Afirmar(Ferreiro.Identificar(p, raro, Cfg) && !raro.NaoIdentificado && p.Ouro == 0, "identificado");
+                Afirmar(Equipamento.PodeEquipar(raro, TabelaItens.EspacoDoTipo(raro.Tipo)), "identificado equipa");
+                var semId = new ConfigJogo { ItensNaoIdentificados = false };
+                foreach (var it in ExecutorSemTela.RodarExpedicao(semId, p, 3UL, ModoExpedicao.Avancar, 1, 6).Itens) Afirmar(!it.NaoIdentificado, "com a regra desligada tudo cai identificado");
+            });
             Teste("distribuição de raridade 70 / 22 / 7 / 0,9 / 0,1 % (400 mil sorteios)", () =>
             {
                 var rng = new Rng(2024);

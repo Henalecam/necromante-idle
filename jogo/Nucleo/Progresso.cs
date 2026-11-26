@@ -122,7 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public long Ouro;                                   // moeda da cidade: cai na masmorra, compra e vende no Ferreiro
-        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados;
+        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados;
         public int MinionsSacrificados;
         /// <summary>Regra automática: minions NA RESERVA com qualidade abaixo desta são sacrificados ao fim de cada expedição.</summary>
         public Qualidade SacrificarAbaixoDe = Qualidade.Fraca;

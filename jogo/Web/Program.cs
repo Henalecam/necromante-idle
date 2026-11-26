@@ -239,6 +239,14 @@ public static partial class Jogo
     {
         if (Equipamento.Vazio(it)) { sb.Append("null"); return; }
         int tw, th; Equipamento.Tamanho(it.Tipo, out tw, out th);
+        if (it.NaoIdentificado)
+        {
+            // fechado: só o tipo, a raridade e o nível aparecem; nome e propriedades só depois de identificar
+            sb.Append("{\"nome\":").Append(S("Não identificado")).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":0,\"tipo\":").Append((int)it.Tipo)
+              .Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg))
+              .Append(",\"nid\":true,\"custoId\":").Append(Ferreiro.CustoDeIdentificar(it, _cfg)).Append(",\"afixos\":[]}");
+            return;
+        }
         sb.Append("{\"nome\":").Append(S(it.Nome)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"afixos\":[");
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
@@ -400,6 +408,7 @@ public static partial class Jogo
                 for (int i = 0; i < (int)Math.Min(30, v); i++)
                 {
                     var it = GeradorDeItens.Gerar(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), rng.Chance(0.25f) ? RaridadeItem.Lendario : RaridadeItem.Raro);
+                    it.NaoIdentificado = _cfg.ItensNaoIdentificados;   // como cairiam na masmorra
                     if (Equipamento.Cabe(_p, it, _cfg)) _p.Inventario.Add(it);
                 }
                 break;
@@ -424,12 +433,14 @@ public static partial class Jogo
     [JSExport]
     public static void Equipar(int i)
     {
-        if (i < 0 || i >= _p.Inventario.Count) return;
+        if (i < 0 || i >= _p.Inventario.Count || _p.Inventario[i] == null || _p.Inventario[i].NaoIdentificado) return;
         var it = _p.Inventario[i]; _p.Inventario.RemoveAt(i);
         var saiu = Equipamento.Equipar(_p, it);
         if (!Equipamento.Vazio(saiu)) _p.Inventario.Add(saiu);
     }
     [JSExport] public static void Desequipar(int espaco) { Equipamento.Desequipar(_p, (EspacoEquipamento)espaco, _cfg); }
+    [JSExport] public static bool IdentificarItem(int i) { return i >= 0 && i < _p.Inventario.Count && Ferreiro.Identificar(_p, _p.Inventario[i], _cfg); }
+    [JSExport] public static int IdentificarTudo() { return Ferreiro.IdentificarTudo(_p, _cfg); }
     [JSExport] public static void VenderItem(int i) { if (i >= 0 && i < _p.Inventario.Count) Ferreiro.Vender(_p, _p.Inventario[i], _cfg); }
     [JSExport] public static bool ComprarItem(int i) { return Ferreiro.Comprar(_p, i, _cfg); }
     [JSExport] public static void Desmanchar(int i) { if (i >= 0 && i < _p.Inventario.Count) Equipamento.Desmanchar(_p, _p.Inventario[i], _cfg); }

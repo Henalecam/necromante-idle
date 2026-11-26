@@ -1307,11 +1307,17 @@ function atualizarPainel(forcar) {
       h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · ${TIPOS[it.tipo]} · nível ${it.nivel} · Poder ${fmt(it.poder)}</span><small>${it.afixos.map(esc).join(' · ')}</small></div>` +
         `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? '' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Inventário cheio' : `Comprar · ${fmt(l.preco)} ouro`}</button></div>`;
     });
+    const fechados = d.inventario.map((it, i) => [it, i]).filter(([it]) => it && it.nid);
+    if (fechados.length) {
+      const total = fechados.reduce((t, [it]) => t + it.custoId, 0);
+      h += `<h3>Identificar</h3><div class="linha"><div class="corpo">${fechados.length} ${fechados.length > 1 ? 'itens não identificados' : 'item não identificado'} no inventário<small>Raros para cima caem fechados: não equipam nem mostram o que fazem até serem identificados.</small></div><button data-ac="identificar-tudo">Identificar tudo · ${fmt(total)} ouro</button></div>`;
+      fechados.forEach(([it, i]) => { h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${TIPOS[it.tipo]} não identificado</span> <span class="nota">${RARIDADES[it.r]} · nível ${it.nivel}</span></div><button data-ac="identificar" data-i="${i}" ${it.custoId > d.ouroTotal ? 'disabled' : ''}>Identificar · ${fmt(it.custoId)} ouro</button></div>`; });
+    }
     h += '<h3>Vender do inventário</h3>';
     const vendaveis = d.inventario.map((it, i) => [it, i]).filter(([it]) => it && !it.trava);
     if (!vendaveis.length) h += '<p class="nota">Nada para vender: o inventário está vazio (ou tudo está travado).</p>';
     vendaveis.sort((a, b) => a[0].r - b[0].r || a[0].poder - b[0].poder).forEach(([it, i]) => {
-      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · Poder ${fmt(it.poder)}</span></div><button data-ac="vender-item" data-i="${i}">Vender · +${fmt(it.ouro)} ouro</button></div>`;
+      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${it.nid ? TIPOS[it.tipo] + ' não identificado' : esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]}${it.nid ? '' : ' · Poder ' + fmt(it.poder)}</span></div><button data-ac="vender-item" data-i="${i}">Vender · +${fmt(it.ouro)} ouro</button></div>`;
     });
   } else if (aba === 'talentos') {
     h += `<p class="nota">Um ponto a cada ${d.niveisPorPonto} níveis do necromante. Os talentos mais fundos de um ramo pedem pontos no mesmo ramo. Valem a partir da próxima expedição.</p>`;
@@ -1403,26 +1409,27 @@ function desenharInventario(d) {
   d.inventario.forEach((it, i) => {
     const [x, y] = g.pos[i];
     if (x < 0) { fora.push(i); return; }
-    h += `<div class="item r${it.r} ${invSel === 'i' + i ? 'sel' : ''}" data-inv="i${i}" style="left:${x * cel}%;top:${y * 100 / g.h}%;width:${it.w * cel}%;height:${it.h * 100 / g.h}%">${icone(it.tipo)}${it.conj ? `<span class="marca-conj${conjSel === it.conj.nome ? ' par' : ''}" title="${esc(it.conj.nome)}">◆</span>` : ''}${it.trava ? '<span class="trava">travado</span>' : ''}</div>`;
+    h += `<div class="item r${it.r} ${invSel === 'i' + i ? 'sel' : ''}" data-inv="i${i}" style="left:${x * cel}%;top:${y * 100 / g.h}%;width:${it.w * cel}%;height:${it.h * 100 / g.h}%">${icone(it.tipo)}${it.conj ? `<span class="marca-conj${conjSel === it.conj.nome ? ' par' : ''}" title="${esc(it.conj.nome)}">◆</span>` : ''}${it.nid ? '<span class="marca-nid">?</span>' : ''}${it.trava ? '<span class="trava">travado</span>' : ''}</div>`;
   });
   h += '</div>';
   if (fora.length) h += `<p class="nota">${fora.length} item(ns) sem lugar na grade: equipe ou desmanche algo.</p>`;
   let sel = null, ehEquipado = false, idx = -1;
   if (invSel) { ehEquipado = invSel[0] === 'e'; idx = +invSel.slice(1); sel = ehEquipado ? d.equipados[idx] : d.inventario[idx]; }
   if (sel) {
-    h += `<div class="ficha r${sel.r}"><b>${esc(sel.nome)}</b><span class="nota">${RARIDADES[sel.r]} · ${TIPOS[sel.tipo]} · nível ${sel.nivel} · ocupa ${sel.w}×${sel.h} · <span style="color:var(--ouro)">Poder ${fmt(sel.poder)}</span></span>` +
+    h += `<div class="ficha r${sel.r}"><b>${sel.nid ? TIPOS[sel.tipo] + ' não identificado' : esc(sel.nome)}</b><span class="nota">${RARIDADES[sel.r]} · ${TIPOS[sel.tipo]} · nível ${sel.nivel} · ocupa ${sel.w}×${sel.h} · <span style="color:var(--ouro)">Poder ${fmt(sel.poder)}</span></span>` +
+      (sel.nid ? '<div class="nota">As propriedades deste item estão ocultas. Identifique-o com ouro para ver o que ele faz e poder equipá-lo.</div>' : '') +
       sel.afixos.map((a) => `<div>${esc(a)}</div>`).join('') +
       (sel.conj ? `<div style="margin-top:6px;border-left:3px solid #c05ad8;padding-left:8px"><b style="color:#d58cf0">${esc(sel.conj.nome)}</b> <span class="nota">· ${sel.conj.tem}/3 peças equipadas</span><div class="nota">${sel.conj.pecas.map(esc).join(' · ')}</div><div style="opacity:${sel.conj.tem >= 2 ? 1 : 0.5}">2 peças: ${sel.conj.b2.map(esc).join(', ')}</div><div style="opacity:${sel.conj.tem >= 3 ? 1 : 0.5}">3 peças: ${sel.conj.b3.map(esc).join(', ')}</div></div>` : '') +
       (sel.tipo === 0 ? '<div class="nota">Cajado: o necromante luta à distância.</div>' : sel.tipo === 1 ? '<div class="nota">Foice: o necromante luta corpo a corpo.</div>' : '') +
       (sel.trava ? '<div class="nota">Travado: não é vendido nem desmanchado.</div>' : '') +
-      '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button><button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Desmanchar · +${fmt(sel.ess)} Ess.</button><button data-ac="vender-item" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ouro)} ouro</button>`) +
+      '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : (sel.nid ? `<button data-ac="identificar" data-i="${idx}" ${sel.custoId > d.ouroTotal ? 'disabled title="Falta ouro"' : ''}>Identificar · ${fmt(sel.custoId)} ouro</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button>`) + `<button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Desmanchar · +${fmt(sel.ess)} Ess.</button><button data-ac="vender-item" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ouro)} ouro</button>`) +
       `<button data-ac="travar" data-i="${idx}" data-eq="${ehEquipado ? 1 : 0}" class="${sel.trava ? 'ativo' : ''}">${sel.trava ? 'Destravar' : 'Travar'}</button></div></div>`;
   } else h += '<p class="nota">Toque num item para ver a descrição.</p>';
   let nV = 0, eV = 0; d.inventario.forEach((it) => { if (!it.trava && it.r <= venderAte) { nV++; eV += it.ess; } });
   h += `<div class="rodape"><button data-ac="auto">Equipar os melhores</button></div>`;
-  h += `<div class="linha" style="margin-top:10px"><div class="corpo">Vender tudo<small>vira Essência; itens travados e equipados ficam</small></div><select data-vender="1">` +
+  h += `<div class="linha" style="margin-top:10px"><div class="corpo">Desmanchar tudo<small>vira Essência; itens travados e equipados ficam. Para ouro, venda no Ferreiro.</small></div><select data-vender="1">` +
     RARIDADES.map((r, k) => `<option value="${k}" ${k === venderAte ? 'selected' : ''}>${k === 0 ? 'só Comuns' : 'até ' + r}</option>`).join('') +
-    `</select></div><div class="rodape" style="margin-top:0"><button data-ac="vender-tudo" ${nV ? '' : 'disabled'} class="${Date.now() - venderOk < 4000 ? 'ativo' : ''}">${Date.now() - venderOk < 4000 ? 'Confirmar: ' : ''}Vender ${nV} ${nV === 1 ? 'item' : 'itens'} · +${fmt(eV)} Ess.</button></div>`;
+    `</select></div><div class="rodape" style="margin-top:0"><button data-ac="vender-tudo" ${nV ? '' : 'disabled'} class="${Date.now() - venderOk < 4000 ? 'ativo' : ''}">${Date.now() - venderOk < 4000 ? 'Confirmar: ' : ''}Desmanchar ${nV} ${nV === 1 ? 'item' : 'itens'} · +${fmt(eV)} Ess.</button></div>`;
   h += `<div class="linha" style="margin-top:10px"><div class="corpo">Desmanchar ao pegar<small>itens abaixo desta raridade viram Essência na hora</small></div><select data-regra="0">` +
     RARIDADES.map((r, k) => `<option value="${k}" ${k === d.regras[0] ? 'selected' : ''}>${k === 0 ? 'nada' : 'abaixo de ' + r}</option>`).join('') + '</select></div>';
   h += '<p class="nota">O que você equipa vale a partir da próxima expedição.</p>';
@@ -1435,6 +1442,7 @@ function acaoDoPainel(b) {
     case 'desequipar': J.Desequipar(i); invSel = null; break;
     case 'desmanchar': J.Desmanchar(i); invSel = null; break;
     case 'vender-item': J.VenderItem(i); invSel = null; som('toque'); break;
+    case 'identificar': if (J.IdentificarItem(i)) { som('bencao'); aviso('Item identificado'); } break;
     case 'auto': J.AutoEquipar(); invSel = null; break;
     case 'travar': J.Travar(i, b.dataset.eq === '1'); break;
     case 'vender-tudo':
@@ -1677,6 +1685,8 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'desequipar': J.Desequipar(i); break;
     case 'desmanchar': J.Desmanchar(i); break;
     case 'vender-item': J.VenderItem(i); som('toque'); break;
+    case 'identificar': if (J.IdentificarItem(i)) { som('bencao'); aviso('Item identificado'); } break;
+    case 'identificar-tudo': { const n = J.IdentificarTudo(); if (n) { som('bencao'); aviso(n + (n > 1 ? ' itens identificados' : ' item identificado')); } else aviso('Falta ouro para identificar'); break; }
     case 'comprar': if (J.ComprarItem(i)) { som('bencao'); aviso('Comprado: foi para o inventário'); } break;
     case 'auto': J.AutoEquipar(); break;
     case 'recomecar': J.Recomecar(); limparArena(true); andar = 0; break;

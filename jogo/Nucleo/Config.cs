@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
         public float AlivioInicial = 0.84f;
-        public float CrescimentoPorAndar = 0.29f;
+        public float CrescimentoPorAndar = 0.293f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
@@ -73,6 +73,9 @@ namespace Necro.Nucleo
         public long[] OuroVendaPorRaridade = { 3, 10, 40, 200, 1000 };
         public float OuroPorNivelDeItem = 0.25f, LojaMargem = 12f;
         public int LojaItens = 4;
+        public bool ItensNaoIdentificados = true;                       // Raros para cima caem sem identificar
+        public long[] OuroParaIdentificar = { 0, 0, 60, 200, 600 };   // por raridade; +10% por nível do item
+        public float VendaNaoIdentificado = 0.4f;                       // vender sem identificar rende só uma fração
         // Objetos quebráveis das salas de combate (barris, urnas, sarcófagos)
         public int ObjetosPorSala = 5; public float ObjetoRaioDeQuebra = 1.0f;
         public float BarrilOssos = 2f, BarrilChanceDeOssos = 0.5f, UrnaOssos = 3f, UrnaChanceDeItem = 0.04f, SarcofagoOssos = 8f, SarcofagoChanceDeMorto = 0.45f;
