@@ -1489,6 +1489,25 @@ namespace Necro.Testes
                 Afirmar(p.MissaoReiEsqueleto == 3, "a missão deveria ficar gravada como vencida");
             });
 
+            Teste("dificuldades: Pesadelo abre ao vencer o chefe do Ato 2; inimigos mais fortes, ouro e ossos maiores, itens de nível mais alto", () =>
+            {
+                var p = ProgressoCom(EspecieId.Esqueleto);
+                Afirmar(!Dificuldades.Definir(p, 1) && p.Dificuldade == 0, "Pesadelo deveria começar trancado");
+                var r = new ResultadoExpedicao(); r.ChefesDerrotados.Add(2);
+                Dificuldades.Registrar(p, r, Cfg);
+                Afirmar(p.DificuldadeLiberada == 1 && Dificuldades.Definir(p, 1) && !Dificuldades.Definir(p, 2), "vencer o chefe do Ato 2 no Normal deveria abrir só o Pesadelo");
+                Dificuldades.Registrar(p, r, Cfg);
+                Afirmar(p.DificuldadeLiberada == 1, "vencer de novo no Normal não deveria abrir o Inferno");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var pn = ProgressoCom(EspecieId.Esqueleto); var pp = ProgressoCom(EspecieId.Esqueleto); pp.DificuldadeLiberada = 1; pp.Dificuldade = 1;
+                float VidaDoPrimeiro(EstadoProgresso q) { var s = new Simulacao(c, q, 3, ModoExpedicao.Avancar, 1); int g = 0; while (g++ < 400) { s.Tick(); foreach (var e in s.Entidades) if (e.Faccao == Faccao.Inimigo && !e.Elite) return e.VidaMax; } return 0f; }
+                float vn = VidaDoPrimeiro(pn), vp = VidaDoPrimeiro(pp);
+                Perto(vp / vn, Cfg.DificuldadeVida[1], 0.01f, "vida dos inimigos no Pesadelo");
+                var rr = new ResultadoExpedicao { Ouro = 100, Dificuldade = 1 }; long antes = pp.Ouro; pp.SemAutoReparo = true;
+                Progressao.AplicarResultado(pp, rr, c);
+                Afirmar(pp.Ouro - antes == (long)(100 * Cfg.DificuldadeOuro[1]), "o ouro do Pesadelo deveria vir multiplicado (" + (pp.Ouro - antes) + ")");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

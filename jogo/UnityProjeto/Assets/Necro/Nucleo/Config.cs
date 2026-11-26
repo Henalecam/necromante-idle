@@ -323,6 +323,14 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        // ---- Dificuldades (Normal, Pesadelo, Inferno) ----
+        public int DificuldadeAbreNoAto = 2;                                  // vencer o chefe deste Ato abre a dificuldade seguinte
+        public float[] DificuldadeVida = { 1f, 2.4f, 5.5f };                  // vida dos inimigos
+        public float[] DificuldadeDano = { 1f, 1.6f, 2.6f };                  // dano dos inimigos
+        public float[] DificuldadeOssos = { 1f, 1.6f, 2.5f };
+        public float[] DificuldadeOuro = { 1f, 2f, 4f };
+        public int[] DificuldadeNivelDeItem = { 0, 6, 14 };                   // somado ao nível de todo item que cai
+        public float[] DificuldadeChanceDeSubirRaridade = { 0f, 0.15f, 0.35f }; // chance de o item cair um degrau acima (até Raro)
         public bool ForcarReiEsqueleto;                  // só para testes e capturas
         public int ReiAndar = 3;
         public float ReiMultVida = 6f;                   // sobre um esqueleto de elite

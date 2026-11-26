@@ -296,7 +296,7 @@ function ligarSom() { if (actx) { if (actx.state === 'suspended') actx.resume();
 document.addEventListener('pointerdown', ligarSom, { passive: true });
 function aviso(texto) {
   if (silencio) return;
-  const a = $('aviso'); a.textContent = texto; a.style.opacity = 1;
+  const a = $('aviso'); a.textContent = texto; a.style.opacity = 1; aviso.ate = performance.now() + 2300;
   clearTimeout(aviso.t); aviso.t = setTimeout(() => { a.style.opacity = 0; }, 2200);
 }
 
@@ -1056,7 +1056,8 @@ function desenhar(dt) {
       const nm = nomesUnicos.get(s.id), ty = py - 150 * (prov ? prov[1] : 1);
       if (unicoAnunciar === s.id) { unicoAnunciar = -1; aviso(nm); anotar(`<b style="color:#ffcf5a">${nm}</b> e seu séquito guardam esta sala.`); }
       const zc = Math.max(0.3, Math.min(1, ctx.getTransform().a / (window.devicePixelRatio || 1)));   // escala atual da câmera
-      ctx.font = `bold ${Math.round(14 / zc)}px Georgia`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty);   // legível também no mapa inteiro
+      if (performance.now() < (aviso.ate || 0)) ctx.globalAlpha = 0.12;   // com o aviso central na tela, o nome some para os dois não se embolarem
+      ctx.font = `bold ${Math.round(14 / zc)}px Georgia`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty); ctx.globalAlpha = 1;   // legível também no mapa inteiro
     }
     if (morto && nomesUnicos.has(s.id)) { const nm = nomesUnicos.get(s.id); nomesUnicos.delete(s.id); aviso(nm + ' caiu!'); anotar(`<b style="color:#ffcf5a">${nm}</b> foi destruído e largou seu tesouro.`); clarao = 0.4; }
     if (!morto && s.id === marcado) {
@@ -1296,7 +1297,7 @@ function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <s
 function atualizarPainel(forcar) {
   const d = JSON.parse(J.Painel());
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
-  $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
+  $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
   const IC = {
     ossos: '<path d="M5 5l14 14M4 7a2 2 0 1 1 3-3M17 20a2 2 0 1 0 3-3" stroke="#d8c9b4"/>', ess: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" stroke="#6dffa8"/>',
@@ -1456,6 +1457,8 @@ function atualizarPainel(forcar) {
         `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
   } else if (aba === 'necropole') {
+    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: inimigos mais fortes, saque melhor. Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
+    DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
     h += '<h3>Construções</h3>';
     d.construcoes.forEach((c, i) => {
       const custo = c.nivel >= c.max ? 'Máximo' : !c.aberta ? `Abre no andar ${c.andar}` : `${fmt(c.ossos)} Ossos` + (c.essencia ? ` · ${fmt(c.essencia)} Ess.` : '');
@@ -1753,6 +1756,7 @@ $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
+const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'inimigos com 2,4x de vida e 1,6x de dano · 2x ouro, 1,6x ossos, itens 6 níveis acima e mais raros'], ['Inferno', 'inimigos com 5,5x de vida e 2,6x de dano · 4x ouro, 2,5x ossos, itens 14 níveis acima e bem mais raros']];
 const NOMES_ZOOM = ['Perto', 'Sala', 'Andar inteiro'];
 const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
 $('b-zoom').addEventListener('click', () => { aprendeu('mapa'); if (zoomLivre || pan[0] || pan[1]) { zoomLivre = 0; pan = [0, 0]; pintarZoom(); return; } zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
@@ -1795,6 +1799,7 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'identificar': if (J.IdentificarItem(i)) { som('bencao'); aviso('Item identificado'); } break;
     case 'reparar': if (J.RepararEquipado(i)) { som('golpe'); aviso('Item reparado'); } break;
     case 'auto-reparo': J.AlternarAutoReparo(); break;
+    case 'dificuldade': if (J.DefinirDificuldade(i)) aviso('Dificuldade: ' + DIFICULDADES[i][0] + ' · vale na próxima descida'); break;
     case 'auto-atributos': J.AlternarAutoAtributos(); break;
     case 'redistribuir-atributos': if (J.RedistribuirAtributos()) aviso('Pontos de atributo devolvidos'); break;
     case 'atributo': if (J.GastarAtributo(i, +b.dataset.n || 1)) som('toque'); break;

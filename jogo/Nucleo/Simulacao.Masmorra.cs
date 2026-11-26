@@ -746,10 +746,11 @@ namespace Necro.Nucleo
 
         private void SoltarItemEm(Vec2 pos, RaridadeItem raridadeMinima)
         {
-            var item = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+            if (_dif > 0 && raridadeMinima < RaridadeItem.Raro && _rngItens.Chance(Cfg.DificuldadeChanceDeSubirRaridade[_dif])) raridadeMinima++;   // Pesadelo e Inferno: saque um degrau acima
+            var item = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
             if (_sorte > 0f && _rngItens.Chance(_sorte * Cfg.SorteChanceDeMelhorPorPonto))
             {
-                var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+                var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
                 if (outro.Raridade > item.Raridade) item = outro;
             }
             item.NaoIdentificado = Cfg.ItensNaoIdentificados && item.Raridade >= RaridadeItem.Raro;

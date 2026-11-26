@@ -112,7 +112,7 @@ namespace Necro.Nucleo
         private float _sorte;   // pontos de Sorte do progresso
         private float _restoDeOssos = 0.5f;
         private float _restoDeOuro = 0.5f;
-        private int _ondaDoUnico;
+        private int _ondaDoUnico, _dif;
         private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f;
         /// <summary>Presságio em vigor neste andar.</summary>
         public Pressagio PressagioAtual { get; private set; }
@@ -147,6 +147,7 @@ namespace Necro.Nucleo
             _recordeInicial = progresso.MaiorAndarConcluido; _acougueiro = progresso.MissaoAcougueiro;
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
+            _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
             _reiEsqueleto = progresso.MissaoReiEsqueleto;
             if (_reiEsqueleto == 0 && Cfg.MissoesDeCenario) { _reiEsqueleto = (semente * 0x9E3779B97F4A7C15UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.ReiEsqueletoSorteio = _reiEsqueleto; }
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
@@ -448,11 +449,11 @@ namespace Necro.Nucleo
 
         private void SoltarItem(Entidade origem, RaridadeItem raridadeMinima)
         {
-            var item = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+            var item = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
             if (_sorte > 0f && _rngItens.Chance(_sorte * Cfg.SorteChanceDeMelhorPorPonto))
             {
                 // sorte: sorteia outro e fica com o de maior raridade
-                var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar, raridadeMinima);
+                var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
                 if (outro.Raridade > item.Raridade) item = outro;
             }
             item.NaoIdentificado = Cfg.ItensNaoIdentificados && item.Raridade >= RaridadeItem.Raro;
@@ -466,8 +467,8 @@ namespace Necro.Nucleo
             var d = TabelaEspecies.Obter(especie);
             var e = CriarBase(Faccao.Inimigo, d, pos);
             float escala = Formulas.EscalaInimigo(Andar, Cfg);
-            e.VidaMax = d.Vida * Cfg.FatorVidaInimigo * escala * _pVidaInimigo;
-            e.Dano = d.Dano * Cfg.FatorDanoInimigo * escala;
+            e.VidaMax = d.Vida * Cfg.FatorVidaInimigo * escala * _pVidaInimigo * Cfg.DificuldadeVida[_dif];
+            e.Dano = d.Dano * Cfg.FatorDanoInimigo * escala * Cfg.DificuldadeDano[_dif];
             if (chefe)
             {
                 e.Chefe = true;
