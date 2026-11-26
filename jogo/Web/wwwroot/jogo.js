@@ -1283,6 +1283,7 @@ function desenharInventario(d) {
   if (sel) {
     h += `<div class="ficha r${sel.r}"><b>${esc(sel.nome)}</b><span class="nota">${RARIDADES[sel.r]} · ${TIPOS[sel.tipo]} · nível ${sel.nivel} · ocupa ${sel.w}×${sel.h} · <span style="color:var(--ouro)">Poder ${fmt(sel.poder)}</span></span>` +
       sel.afixos.map((a) => `<div>${esc(a)}</div>`).join('') +
+      (sel.conj ? `<div style="margin-top:6px;border-left:3px solid #c05ad8;padding-left:8px"><b style="color:#d58cf0">${esc(sel.conj.nome)}</b> <span class="nota">· ${sel.conj.tem}/3 peças equipadas</span><div class="nota">${sel.conj.pecas.map(esc).join(' · ')}</div><div style="opacity:${sel.conj.tem >= 2 ? 1 : 0.5}">2 peças: ${sel.conj.b2.map(esc).join(', ')}</div><div style="opacity:${sel.conj.tem >= 3 ? 1 : 0.5}">3 peças: ${sel.conj.b3.map(esc).join(', ')}</div></div>` : '') +
       (sel.tipo === 0 ? '<div class="nota">Cajado: o necromante luta à distância.</div>' : sel.tipo === 1 ? '<div class="nota">Foice: o necromante luta corpo a corpo.</div>' : '') +
       (sel.trava ? '<div class="nota">Travado: não é vendido nem desmanchado.</div>' : '') +
       '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button><button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ess)} Ess.</button>`) +

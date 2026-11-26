@@ -470,7 +470,14 @@ namespace Necro.Testes
                 int comComando = 0;
                 for (int i = 0; i < 4000; i++) if (GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Raro, TipoItem.Amuleto).Tem(AfixoItem.Comando)) comComando++;
                 Afirmar(comComando > 20 && comComando < 1200, "+Comando deveria ser raro, mas possível: " + comComando + "/4000");
-                Afirmar(TabelaItens.Conjuntos[0].Pecas.Length == 3 && TabelaItens.Lendarios.Length == 6, "1 conjunto de 3 peças e 6 lendários");
+                Afirmar(TabelaItens.Conjuntos.Length == 2 && TabelaItens.Conjuntos[0].Pecas.Length == 3 && TabelaItens.Conjuntos[1].Pecas.Length == 3 && TabelaItens.Lendarios.Length == 6, "2 conjuntos de 3 peças e 6 lendários");
+                {   // Garras do Carniceiro: 2 peças = +12% dano dos minions; 3 peças = +8% velocidade e +3% roubo de vida
+                    var r2 = new Rng(77); var g = new List<Item>();
+                    for (int i = 0; i < 3; i++) { var it = GeradorDeItens.GerarPecaDeConjunto(r2, Cfg, 1, ConjuntoId.GarrasDoCarniceiro, i); it.Afixos.Clear(); it.Implicito = new AfixoRolado(); g.Add(it); }
+                    var b1 = Equipamento.CalcularBonus(new List<Item> { g[0] }, Cfg); var b2 = Equipamento.CalcularBonus(new List<Item> { g[0], g[1] }, Cfg); var b3 = Equipamento.CalcularBonus(g, Cfg);
+                    Afirmar(b1.DanoDosMinions == 0f && Math.Abs(b2.DanoDosMinions - 0.12f) < 1e-4f && b2.VelAtaqueDosMinions == 0f, "2 peças das Garras: só o dano");
+                    Afirmar(Math.Abs(b3.VelAtaqueDosMinions - 0.08f) < 1e-4f && Math.Abs(b3.RouboDeVidaDosMinions - 0.03f) < 1e-4f, "3 peças das Garras: velocidade e roubo de vida");
+                }
             });
             Teste("faixas dos afixos crescem com o nível do item (composto, Config.CrescimentoItemPorAndar; taxas crescem devagar e têm teto)", () =>
             {

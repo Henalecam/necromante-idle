@@ -41,7 +41,7 @@ namespace Necro.Nucleo
         public bool UltimoSuspiro;
         public bool MareRubra;
         /// <summary>Peças equipadas de cada conjunto (índice = (int)ConjuntoId).</summary>
-        public int[] PecasDeConjunto = new int[2];
+        public int[] PecasDeConjunto = new int[3];
         public int ItensEquipados;
 
         public bool Tem(EfeitoLendario efeito)

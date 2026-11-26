@@ -239,7 +239,20 @@ public static partial class Jogo
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
         if (it.Efeito != EfeitoLendario.Nenhum) { if (!primeiro) sb.Append(','); sb.Append(S("Lendário: " + it.Efeito)); }
-        sb.Append("]}");
+        sb.Append(']');
+        if (it.Conjunto != ConjuntoId.Nenhum)
+        {
+            var c = TabelaItens.Conjunto(it.Conjunto); var bq = Equipamento.CalcularBonus(_p, _cfg);
+            int tem = (int)c.Id < bq.PecasDeConjunto.Length ? bq.PecasDeConjunto[(int)c.Id] : 0;
+            sb.Append(",\"conj\":{\"nome\":").Append(S(c.Nome)).Append(",\"tem\":").Append(tem).Append(",\"pecas\":[");
+            for (int i = 0; i < c.NomesDasPecas.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(c.NomesDasPecas[i])); }
+            sb.Append("],\"b2\":[");
+            for (int i = 0; i < c.BonusCom2.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(TabelaItens.Descrever(c.BonusCom2[i]))); }
+            sb.Append("],\"b3\":[");
+            for (int i = 0; i < c.BonusCom3.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(TabelaItens.Descrever(c.BonusCom3[i]))); }
+            sb.Append("]}");
+        }
+        sb.Append('}');
     }
 
     static string S(string s)
@@ -389,6 +402,10 @@ public static partial class Jogo
                     _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, (EspecieId)(1 + rng.Intervalo(0, TabelaEspecies.Total - 1)), (Qualidade)rng.Intervalo(1, 5)));
                 break;
             case "missao": if (Missoes.Atual(_p, _cfg) != null) { _p.MissaoAtual++; _p.ProgressoMissao = 0; } break;
+            case "conjunto":
+                for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) for (int i = 0; i < 3; i++)
+                { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
+                break;
             case "secreto": _forcarSecreto = true; break;
             case "cofre": _forcarCofre = true; break;
             case "reiniciar": break;

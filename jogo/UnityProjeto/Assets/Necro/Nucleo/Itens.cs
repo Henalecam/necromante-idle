@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         MareRubra = 6
     }
 
-    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1 }
+    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1, GarrasDoCarniceiro = 2 }
 
     /// <summary>Como a faixa de um afixo cresce com o nível do item.</summary>
     public enum EscalaAfixo
@@ -187,6 +187,14 @@ namespace Necro.Nucleo
                 NomesDasPecas = new[] { "Capuz do Coveiro", "Mortalha do Coveiro", "Botas do Coveiro" },
                 BonusCom2 = new[] { new AfixoRolado(AfixoItem.PoderNecromantico, 0.15f) },
                 BonusCom3 = new[] { new AfixoRolado(AfixoItem.Comando, 1f), new AfixoRolado(AfixoItem.VidaDosMinions, 0.20f) }
+            },
+            new DadosConjunto
+            {
+                Id = ConjuntoId.GarrasDoCarniceiro, Nome = "Garras do Carniceiro",
+                Pecas = new[] { TipoItem.Luvas, TipoItem.Amuleto, TipoItem.Anel },
+                NomesDasPecas = new[] { "Garras do Carniceiro", "Colar de Dentes do Carniceiro", "Sinete do Carniceiro" },
+                BonusCom2 = new[] { new AfixoRolado(AfixoItem.DanoDosMinions, 0.12f) },
+                BonusCom3 = new[] { new AfixoRolado(AfixoItem.VelAtaqueDosMinions, 0.08f), new AfixoRolado(AfixoItem.RouboDeVidaDosMinions, 0.03f) }
             }
         };
 
