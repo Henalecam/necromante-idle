@@ -17,7 +17,11 @@ namespace Necro.Nucleo
     public enum NivelSecreto { Nenhum = 0, PastoProfano = 1, CamaraDoTesouro = 2, CriptaDosEspelhos = 3 }
 
     /// <summary>Bênção de santuário: vale até o fim do andar.</summary>
-    public enum Bencao { Nenhuma = 0, Furia = 1, Protecao = 2, Colheita = 3, Fartura = 4, Devocao = 5 }
+    /// <summary>
+    /// Santuários de efeito incerto, como os do Diablo 1: cada um tem um nome e uma frase enigmática, e o que ele faz só se
+    /// descobre usando. Uns ajudam, outros cobram um preço.
+    /// </summary>
+    public enum Bencao { Nenhuma = 0, Misterioso = 1, Sombrio = 2, Estranho = 3, Reluzente = 4, Oculto = 5, Religioso = 6, Magico = 7, Ornado = 8, Tetrico = 9, Profano = 10 }
 
     /// <summary>
     /// A masmorra: cada andar é uma sequência de salas. O necromante atravessa salas de combate (as ondas) e, entre
@@ -51,8 +55,9 @@ namespace Necro.Nucleo
         public int[] BencaosOferecidas { get; private set; }
         public float TempoDaBencao { get; private set; }
         private int _escolhaDeBencao = -1;
+        private int _santuariosVistos;   // bits dos santuários cujo efeito o jogador já conhece (vem do progresso)
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
-        public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 3 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
+        public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
@@ -442,15 +447,9 @@ namespace Necro.Nucleo
             {
                 if (BencaosOferecidas == null)
                 {
-                    // três bênçãos diferentes, das cinco
-                    var op = new int[3]; int postas = 0;
-                    while (postas < 3)
-                    {
-                        int b = 1 + Rng.Intervalo(0, 5); bool repetida = false;
-                        for (int i = 0; i < postas; i++) if (op[i] == b) repetida = true;
-                        if (!repetida) op[postas++] = b;
-                    }
-                    BencaosOferecidas = op; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1;
+                    // um santuário de nome sorteado: [tipo, 1 se o efeito já é conhecido, 0]. O jogador pode usar (0) ou recusar (1); sem resposta, o necromante usa.
+                    int tipoS = Cfg.ForcarSantuario > 0 ? Cfg.ForcarSantuario : 1 + _rngMasmorra.Intervalo(0, 10);
+                    BencaosOferecidas = new[] { tipoS, (_santuariosVistos & (1 << tipoS)) != 0 ? 1 : 0, 0 }; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1;
                     return;
                 }
                 TempoDaBencao -= DT;
@@ -480,14 +479,32 @@ namespace Necro.Nucleo
                 case TipoSala.Santuario:
                 {
                     float f = Cfg.BencaoForca * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
-                    BencaoAtual = (Bencao)BencaosOferecidas[_escolhaDeBencao >= 0 ? _escolhaDeBencao : Rng.Intervalo(0, 3)];
+                    var qual = (Bencao)BencaosOferecidas[0]; bool recusou = _escolhaDeBencao == 1;
                     BencaosOferecidas = null; _escolhaDeBencao = -1;
-                    if (BencaoAtual == Bencao.Furia) _bDanoAliado = 1f + f;
-                    else if (BencaoAtual == Bencao.Protecao) _bProtecao = 1f - f;
-                    else if (BencaoAtual == Bencao.Colheita) _bOssos = 1f + f * 2.5f;
-                    else if (BencaoAtual == Bencao.Fartura) _bItem = f * 4f;
-                    else _bAlma += f * 3f;
-                    sub = (int)BencaoAtual; valor = f;
+                    if (recusou) { sub = (int)qual; valor = -1f; especial = true; break; }   // o jogador mandou seguir adiante
+                    BencaoAtual = qual; _santuariosVistos |= 1 << (int)qual; Resultado.SantuariosVistos |= 1 << (int)qual; Resultado.SantuariosUsados++;
+                    switch (qual)
+                    {
+                        case Bencao.Misterioso: _bDanoAliado *= 1f + 2f * f; _bProtecao *= 1f + 0.6f * f; break;                 // bate muito mais, apanha um pouco mais
+                        case Bencao.Sombrio: _bProtecao *= 1f - 1.5f * f; _bDanoAliado *= 1f - 0.5f * f; break;                   // apanha bem menos, bate um pouco menos
+                        case Bencao.Estranho: _bDanoAliado *= 1f + f; break;
+                        case Bencao.Reluzente:
+                            for (int i = 0; i < Resultado.Itens.Count; i++) Resultado.Itens[i].NaoIdentificado = false;         // revela o que já caiu
+                            _bItem += f * 4f; break;
+                        case Bencao.Oculto: Resultado.SemDesgaste = true; break;                                                  // o equipamento não gasta nesta descida
+                        case Bencao.Religioso:
+                            for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo) e.Vida = e.VidaMax; }
+                            break;
+                        case Bencao.Magico:
+                            for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo && e.Escudo < e.VidaMax * 3f * f) e.Escudo = e.VidaMax * 3f * f; }
+                            break;
+                        case Bencao.Ornado: Resultado.Xp += Cfg.BibliotecaXp * 2f * Formulas.EscalaInimigo(Andar, Cfg); _bOssos *= 1f - 2f * f; break;   // saber em troca de Ossos
+                        case Bencao.Tetrico:
+                            for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo) e.Vida = Math.Max(1f, e.Vida * (1f - 2f * f)); }
+                            Resultado.Ouro += (long)(Cfg.OuroBau * 3f * (1f + 0.1f * (Andar - 1)) + 0.5f); break;                 // sangue em troca de ouro
+                        case Bencao.Profano: _bProtecao *= 1f + 1.5f * f; _bAlma += f * 4f; break;                                // os inimigos ferem mais, as almas caem mais
+                    }
+                    sub = (int)qual; valor = f;
                     break;
                 }
                 case TipoSala.AlmasPresas:

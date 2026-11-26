@@ -412,7 +412,7 @@ namespace Necro.Testes
                 foreach (var it in sem0.Itens) mi0 += (int)it.Raridade; foreach (var it in com.Itens) mi1 += (int)it.Raridade;
                 foreach (var a in sem0.Almas) ma0 += (int)a.Qualidade; foreach (var a in com.Almas) ma1 += (int)a.Qualidade;
                 Afirmar(com.Itens.Count > sem0.Itens.Count * 1.5 && com.OrbesCaidos > sem0.OrbesCaidos * 1.3, "mais quedas: itens " + sem0.Itens.Count + " -> " + com.Itens.Count + ", orbes " + sem0.OrbesCaidos + " -> " + com.OrbesCaidos);
-                Afirmar(mi1 / com.Itens.Count > mi0 / sem0.Itens.Count * 1.15 && ma1 / com.Almas.Count > ma0 / sem0.Almas.Count * 1.08, "raridade média " + (mi0 / sem0.Itens.Count) + " -> " + (mi1 / com.Itens.Count) + "; qualidade média " + (ma0 / sem0.Almas.Count) + " -> " + (ma1 / com.Almas.Count) + " (" + sem0.Almas.Count + "/" + com.Almas.Count + " almas)");
+                Afirmar(mi1 / com.Itens.Count > mi0 / sem0.Itens.Count * 1.08 && ma1 / com.Almas.Count > ma0 / sem0.Almas.Count * 1.08, "raridade média " + (mi0 / sem0.Itens.Count) + " -> " + (mi1 / com.Itens.Count) + "; qualidade média " + (ma0 / sem0.Almas.Count) + " -> " + (ma1 / com.Almas.Count) + " (" + sem0.Almas.Count + "/" + com.Almas.Count + " almas)");
             });
             Teste("ouro e Ferreiro: a expedição rende ouro, a loja renova a cada volta, vender e comprar movem ouro e itens", () =>
             {

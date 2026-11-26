@@ -142,6 +142,7 @@ namespace Necro.Nucleo
             _poderTotal = progresso.PoderNecromantico + Bonus.PoderNecromantico;
             _nivelNecromante = progresso.NivelNecromante;
             _bonusAlmaNecropole = Necropole.BonusChanceDeAlma(progresso, cfg);
+            _santuariosVistos = progresso.SantuariosVistos;
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
             PrepararFeiticosDeItem(progresso);
             _sorte = Math.Max(0f, progresso.Sorte);

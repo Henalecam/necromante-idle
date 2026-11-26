@@ -592,9 +592,22 @@ let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 19: 'uma arma ou armadura (Rara se você tocar)', 18: 'Sangue dos supliciados', 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 19: 'uma arma ou armadura (Rara se você tocar)', 18: 'Sangue dos supliciados', 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'santuário de efeito incerto: pode ajudar ou cobrar um preço', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
-const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
+// Santuários de efeito incerto (Diablo 1): [nome, frase enigmática, efeito revelado depois de usado]
+const SANTUARIOS = [null,
+  ['Santuário Misterioso', 'Uns minguam para que um cresça.', 'seus aliados batem muito mais forte, mas apanham um pouco mais'],
+  ['Santuário Sombrio', 'Quem se guarda pouco fere.', 'seus aliados apanham bem menos, mas batem um pouco menos'],
+  ['Santuário Estranho', 'A lâmina justa é ligeira.', 'seus aliados causam mais dano'],
+  ['Santuário Reluzente', 'À luz, o oculto se mostra.', 'identifica os itens já achados nesta descida e faz cair mais itens'],
+  ['Santuário Oculto', 'O que se gasta aqui, ali se poupa.', 'o equipamento não perde durabilidade nesta descida'],
+  ['Santuário Religioso', 'A fé fecha as feridas.', 'cura todos os aliados por completo'],
+  ['Santuário Mágico', 'Um véu se ergue entre ti e o golpe.', 'um escudo envolve todos os aliados'],
+  ['Santuário Ornado', 'Saber custa o que o chão dá.', 'muita experiência para o necromante, mas menos Ossos'],
+  ['Santuário Tétrico', 'Onde a carne cede, o ouro brota.', 'tira parte da vida de todos, e paga em ouro'],
+  ['Santuário Profano', 'As almas ouvem; os vivos também.', 'caem mais almas, mas os inimigos ferem mais']];
+const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
+let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
@@ -611,7 +624,7 @@ function lerMasmorra(p) {
   }
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
   if (masm.secreto && !secAntes && !silencio) { som('secreto'); aviso('NÍVEL SECRETO · ' + NOME_SECRETO[masm.qualSecreto]); clarao = 0.8; tremor = 0.4; if (masm.qualSecreto === 3) anotar('<b style="color:#b8c8ff">Cripta dos Espelhos</b>: cada minion seu encara o próprio reflexo.'); }
-  const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · Bênção: ' + BENCAOS[masm.bencao].split(':')[0] : '');
+  const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · ' + BENCAOS[masm.bencao].split(':')[0] : '');
   if (rot !== lerMasmorra.rot) { lerMasmorra.rot = rot; $('t-sala').textContent = rot; }
 }
 let mapaChave = '';
@@ -669,7 +682,7 @@ function eventoDeSala(tipo, v, x, y) {
   if (ts === 3) {
     if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
     else { aviso((sub === 2 ? 'Baú dourado! ' : 'Baú: ') + '+' + fmt(Math.round(val)) + ' Ossos'); anotar(`${sub === 2 ? '<b style="color:#ffd84a">Baú dourado</b>' : 'Baú'}: +${fmt(Math.round(val))} Ossos${sub === 2 ? ', item Raro e Sangue' : ''}${toque ? ' (aberto por você)' : ''}.`); brilho('#ffd84a', sub === 2 ? 60 : 26); if (sub === 2) clarao = 0.5; }
-  } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * [0, 100, 100, 250, 400, 300][sub])}%) até o fim do andar${toque ? ', escolhida por você' : ''}.`); brilho('#7fd8ff', 34); }
+  } else if (ts === 4) { const sv = SANTUARIOS[sub] || ['Santuário', '', '']; if (val < 0) { aviso(sv[0] + ' · deixado para trás'); anotar(`${sv[0]}: você mandou o grupo seguir sem tocar nele.`); } else { const novo = !(santuariosVistos & (1 << sub)); santuariosVistos |= 1 << sub; aviso(sv[0] + ' · ' + sv[2]); anotar(`<b style="color:#7fd8ff">${sv[0]}</b> — “${sv[1]}” — ${sv[2]}.${novo ? ' <b>Efeito anotado no Livro dos Santuários.</b>' : ''}`); brilho('#7fd8ff', 34); } }
   else if (ts === 5) { aviso('Alma libertada: ' + QUALIDADES[sub]); anotar(`Almas presas: uma alma <span class="q${sub}">${QUALIDADES[sub]}</span> se soltou${toque ? ' (melhorada pelo seu toque?)' : ''}.`); brilho('#78ffaa', 30); }
   else if (ts === 15) { if (sub === 2) { aviso('Os ovos chocaram!'); tremor = 0.3; anotar('<b style="color:#c8e06a">Ninho</b>: ninguém esmagou os ovos e as crias chocaram.'); brilho('#c8e06a', 26); } else { aviso('Ninho esmagado · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Ninho esmagado por você: +${fmt(Math.round(val))} Ossos.`); brilho('#e8e0a0', 30); for (let i = 0; i < 8; i++) mancha(x + rnd(-0.8, 0.8), y + rnd(-0.5, 0.5), 6, 3); } }
   else if (ts === 14) { aviso('Forja de ossos: couraça para todos'); anotar(`Forja de ossos: cada aliado sai com uma couraça de ${Math.round(val * 100)}% da vida${toque ? ' (reforçada pelo seu toque)' : ''}.`); brilho('#e8e0c8', 34); for (const g of estado.values()) if (g.viva && !g.inimigo) g.flash = 0.25; }
@@ -1147,8 +1160,8 @@ function desenhar(dt) {
   const chB = bencaos ? bencaos.slice(0, 3).join(',') : '';
   if (chB !== bencaosMostradas) {
     bencaosMostradas = chB; $('bencaos').hidden = !chB;
-    if (chB) $('bencaos').innerHTML = '<div class="cab"><span>Santuário · escolha uma bênção</span><span id="ben-t"></span></div><div class="ops">' +
-      bencaos.slice(0, 3).map((id, i) => `<button data-b="${i}"><b>${BENCAOS[id].split(':')[0]}</b><span class="g">${escHtml(BENCAOS[id].split(': ')[1])}</span><span class="p" style="color:var(--fraco)">até o fim do andar</span></button>`).join('') + '</div>';
+    if (chB) { const sv = SANTUARIOS[bencaos[0]] || ['Santuário', '', ''], conhecido = bencaos[1] === 1;
+      $('bencaos').innerHTML = `<div class="cab"><span>${escHtml(sv[0])}</span><span id="ben-t"></span></div><p class="frase">“${escHtml(sv[1])}”</p><p class="nota">${conhecido ? 'Você já conhece este santuário: ' + escHtml(sv[2]) + '.' : 'Você ainda não sabe o que ele faz. Pode ajudar ou cobrar um preço.'} Sem resposta, o necromante usa.</p><div class="ops"><button data-b="0"><b>Usar o santuário</b><span class="g">${conhecido ? escHtml(sv[2]) : 'descobrir o efeito'}</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">deixar o santuário intocado</span></button></div>`; }
   }
   if (chB) { const t = $('ben-t'); if (t) t.textContent = Math.ceil(bencaos[3]) + 's'; }
   const NOMES_RITO = ['', 'Rito da Pressa', 'Rito da Colheita', 'Rito do Banquete'];
@@ -1381,7 +1394,10 @@ function atualizarPainel(forcar) {
     const t = masm.tipos[masm.sala];
     h += mapaGrandeHtml();
     if (masm.amb) h += `<div class="linha"><div class="corpo">Ambiente: ${AMBIENTES[masm.amb][0]}<small>${AMBIENTES[masm.amb][1]}</small></div></div>`;
-    if (masm.bencao) h += `<div class="linha"><div class="corpo">Bênção ativa<small>${BENCAOS[masm.bencao]} · até o fim do andar</small></div></div>`;
+    if (masm.bencao) h += `<div class="linha"><div class="corpo">Santuário ativo<small>${BENCAOS[masm.bencao]} · até o fim do andar</small></div></div>`;
+    santuariosVistos |= d.santuarios;
+    h += `<h3>Livro dos Santuários</h3><p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}).</p>` +
+      SANTUARIOS.map((x, k) => (x ? `<div class="linha"><div class="corpo"><span style="color:${d.santuarios & (1 << k) ? '#7fd8ff' : '#8d7c6c'}">${x[0]}</span> <span class="nota">“${x[1]}”</span><small>${d.santuarios & (1 << k) ? x[2] : '? ? ?'}</small></div></div>` : '')).join('');
     if (pressagio) h += `<div class="linha"><div class="corpo">Presságio: ${PRESSAGIOS[pressagio][0]}<small>${PRESSAGIOS[pressagio][1]}</small></div></div>`;
     h += '<h3>Diário da descida</h3><div class="diario">' + (diario.length ? diario.map(([a, tx]) => `<div><small>andar ${a}</small>${tx}</div>`).join('') : '<p class="nota">Nada digno de nota ainda. Baús, santuários, emboscadas e achados raros aparecem aqui.</p>') + '</div>';
     h += '<p class="nota">Entre os combates surgem salas especiais. Do andar 5 em diante, raramente, o fim de um andar abre um nível secreto.</p>';

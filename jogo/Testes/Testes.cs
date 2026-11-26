@@ -1232,9 +1232,10 @@ namespace Necro.Testes
                 var sa = new Simulacao(Cfg, ProgressoCom(EspecieId.Aparicao, EspecieId.Aparicao), 3, ModoExpedicao.Avancar, 5); bool passou = false; int guarda = 0;
                 while (!sa.Encerrada && guarda++ < 8000 && !passou) { sa.Tick(); foreach (var ev in sa.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 19) passou = true; }
                 Afirmar(passou, "a aparição deveria ignorar um golpe");
-                float Sofrido(ConfigJogo c)
+                float Sofrido(ConfigJogo c) { float t = 0f; for (ulong sm = 1; sm <= 8; sm++) t += SofridoEm(c, sm); return t; }
+                float SofridoEm(ConfigJogo c, ulong sm)
                 {
-                    var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto), 2, ModoExpedicao.Avancar, 7); float tot = 0f; int g = 0;
+                    var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto), sm, ModoExpedicao.Avancar, 7); float tot = 0f; int g = 0;
                     while (!s.Encerrada && g++ < 1500) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.Dano) { Entidade al = null; foreach (var e in s.Entidades) if (e.Id == ev.Alvo) al = e; if (al != null && al.Faccao == Faccao.Minion && al.Especie == EspecieId.Esqueleto) tot += ev.Valor; } }
                     return tot;
                 }
@@ -1403,6 +1404,44 @@ namespace Necro.Testes
                         Afirmar(viu, "sala não resolvida: " + tipo);
                     }
                 }
+            });
+
+            Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
+            {
+                Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)
+                {
+                    var s = new Simulacao(c, p, 5UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
+                    while (!s.Encerrada && g++ < 20000 && s.BencaosOferecidas == null) s.Tick();
+                    Afirmar(s.BencaosOferecidas != null, "o santuário forçado deveria aparecer");
+                    return s;
+                }
+                // Religioso: cura todo mundo; e passa a ser conhecido
+                var c6 = new ConfigJogo { ForcarSalaEspecial = (int)TipoSala.Santuario, ForcarSantuario = (int)Bencao.Religioso };
+                var p6 = Progressao.NovoJogo(c6); p6.PoderNecromantico = 60f;
+                var s6 = AteOSantuario(c6, p6);
+                Afirmar(s6.BencaosOferecidas[0] == (int)Bencao.Religioso && s6.BencaosOferecidas[1] == 0, "tipo forçado e ainda desconhecido");
+                s6.Necromante.Vida = s6.Necromante.VidaMax * 0.3f; s6.ComandoEscolherBencao(0); s6.Tick();
+                Afirmar(s6.BencaoAtual == Bencao.Religioso && s6.Necromante.Vida >= s6.Necromante.VidaMax - 0.01f, "o Santuário Religioso cura");
+                Afirmar((s6.Resultado.SantuariosVistos & (1 << (int)Bencao.Religioso)) != 0 && s6.Resultado.SantuariosUsados == 1, "efeito anotado no resultado");
+                Progressao.AplicarResultado(p6, s6.Resultado, c6);
+                Afirmar((p6.SantuariosVistos & (1 << (int)Bencao.Religioso)) != 0, "o Livro dos Santuários guarda o efeito");
+                var s6b = AteOSantuario(c6, p6); Afirmar(s6b.BencaosOferecidas[1] == 1, "da segunda vez o efeito já é conhecido");
+                // recusar: nada muda
+                s6b.Necromante.Vida = s6b.Necromante.VidaMax * 0.3f; s6b.ComandoEscolherBencao(1); s6b.Tick();
+                Afirmar(s6b.BencaoAtual == Bencao.Nenhuma && s6b.Necromante.Vida < s6b.Necromante.VidaMax * 0.5f && s6b.Resultado.SantuariosUsados == 0, "recusar deixa tudo como estava");
+                // sem resposta, o necromante usa sozinho (idle)
+                var c9 = new ConfigJogo { ForcarSalaEspecial = (int)TipoSala.Santuario, ForcarSantuario = (int)Bencao.Tetrico };
+                var p9 = Progressao.NovoJogo(c9); p9.PoderNecromantico = 60f; var s9 = AteOSantuario(c9, p9);
+                long ouro = s9.Resultado.Ouro; float vida = s9.Necromante.Vida; int g9 = 0;
+                while (s9.BencaosOferecidas != null && g9++ < 200) s9.Tick();
+                Afirmar(s9.BencaoAtual == Bencao.Tetrico && s9.Resultado.Ouro > ouro && s9.Necromante.Vida < vida, "o Tétrico cobra vida e paga em ouro, mesmo sem toque");
+                // Oculto: o equipamento não gasta nesta descida
+                var c5 = new ConfigJogo { ForcarSalaEspecial = (int)TipoSala.Santuario, ForcarSantuario = (int)Bencao.Oculto };
+                var p5 = Progressao.NovoJogo(c5); p5.PoderNecromantico = 60f; p5.SemAutoReparo = true;
+                var anel = GeradorDeItens.GerarDoTipo(new Rng(3), c5, 1, RaridadeItem.Magico, TipoItem.Anel); Equipamento.Equipar(p5, anel);
+                var s5 = AteOSantuario(c5, p5); s5.ComandoEscolherBencao(0); s5.Tick();
+                Afirmar(s5.Resultado.SemDesgaste, "o Oculto marca a descida como sem desgaste");
+                Progressao.AplicarResultado(p5, s5.Resultado, c5); Afirmar(anel.Desgaste == 0, "e o anel volta inteiro");
             });
 
             RodarLoot();
