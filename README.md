@@ -3,6 +3,8 @@
 Idle game sombrio, na linha de Diablo: um necromante desce sozinho uma abadia afundada, ceifa as almas dos inimigos,
 ergue-as como minions e as evolui. Combate automático e visual, com gore; o jogador presente rende mais que o ausente.
 
+![O andar inteiro à vista: salas, corredores e o grupo explorando](imagens/mapa_do_andar.png)
+
 **Jogar no navegador:** a pasta `docs/` é o jogo pronto. Para publicar com GitHub Pages: Settings → Pages → branch `main`, pasta `/docs`.
 
 ## O que há aqui
@@ -10,7 +12,7 @@ ergue-as como minions e as evolui. Combate automático e visual, com gore; o jog
 | Pasta | Conteúdo |
 |---|---|
 | `jogo/Nucleo` | Regras do jogo em C# puro (.NET Standard 2.1), determinístico, 10 ticks/s. Sem Unity. |
-| `jogo/Testes` | Testes (100) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
+| `jogo/Testes` | Testes (103) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
 | `jogo/Web` | Versão de navegador: o núcleo compilado para WebAssembly + cliente em canvas. `./montar.sh` gera o site. |
 | `jogo/UnityProjeto` | Projeto Unity 6.3 LTS (camada visual). Conferido só por compilação; ainda não aberto numa Unity. |
 | `jogo/Replay` | Exporta um replay da simulação para as prévias em vídeo. |
@@ -42,3 +44,12 @@ cd jogo/Web && ./montar.sh && python3 -m http.server -d dist
 
 O histórico de decisões está em `jogo/PLANO_CICLOS.md`; as metas medidas, em `jogo/METAS_BALANCEAMENTO.md`.
 Toda a arte é própria, gerada pelo pipeline deste repositório.
+
+## Como é jogar
+
+Cada andar é uma masmorra sorteada, em bloco, inteira à vista. O grupo caminha pelos corredores de sala em sala; os inimigos
+de cada sala já estão lá, à espera. Tocar no símbolo de uma sala muda a rota (por exemplo, para pegar a chave antes do cofre).
+
+![Rótulos dizem o que cada sala guarda](imagens/rotulos_das_salas.png)
+
+![Ao limpar o andar, o grupo desce pela escada](imagens/descida_pela_escada.png)

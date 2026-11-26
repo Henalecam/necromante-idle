@@ -776,7 +776,9 @@ function desenhar(dt) {
   for (const [sala, especie, ix, iy, elite, ehChefe] of [...aEspera].sort((a, b) => b[3] - a[3] + (a[2] - b[2]))) {
     const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * reforco;
     if (px < camX - 300 || px > camX + visivel + 300 || py < camY - 300 || py > camY + visAlt + 300) continue;
-    const [img, sx, sy] = quadro(m, 'parado', direcao(-1, 0), tempoSim * 0.6 + ix);
+    // encaram o grupo, esteja ele onde estiver no andar: dá para ver que sabem que alguém vem
+    const gx = so[0] + (necro ? necro.rx : 5) - (o[0] + ix), gy = so[1] + (necro ? necro.ry : 6) - (o[1] + iy);
+    const [img, sx, sy] = quadro(m, 'parado', Math.abs(gx) + Math.abs(gy) > 0.5 ? direcao(gx, gy) : direcao(-1, 0), tempoSim * 0.6 + ix);
     if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
     ctx.globalAlpha = sala === masm.sala ? 0.95 : 0.8;
     if (prov) {
