@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial; private bool _lutaDoAcougueiro;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto; private bool _lutaDoAcougueiro, _lutaDoRei; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -94,6 +94,7 @@ namespace Necro.Nucleo
             {
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
                 if (w == 1 && TotalDeOndas > 1 && (_acougueiro == 1 || (Cfg.ForcarAcougueiro && _acougueiro != 3)) && Andar == Cfg.AcougueiroAndar) Salas.Add(TipoSala.Acougue);   // missão do Açougueiro: a porta trancada do andar 2
+                if (w == 1 && TotalDeOndas > 1 && (_reiEsqueleto == 1 || (Cfg.ForcarReiEsqueleto && _reiEsqueleto != 3)) && Andar == Cfg.ReiAndar) Salas.Add(TipoSala.TumbaDoRei);   // missão do Rei Esqueleto: a tumba do andar 3
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -309,6 +310,17 @@ namespace Necro.Nucleo
                 long ossos = (long)(Cfg.BauOssos * (_mimico ? 2f : _ninhoChocou ? Cfg.NinhoPremioDaLuta : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                 Resultado.Ossos += ossos;
                 if (_mimico || _fosso) SoltarItemEm(PosDoObjeto, RaridadeItem.Magico);
+                if (_lutaDoRei)
+                {
+                    _lutaDoRei = false; _reiEsqueleto = 3; Resultado.ReiEsqueletoMorto = true;
+                    var coroa = GeradorDeItens.GerarDoTipo(_rngItens, Cfg, Math.Max(Andar, Cfg.ReiNivelDaCoroa), RaridadeItem.Raro, TipoItem.Elmo);
+                    coroa.Nome = "Coroa do Rei Morto"; coroa.NaoIdentificado = false; coroa.Bloqueado = true;
+                    Resultado.Itens.Add(coroa); Resultado.Ouro += Cfg.ReiOuro;
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)coroa.Raridade, Valor = coroa.Nivel });
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.TumbaDoRei, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDoAcougueiro)
                 {
                     _lutaDoAcougueiro = false; _acougueiro = 3; Resultado.AcougueiroMorto = true;
@@ -392,6 +404,28 @@ namespace Necro.Nucleo
             _emEmboscada = true; _mimico = false; _lutaDoAcougueiro = true;
             _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Carnical, Elite = true, Acougueiro = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
             Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>O Rei Esqueleto (Diablo 1): sai do sarcófago e, enquanto vive, ergue esqueletos para lutar por ele.</summary>
+        private void IniciarReiEsqueleto()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDoRei = true; _tempoDoRei = Cfg.ReiErgueACada * 0.5f;
+            _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Esqueleto, Elite = true, Rei = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>Enquanto o Rei vive, de tempos em tempos mais esqueletos se erguem (até um teto de inimigos na sala).</summary>
+        private void AtualizarReiEsqueleto()
+        {
+            bool reiVivo = false; int vivos = 0;
+            for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (!e.Viva || e.Faccao != Faccao.Inimigo) continue; vivos++; if (e.NomeProprio == "Rei Esqueleto") reiVivo = true; }
+            if (!reiVivo) return;
+            _tempoDoRei -= DT;
+            if (_tempoDoRei > 0f) return;
+            _tempoDoRei = Cfg.ReiErgueACada;
+            for (int k = 0; k < Cfg.ReiErguePorVez && vivos + k < Cfg.ReiMaximoDeErguidos + 1; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Esqueleto, Fraco = true, Portal = (k + TickAtual) % 3, TickDeSpawn = TickAtual + 1 + k });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 22, Alvo = -1, Origem = -1, Pos = PosDoObjeto });
         }
 
         private void IniciarEmboscada(bool mimico)
@@ -480,6 +514,19 @@ namespace Necro.Nucleo
                 }
                 TempoDaBencao -= DT;
                 if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+            }
+            if (t == TipoSala.TumbaDoRei)
+            {
+                // a tumba do Rei Esqueleto: [12, 0, 0]. Abrir (0) ou seguir (1). Sem resposta, só abre com recorde suficiente.
+                if (BencaosOferecidas == null) { BencaosOferecidas = new[] { 12, 0, 0 }; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1; return; }
+                TempoDaBencao -= DT;
+                if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+                bool abreT = _escolhaDeBencao == 0 || (_escolhaDeBencao < 0 && _recordeInicial >= Cfg.ReiAbreSozinhoNoRecorde);
+                BencaosOferecidas = null; _escolhaDeBencao = -1;
+                if (abreT) { IniciarReiEsqueleto(); return; }
+                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = -1f, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
+                EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
+                return;
             }
             if (t == TipoSala.Acougue)
             {

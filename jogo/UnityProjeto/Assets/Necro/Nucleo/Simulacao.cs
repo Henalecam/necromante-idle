@@ -13,7 +13,7 @@ namespace Necro.Nucleo
         private struct SpawnPendente
         {
             public EspecieId Especie;
-            public bool Fraco; public bool Acougueiro;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
+            public bool Fraco; public bool Acougueiro; public bool Rei;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
             public bool Elite;
             public bool Chefe;
             public ModificadorElite Mods;
@@ -147,6 +147,8 @@ namespace Necro.Nucleo
             _recordeInicial = progresso.MaiorAndarConcluido; _acougueiro = progresso.MissaoAcougueiro;
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
+            _reiEsqueleto = progresso.MissaoReiEsqueleto;
+            if (_reiEsqueleto == 0 && Cfg.MissoesDeCenario) { _reiEsqueleto = (semente * 0x9E3779B97F4A7C15UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.ReiEsqueletoSorteio = _reiEsqueleto; }
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
             PrepararFeiticosDeItem(progresso);
             _sorte = Math.Max(0f, progresso.Sorte);
@@ -563,6 +565,7 @@ namespace Necro.Nucleo
                     AtualizarExploracao();
                     break;
                 case FaseExpedicao.EmOnda:
+                    if (_lutaDoRei) AtualizarReiEsqueleto();
                     while (_filaDeSpawn.Count > 0 && _filaDeSpawn[0].TickDeSpawn <= TickAtual)
                     {
                         var s = _filaDeSpawn[0];
@@ -572,6 +575,7 @@ namespace Necro.Nucleo
                         if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                         if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        else if (s.Rei) { novo.Unico = true; novo.NomeProprio = "Rei Esqueleto"; novo.VidaMax *= Cfg.ReiMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.ReiMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Acougueiro) { novo.Unico = true; novo.NomeProprio = "O Açougueiro"; novo.VidaMax *= Cfg.AcougueiroMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.AcougueiroMultDano; novo.VelMovimento *= Cfg.AcougueiroMultVelocidade; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Planejado != null && s.Planejado.Sequito) { novo.VidaMax *= Cfg.SequitoMultVida; novo.Vida = novo.VidaMax; }
                         else if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }

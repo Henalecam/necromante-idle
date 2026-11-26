@@ -1471,11 +1471,29 @@ namespace Necro.Testes
                 Afirmar(!s3.Salas.Contains(TipoSala.Acougue), "depois de vencido, o Açougueiro não deveria voltar");
             });
 
+            Teste("missão do Rei Esqueleto: tumba no andar 3, ele ergue esqueletos enquanto vive; vencê-lo dá a Coroa e encerra a missão", () =>
+            {
+                var c = new ConfigJogo { ForcarReiEsqueleto = true, ObjetosPorSala = 0 };
+                var s1 = new Simulacao(c, ProgressoCom(EspecieId.Esqueleto), 3, ModoExpedicao.Avancar, 3); int g = 0; bool viu = false, lutou = false;
+                Afirmar(s1.Salas.Contains(TipoSala.TumbaDoRei), "o andar 3 deveria ter a tumba do Rei");
+                while (!s1.Encerrada && g++ < 6000 && s1.Andar == 3) { s1.Tick(); if (s1.BencaosOferecidas != null && s1.BencaosOferecidas[0] == 12) viu = true; foreach (var e in s1.Entidades) if (e.NomeProprio == "Rei Esqueleto") lutou = true; }
+                Afirmar(viu && !lutou, "sem resposta e sem recorde, a tumba deveria ficar fechada");
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.DiaboDeGuerra); p.NivelNecromante = 40; foreach (var m in p.Minions) m.Nivel = 20;
+                var s2 = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 3); g = 0; int erguidos = 0;
+                while (!s2.Encerrada && g++ < 12000 && s2.Andar == 3) { s2.Tick(); if (s2.BencaosOferecidas != null) s2.ComandoEscolherBencao(0); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 22) erguidos++; }
+                Afirmar(erguidos >= 1, "o Rei deveria erguer esqueletos durante a luta");
+                Afirmar(s2.Resultado.ReiEsqueletoMorto, "um exército forte deveria vencer o Rei Esqueleto");
+                bool coroa = false; foreach (var it in s2.Resultado.Itens) if (it.Nome == "Coroa do Rei Morto" && it.Tipo == TipoItem.Elmo) coroa = true;
+                Afirmar(coroa, "o Rei deveria largar a Coroa do Rei Morto");
+                Progressao.AplicarResultado(p, s2.Resultado, c);
+                Afirmar(p.MissaoReiEsqueleto == 3, "a missão deveria ficar gravada como vencida");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)
                 {
-                    var s = new Simulacao(c, p, 5UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
+                    c.MissoesDeCenario = false; var s = new Simulacao(c, p, 5UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
                     while (!s.Encerrada && g++ < 20000 && s.BencaosOferecidas == null) s.Tick();
                     Afirmar(s.BencaosOferecidas != null, "o santuário forçado deveria aparecer");
                     return s;

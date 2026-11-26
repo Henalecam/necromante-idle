@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
         public int MissaoAcougueiro;                        // 0 = ainda não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
         public int SantuariosVistos;                        // bits: santuários cujo efeito já foi descoberto (o Livro dos Santuários)
         public bool SemAutoReparo;                          // false (padrão): ao voltar de cada descida o Ferreiro já conserta o que o ouro alcançar
@@ -175,6 +176,7 @@ namespace Necro.Nucleo
         public int InteracoesPorToque;
         public int SantuariosVistos, SantuariosUsados; public bool SemDesgaste;
         public int AcougueiroSorteio; public bool AcougueiroMorto;
+        public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int ObjetosQuebrados;
         public long Ouro;
         public int RotasEscolhidas;
@@ -376,6 +378,8 @@ namespace Necro.Nucleo
             p.SantuariosVistos |= r.SantuariosVistos;
             if (p.MissaoAcougueiro == 0 && r.AcougueiroSorteio != 0) p.MissaoAcougueiro = r.AcougueiroSorteio;
             if (r.AcougueiroMorto) p.MissaoAcougueiro = 3;
+            if (p.MissaoReiEsqueleto == 0 && r.ReiEsqueletoSorteio != 0) p.MissaoReiEsqueleto = r.ReiEsqueletoSorteio;
+            if (r.ReiEsqueletoMorto) p.MissaoReiEsqueleto = 3;
             if (!r.SemDesgaste) Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento (salvo pelo Santuário Oculto)
             p.Ouro += r.Ouro; Ferreiro.Renovar(p, cfg);
             if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);

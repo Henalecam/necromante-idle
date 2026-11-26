@@ -323,6 +323,16 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        public bool ForcarReiEsqueleto;                  // só para testes e capturas
+        public int ReiAndar = 3;
+        public float ReiMultVida = 6f;                   // sobre um esqueleto de elite
+        public float ReiMultDano = 1.5f;
+        public float ReiErgueACada = 4f;                 // segundos entre levas de esqueletos erguidos
+        public int ReiErguePorVez = 2;
+        public int ReiMaximoDeErguidos = 8;
+        public int ReiAbreSozinhoNoRecorde = 7;
+        public int ReiNivelDaCoroa = 8;
+        public long ReiOuro = 250;
         public bool ForcarAcougueiro;                    // só para testes e capturas
         public int AcougueiroAndar = 2;
         public float AcougueiroMultVida = 5f;            // sobre um elite da espécie
