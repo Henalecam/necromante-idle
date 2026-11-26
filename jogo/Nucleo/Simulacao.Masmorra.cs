@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -91,7 +91,7 @@ namespace Necro.Nucleo
                     float r = forcar ? 99f : _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    Salas.Add(r < 28f ? TipoSala.Bau : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
+                    Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
                     if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
                 else if (w < TotalDeOndas)
@@ -535,6 +535,18 @@ namespace Necro.Nucleo
                             if (e.Viva && e.Faccao != Faccao.Inimigo) e.Vida = Math.Max(1f, e.Vida - e.VidaMax * Cfg.AltarCustoDeVida);
                         }
                     _bAlma = Cfg.AltarBonusDeAlma; valor = Cfg.AltarBonusDeAlma;
+                    break;
+                }
+                case TipoSala.ForjaDeOssos:
+                {
+                    // Forja de Ossos: cada aliado vivo sai com uma couraça de ossos que absorve dano até quebrar
+                    float f = Cfg.ForjaEscudo * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
+                    for (int i = 0; i < Entidades.Count; i++)
+                    {
+                        var e = Entidades[i];
+                        if (e.Viva && e.Faccao != Faccao.Inimigo && e.Escudo < e.VidaMax * f) e.Escudo = e.VidaMax * f;
+                    }
+                    valor = f;
                     break;
                 }
                 case TipoSala.Fonte:

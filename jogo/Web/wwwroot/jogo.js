@@ -547,12 +547,12 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
@@ -627,6 +627,7 @@ function eventoDeSala(tipo, v, x, y) {
     else { aviso((sub === 2 ? 'Baú dourado! ' : 'Baú: ') + '+' + fmt(Math.round(val)) + ' Ossos'); anotar(`${sub === 2 ? '<b style="color:#ffd84a">Baú dourado</b>' : 'Baú'}: +${fmt(Math.round(val))} Ossos${sub === 2 ? ', item Raro e Sangue' : ''}${toque ? ' (aberto por você)' : ''}.`); brilho('#ffd84a', sub === 2 ? 60 : 26); if (sub === 2) clarao = 0.5; }
   } else if (ts === 4) { aviso('Bênção · ' + BENCAOS[sub]); anotar(`Santuário: <b>${BENCAOS[sub]}</b> (+${Math.round(val * [0, 100, 100, 250, 400, 300][sub])}%) até o fim do andar${toque ? ', escolhida por você' : ''}.`); brilho('#7fd8ff', 34); }
   else if (ts === 5) { aviso('Alma libertada: ' + QUALIDADES[sub]); anotar(`Almas presas: uma alma <span class="q${sub}">${QUALIDADES[sub]}</span> se soltou${toque ? ' (melhorada pelo seu toque?)' : ''}.`); brilho('#78ffaa', 30); }
+  else if (ts === 14) { aviso('Forja de ossos: couraça para todos'); anotar(`Forja de ossos: cada aliado sai com uma couraça de ${Math.round(val * 100)}% da vida${toque ? ' (reforçada pelo seu toque)' : ''}.`); brilho('#e8e0c8', 34); for (const g of estado.values()) if (g.viva && !g.inimigo) g.flash = 0.25; }
   else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
@@ -648,7 +649,7 @@ function desenharObjeto(dt) {
   // o que espera nas salas ainda não visitadas: o baú, o santuário, o mercador... já estão lá, à vista
   mapa.forEach((m, i) => {
     const t = masm.tipos[i];
-    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13)) return;
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14)) return;
     if (objeto && i === masm.sala) return;
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
@@ -692,6 +693,12 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#34282c'; ctx.fillRect(-30, -22, 60, 24); ctx.fillStyle = '#463a3e'; ctx.fillRect(-36, -30, 72, 10);
     ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 14) {    // forja de ossos: bigorna de pedra, brasa e ossos empilhados
+    ctx.fillStyle = '#2c2628'; ctx.fillRect(-22, -14, 44, 14); ctx.fillStyle = '#3c3438'; ctx.fillRect(-28, -24, 56, 10); ctx.fillStyle = '#1c181a'; ctx.fillRect(-12, -4, 24, 6);
+    ctx.fillStyle = '#d8d0b8'; for (const [bx, by, bw] of [[-40, -6, 18], [-38, -11, 14], [24, -5, 16], [27, -10, 12]]) { ctx.fillRect(bx, by, bw, 3); ctx.beginPath(); ctx.arc(bx, by + 1.5, 2.6, 0, 7); ctx.arc(bx + bw, by + 1.5, 2.6, 0, 7); ctx.fill(); }
+    ctx.globalCompositeOperation = 'lighter'; const gf = ctx.createRadialGradient(0, -26, 0, 0, -26, 46); gf.addColorStop(0, `rgba(255,150,60,${0.45 + 0.25 * pulso})`); gf.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = gf; ctx.beginPath(); ctx.arc(0, -26, 46, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `rgba(255,${150 + 60 * pulso | 0},70,0.95)`; ctx.fillRect(-18, -27, 36, 3);
+    if (!o.futuro && Math.random() < 0.4) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.7, rnd(-0.6, 0.6), 0, rnd(4, 8), '#ffb050', rnd(0.3, 0.7)]);
   } else if (o.tipo === 7) {    // fonte
     ctx.fillStyle = '#3a3438'; ctx.beginPath(); ctx.ellipse(0, -6, 36, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#2a2428'; ctx.fillRect(-7, -6, 14, 10);
     ctx.fillStyle = `rgba(170,20,32,${0.8 + 0.2 * pulso})`; ctx.beginPath(); ctx.ellipse(0, -8, 30, 10, 0, 0, 7); ctx.fill();

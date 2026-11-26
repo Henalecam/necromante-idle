@@ -293,6 +293,7 @@ namespace Necro.Nucleo
         public float BencaoForca = 0.10f;                // Fúria: +dano; Proteção: -dano sofrido; Colheita: +ossos (x2,5)
         public float TempoDeEscolhaDaBencao = 4f;        // s para o jogador escolher; depois o necromante pega uma ao acaso
         public float FonteCura = 0.20f;
+        public float ForjaEscudo = 0.25f;                 // Forja de Ossos: couraça = fração da vida máxima de cada aliado
         public float AlmasPresasChanceDeMelhorar = 0.5f;
         public float EmboscadaOrcamento = 0.5f;
         public float MercadorPreco = 40f;                // Ossos da própria expedição, x (1 + 10% por andar)

@@ -1224,6 +1224,25 @@ namespace Necro.Testes
                 Afirmar(com < sem, "o Baluarte deveria reduzir o dano sofrido pelos outros minions (" + com + " vs " + sem + ")");
             });
 
+            Teste("Forja de Ossos: a sala existe no sorteio e dá couraça aos aliados", () =>
+            {
+                bool viu = false;
+                for (int semente = 1; semente < 400 && !viu; semente++)
+                {
+                    var sim = new Simulacao(Cfg, Progressao.NovoJogo(Cfg), (ulong)semente, ModoExpedicao.Avancar, 3);
+                    sim.Tick();
+                    if (!sim.Salas.Contains(TipoSala.ForjaDeOssos)) continue;
+                    int guarda = 0;
+                    while (!sim.Encerrada && guarda++ < 6000 && !viu)
+                    {
+                        sim.Tick();
+                        foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.ForjaDeOssos)
+                        { viu = true; Afirmar(ev.Valor >= Cfg.ForjaEscudo - 1e-4f, "valor da couraça"); Afirmar(sim.Necromante.Escudo > 0f, "o necromante deveria sair com couraça"); }
+                    }
+                }
+                Afirmar(viu, "nenhuma Forja de Ossos resolvida em 400 sementes");
+            });
+
             RodarLoot();
 
             Console.WriteLine();
