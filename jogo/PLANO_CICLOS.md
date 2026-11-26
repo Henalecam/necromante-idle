@@ -262,3 +262,4 @@ Dono pediu ciclos a cada 5 minutos.
 94. Arena: arrastar move a vista, pinça/roda do mouse dá zoom contínuo, ⤢ recentra; o toque passou a agir ao soltar (toque curto sem arrasto).
 95. Travessia em fila: cada aliado parte com um pequeno atraso e o grupo se espreme para o eixo do corredor, em vez de atravessar em bloco.
 96. Inimigos já postos nas salas desde o começo do andar (núcleo: PlanejarInimigos/PlanoDasOndas; despertam um a um no lugar onde estavam, em vez de sair de portais) e objetos das salas especiais visíveis de longe. Portão 9/9: andar 39,2 s; chefe Ato 1 1,10 h (8 tentativas); andar 15 3,14 h; chefe Ato 2 10,35 h.
+97. Setas douradas correndo pelos corredores até a próxima sala, fio verde nos corredores já percorridos, anel pulsando na próxima sala; adormecidos com a tinta certa.

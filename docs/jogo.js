@@ -694,10 +694,24 @@ function desenhar(dt) {
     const pt = q.map(([x, y]) => W(x, y));
     ctx.beginPath(); pt.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
     ctx.fillStyle = percorrido ? '#3a3432' : '#2a2626'; ctx.fill(); ctx.strokeStyle = '#0a0808'; ctx.lineWidth = 3; ctx.stroke();
+    if (percorrido) { const m0 = [(pt[0][0] + pt[3][0]) / 2, (pt[0][1] + pt[3][1]) / 2], m1 = [(pt[1][0] + pt[2][0]) / 2, (pt[1][1] + pt[2][1]) / 2]; ctx.strokeStyle = 'rgba(109,255,168,0.28)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(m0[0], m0[1]); ctx.lineTo(m1[0], m1[1]); ctx.stroke(); }
     // juntas das lajes
     ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.45)';
     for (let f = 0.2; f < 1; f += 0.2) { const p0 = [pt[0][0] + (pt[1][0] - pt[0][0]) * f, pt[0][1] + (pt[1][1] - pt[0][1]) * f], p1 = [pt[3][0] + (pt[2][0] - pt[3][0]) * f, pt[3][1] + (pt[2][1] - pt[3][1]) * f]; ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
   });
+  // o caminho até a próxima sala: setas douradas correndo pelos corredores
+  if (mapa[masm.sala + 1] && !dvg) {
+    const cam = caminhoNoMapa(masm.sala, masm.sala + 1);
+    for (let k = 0; k + 1 < cam.length; k++) {
+      const a = offDaSala(cam[k]), b = offDaSala(cam[k + 1]), dxs = Math.sign(b[0] - a[0]), dys = Math.sign(b[1] - a[1]);
+      for (let q = 0; q < 3; q++) {
+        const f = 0.36 + 0.28 * (((tempoSim * 0.9 + q / 3) % 1)), cx0 = a[0] + 10 + (b[0] - a[0]) * f, cy0 = a[1] + 6 + (b[1] - a[1]) * f;
+        const p0 = W(cx0 + dxs * 0.9, cy0 + dys * 0.9), p1 = W(cx0 - dxs * 0.5 - dys * 0.9, cy0 - dys * 0.5 - dxs * 0.9), p2 = W(cx0 - dxs * 0.5 + dys * 0.9, cy0 - dys * 0.5 + dxs * 0.9);
+        ctx.fillStyle = `rgba(255,216,74,${0.35 + 0.5 * Math.sin(Math.PI * ((tempoSim * 0.9 + q / 3) % 1))})`;
+        ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.closePath(); ctx.fill();
+      }
+    }
+  }
   // salas, das do fundo para as da frente
   const ordem = mapa.map((m, i) => i).sort((a, b) => W(...offDaSala(a))[1] - W(...offDaSala(b))[1]);
   for (const i of ordem) {
@@ -730,7 +744,12 @@ function desenhar(dt) {
     const [img, sx, sy] = quadro(m, 'parado', direcao(-1, 0), tempoSim * 0.6 + ix);
     if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
     ctx.globalAlpha = sala === masm.sala ? 0.95 : 0.8;
-    ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
+    if (prov) {
+      if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
+      tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
+      tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H);
+      ctx.drawImage(tinta, 0, 0, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
+    } else ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     ctx.globalAlpha = 1;
   }
   for (const [s, acao, tempo, morto] of lista) {
@@ -806,6 +825,7 @@ function desenhar(dt) {
       const o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), t = masm.tipos[i] || 0, k = 1 / esc, feita = i < masm.sala, ly = ly0 - (feita ? 0 : 62 * k + 40);   // acima do que há na sala, para não cobrir
       const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
       ctx.globalAlpha = feita ? 0.4 : i === masm.sala ? 0.55 : 0.95;
+      if (i === masm.sala + 1) { ctx.strokeStyle = `rgba(255,216,74,${0.5 + 0.4 * Math.sin(tempoSim * 5)})`; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, (20 + 3 * Math.sin(tempoSim * 5)) * k, 0, 7); ctx.stroke(); }
       ctx.fillStyle = 'rgba(8,5,7,0.8)'; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, 15 * k, 0, 7); ctx.fill(); ctx.strokeStyle = cor; ctx.lineWidth = 1.5 * k; ctx.stroke();
       ctx.fillStyle = cor; ctx.font = `${18 * k}px Georgia`; ctx.fillText(feita ? '✓' : SALAS[t][0], lx, ly + 2 * k);
       if (!feita && t !== 0 && t !== 11) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(SALAS[t][1], lx, ly + 24 * k); }
