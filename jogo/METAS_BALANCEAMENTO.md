@@ -4,19 +4,19 @@
 
 | Meta | Faixa-alvo | Medido (mediana) | Situação |
 |---|---|---|---|
-| Tempo por andar | 30 a 60 s | 35.01 s | ok |
-| Duração média de uma expedição | 3 a 20 min | 3.21 min | ok |
+| Tempo por andar | 30 a 60 s | 35.52 s | ok |
+| Duração média de uma expedição | 3 a 20 min | 3.30 min | ok |
 | Andar em que termina a primeira expedição (jogo novo) | 6 a 10  | 6.00  | ok |
 | Primeiro Ponto de Ancoragem (andar 5) | 0.05 a 0.5 h | 0.07 h | ok |
-| Chefe do Ato 1 derrotado | 1 a 3 h | 1.06 h | ok |
+| Chefe do Ato 1 derrotado | 1 a 3 h | 1.10 h | ok |
 | Tentativas no chefe do Ato 1 até vencer | 2 a 8  | 7.00  | ok |
-| Maior espera num único andar (fração do tempo até o andar 20) | 0 a 0.35  | 0.30  | ok |
-| Andar 15 | 2.5 a 6 h | 3.14 h | ok |
-| Chefe do Ato 2 (andar 20) | 5 a 12 h | 9.36 h | ok |
+| Maior espera num único andar (fração do tempo até o andar 20) | 0 a 0.35  | 0.27  | ok |
+| Andar 15 | 2.5 a 6 h | 3.00 h | ok |
+| Chefe do Ato 2 (andar 20) | 5 a 12 h | 8.53 h | ok |
 
 Campanhas que vencem o chefe do Ato 1 dentro do limite: 100%. Maior andar concluído (mediana): 25.
 
-Ao fim da campanha (medianas): Altar nível 20, Cripta nível 44, Torre das Almas nível 30, Ossuário nível 30, Mesa de Dissecação nível 25; Comando 20; sobrando 51432 Ossos e 13990 de Essência. Nível do necromante: 152.
+Ao fim da campanha (medianas): Altar nível 20, Cripta nível 44, Torre das Almas nível 30, Ossuário nível 30, Mesa de Dissecação nível 25; Comando 20; sobrando 42567 Ossos e 16656 de Essência. Nível do necromante: 150.
 
 ### Curva de progressão
 
@@ -28,22 +28,23 @@ Ao fim da campanha (medianas): Altar nível 20, Cripta nível 44, Torre das Alma
 | 4 | 0.05 |
 | 5 | 0.07 |
 | 6 | 0.14 |
-| 7 | 0.26 |
-| 8 | 0.34 |
+| 7 | 0.23 |
+| 8 | 0.35 |
 | 9 | 0.51 |
-| 10 (chefe) | 1.04 |
-| 11 | 1.12 |
-| 12 | 1.44 |
-| 13 | 1.82 |
-| 14 | 2.34 |
-| 15 | 3.14 |
-| 16 | 3.48 |
-| 17 | 4.04 |
-| 18 | 5.26 |
-| 19 | 6.55 |
-| 20 (chefe) | 9.36 |
-| 21 | 9.65 |
-| 22 | 10.39 |
-| 23 | 11.39 |
-| 24 | 12.93 |
-| 25 | não alcançado |
+| 10 (chefe) | 1.06 |
+| 11 | 1.13 |
+| 12 | 1.34 |
+| 13 | 1.72 |
+| 14 | 2.03 |
+| 15 | 3.00 |
+| 16 | 3.18 |
+| 17 | 3.92 |
+| 18 | 4.83 |
+| 19 | 6.21 |
+| 20 (chefe) | 8.53 |
+| 21 | 9.33 |
+| 22 | 10.45 |
+| 23 | 11.43 |
+| 24 | 12.79 |
+| 25 | 13.89 |
+| 26 | não alcançado |

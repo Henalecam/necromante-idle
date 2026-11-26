@@ -103,6 +103,8 @@ namespace Necro.Testes
             }
             // 3) evolui de estágio quem chegou ao teto, e equipa
             for (int i = 0; i < p.Minions.Count; i++) if (p.Minions[i].Ativo) Progressao.EvoluirEstagio(p, i, cfg);
+            // Ferreiro: compra o que o ouro alcançar (do mais caro para o mais barato) e deixa o auto-equipar decidir
+            if (p.Loja != null) for (int li = p.Loja.Count - 1; li >= 0; li--) Ferreiro.Comprar(p, li, cfg);
             Equipamento.AutoEquipar(p, cfg);
             p.DesmancharAbaixoDe = RaridadeItem.Magico;
         }

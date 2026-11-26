@@ -225,7 +225,10 @@ public static partial class Jogo
         sb.Append("],\"grade\":{\"w\":").Append(_cfg.LarguraDoInventario).Append(",\"h\":").Append(_cfg.AlturaDoInventario).Append(",\"pos\":[");
         for (int i = 0; i < gx.Length; i++) { if (i > 0) sb.Append(','); sb.Append('[').Append(gx[i]).Append(',').Append(gy[i]).Append(']'); }
         var armaEq = Equipamento.Obter(_p, EspacoEquipamento.Arma);
-        sb.Append("]},\"fragmentos\":").Append(_p.FragmentosDeAlma).Append(",\"corpoACorpo\":").Append(B(!Equipamento.Vazio(armaEq) && armaEq.Tipo == TipoItem.Foice))
+        sb.Append("]},\"ouroTotal\":").Append(_p.Ouro).Append(",\"ouroDaExpedicao\":").Append(_sim.Resultado.Ouro).Append(",\"loja\":[");
+        if (_p.Loja == null || (_p.Loja.Count == 0 && _p.LojaRenovacoes == 0)) Ferreiro.Renovar(_p, _cfg);
+        for (int i = 0; i < _p.Loja.Count; i++) { if (i > 0) sb.Append(','); sb.Append("{\"preco\":").Append(Ferreiro.PrecoDeCompra(_p.Loja[i], _cfg)).Append(",\"pode\":").Append(B(Ferreiro.PodeComprar(_p, i, _cfg))).Append(",\"item\":"); AppendItem(sb, _p.Loja[i]); sb.Append('}'); }
+        sb.Append("],\"fragmentos\":").Append(_p.FragmentosDeAlma).Append(",\"corpoACorpo\":").Append(B(!Equipamento.Vazio(armaEq) && armaEq.Tipo == TipoItem.Foice))
           .Append(",\"auto\":[").Append(B(Auto(0))).Append(',').Append(B(Auto(1))).Append(',').Append(B(Auto(2))).Append(',').Append(B(Auto(3))).Append(',').Append(B(Auto(4))).Append("],\"autoPenalidade\":").Append((int)Math.Round((_cfg.AutoFeiticoPenalidade - 1f) * 100f))
           .Append(",\"postura\":").Append((int)_p.PosturasDosGrupos[0])
           .Append(",\"regras\":[").Append((int)_p.DesmancharAbaixoDe).Append(',').Append((int)_p.DissolverAbaixoDe).Append(',').Append((int)_p.SacrificarAbaixoDe).Append("]}");
@@ -236,7 +239,7 @@ public static partial class Jogo
     {
         if (Equipamento.Vazio(it)) { sb.Append("null"); return; }
         int tw, th; Equipamento.Tamanho(it.Tipo, out tw, out th);
-        sb.Append("{\"nome\":").Append(S(it.Nome)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"afixos\":[");
+        sb.Append("{\"nome\":").Append(S(it.Nome)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"afixos\":[");
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
@@ -427,6 +430,8 @@ public static partial class Jogo
         if (!Equipamento.Vazio(saiu)) _p.Inventario.Add(saiu);
     }
     [JSExport] public static void Desequipar(int espaco) { Equipamento.Desequipar(_p, (EspacoEquipamento)espaco, _cfg); }
+    [JSExport] public static void VenderItem(int i) { if (i >= 0 && i < _p.Inventario.Count) Ferreiro.Vender(_p, _p.Inventario[i], _cfg); }
+    [JSExport] public static bool ComprarItem(int i) { return Ferreiro.Comprar(_p, i, _cfg); }
     [JSExport] public static void Desmanchar(int i) { if (i >= 0 && i < _p.Inventario.Count) Equipamento.Desmanchar(_p, _p.Inventario[i], _cfg); }
     /// <summary>Abandona a expedição atual e começa outra já com o exército e os itens novos.</summary>
     [JSExport] public static void Recomecar() { Progressao.AplicarResultado(_p, _sim.Resultado, _cfg); NovaExpedicao(); }

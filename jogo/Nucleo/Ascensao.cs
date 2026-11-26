@@ -69,7 +69,7 @@ namespace Necro.Nucleo
 
             p.NivelNecromante = novo.NivelNecromante; p.XpNecromante = 0f;
             p.MaiorAndarConcluido = 0; p.AndarDeAncoragem = novo.AndarDeAncoragem; p.ChefesDerrotados.Clear();
-            p.Ossos = 0; p.Essencia = 0; p.Sangue = 0; p.FragmentosDeAlma = 0;
+            p.Ossos = 0; p.Essencia = 0; p.Sangue = 0; p.FragmentosDeAlma = 0; p.Ouro = 0; if (p.Loja != null) p.Loja.Clear();
             for (int i = 0; i < p.Restos.Length; i++) p.Restos[i] = 0;
             p.Filacterio.Clear();
             p.Construcoes = new int[Necropole.TotalDeConstrucoes];

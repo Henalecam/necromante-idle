@@ -110,6 +110,7 @@ namespace Necro.Nucleo
         private readonly Rng _rngPressagio;
         private float _sorte;   // pontos de Sorte do progresso
         private float _restoDeOssos = 0.5f;
+        private float _restoDeOuro = 0.5f;
         private int _ondaDoUnico;
         private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f;
         /// <summary>Presságio em vigor neste andar.</summary>

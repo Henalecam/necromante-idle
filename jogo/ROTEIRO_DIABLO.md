@@ -19,9 +19,9 @@ battle.net clássico (pacotes de campeões/únicos).
 2. [feito] Únicos com nome próprio e séquito (nome dourado sobre a barra; 1-2 por andar a partir do andar 4), com prêmio garantido.
 3. [feito] Objetos quebráveis dentro das salas: barris (ossos/explosivos), sarcófagos (esqueleto sai ou tesouro), urnas — os minions quebram ao passar.
 4. [feito, parte 1: névoa por sala e raio de luz no cliente; falta inimigos invisíveis fora da luz dentro da própria sala] Luz e névoa: raio de luz ao redor do grupo; salas não visitadas escuras no mapa (silhueta), reveladas ao entrar; inimigos fora da luz invisíveis.
-5. Ouro como moeda própria (cai dos monstros/objetos) + Mercador da cidade: comprar, vender, reparar.
+5. [feito: ouro + Ferreiro compra e vende; reparo vai com a fatia 6] Ouro como moeda própria (cai dos monstros/objetos) + Mercador da cidade: comprar, vender, reparar.
 6. Itens não identificados (identificar custa ouro ou pergaminho) e durabilidade com reparo.
-7. Inventário em grade de espaço limitado.
+7. [já existia: o inventário é uma grade limitada (Cfg.LarguraDoInventario x AlturaDoInventario) com itens de tamanhos diferentes] Inventário em grade de espaço limitado.
 8. Atributos do necromante (Força/Magia/Destreza/Vitalidade) com pontos por nível.
 9. Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
 10. Santuários de efeito incerto (nomes crípticos, bom ou ruim) no lugar das bênçãos escolhidas.

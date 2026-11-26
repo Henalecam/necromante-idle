@@ -121,6 +121,8 @@ namespace Necro.Nucleo
         public bool OferendasAutomaticas = true;
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
+        public long Ouro;                                   // moeda da cidade: cai na masmorra, compra e vende no Ferreiro
+        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados;
         public int MinionsSacrificados;
         /// <summary>Regra automática: minions NA RESERVA com qualidade abaixo desta são sacrificados ao fim de cada expedição.</summary>
         public Qualidade SacrificarAbaixoDe = Qualidade.Fraca;
@@ -168,6 +170,7 @@ namespace Necro.Nucleo
         public int NiveisSecretos;
         public int InteracoesPorToque;
         public int ObjetosQuebrados;
+        public long Ouro;
         public int RotasEscolhidas;
         public int PatrulhasEnfrentadas;
         public int CofresAbertos;
@@ -364,6 +367,7 @@ namespace Necro.Nucleo
             Bestiario.Registrar(p, r);
             p.Ossos += (long)Math.Round(r.Ossos * (double)(Necropole.MultOssos(p, cfg) + Talentos.Total(p, EfeitoDeTalento.Ossos, cfg) + Oferendas.Total(p, EfeitoDeTalento.Ossos, cfg) + Ascensao.Valor(p, 0, cfg)));
             p.Sangue += r.Sangue;
+            p.Ouro += r.Ouro; Ferreiro.Renovar(p, cfg);   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;
             if (r.AncoragemAlcancada > p.AndarDeAncoragem) p.AndarDeAncoragem = r.AncoragemAlcancada;

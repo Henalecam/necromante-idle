@@ -414,6 +414,26 @@ namespace Necro.Testes
                 Afirmar(com.Itens.Count > sem0.Itens.Count * 1.5 && com.OrbesCaidos > sem0.OrbesCaidos * 1.3, "mais quedas: itens " + sem0.Itens.Count + " -> " + com.Itens.Count + ", orbes " + sem0.OrbesCaidos + " -> " + com.OrbesCaidos);
                 Afirmar(mi1 / com.Itens.Count > mi0 / sem0.Itens.Count * 1.15 && ma1 / com.Almas.Count > ma0 / sem0.Almas.Count * 1.08, "raridade média " + (mi0 / sem0.Itens.Count) + " -> " + (mi1 / com.Itens.Count) + "; qualidade média " + (ma0 / sem0.Almas.Count) + " -> " + (ma1 / com.Almas.Count) + " (" + sem0.Almas.Count + "/" + com.Almas.Count + " almas)");
             });
+            Teste("ouro e Ferreiro: a expedição rende ouro, a loja renova a cada volta, vender e comprar movem ouro e itens", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 20f;
+                var r = ExecutorSemTela.RodarExpedicao(Cfg, p, 5UL, ModoExpedicao.Avancar, 1, 4);
+                Afirmar(r.Ouro > 0, "a expedição deveria render ouro");
+                long antes = p.Ouro; Progressao.AplicarResultado(p, r, Cfg);
+                Afirmar(p.Ouro == antes + r.Ouro, "o ouro da expedição entra no progresso");
+                Afirmar(p.Loja.Count == Cfg.LojaItens && p.Loja[Cfg.LojaItens - 1].Raridade >= RaridadeItem.Raro, "estoque de " + Cfg.LojaItens + " com um Raro");
+                foreach (var it in p.Loja) Afirmar(it.Raridade >= RaridadeItem.Magico, "o Ferreiro só vende de Mágico para cima");
+                var nome0 = p.Loja[0].Nome + p.Loja[1].Nome; Ferreiro.Renovar(p, Cfg);
+                Afirmar(p.Loja[0].Nome + p.Loja[1].Nome != nome0, "renovar troca o estoque");
+                // comprar: sem ouro não leva; com ouro, o item vai para o inventário e o ouro sai
+                p.Ouro = 0; Afirmar(!Ferreiro.Comprar(p, 0, Cfg), "sem ouro não compra");
+                long preco = Ferreiro.PrecoDeCompra(p.Loja[0], Cfg); p.Ouro = preco + 7; int inv = p.Inventario.Count; var alvo = p.Loja[0];
+                Afirmar(Ferreiro.Comprar(p, 0, Cfg) && p.Ouro == 7 && p.Inventario.Count == inv + 1 && p.Inventario.Contains(alvo) && p.Loja.Count == Cfg.LojaItens - 1, "compra feita");
+                // vender devolve só uma fração do preço de compra; travado não vende
+                long venda = Ferreiro.PrecoDeVenda(alvo, Cfg); Afirmar(venda * 2 < preco, "vender rende bem menos que comprar custa");
+                alvo.Bloqueado = true; Afirmar(Ferreiro.Vender(p, alvo, Cfg) == 0, "item travado não se vende"); alvo.Bloqueado = false;
+                Afirmar(Ferreiro.Vender(p, alvo, Cfg) == venda && p.Ouro == 7 + venda && !p.Inventario.Contains(alvo), "venda feita");
+            });
             Teste("distribuição de raridade 70 / 22 / 7 / 0,9 / 0,1 % (400 mil sorteios)", () =>
             {
                 var rng = new Rng(2024);

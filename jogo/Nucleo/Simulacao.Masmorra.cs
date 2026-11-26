@@ -454,7 +454,7 @@ namespace Necro.Nucleo
                     }
                     bool dourado = Rng.Chance(Cfg.BauChanceDourado * (1f + _sorte * Cfg.SorteChanceDeMelhorPorPonto));
                     long ossos = (long)(Cfg.BauOssos * (dourado ? 3f : 1f) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
-                    Resultado.Ossos += ossos; valor = ossos;
+                    Resultado.Ouro += (long)(Cfg.OuroBau * (1f + 0.1f * (Andar - 1)) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) + 0.5f); Resultado.Ossos += ossos; valor = ossos;
                     if (dourado) { SoltarItemEm(PosDoObjeto, RaridadeItem.Raro); Resultado.Sangue += Cfg.BauDouradoSangue; sub = 2; especial = true; }
                     else if (_rngItens.Chance(toque ? Cfg.BauChanceDeItemComToque : Cfg.BauChanceDeItem)) SoltarItemEm(PosDoObjeto, RaridadeItem.Comum);
                     break;

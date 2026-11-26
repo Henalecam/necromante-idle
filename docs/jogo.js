@@ -1188,7 +1188,7 @@ function ajustarTela() {
 function salvar() { try { localStorage.setItem(CHAVE, J.Salvar()); localStorage.setItem(CHAVE + '-hora', String(Date.now())); } catch (e) { /* sem armazenamento: joga-se sem salvar */ } }
 
 // ---- painéis ----
-const abasSel = { esq: 'exercito', dir: 'combate', baixo: 'necropole' }, LADO = { exercito: 'esq', equip: 'esq', combate: 'dir', masmorra: 'dir', bestiario: 'dir', necropole: 'baixo', talentos: 'baixo' };
+const abasSel = { esq: 'exercito', dir: 'combate', baixo: 'necropole' }, LADO = { exercito: 'esq', equip: 'esq', combate: 'dir', masmorra: 'dir', bestiario: 'dir', necropole: 'baixo', talentos: 'baixo', ferreiro: 'baixo' };
 const ALVO = { esq: 'p-esq', dir: 'p-dir', baixo: 'painel' }, htmlAnterior = { esq: '', dir: '', baixo: '' };
 const botoesDeAba = () => document.querySelectorAll('.abas button[data-aba]');
 let painelAnterior = '', missaoAnterior = '', recursosAnterior = '', exFiltro = 'todos', exOrdem = 'campo';
@@ -1223,7 +1223,7 @@ function atualizarPainel(forcar) {
   };
   const folga = d.poder / Math.max(1, d.poderSugerido), corP = folga >= 1 ? '#8fd89f' : folga >= 0.8 ? '#ffd84a' : '#ff6a6a';
   IC.poder = `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7z" stroke="${corP}"/>`;
-  const fichas = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos']];
+  const fichas = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos'], ['ouro', `<span style="color:#ffd84a">${fmt(d.ouroTotal)}</span>`, d.ouroDaExpedicao ? `Ouro · +${fmt(d.ouroDaExpedicao)} nesta descida` : 'Ouro']];
   if (d.ascensao.cinzas || d.ascensao.vezes) fichas.push(['cinzas', fmt(d.ascensao.cinzas), 'Cinzas']);
   if (d.sorte > 0) fichas.push(['frag', fmt(d.sorte), 'Sorte']);
   if (d.cheats) fichas.push(['cmd', 'teste', 'save']);
@@ -1244,7 +1244,7 @@ function atualizarPainel(forcar) {
   d.abertos[5] = true; d.abertos[6] = true;
   d.abertos[3] = d.abertos[0];   // o Bestiário abre junto com o Exército
   d.abertos[4] = d.nivel >= 1 + d.niveisPorPonto || d.talentos.some((t) => t.pts > 0);   // Talentos abrem com o primeiro ponto
-  const aberto = (n) => d.abertos[nomes.indexOf(n)];
+  const aberto = (n) => d.abertos[nomes.indexOf(n === 'ferreiro' ? 'equip' : n)];   // o Ferreiro abre junto com o Inventário
   // selos: quantas coisas dá para fazer em cada aba agora
   const pend = {
     exercito: d.almas.filter((a) => a.custo <= d.essencia).length + d.fusoes.filter((f) => f.pode).length + d.minions.filter((m) => (m.imbuir >= 0 && m.imbuir <= d.fragmentos) || (m.evoluir >= 0 && m.evoluir <= d.essencia)).length,
@@ -1298,6 +1298,21 @@ function atualizarPainel(forcar) {
     if (!d.almas.length) h += '<p class="nota">Vazio. As almas ceifadas chegam ao fim de cada expedição.</p>';
     d.almas.map((a, i) => [a, i]).sort((x, y) => y[0].q - x[0].q || x[1] - y[1]).forEach(([a, i]) => { h += `<div class="linha">${thumb(a.sprite)}<div class="corpo"><span class="q${a.q}">${esc(a.nome)}</span> <span class="nota">${QUALIDADES[a.q]} · ${a.comando} de comando</span>${donsHtml(a.dons)}${tracosHtml(a.tracos)}</div><button data-ac="erguer" data-i="${i}" ${a.custo > d.essencia ? 'disabled' : ''}>Erguer · ${fmt(a.custo)} Ess.</button></div>`; });
     h += '<p class="nota">Mudanças no exército valem a partir da próxima expedição.</p><div class="rodape"><button data-ac="recomecar">Recomeçar expedição agora</button></div>';
+  } else if (aba === 'ferreiro') {
+    h += `<p class="nota">O Ferreiro compra o que você traz da masmorra e vende um estoque que muda a cada expedição. Você tem <b style="color:#ffd84a;font-weight:normal">${fmt(d.ouroTotal)} de ouro</b>${d.ouroDaExpedicao ? ` (+${fmt(d.ouroDaExpedicao)} chegam quando esta descida terminar)` : ''}.</p>`;
+    h += '<h3>À venda</h3>';
+    if (!d.loja.length) h += '<p class="nota">Estoque vendido. Volta cheio depois da próxima expedição.</p>';
+    d.loja.forEach((l, i) => {
+      const it = l.item;
+      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · ${TIPOS[it.tipo]} · nível ${it.nivel} · Poder ${fmt(it.poder)}</span><small>${it.afixos.map(esc).join(' · ')}</small></div>` +
+        `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? '' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Inventário cheio' : `Comprar · ${fmt(l.preco)} ouro`}</button></div>`;
+    });
+    h += '<h3>Vender do inventário</h3>';
+    const vendaveis = d.inventario.map((it, i) => [it, i]).filter(([it]) => it && !it.trava);
+    if (!vendaveis.length) h += '<p class="nota">Nada para vender: o inventário está vazio (ou tudo está travado).</p>';
+    vendaveis.sort((a, b) => a[0].r - b[0].r || a[0].poder - b[0].poder).forEach(([it, i]) => {
+      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · Poder ${fmt(it.poder)}</span></div><button data-ac="vender-item" data-i="${i}">Vender · +${fmt(it.ouro)} ouro</button></div>`;
+    });
   } else if (aba === 'talentos') {
     h += `<p class="nota">Um ponto a cada ${d.niveisPorPonto} níveis do necromante. Os talentos mais fundos de um ramo pedem pontos no mesmo ramo. Valem a partir da próxima expedição.</p>`;
     h += `<div class="linha"><div class="corpo">Pontos para gastar: <b style="color:var(--ouro);font-weight:normal">${d.pontos}</b></div>${d.redistribuir ? `<button data-ac="redistribuir" ${d.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(d.redistribuir)} Ess.</button>` : ''}</div>`;
@@ -1400,7 +1415,7 @@ function desenharInventario(d) {
       (sel.conj ? `<div style="margin-top:6px;border-left:3px solid #c05ad8;padding-left:8px"><b style="color:#d58cf0">${esc(sel.conj.nome)}</b> <span class="nota">· ${sel.conj.tem}/3 peças equipadas</span><div class="nota">${sel.conj.pecas.map(esc).join(' · ')}</div><div style="opacity:${sel.conj.tem >= 2 ? 1 : 0.5}">2 peças: ${sel.conj.b2.map(esc).join(', ')}</div><div style="opacity:${sel.conj.tem >= 3 ? 1 : 0.5}">3 peças: ${sel.conj.b3.map(esc).join(', ')}</div></div>` : '') +
       (sel.tipo === 0 ? '<div class="nota">Cajado: o necromante luta à distância.</div>' : sel.tipo === 1 ? '<div class="nota">Foice: o necromante luta corpo a corpo.</div>' : '') +
       (sel.trava ? '<div class="nota">Travado: não é vendido nem desmanchado.</div>' : '') +
-      '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button><button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ess)} Ess.</button>`) +
+      '<div class="rodape">' + (ehEquipado ? `<button data-ac="desequipar" data-i="${idx}">Tirar</button>` : `<button data-ac="equipar" data-i="${idx}">Equipar</button><button data-ac="desmanchar" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Desmanchar · +${fmt(sel.ess)} Ess.</button><button data-ac="vender-item" data-i="${idx}" ${sel.trava ? 'disabled' : ''}>Vender · +${fmt(sel.ouro)} ouro</button>`) +
       `<button data-ac="travar" data-i="${idx}" data-eq="${ehEquipado ? 1 : 0}" class="${sel.trava ? 'ativo' : ''}">${sel.trava ? 'Destravar' : 'Travar'}</button></div></div>`;
   } else h += '<p class="nota">Toque num item para ver a descrição.</p>';
   let nV = 0, eV = 0; d.inventario.forEach((it) => { if (!it.trava && it.r <= venderAte) { nV++; eV += it.ess; } });
@@ -1419,6 +1434,7 @@ function acaoDoPainel(b) {
     case 'equipar': { const cj = ultimoInv && ultimoInv[i] && ultimoInv[i].conj; J.Equipar(i); invSel = null; if (cj) { const n = Math.min(3, cj.tem + 1); if (n >= 2) { aviso(`${cj.nome}: bônus de ${n} peças ativo!`); som('bencao'); } else aviso(`${cj.nome}: 1 de 3 peças`); } break; }
     case 'desequipar': J.Desequipar(i); invSel = null; break;
     case 'desmanchar': J.Desmanchar(i); invSel = null; break;
+    case 'vender-item': J.VenderItem(i); invSel = null; som('toque'); break;
     case 'auto': J.AutoEquipar(); invSel = null; break;
     case 'travar': J.Travar(i, b.dataset.eq === '1'); break;
     case 'vender-tudo':
@@ -1660,6 +1676,8 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'equipar': J.Equipar(i); break;
     case 'desequipar': J.Desequipar(i); break;
     case 'desmanchar': J.Desmanchar(i); break;
+    case 'vender-item': J.VenderItem(i); som('toque'); break;
+    case 'comprar': if (J.ComprarItem(i)) { som('bencao'); aviso('Comprado: foi para o inventário'); } break;
     case 'auto': J.AutoEquipar(); break;
     case 'recomecar': J.Recomecar(); limparArena(true); andar = 0; break;
     case 'novo':

@@ -241,6 +241,10 @@ namespace Necro.Nucleo
                 Resultado.Ossos += qOssos;
                 if (qOssos > 0) Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
 
+                // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
+                _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1)) * premio * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
+                { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
+
                 // Sangue: elites, chefes e execuções.
                 int sangue = (alvo.Chefe ? Cfg.SangueChefe : alvo.Elite ? Cfg.SangueElite : 0) + (execucao ? Cfg.SangueExecucao : 0);
                 if (sangue > 0)

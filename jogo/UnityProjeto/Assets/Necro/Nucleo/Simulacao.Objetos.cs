@@ -104,6 +104,7 @@ namespace Necro.Nucleo
                     else { long q = Math.Max(1L, (long)(Cfg.SarcofagoOssos * escala + 0.5f)); Resultado.Ossos += q; valor = q; }
                     break;
             }
+            Resultado.Ouro += (long)((o.Tipo == TipoObjeto.Barril ? Cfg.OuroBarril : o.Tipo == TipoObjeto.Urna ? Cfg.OuroUrna : o.Tipo == TipoObjeto.Sarcofago && sub != 2 ? Cfg.OuroSarcofago : 0f) * (1f + 0.1f * (Andar - 1)) + 0.5f);
             Resultado.ObjetosQuebrados++;
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 21, Valor = valor, Origem = indice, Alvo = sub, Pos = o.Pos, Critico = toque });
         }

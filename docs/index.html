@@ -164,6 +164,7 @@
   h3:first-child { margin-top:0; }
   .linha { display:flex; align-items:center; gap:8px; padding:7px 8px; margin-bottom:5px; background:#1b1418; border:1px solid #2a1f22; border-radius:4px; font-size:14px; }
   .linha { flex-wrap:wrap; }
+  .linha > img { width:34px; height:34px; object-fit:contain; flex:none; image-rendering:auto; }
   .linha .corpo { flex:1 1 170px; min-width:0; }
   .linha small { display:block; color:var(--fraco); font-size:12px; margin-top:2px; }
   .xp { height:3px; background:#0008; border-radius:2px; margin-top:5px; } .xp div { height:100%; background:#5a8f6a; border-radius:2px; }
@@ -213,7 +214,7 @@
 <div id="autos"></div>
 <div id="missao"></div>
 <div id="doca"><button data-abre="esq">◧ Exército · Inventário</button><button data-abre="dir">Estatísticas · Diário ◨</button></div>
-<div class="abas" data-lado="baixo"><button data-aba="necropole" class="ativo">Necrópole</button><button data-aba="talentos">Talentos</button></div>
+<div class="abas" data-lado="baixo"><button data-aba="necropole" class="ativo">Necrópole</button><button data-aba="talentos">Talentos</button><button data-aba="ferreiro">Ferreiro</button></div>
 <div id="painel" class="pn"></div>
 </main>
 <aside id="dir" class="lado">
@@ -253,6 +254,7 @@
   <div class="tr"><b>Ossos</b>: de todo inimigo morto. Pagam as construções da Necrópole.</div>
   <div class="tr"><b>Essência</b>: de vender itens e dissolver almas. Paga erguer, fundir e evoluir minions.</div>
   <div class="tr"><b>Sangue</b>: de elites, chefes e execuções. Paga os Ritos da próxima expedição.</div>
+  <div class="tr"><b>Ouro</b>: cai dos monstros, barris, urnas, sarcófagos e baús. Compra e vende itens no Ferreiro, cujo estoque muda a cada expedição.</div>
   <div class="tr"><b>Fragmentos</b>: de sacrificar minions. Servem para Imbuir (subir a qualidade de um minion).</div>
   <div class="tr"><b>Poder</b>: a força do seu exército em um número, calculada da vida e do dano reais. Verde cobre o que o andar pede; amarelo está perto; vermelho está abaixo. É estimativa: jogando com a mão você passa com menos.</div>
   <div class="tr"><b>Dons</b>: cada alma nasce um pouco diferente em vida, dano e velocidade. Vale a pena comparar duas almas iguais.</div>

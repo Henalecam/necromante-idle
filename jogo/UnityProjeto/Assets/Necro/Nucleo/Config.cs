@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.112f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.12f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -67,6 +67,12 @@ namespace Necro.Nucleo
         // Campeões: pacote de N da mesma espécie, mais fortes que os comuns (azuis)
         public float ChanceDeCampeoes = 0.3f; public int CampeoesAPartirDoAndar = 3, CampeoesPorPacote = 3;
         public float CampeaoMultVida = 2.2f, CampeaoMultDano = 1.25f, CampeaoPremio = 2.5f, CampeaoCusto = 2f;
+        // ---- Ouro e Ferreiro (Diablo 1: o ouro cai dos monstros e dos objetos, e compra/vende na cidade) ----
+        public float[] OuroPorPorte = { 1f, 2.5f, 5f, 10f };
+        public float OuroElite = 4f, OuroChefe = 25f, OuroBarril = 2f, OuroUrna = 4f, OuroSarcofago = 12f, OuroBau = 20f;
+        public long[] OuroVendaPorRaridade = { 3, 10, 40, 200, 1000 };
+        public float OuroPorNivelDeItem = 0.25f, LojaMargem = 12f;
+        public int LojaItens = 4;
         // Objetos quebráveis das salas de combate (barris, urnas, sarcófagos)
         public int ObjetosPorSala = 5; public float ObjetoRaioDeQuebra = 1.0f;
         public float BarrilOssos = 2f, BarrilChanceDeOssos = 0.5f, UrnaOssos = 3f, UrnaChanceDeItem = 0.04f, SarcofagoOssos = 8f, SarcofagoChanceDeMorto = 0.45f;
