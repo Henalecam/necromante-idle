@@ -1,0 +1,56 @@
+{
+  "nome": "carcereirodealmas",
+  "largura_frame": 392,
+  "altura_frame": 358,
+  "pivo_px": [
+    148,
+    119
+  ],
+  "pivo_normalizado": [
+    0.3776,
+    0.3324
+  ],
+  "pixels_por_unidade_unity": 32,
+  "direcoes": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "sombra": true,
+  "layout": "linhas = direções (de cima para baixo, na ordem de 'direcoes'); colunas = frames",
+  "acoes": [
+    {
+      "nome": "parado",
+      "arquivo": "carcereirodealmas_parado.png",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "arquivo": "carcereirodealmas_andar.png",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "conjurar",
+      "arquivo": "carcereirodealmas_conjurar.png",
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "arquivo": "carcereirodealmas_morrer.png",
+      "frames": 7,
+      "fps": 10,
+      "loop": false
+    }
+  ]
+}
