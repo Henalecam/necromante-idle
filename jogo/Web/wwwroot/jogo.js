@@ -1,5 +1,5 @@
 // Desenho e interface da versão de navegador. As regras do jogo rodam no núcleo C# (WebAssembly): aqui só se desenha.
-const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'necromante_foice', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite', 'carnical', 'diabodeguerra'];
+const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'necromante_foice', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite', 'carnical', 'diabodeguerra', 'aparicao'];
 const ACAO = { Parado: 'parado', Andando: 'andar', Atacando: 'atacar', Conjurando: 'conjurar', Morrendo: 'morrer' };
 const TPS = 10, CHAVE = 'necromante-idle-save-v1';
 const $ = (id) => document.getElementById(id);
@@ -32,7 +32,9 @@ async function carregarArte() {
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
 const PROVISORIO = { carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5] };
-function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : null; }
+// tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
+const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
+function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
 function monstro(especie, elite) {
   let n = especie.toLowerCase();
   if (!monstros[n] && PROVISORIO[n]) n = PROVISORIO[n][0];

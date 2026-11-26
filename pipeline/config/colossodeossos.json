@@ -1,0 +1,54 @@
+{
+  "nome": "colossodeossos",
+  "modelo": "../modelos/colossodeossos/colossodeossos.blend",
+  "saida": "../saida/colossodeossos",
+  "estilo": "diablo",
+  "acoes": [
+    {
+      "nome": "parado",
+      "acao_blender": "Parado",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "acao_blender": "Andar",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "acao_blender": "Atacar",
+      "lista_frames": [
+        1,
+        4,
+        6,
+        9,
+        12,
+        16
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "acao_blender": "Morrer",
+      "lista_frames": [
+        1,
+        5,
+        9,
+        12,
+        16,
+        20,
+        28
+      ],
+      "fps": 10,
+      "loop": false
+    }
+  ],
+  "altura_px": 168,
+  "superamostragem": 2,
+  "amostras": 16
+}

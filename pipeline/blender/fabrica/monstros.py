@@ -979,7 +979,8 @@ def abadessa():
 # CÃO DE CRIPTA (quadrúpede)
 # ---------------------------------------------------------------------------
 
-def cao_de_cripta():
+def cao_de_cripta(variante="cao"):
+    res = variante == "res"   # a Rês Profana do nível secreto: couro pálido malhado, chifres largos, olhos de brasa
     B.cena_limpa()
     V = Vector
     d = {
@@ -1005,12 +1006,15 @@ def cao_de_cripta():
     rig = B.Rig("CaoDeCripta")
     rig.construir(d)
     M = Montagem()
-    carne = B.mat_carne("CouroPodre", ((0.07, 0.06, 0.06), (0.14, 0.11, 0.10), (0.05, 0.03, 0.05)), sangue_qtd=0.36)
+    if res:
+        carne = B.mat_carne("CouroMalhado", ((0.42, 0.38, 0.33), (0.62, 0.58, 0.52), (0.05, 0.04, 0.04)), sangue_qtd=0.22)
+    else:
+        carne = B.mat_carne("CouroPodre", ((0.07, 0.06, 0.06), (0.14, 0.11, 0.10), (0.05, 0.03, 0.05)), sangue_qtd=0.36)
     viva = B.mat_carne("CarneViva", ((0.09, 0.012, 0.012), (0.15, 0.035, 0.025), (0.045, 0.005, 0.008)), sangue=(0.06, 0.002, 0.004), sangue_qtd=0.5)
     osso = B.mat_osso()
     ferro = B.mat_metal("Coleira", qtd=0.5)
     preto = B.mat_liso("Vazio", (0.003, 0.002, 0.003), 1.0)
-    olho = B.mat_emissao("OlhoFatuo", (0.75, 1.0, 0.2), 30.0)
+    olho = B.mat_emissao("OlhoFatuo", (1.0, 0.25, 0.05) if res else (0.75, 1.0, 0.2), 30.0)
 
     # tronco magro, de peito fundo e cintura afilada
     M.tubo("Traseiro", [(0, 0.42, 0.60), (0, 0.30, 0.63), (0, 0.10, 0.65), (0, -0.04, 0.66)], [(0.07, 0.08), (0.115, 0.14), (0.10, 0.12), (0.10, 0.125)],
@@ -1041,6 +1045,12 @@ def cao_de_cripta():
         b0 = V((cc.x + 0.105 * math.cos(ar), cc.y, cc.z + 0.115 * math.sin(ar)))
         M.cone("EspinhoColeira", b0, b0 + V((math.cos(ar) * 0.08, 0, math.sin(ar) * 0.08)), 0.016, ferro, "pescoco", segs=4)
     M.tubo("Corrente", [cc + V((0, -0.01, -0.115)), cc + V((0.02, 0.0, -0.25)), cc + V((-0.02, 0.03, -0.38))], [0.014, 0.014, 0.012], ferro, "pescoco", subdiv=1, amplitude=0.008, escala_ruido=40, semente=6)
+    if res:
+        # barriga pesada e chifres largos, curvados para a frente
+        M.esfera("Barriga", (0, -0.06, 0.58), (0.17, 0.30, 0.15), carne, "coluna", amplitude=0.012, escala_ruido=8, semente=31)
+        for sx in (1, -1):
+            M.tubo("Chifre", [(sx * 0.06, -0.63, 0.91), (sx * 0.17, -0.62, 0.97), (sx * 0.25, -0.68, 1.03), (sx * 0.27, -0.78, 1.07)], [0.034, 0.028, 0.02, 0.006], osso, "cabeca", subdiv=1)
+            M.esfera("Orelha", (sx * 0.10, -0.60, 0.87), (0.05, 0.025, 0.03), carne, "cabeca", segs=6, aneis=4)
     # cabeça: crânio de lobo meio descarnado
     M.esfera("Cranio", (0, -0.665, 0.855), (0.085, 0.105, 0.075), osso, "cabeca", amplitude=0.006, semente=7)
     M.tubo("Focinho", [(0, -0.72, 0.84), (0, -0.84, 0.815), (0, -0.93, 0.80)], [(0.058, 0.045), (0.042, 0.034), (0.03, 0.024)], osso, "cabeca", subdiv=1)
@@ -1122,7 +1132,7 @@ def cao_de_cripta():
         {"nome": "atacar", "acao_blender": "Atacar", "lista_frames": [1, 4, 6, 9, 11, 14], "fps": 12, "loop": False},
         {"nome": "morrer", "acao_blender": "Morrer", "lista_frames": [1, 4, 7, 10, 13, 16, 22], "fps": 10, "loop": False},
     ]
-    return rig, "Parado", acoes, {"altura_px": 54}
+    return rig, "Parado", acoes, {"altura_px": 68 if res else 54}
 
 
 MONSTROS = {"esqueleto": esqueleto, "zumbi": zumbi, "diabrete": diabrete, "necromante": necromante,
@@ -1130,4 +1140,4 @@ MONSTROS = {"esqueleto": esqueleto, "zumbi": zumbi, "diabrete": diabrete, "necro
             "abadessacosturada": abadessa, "caodecripta": cao_de_cripta, "esqueleto_elite": esqueleto_elite,
             "necromante_foice": lambda: necromante("foice"),
             "carnical": lambda: zumbi("carnical"), "diabodeguerra": lambda: diabrete("guerra"),
-            "aparicao": lambda: necromante("aparicao"), "colossodeossos": lambda: esqueleto("colosso")}
+            "aparicao": lambda: necromante("aparicao"), "colossodeossos": lambda: esqueleto("colosso"), "resprofana": lambda: cao_de_cripta("res")}

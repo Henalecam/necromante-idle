@@ -252,3 +252,4 @@ Dono pediu ciclos a cada 5 minutos.
 84. Campeões: cada elite recebe nome e epíteto pelos modificadores, barra de vida própria no topo e entradas no diário. Corrigida a transformação da câmera depois da barra do chefe (faltava o eixo vertical).
 85. Arte: Diabo de Guerra com sprites próprios (render com superamostragem 2 para caber num ciclo). Aparição em render.
 86. Cenário próprio do Ato 2 (criptas alagadas: pedra esverdeada, poças, raízes nas paredes, fogo-fátuo no lugar das tochas).
+87. Arte: Aparição com sprites próprios (com tom azul espectral aplicado no cliente). Variante Rês Profana escrita na fábrica; Colosso de Ossos em render.

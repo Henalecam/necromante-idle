@@ -1,0 +1,63 @@
+{
+  "nome": "resprofana",
+  "modelo": "../modelos/resprofana/resprofana.blend",
+  "saida": "../saida/resprofana",
+  "estilo": "diablo",
+  "acoes": [
+    {
+      "nome": "parado",
+      "acao_blender": "Parado",
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "nome": "andar",
+      "acao_blender": "Andar",
+      "lista_frames": [
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      "fps": 16,
+      "loop": true
+    },
+    {
+      "nome": "atacar",
+      "acao_blender": "Atacar",
+      "lista_frames": [
+        1,
+        4,
+        6,
+        9,
+        11,
+        14
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "nome": "morrer",
+      "acao_blender": "Morrer",
+      "lista_frames": [
+        1,
+        4,
+        7,
+        10,
+        13,
+        16,
+        22
+      ],
+      "fps": 10,
+      "loop": false
+    }
+  ],
+  "altura_px": 68,
+  "superamostragem": 2,
+  "amostras": 16
+}
