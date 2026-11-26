@@ -477,6 +477,26 @@ namespace Necro.Testes
                 Afirmar(Equipamento.CalcularBonus(p.Equipados, Cfg).ItensEquipados == 1, "reparado volta a valer");
                 var semDur = new ConfigJogo { Durabilidade = false }; anel.Desgaste = 9999; Afirmar(!Ferreiro.Quebrado(anel, semDur), "com a regra desligada nada quebra");
             });
+            Teste("atributos: 5 pontos por nível, gastos à mão ou distribuídos por igual, e cada um muda o agregado de bônus", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                Afirmar(Atributos.Totais(p, Cfg) == 0 && !Atributos.Gastar(p, Atributo.Forca, 1, Cfg), "nível 1 não tem pontos");
+                p.NivelNecromante = 5;
+                Afirmar(Atributos.Totais(p, Cfg) == 20 && Atributos.Livres(p, Cfg) == 20, "nível 5 = 20 pontos");
+                var antes = Equipamento.CalcularBonus(p, Cfg);
+                Afirmar(Atributos.Gastar(p, Atributo.Forca, 10, Cfg) && Atributos.Valor(p, Atributo.Forca) == 10 && Atributos.Livres(p, Cfg) == 10, "gastou 10 em Força");
+                Afirmar(!Atributos.Gastar(p, Atributo.Magia, 11, Cfg), "não gasta mais do que tem");
+                var comForca = Equipamento.CalcularBonus(p, Cfg);
+                Afirmar(Math.Abs(comForca.DanoDosMinions - antes.DanoDosMinions - 10 * Cfg.ForcaDanoDosMinions) < 1e-5f && comForca.VidaDosMinions == antes.VidaDosMinions, "Força mexe só no dano dos minions");
+                Afirmar(Atributos.AutoDistribuir(p, Cfg) == 10 && Atributos.Livres(p, Cfg) == 0, "o resto vai sozinho");
+                Afirmar(Atributos.Valor(p, Atributo.Magia) + Atributos.Valor(p, Atributo.Destreza) + Atributos.Valor(p, Atributo.Vitalidade) == 10 && Atributos.Valor(p, Atributo.Forca) == 10, "a distribuição automática levanta os mais baixos");
+                var cheio = Equipamento.CalcularBonus(p, Cfg);
+                Afirmar(cheio.VidaDosMinions > antes.VidaDosMinions && cheio.DanoDeFeiticos > antes.DanoDeFeiticos && cheio.ChanceCritico > antes.ChanceCritico && cheio.Mana > antes.Mana, "Magia, Destreza e Vitalidade também contam");
+                // ao subir de nível numa volta da masmorra, os pontos novos entram sozinhos (padrão idle)
+                p.NivelNecromante = 6; Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg);
+                Afirmar(Atributos.Livres(p, Cfg) == 0 && Atributos.Gastos(p) == 25, "pontos do nível novo distribuídos na volta");
+                p.Essencia = 1000; Afirmar(Atributos.Redistribuir(p, Cfg) && Atributos.Gastos(p) == 0 && p.SemAutoAtributos && p.Essencia == 1000 - 25 * Cfg.EssenciaPorPontoDeAtributoRedistribuido, "redistribuir devolve tudo e desliga o automático");
+            });
             Teste("distribuição de raridade 70 / 22 / 7 / 0,9 / 0,1 % (400 mil sorteios)", () =>
             {
                 var rng = new Rng(2024);

@@ -128,6 +128,10 @@ public static partial class Jogo
             sb.Append("{\"nome\":").Append(S(_cfg.Pactos[i].Nome)).Append(",\"ganho\":").Append(S(_cfg.Pactos[i].Ganho)).Append(",\"preco\":").Append(S(_cfg.Pactos[i].Preco)).Append('}');
         }
         sb.Append(']');
+        if (!_p.SemAutoAtributos) Atributos.AutoDistribuir(_p, _cfg);
+        sb.Append(",\"atributos\":{\"v\":[").Append(Atributos.Valor(_p, Atributo.Forca)).Append(',').Append(Atributos.Valor(_p, Atributo.Magia)).Append(',').Append(Atributos.Valor(_p, Atributo.Destreza)).Append(',').Append(Atributos.Valor(_p, Atributo.Vitalidade))
+          .Append("],\"livres\":").Append(Atributos.Livres(_p, _cfg)).Append(",\"auto\":").Append(B(!_p.SemAutoAtributos)).Append(",\"redistribuir\":").Append(Atributos.CustoDeRedistribuir(_p, _cfg))
+          .Append(",\"porPonto\":[").Append(F(_cfg.ForcaDanoDosMinions * 100f)).Append(',').Append(F(_cfg.MagiaDanoDeFeiticos * 100f)).Append(',').Append(F(_cfg.MagiaMana)).Append(',').Append(F(_cfg.DestrezaCritico * 100f)).Append(',').Append(F(_cfg.DestrezaVelAtaque * 100f)).Append(',').Append(F(_cfg.VitalidadeVidaDosMinions * 100f)).Append(',').Append(F(_cfg.VitalidadeVidaDoNecromante * 100f)).Append("]}");
         sb.Append(",\"pontos\":").Append(Talentos.Disponiveis(_p, _cfg)).Append(",\"niveisPorPonto\":").Append(_cfg.NiveisPorPontoDeTalento)
           .Append(",\"redistribuir\":").Append(Talentos.CustoDeRedistribuir(_p, _cfg)).Append(",\"talentos\":[");
         for (int i = 0; i < _cfg.Talentos.Length; i++)
@@ -442,6 +446,9 @@ public static partial class Jogo
     [JSExport] public static bool IdentificarItem(int i) { return i >= 0 && i < _p.Inventario.Count && Ferreiro.Identificar(_p, _p.Inventario[i], _cfg); }
     [JSExport] public static int IdentificarTudo() { return Ferreiro.IdentificarTudo(_p, _cfg); }
     [JSExport] public static bool RepararEquipado(int espaco) { return espaco >= 0 && espaco < _p.Equipados.Length && Ferreiro.Reparar(_p, _p.Equipados[espaco], _cfg); }
+    [JSExport] public static bool GastarAtributo(int qual, int pontos) { return qual >= 0 && qual < 4 && Atributos.Gastar(_p, (Atributo)qual, pontos, _cfg); }
+    [JSExport] public static void AlternarAutoAtributos() { _p.SemAutoAtributos = !_p.SemAutoAtributos; }
+    [JSExport] public static bool RedistribuirAtributos() { return Atributos.Redistribuir(_p, _cfg); }
     [JSExport] public static void AlternarAutoReparo() { _p.SemAutoReparo = !_p.SemAutoReparo; }
     [JSExport] public static int RepararTudo() { return Ferreiro.RepararTudo(_p, _cfg); }
     [JSExport] public static int VenderFechados() { int n = 0; for (int i = _p.Inventario.Count - 1; i >= 0; i--) if (_p.Inventario[i] != null && _p.Inventario[i].NaoIdentificado && Ferreiro.Vender(_p, _p.Inventario[i], _cfg) > 0) n++; return n; }

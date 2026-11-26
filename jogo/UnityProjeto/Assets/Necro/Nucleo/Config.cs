@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
         public float AlivioInicial = 0.84f;
-        public float CrescimentoPorAndar = 0.293f;
+        public float CrescimentoPorAndar = 0.298f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.13f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.14f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -73,6 +73,9 @@ namespace Necro.Nucleo
         public long[] OuroVendaPorRaridade = { 3, 10, 40, 200, 1000 };
         public float OuroPorNivelDeItem = 0.25f, LojaMargem = 12f;
         public int LojaItens = 4;
+        // ---- Atributos (Diablo 1: cinco pontos por nível entre Força, Magia, Destreza e Vitalidade) ----
+        public int PontosDeAtributoPorNivel = 5; public long EssenciaPorPontoDeAtributoRedistribuido = 2;
+        public float ForcaDanoDosMinions = 0.004f, MagiaDanoDeFeiticos = 0.006f, MagiaMana = 1f, DestrezaCritico = 0.0008f, DestrezaVelAtaque = 0.0015f, VitalidadeVidaDosMinions = 0.004f, VitalidadeVidaDoNecromante = 0.006f;
         // Durabilidade (Diablo 1): o equipamento gasta com o uso e o Ferreiro repara por ouro
         public bool Durabilidade = true; public int DurabilidadeBase = 30, DurabilidadePorRaridade = 10, DesgastePorExpedicao = 3;
         public float ReparoFracao = 0.6f;   // reparar do zero custa esta fração do valor de venda do item

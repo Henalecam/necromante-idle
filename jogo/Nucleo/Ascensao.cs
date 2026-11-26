@@ -74,6 +74,7 @@ namespace Necro.Nucleo
             p.Filacterio.Clear();
             p.Construcoes = new int[Necropole.TotalDeConstrucoes];
             p.Talentos = new int[cfg.Talentos.Length];
+            Atributos.Zerar(p);
             p.Oferendas = new int[Oferendas.Tipos];
             p.RitoPreparado = Rito.Nenhum;
             p.Minions.Clear(); p.Minions.AddRange(novo.Minions);

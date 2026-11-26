@@ -1248,7 +1248,7 @@ function atualizarPainel(forcar) {
   // selos: quantas coisas dá para fazer em cada aba agora
   const pend = {
     exercito: d.almas.filter((a) => a.custo <= d.essencia).length + d.fusoes.filter((f) => f.pode).length + d.minions.filter((m) => (m.imbuir >= 0 && m.imbuir <= d.fragmentos) || (m.evoluir >= 0 && m.evoluir <= d.essencia)).length,
-    necropole: d.construcoes.filter((c) => c.pode).length + d.ascensao.legados.filter((l) => l.pode).length, talentos: d.pontos,
+    necropole: d.construcoes.filter((c) => c.pode).length + d.ascensao.legados.filter((l) => l.pode).length, talentos: d.pontos + (d.atributos.auto ? 0 : d.atributos.livres),
   };
   for (const b of botoesDeAba()) {
     const n = b.dataset.aba, lado = b.parentElement.dataset.lado;
@@ -1327,6 +1327,15 @@ function atualizarPainel(forcar) {
       h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${it.nid ? TIPOS[it.tipo] + ' não identificado' : esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]}${it.nid ? '' : ' · Poder ' + fmt(it.poder)}</span></div><button data-ac="vender-item" data-i="${i}">Vender · +${fmt(it.ouro)} ouro</button></div>`;
     });
   } else if (aba === 'talentos') {
+    {
+      const at = d.atributos, pp = at.porPonto, n = (x) => (Math.round(x * 100) / 100).toLocaleString('pt-BR');
+      const linhas = [['Força', `+${n(at.v[0] * pp[0])}% de dano dos minions`, `cada ponto: +${n(pp[0])}% de dano dos minions`], ['Magia', `+${n(at.v[1] * pp[1])}% de dano de feitiços · +${n(at.v[1] * pp[2])} de mana`, `cada ponto: +${n(pp[1])}% de dano de feitiços e +${n(pp[2])} de mana`],
+        ['Destreza', `+${n(at.v[2] * pp[3])}% de chance de crítico · +${n(at.v[2] * pp[4])}% de velocidade de ataque dos minions`, `cada ponto: +${n(pp[3])}% de crítico e +${n(pp[4])}% de velocidade`], ['Vitalidade', `+${n(at.v[3] * pp[5])}% de vida dos minions · +${n(at.v[3] * pp[6])}% de vida do necromante`, `cada ponto: +${n(pp[5])}% de vida dos minions e +${n(pp[6])}% do necromante`]];
+      h += `<h3>Atributos do necromante</h3><p class="nota">Cinco pontos a cada nível, como no Diablo. Valem a partir da próxima expedição.</p>`;
+      h += `<div class="linha"><div class="corpo">Pontos livres: <b style="color:var(--ouro);font-weight:normal">${at.livres}</b><small>${at.auto ? 'distribuição automática: os pontos novos vão sozinhos para o atributo mais baixo' : 'distribuição manual: use os botões + de cada atributo'}</small></div><button data-ac="auto-atributos" class="${at.auto ? 'ativo' : ''}">Automático: ${at.auto ? 'ligado' : 'desligado'}</button>${at.redistribuir ? `<button data-ac="redistribuir-atributos" ${at.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(at.redistribuir)} Ess.</button>` : ''}</div>`;
+      linhas.forEach((l, i) => { h += `<div class="linha"><div class="corpo"><b style="font-weight:normal;color:var(--ouro)">${l[0]} ${at.v[i]}</b> <span class="nota">${l[1]}</span><small>${l[2]}</small></div><button data-ac="atributo" data-i="${i}" data-n="1" ${at.livres >= 1 ? '' : 'disabled'}>+1</button><button data-ac="atributo" data-i="${i}" data-n="5" ${at.livres >= 5 ? '' : 'disabled'}>+5</button></div>`; });
+      h += '<h3>Talentos</h3>';
+    }
     h += `<p class="nota">Um ponto a cada ${d.niveisPorPonto} níveis do necromante. Os talentos mais fundos de um ramo pedem pontos no mesmo ramo. Valem a partir da próxima expedição.</p>`;
     h += `<div class="linha"><div class="corpo">Pontos para gastar: <b style="color:var(--ouro);font-weight:normal">${d.pontos}</b></div>${d.redistribuir ? `<button data-ac="redistribuir" ${d.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(d.redistribuir)} Ess.</button>` : ''}</div>`;
     ['Ossos · o exército', 'Sangue · o necromante', 'Sombras · almas e saque'].forEach((titulo, ramo) => {
@@ -1697,6 +1706,9 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'identificar': if (J.IdentificarItem(i)) { som('bencao'); aviso('Item identificado'); } break;
     case 'reparar': if (J.RepararEquipado(i)) { som('golpe'); aviso('Item reparado'); } break;
     case 'auto-reparo': J.AlternarAutoReparo(); break;
+    case 'auto-atributos': J.AlternarAutoAtributos(); break;
+    case 'redistribuir-atributos': if (J.RedistribuirAtributos()) aviso('Pontos de atributo devolvidos'); break;
+    case 'atributo': if (J.GastarAtributo(i, +b.dataset.n || 1)) som('toque'); break;
     case 'reparar-tudo': { const n = J.RepararTudo(); if (n) { som('golpe'); aviso(n + (n > 1 ? ' itens reparados' : ' item reparado')); } else aviso('Falta ouro para reparar'); break; }
     case 'vender-fechados': { const n = J.VenderFechados(); if (n) { som('toque'); aviso(n + ' vendidos sem identificar'); } break; }
     case 'identificar-tudo': { const n = J.IdentificarTudo(); if (n) { som('bencao'); aviso(n + (n > 1 ? ' itens identificados' : ' item identificado')); } else aviso('Falta ouro para identificar'); break; }

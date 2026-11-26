@@ -121,6 +121,7 @@ namespace Necro.Nucleo
         public bool OferendasAutomaticas = true;
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
+        public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
         public bool SemAutoReparo;                          // false (padrão): ao voltar de cada descida o Ferreiro já conserta o que o ouro alcançar
         public long Ouro;                                   // moeda da cidade: cai na masmorra, compra e vende no Ferreiro
         public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados, ItensReparados;
@@ -370,7 +371,8 @@ namespace Necro.Nucleo
             p.Sangue += r.Sangue;
             Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento
             p.Ouro += r.Ouro; Ferreiro.Renovar(p, cfg);
-            if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
+            if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);
+            if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;
             if (r.AncoragemAlcancada > p.AndarDeAncoragem) p.AndarDeAncoragem = r.AncoragemAlcancada;

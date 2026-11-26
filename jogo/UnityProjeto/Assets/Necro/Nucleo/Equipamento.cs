@@ -321,6 +321,7 @@ namespace Necro.Nucleo
             Talentos.Aplicar(p, cfg, b);     // talentos somam no mesmo agregado
             Oferendas.Aplicar(p, cfg, b);    // oferendas também
             Ascensao.Aplicar(p, cfg, b);     // e os Legados da Ascensão
+            Atributos.Aplicar(p, cfg, b);    // e os atributos do necromante
             return b;
         }
 
