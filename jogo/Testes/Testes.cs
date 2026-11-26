@@ -128,9 +128,9 @@ namespace Necro.Testes
             Teste("encruzilhada: oferta de três pactos distintos, some se ignorada, e não muda nada para quem não aceita", () =>
             {
                 var forte = Progressao.NovoJogo(Cfg); forte.PoderNecromantico = 3f;     // forte o bastante para passar do andar em que as encruzilhadas começam
-                var semPacto = new Simulacao(Cfg, forte, 91, ModoExpedicao.Avancar, 1);
-                var ignora = new Simulacao(Cfg, forte, 91, ModoExpedicao.Avancar, 1);
-                var aceita = new Simulacao(Cfg, forte, 91, ModoExpedicao.Avancar, 1);
+                var semPacto = new Simulacao(new ConfigJogo { PortasFechadas = false, EmboscadaDeCorredor = false }, forte, 91, ModoExpedicao.Avancar, 1);
+                var ignora = new Simulacao(new ConfigJogo { PortasFechadas = false, EmboscadaDeCorredor = false }, forte, 91, ModoExpedicao.Avancar, 1);
+                var aceita = new Simulacao(new ConfigJogo { PortasFechadas = false, EmboscadaDeCorredor = false }, forte, 91, ModoExpedicao.Avancar, 1);
                 bool viuOferta = false; int aceitos = 0;
                 for (int t = 0; t < 9000 && !semPacto.Encerrada; t++)
                 {
@@ -1327,7 +1327,7 @@ namespace Necro.Testes
 
             Teste("estilo Diablo: salas de combate têm objetos quebráveis; aliados os quebram ao passar e o barril explosivo fere", () =>
             {
-                var c = new ConfigJogo();
+                var c = new ConfigJogo { PortasFechadas = false, EmboscadaDeCorredor = false };
                 var p = Progressao.NovoJogo(c); p.PoderNecromantico = 30f;
                 var sim = new Simulacao(c, p, 31UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; sim.Tick();
                 Afirmar(sim.Objetos.Count >= 3, "o andar deveria ter objetos: " + sim.Objetos.Count);
@@ -1559,6 +1559,29 @@ namespace Necro.Testes
                 var q = ProgressoCom(EspecieId.Esqueleto); q.NivelNecromante = 30; int antes = 0; for (int i = 0; i < 6; i++) antes += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
                 Progressao.AplicarResultado(q, s.Resultado, c); int depois = 0; for (int i = 0; i < 6; i++) depois += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
                 Afirmar(depois == antes + s.Resultado.Livros.Count, "os livros achados deveriam entrar no grimório (lidos ou guardados)");
+            });
+
+            Teste("corredores com vida: portas emperradas atrasam a travessia (o toque abre na hora) e emboscadas de corredor caem em cima do grupo", () =>
+            {
+                long Ticks(bool tocar, out int portas, out int porToque)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ChanceDePortaFechada = 1f, EmboscadaDeCorredor = false, SalasLigadas = false, ChanceDeSalaEspecial = 0f };
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 20;
+                    var s = new Simulacao(c, p, 9, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
+                    while (!s.Encerrada && g++ < 30000) { s.Tick(); if (tocar && s.PortaFechada) s.ComandoAbrirPorta(); }
+                    portas = s.Resultado.PortasArrombadas; porToque = s.Resultado.PortasAbertasPorToque;
+                    return s.TickAtual;
+                }
+                int pa, pt, qa, qt; long semToque = Ticks(false, out pa, out pt), comToque = Ticks(true, out qa, out qt);
+                Afirmar(pa >= 2 && pt == 0, "sem toque, as portas são arrombadas (" + pa + ")");
+                Afirmar(qt >= 2 && qa == 0, "com toque, as portas abrem na hora (" + qt + ")");
+                Afirmar(comToque < semToque, "abrir pelo toque deveria ser mais rápido (" + comToque + " vs " + semToque + " ticks)");
+                var c2 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ChanceDeEmboscadaDeCorredor = 1f, PortasFechadas = false, SalasLigadas = false };
+                var p2 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p2.NivelNecromante = 30; foreach (var m in p2.Minions) m.Nivel = 20;
+                var s2 = new Simulacao(c2, p2, 9, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 }; int g2 = 0; bool perto = false;
+                while (!s2.Encerrada && g2++ < 30000) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 27) perto = true; }
+                Afirmar(s2.Resultado.EmboscadasDeCorredor >= 1 && perto, "com chance 100% deveria haver emboscada de corredor");
+                Afirmar(s2.Encerrada, "a descida não deveria travar");
             });
 
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>

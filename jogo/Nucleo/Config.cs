@@ -340,6 +340,13 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        public bool PortasFechadas = true;
+        public int PortasAPartirDoAndar = 2;
+        public float ChanceDePortaFechada = 0.2f;         // por travessia entre salas
+        public float PortaFechadaTempo = 3f;              // segundos para o grupo arrombar (o toque abre na hora)
+        public bool EmboscadaDeCorredor = true;
+        public int EmboscadaDeCorredorAPartirDoAndar = 3;
+        public float ChanceDeEmboscadaDeCorredor = 0.12f; // por sala de combate: os inimigos já atacam na entrada, sem dar tempo de formar
         public bool SalasLigadas = true;
         public float ChanceDeAtrairVizinha = 0.4f;        // por luta: a matilha de uma sala vizinha não visitada vem pela porta
         public float AtrairAtraso = 3.5f;                 // segundos até os primeiros chegarem

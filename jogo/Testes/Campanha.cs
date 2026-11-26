@@ -155,6 +155,7 @@ namespace Necro.Testes
                     int sant = sim.Salas.IndexOf(TipoSala.Santuario);
                     if (sant > sim.SalaAtual + 1 && sant < sim.Salas.Count - 1 && sim.BencaoAtual == Bencao.Nenhuma && !(cofre > sim.SalaAtual && !sim.TemChave)) sim.ComandoIrPara(sant);
                 }
+                if (sim.PortaFechada) sim.ComandoAbrirPorta();   // jogador ativo: abre a porta emperrada na hora
                 if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();
                 if (sim.Fase == FaseExpedicao.EmOnda && sim.TickAtual % 25 == 0) for (int qi = 0; qi < sim.Objetos.Count; qi++) if (sim.ComandoQuebrar(qi)) break;   // quebra um barril de vez em quando
                 if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao((sim.BencaosOferecidas[0] == 11 && p.MaiorAndarConcluido < cfg.AcougueiroAbreSozinhoNoRecorde) || (sim.BencaosOferecidas[0] == 12 && p.MaiorAndarConcluido < cfg.ReiAbreSozinhoNoRecorde) ? 1 : 0);   // toca no baú/santuário/fonte

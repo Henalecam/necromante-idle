@@ -68,6 +68,18 @@ namespace Necro.Nucleo
         public TipoSala TipoDaSalaAtual { get { return SalaAtual >= 0 && SalaAtual < Salas.Count ? Salas[SalaAtual] : TipoSala.Combate; } }
 
         /// <summary>Toque do jogador no objeto da sala (baú, santuário, fonte, almas): o resultado melhora.</summary>
+        /// <summary>Há uma porta emperrada entre o grupo e a próxima sala (vale até ser aberta ou arrombada).</summary>
+        public bool PortaFechada { get; private set; }
+        private float _portaExtra;
+        /// <summary>O jogador abre a porta emperrada na hora (em vez de esperar o grupo arrombar).</summary>
+        public bool ComandoAbrirPorta()
+        {
+            if (!PortaFechada || _portaExtra <= 0f) return false;
+            _temporizadorDeFase = Math.Max(0f, _temporizadorDeFase - _portaExtra); _viagem = Math.Max(0f, _viagem - _portaExtra);
+            _portaExtra = 0f; PortaFechada = false; Resultado.InteracoesPorToque++; Resultado.PortasArrombadas--; Resultado.PortasAbertasPorToque++;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 26, Alvo = SalaAtual, Origem = -1, Pos = Necromante.Pos });
+            return true;
+        }
         public void ComandoInteragir() { if (Fase == FaseExpedicao.Explorando && !_toqueNaSala) { _toqueNaSala = true; Resultado.InteracoesPorToque++; } }
 
         private void PlanejarSalas(bool chefe)
@@ -285,6 +297,13 @@ namespace Necro.Nucleo
             SalaAtual++;
             var t = TipoDaSalaAtual;
             _viagem = SalaAtual < Salas.Count ? TempoDeViagem(SalaAtual - 1, SalaAtual) : pausa;
+            // corredores com vida: a porta para a próxima sala pode estar emperrada. O grupo a arromba em alguns segundos; o toque do jogador abre na hora
+            PortaFechada = false; _portaExtra = 0f;
+            if (Cfg.PortasFechadas && SalaAtual < Salas.Count && Andar >= Cfg.PortasAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDePortaFechada))
+            {
+                PortaFechada = true; _portaExtra = Cfg.PortaFechadaTempo; _viagem += _portaExtra; Resultado.PortasArrombadas++;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 25, Valor = _portaExtra, Alvo = SalaAtual, Origem = -1, Pos = Necromante.Pos });
+            }
             if (t == TipoSala.Combate || t == TipoSala.Elite || t == TipoSala.Chefe || SalaAtual >= Salas.Count) { Fase = FaseExpedicao.EntreOndas; _temporizadorDeFase = _viagem; }
             else IniciarSalaEspecial(t);
         }

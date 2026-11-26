@@ -636,6 +636,18 @@ namespace Necro.Nucleo
                 var plano = PlanoDasOndas[Onda - 1];
                 for (int i = 0; i < plano.Count; i++)
                     _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
+                PortaFechada = false; _portaExtra = 0f;
+                // emboscada de corredor: os inimigos desta sala não esperam — já caem em cima do grupo na entrada
+                if (Cfg.EmboscadaDeCorredor && !ondaDeChefe && !ondaDeElite && Onda != _ondaDoUnico && Onda > 1 && Andar >= Cfg.EmboscadaDeCorredorAPartirDoAndar && plano.Count > 0 && _rngMasmorra.Chance(Cfg.ChanceDeEmboscadaDeCorredor))
+                {
+                    var n0 = Necromante.Pos;
+                    for (int i = 0; i < plano.Count; i++) { float ang = i * 2.399963f, rr = 2.2f + 0.35f * (i % 5); plano[i].Pos = Limitar(new Vec2(n0.X + 1.5f + rr * (float)Math.Cos(ang), n0.Y + rr * (float)Math.Sin(ang))); plano[i].Atraso = i / 3; }
+                    _filaDeSpawn.Clear();
+                    for (int i = 0; i < plano.Count; i++)
+                        _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
+                    Resultado.EmboscadasDeCorredor++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 27, Valor = plano.Count, Alvo = -1, Origem = -1, Pos = n0 });
+                }
                 if (Cfg.SalasLigadas && !ondaDeChefe && !ondaDeElite) AtrairSalaVizinha(plano);
                 _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }

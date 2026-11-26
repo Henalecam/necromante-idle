@@ -462,6 +462,7 @@ public static partial class Jogo
     [JSExport] public static void Desequipar(int espaco) { Equipamento.Desequipar(_p, (EspacoEquipamento)espaco, _cfg); }
     [JSExport] public static bool IdentificarItem(int i) { return i >= 0 && i < _p.Inventario.Count && Ferreiro.Identificar(_p, _p.Inventario[i], _cfg); }
     [JSExport] public static int IdentificarTudo() { return Ferreiro.IdentificarTudo(_p, _cfg); }
+    [JSExport] public static bool AbrirPorta() { return _sim.ComandoAbrirPorta(); }
     [JSExport] public static bool MelhorarEquipado(int espaco) { return espaco >= 0 && espaco < _p.Equipados.Length && Ferreiro.Melhorar(_p, _p.Equipados[espaco], _cfg); }
     [JSExport] public static int MelhorarTudo() { return Ferreiro.MelhorarTudo(_p, _cfg); }
     [JSExport] public static bool ImbuirEquipado(int espaco) { return espaco >= 0 && espaco < _p.Equipados.Length && Ferreiro.Imbuir(_p, _p.Equipados[espaco], _cfg); }

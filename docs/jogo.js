@@ -406,6 +406,14 @@ function evento(v) {
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '16') { const g = estado.get(+v[3]); if (g) { g.flash = 0.18; numeros.push({ x: g.x, y: g.y, txt: 'Aparou!', cor: '#cfe6ff', t: 1, amigo: true }); for (let i = 0; i < 6; i++) particulas.push([g.x, g.y, 0.9, rnd(-2, 2), rnd(-1.5, 1.5), rnd(1, 3), '#e8f2ff', 0.35]); } som('golpe'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '17') { const g = estado.get(+v[3]); if (g) { g.sede = tempoSim + (+v[4] || 4); numeros.push({ x: g.x, y: g.y, txt: 'Sede!', cor: '#ff8a6a', t: 1, amigo: true }); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '25') {   // porta emperrada: botão por alguns segundos para o jogador abrir na hora
+    aviso('Porta emperrada · o grupo está arrombando'); som('golpe');
+    let bp = $('b-porta'); if (!bp) { bp = document.createElement('button'); bp.id = 'b-porta'; bp.textContent = '🚪 Abrir a porta já'; bp.style.cssText = 'position:absolute;left:50%;top:46%;transform:translateX(-50%);z-index:6;padding:10px 16px;font-size:15px;border:1px solid var(--ouro);background:#2a1418;color:#ffe9b0;border-radius:8px;box-shadow:0 0 18px #000'; bp.addEventListener('click', () => { if (J && J.AbrirPorta()) aviso('Porta aberta'); bp.hidden = true; }); tela.parentElement.appendChild(bp); }
+    bp.hidden = false; clearTimeout(bp.t); bp.t = setTimeout(() => { bp.hidden = true; }, Math.max(600, (+v[4] || 3) * 1000 / Math.max(1, velocidade || 1)));
+    return;
+  }
+  if (tipo === 'EfeitoAplicado' && v[14] === '26') { const bp = $('b-porta'); if (bp) bp.hidden = true; return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '27') { const n = Math.round(+v[4] || 0); aviso(`Emboscada no corredor! ${n} inimigos em cima do grupo`); anotar(`<b style="color:#ff8a6a">Emboscada no corredor:</b> ${n} inimigos caíram sobre o grupo antes de ele formar.`); som('chefe'); tremor = Math.max(tremor, 0.35); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '24') { const nf = ['Lança de Ossos', 'Drenar Vida', 'Explosão de Cadáver', 'Reerguer', 'Maldição da Fraqueza', 'Sacrifício'][Math.round(+v[4] || 0)] || 'feitiço'; aviso('Livro de feitiço · ' + nf); anotar(`Você achou um <b style="color:#9fd0ff">Livro de ${nf}</b>. Será lido ao voltar (se a Magia permitir).`); som('bencao'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '23') { window.__atraidas = (window.__atraidas || 0) + 1; const n = Math.round(+v[4] || 0); aviso(`O barulho atraiu a sala vizinha! +${n} inimigos pela porta`); anotar(`A luta ecoou: <b>${n} inimigos</b> da sala ao lado vieram pela porta. Aquela sala ficou vazia.`); som('chefe'); tremor = Math.max(tremor, 0.25); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '22') { aviso('O Rei ergue mais esqueletos!'); som('chefe'); return; }
