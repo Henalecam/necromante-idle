@@ -1263,7 +1263,10 @@ const ARTE_ITEM = ['cajado', 'foice', 'grimorio', 'relicario', 'elmo', 'peitoral
 const icone = (t) => `<img alt="${TIPOS[t] || ''}" src="arte/itens/${ARTE_ITEM[t] || 'anel'}.webp" draggable="false">`;
 let venderAte = 1, venderOk = 0;
 
+let ultimoInv = null;
 function desenharInventario(d) {
+  ultimoInv = d.inventario;
+  const conjSel = (() => { if (!invSel) return ''; const it = invSel[0] === 'e' ? d.equipados[+invSel.slice(1)] : d.inventario[+invSel.slice(1)]; return it && it.conj ? it.conj.nome : ''; })();
   if (!invAberto) return;
   const g = d.grade, cel = 100 / g.w;
   let h = `<div class="cab"><span>Inventário</span><button data-inv="fechar">Fechar</button></div>`;
@@ -1274,7 +1277,7 @@ function desenharInventario(d) {
   d.inventario.forEach((it, i) => {
     const [x, y] = g.pos[i];
     if (x < 0) { fora.push(i); return; }
-    h += `<div class="item r${it.r} ${invSel === 'i' + i ? 'sel' : ''}" data-inv="i${i}" style="left:${x * cel}%;top:${y * 100 / g.h}%;width:${it.w * cel}%;height:${it.h * 100 / g.h}%">${icone(it.tipo)}${it.trava ? '<span class="trava">travado</span>' : ''}</div>`;
+    h += `<div class="item r${it.r} ${invSel === 'i' + i ? 'sel' : ''}" data-inv="i${i}" style="left:${x * cel}%;top:${y * 100 / g.h}%;width:${it.w * cel}%;height:${it.h * 100 / g.h}%">${icone(it.tipo)}${it.conj ? `<span class="marca-conj${conjSel === it.conj.nome ? ' par' : ''}" title="${esc(it.conj.nome)}">◆</span>` : ''}${it.trava ? '<span class="trava">travado</span>' : ''}</div>`;
   });
   h += '</div>';
   if (fora.length) h += `<p class="nota">${fora.length} item(ns) sem lugar na grade: equipe ou desmanche algo.</p>`;
@@ -1302,7 +1305,7 @@ function desenharInventario(d) {
 function acaoDoPainel(b) {
   const i = +b.dataset.i;
   switch (b.dataset.ac) {
-    case 'equipar': J.Equipar(i); invSel = null; break;
+    case 'equipar': { const cj = ultimoInv && ultimoInv[i] && ultimoInv[i].conj; J.Equipar(i); invSel = null; if (cj) { const n = Math.min(3, cj.tem + 1); if (n >= 2) { aviso(`${cj.nome}: bônus de ${n} peças ativo!`); som('bencao'); } else aviso(`${cj.nome}: 1 de 3 peças`); } break; }
     case 'desequipar': J.Desequipar(i); invSel = null; break;
     case 'desmanchar': J.Desmanchar(i); invSel = null; break;
     case 'auto': J.AutoEquipar(); invSel = null; break;
