@@ -705,6 +705,7 @@ def necromante(variante="necromante"):
     acolito = variante == "acolito"
     foice = variante == "foice"      # mesma figura, de foice de guerra em vez de cajado: estilo corpo a corpo
     aparicao = variante == "aparicao"   # espectro: manto que brilha frio, sem arma
+    carcereiro = variante == "carcereiro"   # chefe do Ato 2: manto negro-violeta, correntes, cajado-gaiola com alma roxa
     B.cena_limpa()
     J = juntas(tronco=1.05, ombros=1.05)
     extras = {"cajado": (J["mao.R"] + Vector((0, -0.02, 0.03)), J["mao.R"] + Vector((0, -0.02, 0.5)), "mao.R")}
@@ -731,7 +732,23 @@ def necromante(variante="necromante"):
         olho = B.mat_emissao("OlhoGelo", (0.6, 0.9, 1.0), 40.0)
         alma = B.mat_emissao("ChamaFria", (0.5, 0.8, 1.0), 14.0)
 
+    if carcereiro:
+        manto = B.mat_pano("MantoCarcere", (0.035, 0.012, 0.06), (0.004, 0.002, 0.01))
+        forro = B.mat_emissao("ForroViolet", (0.45, 0.15, 0.9), 2.2)
+        osso = B.mat_osso("OssoCinza", (0.50, 0.46, 0.55), (0.10, 0.08, 0.16))
+        olho = B.mat_emissao("OlhoViolet", (0.7, 0.3, 1.0), 45.0)
+        alma = B.mat_emissao("AlmaRoxa", (0.6, 0.25, 1.0), 18.0)
+
     q, co, pe, pc, c = J["quadril"], J["coluna"], J["peito"], J["pescoco"], J["cabeca"]
+    if carcereiro:
+        # correntes cruzadas no peito e pendendo dos pulsos, com argolas
+        ferro_c = B.mat_metal("Grilhao", (0.16, 0.15, 0.17), (0.08, 0.03, 0.02), 0.5)
+        M.tubo("CorrenteA", [pe + Vector((0.20, -0.02, 0.16)), pe + Vector((0.05, -0.15, 0.02)), pe + Vector((-0.12, -0.16, -0.16)), q + Vector((-0.22, -0.08, 0.05))], [0.022] * 4, ferro_c, "peito", subdiv=1, amplitude=0.012, escala_ruido=45, semente=61)
+        M.tubo("CorrenteB", [pe + Vector((-0.20, -0.02, 0.16)), pe + Vector((-0.05, -0.16, 0.02)), pe + Vector((0.12, -0.17, -0.16)), q + Vector((0.22, -0.08, 0.05))], [0.022] * 4, ferro_c, "peito", subdiv=1, amplitude=0.012, escala_ruido=45, semente=62)
+        for lado in ("L", "R"):
+            m = J["mao." + lado]
+            M.tubo("Pendente" + lado, [m + Vector((0, 0, 0.02)), m + Vector((0.02, 0.02, -0.18)), m + Vector((-0.02, 0.0, -0.36)), m + Vector((0.01, 0.03, -0.5))], [0.02, 0.02, 0.018, 0.016], ferro_c, "mao." + lado, subdiv=1, amplitude=0.012, escala_ruido=45, semente=63)
+            M.esfera("Argola" + lado, m + Vector((0.01, 0.03, -0.54)), (0.05, 0.02, 0.05), ferro_c, "mao." + lado, segs=8, aneis=4)
     # saia do manto: larga e rasgada na barra, cobrindo as pernas
     saia = M.tubo("Saia", [(0, 0.02, 0.05), (0, 0.02, 0.30), (0, 0.01, q.z - 0.15), q + Vector((0, 0, 0.08))],
                   [(0.33, 0.30), (0.27, 0.24), (0.19, 0.16), (0.155, 0.125)], manto, "quadril", subdiv=3, amplitude=0.015, escala_ruido=5, semente=1)
@@ -853,7 +870,7 @@ def necromante(variante="necromante"):
     anim_morrer(rig, base)
     acoes = [dict(a) for a in ACOES_PADRAO if foice or a["nome"] != "atacar"]
     acoes.insert(2, {"nome": "conjurar", "acao_blender": "Conjurar", "lista_frames": [1, 4, 7, 11, 15, 19], "fps": 12, "loop": False})
-    return rig, "Parado", acoes, {"altura_px": 96 if acolito else 100 if aparicao else 104}
+    return rig, "Parado", acoes, {"altura_px": 96 if acolito else 100 if aparicao else 150 if carcereiro else 104}
 
 
 def acolito_caido():
@@ -1140,4 +1157,4 @@ MONSTROS = {"esqueleto": esqueleto, "zumbi": zumbi, "diabrete": diabrete, "necro
             "abadessacosturada": abadessa, "caodecripta": cao_de_cripta, "esqueleto_elite": esqueleto_elite,
             "necromante_foice": lambda: necromante("foice"),
             "carnical": lambda: zumbi("carnical"), "diabodeguerra": lambda: diabrete("guerra"),
-            "aparicao": lambda: necromante("aparicao"), "colossodeossos": lambda: esqueleto("colosso"), "resprofana": lambda: cao_de_cripta("res")}
+            "aparicao": lambda: necromante("aparicao"), "colossodeossos": lambda: esqueleto("colosso"), "resprofana": lambda: cao_de_cripta("res"), "carcereirodealmas": lambda: necromante("carcereiro")}

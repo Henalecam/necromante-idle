@@ -256,3 +256,4 @@ Dono pediu ciclos a cada 5 minutos.
 88. Arte: Colosso de Ossos com sprites próprios. Rês Profana em render.
 89. Arte: Rês Profana com sprites próprios. Todas as 12 espécies têm arte própria.
 90. Chefe próprio do Ato 2: o Carcereiro de Almas (acorrenta os 2 minions de mais vida por 2 s a cada 9 s e chama Aparições, até 3). Sprite provisório (Aparição grande e roxa). Portão 9/9 (chefe Ato 2 em 9,75 h). 101 testes.
+91. Encruzilhada recolhida (uma linha, toque para abrir) enquanto há chefe ou campeão em cena. Modelo do Carcereiro de Almas na fábrica (manto negro-violeta, correntes, cajado-gaiola); em render.

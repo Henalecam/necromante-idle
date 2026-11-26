@@ -770,11 +770,12 @@ function desenhar(dt) {
   // encruzilhada: três pactos, um toque, tempo contado
   const enc = $('encruzilhada'), chave = oferta && pactos.length ? oferta.slice(0, 3).join(',') : '';
   if (chave !== ofertaMostrada) {
-    ofertaMostrada = chave; enc.hidden = !chave;
+    ofertaMostrada = chave; enc.hidden = !chave; encAberta = false;
     if (chave) enc.innerHTML = '<div class="cab"><span>Encruzilhada · escolha um pacto</span><span id="enc-t"></span></div><div class="ops">' +
       oferta.slice(0, 3).map((id, i) => `<button data-o="${i}"><b>${escHtml(pactos[id].nome)}</b><span class="g">${escHtml(pactos[id].ganho)}</span><span class="p">${escHtml(pactos[id].preco)}</span></button>`).join('') + '</div>';
   }
-  if (chave) { const t = $('enc-t'); if (t) t.textContent = Math.ceil(oferta[3]) + 's'; }
+  if (chave) { const t = $('enc-t'); if (t) t.textContent = Math.ceil(oferta[3]) + 's' + (chefe && !encAberta ? ' · toque para ver' : ''); }
+  enc.classList.toggle('min', !!chave && !!chefe && !encAberta);   // em luta de chefe ou campeão, o pacto fica recolhido para não cobrir a arena
   // santuário: três bênçãos à escolha
   const chB = bencaos ? bencaos.slice(0, 3).join(',') : '';
   if (chB !== bencaosMostradas) {
@@ -1192,7 +1193,8 @@ window.__orbeNaTela = () => {
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
-$('encruzilhada').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-o]'); if (b && J) { J.Pacto(+b.dataset.o); aviso('Pacto selado'); } });
+let encAberta = false;
+$('encruzilhada').addEventListener('click', (ev) => { if (ev.target.closest('.cab')) { encAberta = !encAberta; return; } const b = ev.target.closest('button[data-o]'); if (b && J) { J.Pacto(+b.dataset.o); aviso('Pacto selado'); } });
 $('resumo').addEventListener('click', () => { $('resumo').hidden = true; });
 $('missao').addEventListener('click', (ev) => { if (!ev.target.closest('button')) $('missao').classList.toggle('min'); });
 $('recursos').addEventListener('click', (ev) => { if (ev.target.closest('.rec')) $('ajuda').hidden = false; });
