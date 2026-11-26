@@ -65,6 +65,7 @@
   #topo b { color:#fff; font-weight:normal; }
   #topo .andar { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
   #topo .espaco { flex:1; }
+  @media (max-width:520px) { #topo .l1 { flex-wrap:wrap; row-gap:3px; } #topo .andar { flex:1 0 100%; } #topo .espaco { display:none; } #topo .nv { margin-right:auto; } }
   #cena { position:relative; background:#000; }
   canvas { display:block; width:100%; touch-action:none; cursor:grab; }
   #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }

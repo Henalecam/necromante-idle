@@ -843,15 +843,17 @@ function desenhar(dt) {
   const larg = tela.width, alt = tela.height, escPerto = alt / VISTA_H;
   const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt * 0.7 / (lim[3] - lim[1] + 90));   // sobra espaço para os botões e avisos da base
   if (zoomLivre) zoomLivre = Math.max(escTudo * 0.7, Math.min(escPerto * 1.4, zoomLivre));
-  const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5));
+  const escSala = Math.max(escTudo, Math.min(escPerto * 0.8, Math.max(larg / (CW * 0.96), alt / (CH * 1.04))));   // modo Sala: a sala atual cabe na altura (ou na largura, em tela larga)
+  const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : escSala);
   escAtual += (escAlvo - escAtual) * Math.min(1, dt * 4); if (Math.abs(escAlvo - escAtual) < 0.0005) escAtual = escAlvo;
-  const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(3.2, (escPerto * (larg < 900 ? 0.7 : 0.55)) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
+  const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(1.7, (escPerto * 0.5) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
   {
     let sx = 0, sy = 0, n = 0;
-    for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }
+    for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? (zoomModo === 1 ? 1.5 : 3) : 1; sx += px * w; sy += py * w; n += w; }
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
+    else if (zoomModo === 1 && !zoomLivre && mapa.length) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); cy = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (camForcar || (camSalto && zoomModo === 2 && !zoomLivre)) { camSalto = false; camForcar = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
@@ -1709,7 +1711,7 @@ $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
-const NOMES_ZOOM = ['Perto', 'Médio', 'Andar inteiro'];
+const NOMES_ZOOM = ['Perto', 'Sala', 'Andar inteiro'];
 const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
 $('b-zoom').addEventListener('click', () => { aprendeu('mapa'); if (zoomLivre || pan[0] || pan[1]) { zoomLivre = 0; pan = [0, 0]; pintarZoom(); return; } zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
 pintarZoom();
