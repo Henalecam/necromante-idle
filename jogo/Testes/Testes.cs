@@ -1158,6 +1158,30 @@ namespace Necro.Testes
                 Afirmar(achados >= 3 && abertos > 0 && fechados > 0, "andares com cofre " + achados + ", abertos " + abertos + ", fechados " + fechados);
             });
 
+            Teste("patrulha errante: surge numa sala de combate, muda de sala, entra na luta e deixa um item", () =>
+            {
+                var cfg = new ConfigJogo { ChanceDePatrulha = 1f, PatrulhaIntervalo = 2f };
+                int surgiu = 0, mudou = 0, lutou = 0, pagou = 0;
+                for (ulong s = 1; s <= 10; s++)
+                {
+                    var p = Progressao.NovoJogo(cfg); p.PoderNecromantico = 60f;
+                    var sim = new Simulacao(cfg, p, s, ModoExpedicao.Avancar, 7) { LimiteDeAndares = 1 };
+                    if (sim.PatrulhaSala < 0) continue;
+                    surgiu++;
+                    Afirmar(sim.Patrulha.Count > 0 && (sim.Salas[sim.PatrulhaSala] == TipoSala.Combate || sim.Salas[sim.PatrulhaSala] == TipoSala.Elite), "patrulha fora de sala de combate");
+                    int ini = sim.PatrulhaSala, guarda = 0; bool m = false, l = false, i2 = false;
+                    while (!sim.Encerrada && guarda++ < 20000)
+                    {
+                        sim.Tick();
+                        if (sim.PatrulhaSala >= 0 && sim.PatrulhaSala != ini) m = true;
+                        foreach (var ev in sim.Eventos) { if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 14) l = true; if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 15) i2 = true; }
+                    }
+                    if (m) mudou++; if (l) lutou++; if (i2) pagou++;
+                    if (sim.Resultado.Motivo == MotivoFim.LimiteDeAndares) Afirmar(l && i2 && sim.Resultado.PatrulhasEnfrentadas == 1, "andar limpo sem enfrentar a patrulha");
+                }
+                Afirmar(surgiu >= 8 && mudou >= 3 && lutou >= 6 && pagou >= 6, "surgiu " + surgiu + " mudou " + mudou + " lutou " + lutou + " pagou " + pagou);
+            });
+
             RodarLoot();
 
             Console.WriteLine();

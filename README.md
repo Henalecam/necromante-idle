@@ -12,7 +12,7 @@ ergue-as como minions e as evolui. Combate automático e visual, com gore; o jog
 | Pasta | Conteúdo |
 |---|---|
 | `jogo/Nucleo` | Regras do jogo em C# puro (.NET Standard 2.1), determinístico, 10 ticks/s. Sem Unity. |
-| `jogo/Testes` | Testes (103) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
+| `jogo/Testes` | Testes (104) e o portão de balanceamento: um robô joga campanhas inteiras e mede 9 metas. |
 | `jogo/Web` | Versão de navegador: o núcleo compilado para WebAssembly + cliente em canvas. `./montar.sh` gera o site. |
 | `jogo/UnityProjeto` | Projeto Unity 6.3 LTS (camada visual). Conferido só por compilação; ainda não aberto numa Unity. |
 | `jogo/Replay` | Exporta um replay da simulação para as prévias em vídeo. |
@@ -53,3 +53,7 @@ de cada sala já estão lá, à espera. Tocar no símbolo de uma sala muda a rot
 ![Rótulos dizem o que cada sala guarda](imagens/rotulos_das_salas.png)
 
 ![Ao limpar o andar, o grupo desce pela escada](imagens/descida_pela_escada.png)
+
+![Cofre trancado: o mapa mostra a sala cujos inimigos guardam a chave](imagens/cofre_e_chave.png)
+
+![Uma patrulha errante anda pelo andar e entra na luta se cruzar com o grupo](imagens/patrulha_e_rotulos.png)
