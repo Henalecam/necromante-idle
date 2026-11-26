@@ -469,9 +469,16 @@ function iniciarViagem(de, para) {
   viag = { pts, seg, total, t0: tempoSim, T, fim: centro(para, 5, 6) };
 }
 // deslocamento (em unidades da simulação) dos aliados em relação à posição final, e para onde olham
-function deltaDaViagem() {
+function deltaDaViagem(atraso = 0, ox = 0, oy = 0) {
   if (!viag) return null;
-  const t = (tempoSim - viag.t0) / viag.T; if (t >= 1 || viag.total < 0.01) { viag = null; return null; }
+  const t0 = (tempoSim - viag.t0) / viag.T; if (t0 >= 1 || viag.total < 0.01) { if (!atraso) viag = null; return null; }
+  // cada um parte um pouco depois do anterior e se espreme para caber no corredor: o grupo passa em fila, não em bloco
+  const t = Math.max(0, Math.min(1, t0 * (1 + atraso) - atraso)), aperto = 1 - 0.72 * Math.sin(Math.PI * t);
+  if (atraso || ox || oy) {
+    let d2 = viag.total * (t * t * (3 - 2 * t)), k2 = 0; while (k2 < viag.seg.length - 1 && d2 > viag.seg[k2]) { d2 -= viag.seg[k2]; k2++; }
+    const a2 = viag.pts[k2], b2 = viag.pts[k2 + 1], f2 = viag.seg[k2] > 0 ? d2 / viag.seg[k2] : 1;
+    return [a2[0] + (b2[0] - a2[0]) * f2 - viag.fim[0] + ox * (aperto - 1), a2[1] + (b2[1] - a2[1]) * f2 - viag.fim[1] + oy * (aperto - 1), b2[0] - a2[0], b2[1] - a2[1]];
+  }
   let d = viag.total * (t * t * (3 - 2 * t)), k = 0; while (k < viag.seg.length - 1 && d > viag.seg[k]) { d -= viag.seg[k]; k++; }
   const a = viag.pts[k], b = viag.pts[k + 1], f = viag.seg[k] > 0 ? d / viag.seg[k] : 1;
   return [a[0] + (b[0] - a[0]) * f - viag.fim[0], a[1] + (b[1] - a[1]) * f - viag.fim[1], b[0] - a[0], b[1] - a[1]];
@@ -705,7 +712,7 @@ function desenhar(dt) {
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
   for (const [s, acao, tempo, morto] of lista) {
-    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? dvg : null, [px, py] = naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
+    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, [px, py] = naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
     if (reforco > 1.01) { ctx.save(); ctx.translate(px, py); ctx.scale(reforco, reforco); ctx.translate(-px, -py); }
     if (!morto) {
       // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
