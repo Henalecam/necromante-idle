@@ -322,6 +322,7 @@ function ler(texto) {
       case 'G': lerMapa(p); break;
       case 'R': patrulha = { sala: +p[1], especies: p.slice(2) }; break;
       case 'C': chaveCofre = [+p[1], p[2] === '1']; break;
+      case 'U': nomesUnicos.set(+p[1], p.slice(2).join(' ')); break;
       case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1', p[7] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'V': evento(p); break;
@@ -387,6 +388,7 @@ function evento(v) {
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '16') { const g = estado.get(+v[3]); if (g) { g.flash = 0.18; numeros.push({ x: g.x, y: g.y, txt: 'Aparou!', cor: '#cfe6ff', t: 1, amigo: true }); for (let i = 0; i < 6; i++) particulas.push([g.x, g.y, 0.9, rnd(-2, 2), rnd(-1.5, 1.5), rnd(1, 3), '#e8f2ff', 0.35]); } som('golpe'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '17') { const g = estado.get(+v[3]); if (g) { g.sede = tempoSim + (+v[4] || 4); numeros.push({ x: g.x, y: g.y, txt: 'Sede!', cor: '#ff8a6a', t: 1, amigo: true }); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
@@ -491,6 +493,7 @@ function cenaDoGrupo(s) {
 }
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
 let reordenado = false, camSalto = false, camForcar = false;
+let unicoAnunciar = -1;
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 const vizinhas = (a, b) => mapa[a] && mapa[b] && Math.abs(mapa[a][0] - mapa[b][0]) + Math.abs(mapa[a][1] - mapa[b][1]) === 1;
@@ -573,6 +576,7 @@ const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos 
 const DICA_SALA = { 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
+const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -912,6 +916,13 @@ function desenhar(dt) {
       const tg = py - (s.chefe ? 190 : 146); ctx.font = 'bold 30px Georgia'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
       ctx.fillStyle = Math.sin(tempoSim * 22) > 0 ? '#ffd84a' : '#ff5a30'; ctx.strokeText('!', px, tg); ctx.fillText('!', px, tg);
     }
+    if (!morto && nomesUnicos.has(s.id)) {
+      const nm = nomesUnicos.get(s.id), ty = py - 150 * (prov ? prov[1] : 1);
+      if (unicoAnunciar === s.id) { unicoAnunciar = -1; aviso(nm); anotar(`<b style="color:#ffcf5a">${nm}</b> e seu séquito guardam esta sala.`); }
+      const zc = Math.max(0.3, Math.min(1, ctx.getTransform().a / (window.devicePixelRatio || 1)));   // escala atual da câmera
+      ctx.font = `bold ${Math.round(14 / zc)}px Georgia`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty);   // legível também no mapa inteiro
+    }
+    if (morto && nomesUnicos.has(s.id)) { const nm = nomesUnicos.get(s.id); nomesUnicos.delete(s.id); aviso(nm + ' caiu!'); anotar(`<b style="color:#ffcf5a">${nm}</b> foi destruído e largou seu tesouro.`); clarao = 0.4; }
     if (!morto && s.id === marcado) {
       const topoM = py - (s.chefe ? 172 : 128), b2 = Math.sin(tempoSim * 6) * 3;
       ctx.fillStyle = '#ff3040'; ctx.beginPath(); ctx.moveTo(px, topoM + 12 + b2); ctx.lineTo(px - 8, topoM + b2); ctx.lineTo(px + 8, topoM + b2); ctx.fill();
@@ -1501,6 +1512,7 @@ window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual 
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
+window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];

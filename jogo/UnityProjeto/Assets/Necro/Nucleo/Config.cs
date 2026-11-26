@@ -39,18 +39,18 @@ namespace Necro.Nucleo
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
         public float AlivioInicial = 0.88f;
-        public float CrescimentoPorAndar = 0.28f;
+        public float CrescimentoPorAndar = 0.29f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
         public float EliteMultVida = 3.5f;
         public float EliteMultDano = 1.4f;
-        public float ChefeMultVida = 2.4f;
+        public float ChefeMultVida = 2.2f;
         public float ChefeMultDano = 1.0f;
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.095f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.105f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -67,6 +67,9 @@ namespace Necro.Nucleo
         // Campeões: pacote de N da mesma espécie, mais fortes que os comuns (azuis)
         public float ChanceDeCampeoes = 0.3f; public int CampeoesAPartirDoAndar = 3, CampeoesPorPacote = 3;
         public float CampeaoMultVida = 2.2f, CampeaoMultDano = 1.25f, CampeaoPremio = 2.5f, CampeaoCusto = 2f;
+        // Únicos: um monstro com nome próprio e séquito da mesma espécie, num ponto sorteado do andar (como no Diablo)
+        public float ChanceDeUnico = 0.5f; public int UnicosAPartirDoAndar = 4, SequitoDoUnico = 4;
+        public float UnicoMultVida = 1.35f, SequitoMultVida = 1.3f, UnicoCusto = 0.8f;   // o único já é elite; isto multiplica por cima
         public float IntervaloDeSpawn = 0.8f;       // segundos entre inimigos da mesma onda
         public float PausaEntreOndas = 2.0f;
         public float PausaEntreAndares = 3.0f;

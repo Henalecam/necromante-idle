@@ -86,6 +86,7 @@ public static partial class Jogo
         if (_sim.PactosOferecidos != null)
             _sb.Append("K ").Append(_sim.PactosOferecidos[0]).Append(' ').Append(_sim.PactosOferecidos[1]).Append(' ').Append(_sim.PactosOferecidos[2]).Append(' ').Append(F(_sim.TempoDaOferta)).Append('\n');
         if (_sim.PactosAtivos.Count > 0) { _sb.Append('A'); foreach (int pa in _sim.PactosAtivos) _sb.Append(' ').Append(pa); _sb.Append('\n'); }
+        foreach (var e in _sim.Entidades) if (e.Unico && e.Viva) _sb.Append("U ").Append(e.Id).Append(' ').Append(e.NomeProprio).Append('\n');
         foreach (var e in _sim.Entidades)
             _sb.Append("E ").Append(e.Id).Append(' ').Append(e.Especie).Append(' ').Append(e.Faccao == Faccao.Inimigo ? 1 : 0).Append(' ')
               .Append(F(e.Pos.X)).Append(' ').Append(F(e.Pos.Y)).Append(' ').Append(F(e.Olhar.X)).Append(' ').Append(F(e.Olhar.Y)).Append(' ')

@@ -1302,6 +1302,28 @@ namespace Necro.Testes
                 Afirmar(viuCampeao && viuHorda, "campeões e horda deveriam surgir na sala");
             });
 
+            Teste("estilo Diablo: o Único tem nome próprio, séquito da mesma espécie e sempre larga item", () =>
+            {
+                var cu = new ConfigJogo { ChanceDeUnico = 1f, ChanceDeCampeoes = 0f };
+                var p = Progressao.NovoJogo(cu); p.PoderNecromantico = 60f;
+                var sim = new Simulacao(cu, p, 21UL, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 }; sim.Tick();
+                Simulacao.InimigoPlanejado chefe = null; int sequito = 0;
+                foreach (var l in sim.PlanoDasOndas) foreach (var ip in l) { if (ip.Unico) chefe = ip; }
+                Afirmar(chefe != null && !string.IsNullOrEmpty(chefe.Nome) && chefe.Nome.Contains(", "), "o andar deveria ter um único com nome");
+                foreach (var l in sim.PlanoDasOndas) foreach (var ip in l) if (ip.Sequito) { sequito++; Afirmar(ip.Especie == chefe.Especie && ip.Sala == chefe.Sala, "séquito da mesma espécie e na mesma sala"); }
+                Afirmar(sequito == cu.SequitoDoUnico, "séquito de " + cu.SequitoDoUnico + ": " + sequito);
+                bool viu = false, morreu = false; int id = -1, itensAntes = 0, guarda = 0;
+                while (!sim.Encerrada && guarda++ < 30000 && !morreu)
+                {
+                    int antes = sim.Resultado.Itens.Count;
+                    sim.Tick();
+                    foreach (var e in sim.Entidades) if (e.Unico) { viu = true; id = e.Id; Afirmar(e.NomeProprio == chefe.Nome, "nome na entidade"); }
+                    foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.Morte && ev.Alvo == id) { morreu = true; itensAntes = antes; }
+                }
+                Afirmar(viu && morreu, "o único deveria surgir e morrer: " + viu + "/" + morreu);
+                Afirmar(sim.Resultado.Itens.Count > itensAntes, "o único deveria largar um item");
+            });
+
             RodarLoot();
 
             Console.WriteLine();

@@ -24,7 +24,7 @@ namespace Necro.Nucleo
         /// <summary>Um inimigo que já está numa sala do andar, à espera do grupo.</summary>
         public sealed class InimigoPlanejado
         {
-            public int Sala; public EspecieId Especie; public bool Elite, Chefe, Campeao; public ModificadorElite Mods; public Vec2 Pos; public int Atraso; public bool Desperto;
+            public int Sala; public EspecieId Especie; public bool Elite, Chefe, Campeao; public bool Unico, Sequito; public string Nome; public ModificadorElite Mods; public Vec2 Pos; public int Atraso; public bool Desperto;
         }
         /// <summary>Quem está em cada sala de combate do andar (uma lista por onda).</summary>
         public readonly List<List<InimigoPlanejado>> PlanoDasOndas = new List<List<InimigoPlanejado>>(4);
@@ -110,6 +110,7 @@ namespace Necro.Nucleo
         private readonly Rng _rngPressagio;
         private float _sorte;   // pontos de Sorte do progresso
         private float _restoDeOssos = 0.5f;
+        private int _ondaDoUnico;
         private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f;
         /// <summary>Presságio em vigor neste andar.</summary>
         public Pressagio PressagioAtual { get; private set; }
@@ -428,6 +429,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < Cfg.ItensDoChefe; i++)
                     SoltarItem(alvo, i == 0 && !chefeJaDerrotado ? RaridadeItem.Raro : RaridadeItem.Comum);
             }
+            else if (alvo.Unico) SoltarItem(alvo, RaridadeItem.Magico);   // único sempre larga algo ao menos Mágico
             else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * (alvo.DaHorda ? 1f / Cfg.Horda : alvo.Campeao ? Cfg.CampeaoPremio : 1f) * _pItem * (1f + _bItem) * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
             {
                 SoltarItem(alvo, RaridadeItem.Comum);
@@ -559,7 +561,9 @@ namespace Necro.Nucleo
                         var pos = new Vec2(portal.X, portal.Y + Rng.Intervalo(-0.8f, 0.8f));
                         if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
-                        if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }
+                        if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        else if (s.Planejado != null && s.Planejado.Sequito) { novo.VidaMax *= Cfg.SequitoMultVida; novo.Vida = novo.VidaMax; }
+                        else if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }
                         else if (s.Planejado != null && !s.Elite && !s.Chefe && Cfg.Horda > 1f) { novo.DaHorda = true; novo.VidaMax /= Cfg.Horda; novo.Vida = novo.VidaMax; novo.Dano /= Cfg.Horda; }
                     }
                     // Fúria: garante que nenhum andar empate para sempre.
@@ -617,6 +621,13 @@ namespace Necro.Nucleo
             int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
             int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo + 0.5f));
             int sala = -1;
+            // em qual sala de combate mora o Único deste andar (nunca na do chefe nem na da elite)
+            _ondaDoUnico = 0;
+            if (!chefe && Andar >= Cfg.UnicosAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeUnico))
+            {
+                int livres = TotalDeOndas - (_ondaEliteNesteAndar ? 1 : 0);
+                if (livres >= 1) _ondaDoUnico = 1 + _rngMasmorra.Intervalo(0, livres);
+            }
             for (int onda = 1; onda <= TotalDeOndas; onda++)
             {
                 // a sala desta onda: a próxima sala de combate do plano
@@ -654,6 +665,23 @@ namespace Necro.Nucleo
                             k++;
                         }
                         orcamento -= Cfg.CampeoesPorPacote * Cfg.CampeaoCusto * TabelaEspecies.Obter(ec).CustoOnda;
+                    }
+                }
+                // Único: nome próprio, modificadores de elite e um séquito da mesma espécie em volta
+                if (onda == _ondaDoUnico)
+                {
+                    EspecieId eu = SortearEspecie(noAto, 99f);
+                    if (eu != EspecieId.Necromante)
+                    {
+                        var cu = centros[nMat - 1];
+                        lista.Add(new InimigoPlanejado { Sala = sala, Especie = eu, Elite = true, Unico = true, Mods = SortearModificadores(), Nome = NomesDeUnicos.Sortear(_rngMasmorra), Atraso = k * intervalo / PortaisAtivos, Pos = cu });
+                        k++;
+                        for (int q = 0; q < Cfg.SequitoDoUnico; q++)
+                        {
+                            lista.Add(new InimigoPlanejado { Sala = sala, Especie = eu, Sequito = true, Atraso = k * intervalo / PortaisAtivos, Pos = new Vec2(cu.X + _rngMasmorra.Intervalo(-1.4f, 1.4f), cu.Y + _rngMasmorra.Intervalo(-1.4f, 1.4f)) });
+                            k++;
+                        }
+                        orcamento *= Cfg.UnicoCusto;
                     }
                 }
                 orcamento *= Cfg.Horda; int passo = Math.Max(1, (int)(intervalo / PortaisAtivos / Cfg.Horda));
