@@ -292,6 +292,7 @@ public static partial class Jogo
     [JSExport] public static void Marcar(int entidadeId) { _sim.ComandoMarcar(entidadeId); }
     [JSExport] public static void Curar(int entidadeId) { _sim.ComandoCurar(entidadeId); }
     [JSExport] public static void EscolherBencao(int opcao) { _sim.ComandoEscolherBencao(opcao); }
+    [JSExport] public static bool IrPara(int sala) { return _sim.ComandoIrPara(sala); }
     [JSExport] public static void Interagir() { _sim.ComandoInteragir(); }
     [JSExport] public static void Detonar() { _sim.ComandoDetonar(); }
     [JSExport] public static void Frenesi() { _sim.ComandoFrenesi(); }

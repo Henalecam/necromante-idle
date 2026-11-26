@@ -605,7 +605,7 @@ namespace Necro.Nucleo
         /// <summary>Sorteia, no começo do andar, quem está em cada sala de combate e onde. Assim o mapa inteiro já mostra o que espera o grupo.</summary>
         private void PlanejarInimigos()
         {
-            PlanoDasOndas.Clear();
+            PlanoDasOndas.Clear(); _salaDaOnda.Clear();
             bool chefe = Formulas.AndarDeChefe(Andar, Cfg);
             int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
             int intervalo = Math.Max(1, (int)(Cfg.IntervaloDeSpawn * Cfg.TicksPorSegundo + 0.5f));
@@ -640,7 +640,7 @@ namespace Necro.Nucleo
                     lista.Add(new InimigoPlanejado { Sala = sala, Especie = esp, Atraso = k * intervalo / PortaisAtivos, Pos = pos });
                     k++;
                 }
-                PlanoDasOndas.Add(lista);
+                PlanoDasOndas.Add(lista); _salaDaOnda.Add(sala);
             }
         }
 

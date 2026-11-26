@@ -1116,6 +1116,28 @@ namespace Necro.Testes
                 Afirmar(viu && grilhoes && aparicao, "chefe " + viu + " grilhões " + grilhoes + " aparição " + aparicao);
             });
 
+            Teste("rota do jogador: a sala escolhida vira a próxima, os inimigos acompanham e o andar ainda visita tudo", () =>
+            {
+                var cfg = new ConfigJogo { ChanceDeSalaEspecial = 1f, ChanceDeSalaVazia = 1f };
+                int trocas = 0;
+                for (ulong s = 1; s <= 12; s++)
+                {
+                    var p = Progressao.NovoJogo(cfg); p.PoderNecromantico = 8f;
+                    var sim = new Simulacao(cfg, p, s, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 };
+                    int total = sim.Salas.Count, alvo = total - 2;
+                    var tipo = sim.Salas[alvo]; var cel = sim.Mapa[alvo];
+                    Afirmar(!sim.ComandoIrPara(total - 1), "a última sala não pode ser adiantada");
+                    if (sim.ComandoIrPara(alvo)) { trocas++; Afirmar(sim.Salas[1] == tipo && sim.Mapa[1].X == cel.X && sim.Mapa[1].Y == cel.Y && sim.Salas.Count == total, "a sala escolhida deveria ser a próxima"); }
+                    // cada onda continua apontando para uma sala de combate, na ordem de visita
+                    int ant = -1;
+                    foreach (var plano in sim.PlanoDasOndas) { Afirmar(plano.Count > 0, "onda vazia"); int sl = plano[0].Sala; Afirmar(sl > ant && (sim.Salas[sl] == TipoSala.Combate || sim.Salas[sl] == TipoSala.Elite || sim.Salas[sl] == TipoSala.Chefe), "onda fora de ordem ou em sala errada: " + sl); ant = sl; }
+                    int maior = 0, guarda = 0;
+                    while (!sim.Encerrada && guarda++ < 20000) { sim.Tick(); if (sim.SalaAtual > maior) maior = sim.SalaAtual; }
+                    Afirmar(sim.Resultado.Motivo != MotivoFim.LimiteDeAndares || maior >= total - 1, "andar concluído sem visitar tudo");
+                }
+                Afirmar(trocas >= 8, "trocas " + trocas);
+            });
+
             RodarLoot();
 
             Console.WriteLine();

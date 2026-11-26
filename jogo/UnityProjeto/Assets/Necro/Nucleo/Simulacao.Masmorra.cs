@@ -144,6 +144,36 @@ namespace Necro.Nucleo
             if (t != TipoSala.Combate && t != TipoSala.Elite && t != TipoSala.Chefe) IniciarSalaEspecial(t);
         }
 
+        /// <summary>
+        /// Rota do jogador: a sala indicada passa a ser a próxima visitada. Só vale para salas ainda não visitadas e nunca
+        /// para a última (a da escada, do campeão ou do chefe). Devolve true se a ordem mudou.
+        /// </summary>
+        public bool ComandoIrPara(int sala)
+        {
+            int p = SalaAtual + 1;
+            if (_emSecreto || sala <= p || sala >= Salas.Count - 1 || p >= Salas.Count - 1) return sala == p && p < Salas.Count;
+            var tipo = Salas[sala]; var celula = Mapa[sala];
+            for (int i = sala; i > p; i--) { Salas[i] = Salas[i - 1]; Mapa[i] = Mapa[i - 1]; }
+            Salas[p] = tipo; Mapa[p] = celula;
+            // os inimigos já postos acompanham as suas salas, e as ondas voltam a seguir a ordem de visita
+            for (int w = 0; w < PlanoDasOndas.Count; w++)
+            {
+                int s0 = _salaDaOnda[w], s1 = s0 == sala ? p : (s0 >= p && s0 < sala ? s0 + 1 : s0);
+                _salaDaOnda[w] = s1;
+                for (int k = 0; k < PlanoDasOndas[w].Count; k++) PlanoDasOndas[w][k].Sala = s1;
+            }
+            for (int a = Onda; a < PlanoDasOndas.Count; a++)
+                for (int b = a + 1; b < PlanoDasOndas.Count; b++)
+                    if (_salaDaOnda[b] < _salaDaOnda[a])
+                    {
+                        int ts = _salaDaOnda[a]; _salaDaOnda[a] = _salaDaOnda[b]; _salaDaOnda[b] = ts;
+                        var tl = PlanoDasOndas[a]; PlanoDasOndas[a] = PlanoDasOndas[b]; PlanoDasOndas[b] = tl;
+                    }
+            Resultado.InteracoesPorToque++;
+            return true;
+        }
+        private readonly List<int> _salaDaOnda = new List<int>(4);
+
         /// <summary>Quantas passagens o grupo atravessa para ir de uma sala a outra no mapa (caminho pela árvore).</summary>
         public int DistanciaNoMapa(int a, int b)
         {

@@ -462,6 +462,7 @@ function cenaDoGrupo(s) {
   return null;
 }
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
+let reordenado = false;
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 const vizinhas = (a, b) => mapa[a] && mapa[b] && Math.abs(mapa[a][0] - mapa[b][0]) + Math.abs(mapa[a][1] - mapa[b][1]) === 1;
@@ -502,9 +503,9 @@ function deltaDaViagem(atraso = 0, ox = 0, oy = 0) {
   const a = viag.pts[k], b = viag.pts[k + 1], f = viag.seg[k] > 0 ? d / viag.seg[k] : 1;
   return [a[0] + (b[0] - a[0]) * f - viag.fim[0], a[1] + (b[1] - a[1]) * f - viag.fim[1], b[0] - a[0], b[1] - a[1]];
 }
-function reconstruirMundo() {
+function reconstruirMundo(manterSangue) {
   salasCv = mapa.map((m, i) => { const cv = document.createElement('canvas'); cv.width = CW / 2; cv.height = CH / 2; construirSala(i, cv, 0.5); return cv; });
-  construirSala(); sctx.clearRect(0, 0, CW, CH);
+  construirSala(); if (!manterSangue) sctx.clearRect(0, 0, CW, CH);
 }
 function limitesDoMundo() {
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
@@ -526,7 +527,8 @@ const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () =>
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
   ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
   ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
-  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Use o botão ⤢ para aproximar ou ver o andar inteiro', () => mapa.length >= 4]];
+  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Use o botão ⤢ para aproximar ou ver o andar inteiro', () => mapa.length >= 4],
+  ['rota', 'Toque no símbolo de uma sala para o grupo ir a ela primeiro', () => !!licoes.mapa && mapa.length - masm.sala >= 4]];
 let licoes = {}; try { licoes = JSON.parse(localStorage.getItem('necromante-idle-save-v1-licoes') || '{}'); } catch (e) { /* começa do zero */ }
 function aprendeu(k) { if (licoes[k]) return; licoes[k] = 1; try { localStorage.setItem('necromante-idle-save-v1-licoes', JSON.stringify(licoes)); } catch (e) { /* tudo bem */ } }
 function atualizarLicao() {
@@ -560,7 +562,11 @@ let mapaChave = '';
 function lerMapa(p) {
   const m = []; for (let i = 1; i + 2 < p.length; i += 3) m.push([+p[i], +p[i + 1], +p[i + 2]]);
   const geo = p.join(' ') + '|' + masm.tipos.join(',') + '|' + andar, chave = geo + '|' + masm.sala;
-  if (geo !== lerMapa.geo) { lerMapa.geo = geo; mapa = m; mapaSujo = true; }
+  if (geo !== lerMapa.geo) {
+    const cels = m.map((c) => c[0] + ',' + c[1]).sort().join(';') + '|' + andar;
+    reordenado = cels === lerMapa.cels && !!mapa[masm.sala] && !!m[masm.sala] && mapa[masm.sala][0] === m[masm.sala][0] && mapa[masm.sala][1] === m[masm.sala][1];   // só a ordem de visita mudou (rota do jogador)
+    lerMapa.cels = cels; lerMapa.geo = geo; mapa = m; mapaSujo = true;
+  }
   if (chave === mapaChave) return;
   mapaChave = chave; mapa = m;
   $('salas').innerHTML = mapaSvg(13, false);
@@ -675,7 +681,7 @@ function pintarObjeto(o, px, py) {
 }
 try { dica = localStorage.getItem(CHAVE + '-dica') === '1'; } catch (e) { /* sem armazenamento */ }
 function desenhar(dt) {
-  if (mapaSujo && mapa.length) { mapaSujo = false; salaSuja = false; assar = -1; so = offDaSala(masm.sala); limparArena(true); reconstruirMundo(); }
+  if (mapaSujo && mapa.length) { mapaSujo = false; salaSuja = false; assar = -1; so = offDaSala(masm.sala); if (!reordenado) limparArena(true); reconstruirMundo(reordenado); reordenado = false; }
   if (salaSuja) {
     salaSuja = false;
     // o sangue da sala que ficou para trás passa a fazer parte dela; a sala nova ganha o chão em detalhe
@@ -1329,6 +1335,15 @@ function toqueNaArena(ev) {
   const r = tela.getBoundingClientRect(), k = (tela.width / r.width) / escAtual;
   const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k + camY;
   if (objeto && !objeto.aberto && masm.fase === 'Explorando') { const [ox, oy] = naTela(objeto.x, objeto.y); if ((ox - ax) ** 2 + (oy - 30 - ay) ** 2 < 90 * 90) { J.Interagir(); aprendeu('sala'); if (!objeto.tocado) { objeto.tocado = true; aviso('Você pôs a mão: rende mais'); } return; } }
+  // toque no rótulo de uma sala ainda não visitada: o grupo vai para ela em seguida
+  for (let i = masm.sala + 1; i < mapa.length - 1; i++) {
+    const o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual, ly = ly0 - (62 * kk + 40) - 4 * kk;
+    if ((lx - ax) ** 2 + (ly - ay) ** 2 < (30 * kk) ** 2) {
+      if (i === masm.sala + 1) { aviso('Essa já é a próxima sala'); return; }
+      if (J.IrPara(i)) { aprendeu('rota'); som('toque'); aviso('Rota mudada · próxima: ' + SALAS[masm.tipos[i]][1]); anotar(`Você mandou o grupo para <b>${SALAS[masm.tipos[i]][1]}</b> primeiro.`); }
+      return;
+    }
+  }
   let melhor = null, md = 70 * 70;
   for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); const d = (px - ax) ** 2 + (py - 30 - ay) ** 2; if (d < md) { md = d; melhor = o; } }
   if (melhor) { J.Ceifar(melhor[2]); aprendeu('orbe'); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } return; }
@@ -1385,6 +1400,7 @@ window.__orbeNaTela = () => {
   return x > r.left + 4 && x < r.right - 4 ? [x, y] : null;
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
+window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
 window.__cena = () => [!!descida, !!chegada];
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
