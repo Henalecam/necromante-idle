@@ -232,11 +232,14 @@ namespace Necro.Nucleo
                 // Ossos: todo inimigo morto; extras se explodiu.
                 float ossos = Cfg.OssosPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1));
                 if (alvo.Elite) ossos *= 3f;
+                float premio = alvo.DaHorda ? 1f / Cfg.Horda : alvo.Campeao ? Cfg.CampeaoPremio : 1f;   // horda rende menos por cabeça; campeão rende mais
+                ossos *= premio;
                 if (overkill) ossos *= 1f + Cfg.OssosExtrasOverkill;
                 ossos *= _pOssos * _aOssos * _bOssos * (_emSecreto ? Cfg.SecretoOssos : 1f);
-                int qOssos = Math.Max(1, (int)(ossos + 0.5f));
+                // a fração que sobra de cada morte é guardada: uma horda de inimigos fracos não arredonda tudo para cima
+                _restoDeOssos += ossos; int qOssos = (int)_restoDeOssos; _restoDeOssos -= qOssos;
                 Resultado.Ossos += qOssos;
-                Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
+                if (qOssos > 0) Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
 
                 // Sangue: elites, chefes e execuções.
                 int sangue = (alvo.Chefe ? Cfg.SangueChefe : alvo.Elite ? Cfg.SangueElite : 0) + (execucao ? Cfg.SangueExecucao : 0);
@@ -248,12 +251,13 @@ namespace Necro.Nucleo
 
                 float xp = Cfg.XpPorPorte[(int)alvo.Porte] * Formulas.EscalaInimigo(Andar, Cfg);
                 if (alvo.Elite) xp *= 4f;
+                xp *= premio;
                 Resultado.Xp += xp;
 
                 // Alma
                 int ato = Formulas.AtoDoAndar(Andar, Cfg);
                 bool jaDerrotado = alvo.Chefe && _chefesDerrotados.Contains(ato);
-                if (Rng.Chance(GeradorDeAlmas.ChanceDeDrop(Cfg, alvo.Elite, alvo.Chefe, jaDerrotado) * (1f + Bonus.ChanceDeAlma + _bonusAlmaNecropole + _pAlma + _aAlma + _bAlma + _sorte * Cfg.SorteMaisDropsPorPonto)))
+                if (Rng.Chance(GeradorDeAlmas.ChanceDeDrop(Cfg, alvo.Elite, alvo.Chefe, jaDerrotado) * premio * (1f + Bonus.ChanceDeAlma + _bonusAlmaNecropole + _pAlma + _aAlma + _bAlma + _sorte * Cfg.SorteMaisDropsPorPonto)))
                 {
                     var almaNova = GeradorDeAlmas.Gerar(Rng, Cfg, alvo.Especie);
                     if (_sorte > 0f && Rng.Chance(_sorte * Cfg.SorteChanceDeMelhorPorPonto))

@@ -78,7 +78,7 @@ public static partial class Jogo
         _sb.Append('\n');
         if (_sim.BencaosOferecidas != null) _sb.Append("B ").Append(_sim.BencaosOferecidas[0]).Append(' ').Append(_sim.BencaosOferecidas[1]).Append(' ').Append(_sim.BencaosOferecidas[2]).Append(' ').Append(F(Math.Max(0f, _sim.TempoDaBencao))).Append('\n');
         foreach (var plano in _sim.PlanoDasOndas) foreach (var ip in plano) if (!ip.Desperto)
-            _sb.Append("I ").Append(ip.Sala).Append(' ').Append(ip.Especie).Append(' ').Append(F(ip.Pos.X)).Append(' ').Append(F(ip.Pos.Y)).Append(' ').Append(ip.Elite ? 1 : 0).Append(' ').Append(ip.Chefe ? 1 : 0).Append('\n');
+            _sb.Append("I ").Append(ip.Sala).Append(' ').Append(ip.Especie).Append(' ').Append(F(ip.Pos.X)).Append(' ').Append(F(ip.Pos.Y)).Append(' ').Append(ip.Elite ? 1 : 0).Append(' ').Append(ip.Chefe ? 1 : 0).Append(' ').Append(ip.Campeao ? 1 : 0).Append('\n');
         if (_sim.ChaveNaSala >= 0) _sb.Append("C ").Append(_sim.ChaveNaSala).Append(' ').Append(_sim.TemChave ? 1 : 0).Append('\n');
         if (_sim.PatrulhaSala >= 0) { _sb.Append("R ").Append(_sim.PatrulhaSala); foreach (var pe in _sim.Patrulha) _sb.Append(' ').Append(pe); _sb.Append('\n'); }
         _sb.Append('G'); foreach (var c in _sim.Mapa) _sb.Append(' ').Append(c.X).Append(' ').Append(c.Y).Append(' ').Append(c.Pai);
@@ -90,7 +90,7 @@ public static partial class Jogo
             _sb.Append("E ").Append(e.Id).Append(' ').Append(e.Especie).Append(' ').Append(e.Faccao == Faccao.Inimigo ? 1 : 0).Append(' ')
               .Append(F(e.Pos.X)).Append(' ').Append(F(e.Pos.Y)).Append(' ').Append(F(e.Olhar.X)).Append(' ').Append(F(e.Olhar.Y)).Append(' ')
               .Append(e.Animacao).Append(' ').Append(e.Viva ? 1 : 0).Append(' ').Append(F(e.Vida / Math.Max(1f, e.VidaMax))).Append(' ')
-              .Append(e.Elite ? 1 : 0).Append(' ').Append(e.Chefe ? 1 : 0).Append(' ').Append(e == _sim.Necromante ? 1 : 0).Append(' ').Append(F(Math.Max(0f, e.PreparandoGolpe))).Append(' ').Append(e.Faccao == Faccao.Minion && e.IndiceMinion >= 0 && e.IndiceMinion < _p.Minions.Count ? (int)_p.Minions[e.IndiceMinion].Alma.Qualidade : -1).Append(' ').Append(F(Math.Min(1f, Math.Max(0f, e.Escudo) / Math.Max(1f, e.VidaMax)))).Append('\n');
+              .Append(e.Elite ? 1 : 0).Append(' ').Append(e.Chefe ? 1 : 0).Append(' ').Append(e == _sim.Necromante ? 1 : 0).Append(' ').Append(F(Math.Max(0f, e.PreparandoGolpe))).Append(' ').Append(e.Faccao == Faccao.Minion && e.IndiceMinion >= 0 && e.IndiceMinion < _p.Minions.Count ? (int)_p.Minions[e.IndiceMinion].Alma.Qualidade : -1).Append(' ').Append(F(Math.Min(1f, Math.Max(0f, e.Escudo) / Math.Max(1f, e.VidaMax)))).Append(' ').Append(e.Campeao ? 1 : 0).Append('\n');
         foreach (var o in _sim.Orbes) _sb.Append("O ").Append(o.Id).Append(' ').Append(F(o.Pos.X)).Append(' ').Append(F(o.Pos.Y)).Append('\n');
         foreach (var pj in _sim.Projeteis)
             _sb.Append("P ").Append(pj.Id).Append(' ').Append(F(pj.Pos.X)).Append(' ').Append(F(pj.Pos.Y)).Append(' ').Append(F(pj.Dir.X)).Append(' ').Append(F(pj.Dir.Y)).Append(' ').Append(pj.Perfurante ? 1 : 0).Append('\n');

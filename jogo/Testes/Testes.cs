@@ -1288,6 +1288,20 @@ namespace Necro.Testes
                 Afirmar(chocou && esmagou, "ninho não exercitado nos dois modos: " + chocou + "/" + esmagou);
             });
 
+            Teste("estilo Diablo: a horda multiplica os comuns (mais fracos, em matilhas) e aparecem pacotes de 3 Campeões", () =>
+            {
+                int Comuns(ConfigJogo c) { var s = new Simulacao(c, Progressao.NovoJogo(c), 11UL, ModoExpedicao.Avancar, 6); s.Tick(); int n = 0; foreach (var l in s.PlanoDasOndas) foreach (var ip in l) if (!ip.Elite && !ip.Chefe && !ip.Campeao) n++; return n; }
+                int com = Comuns(new ConfigJogo { ChanceDeCampeoes = 0f }), sem = Comuns(new ConfigJogo { ChanceDeCampeoes = 0f, Horda = 1f });
+                Afirmar(com >= sem * 1.25f, "a horda deveria ter pelo menos 25% mais inimigos: " + com + " vs " + sem);
+                var cc = new ConfigJogo { ChanceDeCampeoes = 1f };
+                var sim = new Simulacao(cc, Progressao.NovoJogo(cc), 11UL, ModoExpedicao.Avancar, 6); sim.Tick();
+                int campeoes = 0; foreach (var ip in sim.PlanoDasOndas[0]) if (ip.Campeao) { campeoes++; Afirmar(ip.Especie == sim.PlanoDasOndas[0][0].Especie, "campeões da mesma espécie"); }
+                Afirmar(campeoes == cc.CampeoesPorPacote, "pacote de " + cc.CampeoesPorPacote + " campeões: " + campeoes);
+                bool viuCampeao = false, viuHorda = false; int guarda = 0;
+                while (!sim.Encerrada && guarda++ < 600 && !(viuCampeao && viuHorda)) { sim.Tick(); foreach (var e in sim.Entidades) { if (e.Campeao) viuCampeao = true; if (e.DaHorda) viuHorda = true; } }
+                Afirmar(viuCampeao && viuHorda, "campeões e horda deveriam surgir na sala");
+            });
+
             RodarLoot();
 
             Console.WriteLine();

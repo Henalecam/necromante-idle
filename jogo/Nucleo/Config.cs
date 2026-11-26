@@ -41,7 +41,7 @@ namespace Necro.Nucleo
         public float AlivioInicial = 0.88f;
         public float CrescimentoPorAndar = 0.28f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
-        public float FatorVidaInimigo = 0.24f;      // inimigo comum = base da espécie x fator
+        public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
         public float EliteMultVida = 3.5f;
         public float EliteMultDano = 1.4f;
@@ -60,6 +60,13 @@ namespace Necro.Nucleo
         public float OrcamentoPorAndar = 0.40f;
         public float OrcamentoPorOnda = 1.0f;
         public float OrcamentoMaximo = 28f;
+        // Estilo Diablo: mais inimigos por sala, cada um mais fraco e rendendo menos (o total da sala fica parecido)
+        public float Horda = 1.6f;
+        public int MatilhasPorSala = 3;              // os inimigos comuns ficam agrupados em até N matilhas, não espalhados
+        public float MatilhaRaio = 1.7f;
+        // Campeões: pacote de N da mesma espécie, mais fortes que os comuns (azuis)
+        public float ChanceDeCampeoes = 0.3f; public int CampeoesAPartirDoAndar = 3, CampeoesPorPacote = 3;
+        public float CampeaoMultVida = 2.2f, CampeaoMultDano = 1.25f, CampeaoPremio = 2.5f, CampeaoCusto = 2f;
         public float IntervaloDeSpawn = 0.8f;       // segundos entre inimigos da mesma onda
         public float PausaEntreOndas = 2.0f;
         public float PausaEntreAndares = 3.0f;

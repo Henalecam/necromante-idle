@@ -308,7 +308,7 @@ function ler(texto) {
         if (Math.abs(dx) + Math.abs(dy) > 1e-6) s.dir = direcao(dx, dy);
         s.especie = p[2]; s.inimigo = p[3] === '1'; s.x = x; s.y = y; s.viva = p[9] === '1'; s.vida = +p[10];
         s.elite = p[11] === '1'; s.chefe = p[12] === '1'; s.necro = p[13] === '1';
-        s.golpe = +p[14] || 0; s.qual = p[15] === undefined ? -1 : +p[15]; s.escudo = +p[16] || 0;
+        s.golpe = +p[14] || 0; s.qual = p[15] === undefined ? -1 : +p[15]; s.escudo = +p[16] || 0; s.campeao = p[17] === '1';
         if (s.golpe > 0 && !dicaGolpe && !silencio) { dicaGolpe = true; aviso('Toque no inimigo que brilha para interromper o golpe'); }
         if (s.necro) necro = s;
         break;
@@ -322,7 +322,7 @@ function ler(texto) {
       case 'G': lerMapa(p); break;
       case 'R': patrulha = { sala: +p[1], especies: p.slice(2) }; break;
       case 'C': chaveCofre = [+p[1], p[2] === '1']; break;
-      case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1']); break;
+      case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1', p[7] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'V': evento(p); break;
       case 'F': fimDeExpedicao(p); break;
@@ -889,7 +889,7 @@ function desenhar(dt) {
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
-    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
+    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
@@ -919,7 +919,7 @@ function desenhar(dt) {
     if (!morto && (s.vida < 0.999 || s.escudo > 0.01)) {
       const w = s.chefe ? 70 : 30, topo = py - (s.chefe ? 150 : 108);
       ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(px - w / 2, topo, w, 4);
-      ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
+      ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : s.campeao ? '#5a9cff' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
       if (s.escudo > 0.01) { ctx.fillStyle = '#e8e0c8'; ctx.fillRect(px - w / 2, topo - 3, w * Math.min(1, s.escudo), 2); }   // couraça de ossos / escudo: faixa clara por cima da vida
     }
     if (reforco > 1.01) ctx.restore();
@@ -1500,6 +1500,7 @@ window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const
 window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
+window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];

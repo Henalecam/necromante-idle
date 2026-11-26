@@ -1,0 +1,33 @@
+# Roteiro "Diablo 1 com idle"
+
+Pedido do dono (26/11): deixar a jogabilidade extremamente parecida com o Diablo 1, mantendo o idle. Fontes consultadas:
+Boris the Brave (geração de masmorras do Diablo 1), Wikipedia/Giant Bomb/DiabloWiki (estrutura do jogo), Maxroll e
+battle.net clássico (pacotes de campeões/únicos).
+
+## O que define a exploração no Diablo 1 (resumo da pesquisa)
+- 16 andares em 4 temas (Catedral, Catacumbas, Cavernas, Inferno), cada tema com arquitetura, luz e monstros próprios.
+- Catedral: espinha central de salas grandes + salas menores que "brotam" delas; paredes divisórias com arcos, grades e portas.
+- Salas temáticas fechadas com objetos e monstros prontos (biblioteca com estante e velas, fosso de monstros com um item).
+- Peças fixas de missão coladas no andar (Açougueiro, Rei Esqueleto...), no máximo uma por andar; as missões de cada jogo são sorteadas.
+- Monstros do andar sorteados a cada jogo (poucos tipos por andar), em bandos; únicos com nome, cor própria e séquito.
+- Objetos: barris, sarcófagos, baús, santuários de efeito incerto, estantes/livros, alavancas, armadilhas.
+- Itens: ouro, inventário de espaço limitado, não identificados, durabilidade e reparo, vendedores na cidade.
+- Personagem: atributos distribuídos por nível; luz limitada ao redor do herói, o resto do mapa escuro até ser explorado.
+
+## Fatias (uma por ciclo, sempre com teste + portão + captura)
+1. [feito] Hordas maiores em matilhas + pacotes de Campeões (azuis).
+2. Únicos com nome próprio e séquito (nome dourado sobre a barra; 1-2 por andar a partir do andar 4), com prêmio garantido.
+3. Objetos quebráveis dentro das salas: barris (ossos/explosivos), sarcófagos (esqueleto sai ou tesouro), urnas — os minions quebram ao passar.
+4. Luz e névoa: raio de luz ao redor do grupo; salas não visitadas escuras no mapa (silhueta), reveladas ao entrar; inimigos fora da luz invisíveis.
+5. Ouro como moeda própria (cai dos monstros/objetos) + Mercador da cidade: comprar, vender, reparar.
+6. Itens não identificados (identificar custa ouro ou pergaminho) e durabilidade com reparo.
+7. Inventário em grade de espaço limitado.
+8. Atributos do necromante (Força/Magia/Destreza/Vitalidade) com pontos por nível.
+9. Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
+10. Santuários de efeito incerto (nomes crípticos, bom ou ruim) no lugar das bênçãos escolhidas.
+11. Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
+12. Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
+13. Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
+14. Árvore de ascensão muito maior.
+15. Imbuir/melhorar armaduras com ouro.
+Andares maiores (mais salas, formas irregulares) entram junto com 4 e 11: o dono agora pediu "mais profundidade nos mapas".

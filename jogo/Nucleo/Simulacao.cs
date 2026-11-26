@@ -24,7 +24,7 @@ namespace Necro.Nucleo
         /// <summary>Um inimigo que já está numa sala do andar, à espera do grupo.</summary>
         public sealed class InimigoPlanejado
         {
-            public int Sala; public EspecieId Especie; public bool Elite, Chefe; public ModificadorElite Mods; public Vec2 Pos; public int Atraso; public bool Desperto;
+            public int Sala; public EspecieId Especie; public bool Elite, Chefe, Campeao; public ModificadorElite Mods; public Vec2 Pos; public int Atraso; public bool Desperto;
         }
         /// <summary>Quem está em cada sala de combate do andar (uma lista por onda).</summary>
         public readonly List<List<InimigoPlanejado>> PlanoDasOndas = new List<List<InimigoPlanejado>>(4);
@@ -109,6 +109,7 @@ namespace Necro.Nucleo
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
         private float _sorte;   // pontos de Sorte do progresso
+        private float _restoDeOssos = 0.5f;
         private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f;
         /// <summary>Presságio em vigor neste andar.</summary>
         public Pressagio PressagioAtual { get; private set; }
@@ -427,7 +428,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < Cfg.ItensDoChefe; i++)
                     SoltarItem(alvo, i == 0 && !chefeJaDerrotado ? RaridadeItem.Raro : RaridadeItem.Comum);
             }
-            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * _pItem * (1f + _bItem) * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
+            else if (_rngItens.Chance(GeradorDeItens.ChanceDeDrop(Cfg, alvo.Elite) * (alvo.DaHorda ? 1f / Cfg.Horda : alvo.Campeao ? Cfg.CampeaoPremio : 1f) * _pItem * (1f + _bItem) * (1f + _sorte * Cfg.SorteMaisDropsPorPonto)))
             {
                 SoltarItem(alvo, RaridadeItem.Comum);
             }
@@ -557,7 +558,9 @@ namespace Necro.Nucleo
                         var portal = Portais[s.Portal];
                         var pos = new Vec2(portal.X, portal.Y + Rng.Intervalo(-0.8f, 0.8f));
                         if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
-                        CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
+                        var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
+                        if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }
+                        else if (s.Planejado != null && !s.Elite && !s.Chefe && Cfg.Horda > 1f) { novo.DaHorda = true; novo.VidaMax /= Cfg.Horda; novo.Vida = novo.VidaMax; novo.Dano /= Cfg.Horda; }
                     }
                     // Fúria: garante que nenhum andar empate para sempre.
                     float tempoNoAndar = (TickAtual - _tickInicioDoAndar - _ticksDeExploracao) * DT;
@@ -624,6 +627,10 @@ namespace Necro.Nucleo
                 if (orcamento > Cfg.OrcamentoMaximo) orcamento = Cfg.OrcamentoMaximo;
                 orcamento *= _aOrcamento;
                 int k = 0;
+                // matilhas: os comuns ficam em grupos, como os bandos do Diablo
+                int nMat = Math.Max(1, Cfg.MatilhasPorSala);
+                var centros = new Vec2[nMat];
+                for (int c = 0; c < nMat; c++) centros[c] = new Vec2(_rngMasmorra.Intervalo(Cfg.LarguraArena * 0.58f, Cfg.LarguraArena - 2.6f), _rngMasmorra.Intervalo(2.4f, Cfg.AlturaArena - 2.4f));
                 if (chefe)
                 {
                     lista.Add(new InimigoPlanejado { Sala = sala, Especie = TabelaEspecies.ChefeDoAto(Formulas.AtoDoAndar(Andar, Cfg)), Chefe = true, Atraso = 0, Pos = new Vec2(Cfg.LarguraArena * 0.74f, Cfg.AlturaArena * 0.5f) });
@@ -634,15 +641,33 @@ namespace Necro.Nucleo
                     lista.Add(new InimigoPlanejado { Sala = sala, Especie = SortearEspecie(noAto, 99f), Elite = true, Mods = SortearModificadores(), Atraso = 0, Pos = new Vec2(Cfg.LarguraArena * 0.74f, Cfg.AlturaArena * 0.5f) });
                     orcamento *= 0.5f; k = 2;
                 }
+                // pacote de Campeões: três da mesma espécie, juntos
+                if (!chefe && !ondaDeElite && Andar >= Cfg.CampeoesAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeCampeoes))
+                {
+                    EspecieId ec = SortearEspecie(noAto, orcamento / (Cfg.CampeoesPorPacote * Cfg.CampeaoCusto));
+                    if (ec != EspecieId.Necromante)
+                    {
+                        var cc = centros[0];
+                        for (int q = 0; q < Cfg.CampeoesPorPacote; q++)
+                        {
+                            lista.Add(new InimigoPlanejado { Sala = sala, Especie = ec, Campeao = true, Atraso = k * intervalo / PortaisAtivos, Pos = new Vec2(cc.X + _rngMasmorra.Intervalo(-1.1f, 1.1f), cc.Y + _rngMasmorra.Intervalo(-1.1f, 1.1f)) });
+                            k++;
+                        }
+                        orcamento -= Cfg.CampeoesPorPacote * Cfg.CampeaoCusto * TabelaEspecies.Obter(ec).CustoOnda;
+                    }
+                }
+                orcamento *= Cfg.Horda; int passo = Math.Max(1, (int)(intervalo / PortaisAtivos / Cfg.Horda));
+                int inicioDaHorda = k, nHorda = 0;
                 while (orcamento > 0.01f)
                 {
                     EspecieId esp = SortearEspecie(noAto, orcamento);
                     if (esp == EspecieId.Necromante) break;
                     orcamento -= TabelaEspecies.Obter(esp).CustoOnda;
                     // espalhados pela metade do fundo da sala; despertam aos poucos, como antes chegavam pelos portais
-                    var pos = new Vec2(_rngMasmorra.Intervalo(Cfg.LarguraArena * 0.56f, Cfg.LarguraArena - 1.2f), _rngMasmorra.Intervalo(1.2f, Cfg.AlturaArena - 1.2f));
-                    lista.Add(new InimigoPlanejado { Sala = sala, Especie = esp, Atraso = k * intervalo / PortaisAtivos, Pos = pos });
-                    k++;
+                    var cm = centros[nHorda % nMat];
+                    var pos = new Vec2(cm.X + _rngMasmorra.Intervalo(-Cfg.MatilhaRaio, Cfg.MatilhaRaio), cm.Y + _rngMasmorra.Intervalo(-Cfg.MatilhaRaio, Cfg.MatilhaRaio));
+                    lista.Add(new InimigoPlanejado { Sala = sala, Especie = esp, Atraso = inicioDaHorda * intervalo / PortaisAtivos + nHorda * passo, Pos = pos });
+                    k++; nHorda++;
                 }
                 PlanoDasOndas.Add(lista); _salaDaOnda.Add(sala);
             }
