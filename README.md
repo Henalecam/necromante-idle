@@ -31,6 +31,11 @@ almas presas, emboscadas, mercador, altar de sangue, câmaras vazias), sala do c
 nível secreto raro. Também: talentos, sacrifício e Fragmentos, oferendas e ritos, Ascensão com Legados, feitiços de item com
 modo automático, dons aleatórios, presságios, Sorte, estatísticas de combate e painel de testes.
 
+Cada espécie erguida como minion tem uma habilidade passiva própria: Esqueleto (Aparar), Zumbi (Miasma), Cão de Cripta
+(Sede), Arqueiro Ossudo (Olho Morto), Diabrete (Matilha), Acólito Caído (Agouro), Carniçal (Banquete), Diabo de Guerra
+(Fúria de Guerra), Aparição (Incorpórea), Colosso de Ossos (Baluarte) e Rês Profana (Investida). Elas aparecem na ficha
+do minion, na lista do exército e no Bestiário.
+
 ## Rodar
 
 ```bash

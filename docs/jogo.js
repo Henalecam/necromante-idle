@@ -1214,8 +1214,9 @@ function atualizarPainel(forcar) {
     d.bestiario.forEach((b) => {
       if (!b.mortes && !b.conhecida) { h += '<div class="linha"><div class="corpo"><span class="nota">??? · espécie ainda não encontrada</span></div></div>'; return; }
       const pct = b.prox ? Math.min(100, Math.round(100 * b.mortes / b.prox)) : 100;
-      h += `<div class="linha"><div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
-        `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small><div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
+      const kb = b.nome.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase(), hb = HABILIDADE[kb];
+      h += `<div class="linha">${monstros[kb] ? thumb(kb) : ''}<div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
+        `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
   } else if (aba === 'necropole') {
     h += '<h3>Construções</h3>';
