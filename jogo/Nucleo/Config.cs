@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
         public float AlivioInicial = 0.88f;
-        public float CrescimentoPorAndar = 0.275f;
+        public float CrescimentoPorAndar = 0.28f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.24f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.1f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.095f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
