@@ -446,7 +446,7 @@ function quadro(m, acao, dir, tempo) {
 
 let saidaAtual = '', viagem = [1, 0];
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
-let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2;   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
+let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 function caminhoNoMapa(a, b) {      // salas entre a e b, pela árvore
   const ida = [a], volta = [b]; let x = a, y = b, guarda = 0;
@@ -649,7 +649,8 @@ function desenhar(dt) {
   const dvg = deltaDaViagem();
   const larg = tela.width, alt = tela.height, escPerto = alt / VISTA_H;
   const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt / (lim[3] - lim[1] + 160));
-  const escAlvo = zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5);
+  if (zoomLivre) zoomLivre = Math.max(escTudo * 0.7, Math.min(escPerto * 1.4, zoomLivre));
+  const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5));
   escAtual += (escAlvo - escAtual) * Math.min(1, dt * 4); if (Math.abs(escAlvo - escAtual) < 0.0005) escAtual = escAlvo;
   const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(2.4, (escPerto * 0.55) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
   {
@@ -658,7 +659,7 @@ function desenhar(dt) {
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.06; }
-    const ax = cx - visivel / 2, ay = cy - visAlt * 0.56, kc = Math.min(1, dt * 3);
+    const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * 0.56, kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#050305'; ctx.fillRect(0, 0, larg, alt);
@@ -898,6 +899,7 @@ function desenhar(dt) {
   if (bd.textContent !== td) bd.textContent = td; if (bf.textContent !== tf) bf.textContent = tf;
   bd.disabled = poderes[0] > 0 || poderes[3] === 0; bf.disabled = poderes[1] > 0; bf.classList.toggle('ligado', poderes[2] > 0);
   $('mana').firstElementChild.style.width = (mana * 100).toFixed(0) + '%';
+  { const livre = !!(zoomLivre || pan[0] || pan[1]); if (livre !== desenhar.livre) { desenhar.livre = livre; pintarZoom(); } }
   // tira do grupo: retrato e vida de cada aliado; toque num ferido usa o Sopro Profano
   desenhar.tg = (desenhar.tg || 0) + dt;
   if (desenhar.tg > 0.25) {
@@ -1254,7 +1256,7 @@ $('ficha-minion').addEventListener('click', (ev) => {
 
 let confirmarNovo = 0;
 // toque na arena: ceifa o orbe mais próximo do dedo
-tela.addEventListener('pointerdown', (ev) => {
+function toqueNaArena(ev) {
   if (!J) return;
   const r = tela.getBoundingClientRect(), k = (tela.width / r.width) / escAtual;
   const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k + camY;
@@ -1280,7 +1282,33 @@ tela.addEventListener('pointerdown', (ev) => {
     if (d < (s.golpe > 0 ? md * 4 : md) && !(alvoM && alvoM.golpe > 0 && !(s.golpe > 0))) { md = s.golpe > 0 ? d / 4 : d; alvoM = s; }
   }
   if (alvoM) { J.Marcar(alvoM.id); aprendeu(alvoM.golpe > 0 ? 'golpe' : 'marca'); if (!dicaMarca) { dicaMarca = true; aviso('Alvo marcado: os minions vão nele'); } }
+}
+// ponteiros na arena: toque curto age; arrastar move a câmera; pinça ou roda do mouse dá zoom
+const ponteiros = new Map(); let arrasto = null, pinca = 0;
+tela.addEventListener('pointerdown', (ev) => {
+  ponteiros.set(ev.pointerId, [ev.clientX, ev.clientY]); try { tela.setPointerCapture(ev.pointerId); } catch (e) { /* tudo bem */ }
+  if (ponteiros.size === 1) arrasto = { x: ev.clientX, y: ev.clientY, t: performance.now(), moveu: false };
+  else if (ponteiros.size === 2) { const [a, b] = [...ponteiros.values()]; pinca = Math.hypot(a[0] - b[0], a[1] - b[1]); if (arrasto) arrasto.moveu = true; }
 });
+tela.addEventListener('pointermove', (ev) => {
+  if (!ponteiros.has(ev.pointerId)) return;
+  const ant = ponteiros.get(ev.pointerId); ponteiros.set(ev.pointerId, [ev.clientX, ev.clientY]);
+  const r = tela.getBoundingClientRect(), k = (tela.width / r.width) / escAtual;
+  if (ponteiros.size === 2) {
+    const [a, b] = [...ponteiros.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinca > 0 && d > 0) zoomLivre = (zoomLivre || escAtual) * (d / pinca); pinca = d; return;
+  }
+  if (!arrasto) return;
+  if (!arrasto.moveu && Math.hypot(ev.clientX - arrasto.x, ev.clientY - arrasto.y) > 8) arrasto.moveu = true;
+  if (arrasto.moveu) { pan[0] -= (ev.clientX - ant[0]) * k; pan[1] -= (ev.clientY - ant[1]) * k; }
+});
+const soltar = (ev) => {
+  const era = ponteiros.size; ponteiros.delete(ev.pointerId); pinca = 0;
+  if (era === 1 && arrasto && !arrasto.moveu && performance.now() - arrasto.t < 600 && ev.type === 'pointerup') toqueNaArena(ev);
+  if (ponteiros.size === 0) arrasto = null;
+};
+tela.addEventListener('pointerup', soltar); tela.addEventListener('pointercancel', soltar);
+tela.addEventListener('wheel', (ev) => { ev.preventDefault(); zoomLivre = (zoomLivre || escAtual) * Math.exp(-ev.deltaY * 0.0012); }, { passive: false });
 // usado pelos testes automatizados: posição na página do primeiro orbe visível
 window.__orbeNaTela = () => {
   if (!orbes.length) return null;
@@ -1325,8 +1353,8 @@ $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
 const NOMES_ZOOM = ['Perto', 'Médio', 'Andar inteiro'];
-const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + NOMES_ZOOM[zoomModo]; $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
-$('b-zoom').addEventListener('click', () => { aprendeu('mapa'); zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
+const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
+$('b-zoom').addEventListener('click', () => { aprendeu('mapa'); if (zoomLivre || pan[0] || pan[1]) { zoomLivre = 0; pan = [0, 0]; pintarZoom(); return; } zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
 pintarZoom();
 $('salas').addEventListener('click', () => { aprendeu('mapa'); $('mapa-corpo').innerHTML = mapaGrandeHtml(); $('mapa-grande').hidden = false; });
 $('mapa-grande').addEventListener('click', (ev) => { if (ev.target === $('mapa-grande') || ev.target.id === 'b-mapa-fechar') $('mapa-grande').hidden = true; });

@@ -65,7 +65,7 @@
   #topo .andar { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
   #topo .espaco { flex:1; }
   #cena { position:relative; background:#000; }
-  canvas { display:block; width:100%; touch-action:pan-y; cursor:pointer; }
+  canvas { display:block; width:100%; touch-action:none; cursor:grab; }
   #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
   #poderes { position:absolute; right:6px; left:6px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap-reverse; justify-content:flex-end; pointer-events:none; }
   #poderes > * { pointer-events:auto; }
@@ -240,7 +240,7 @@
   <div class="tr"><b>Santuário</b>: oferece três bênçãos; escolha uma em 4 segundos (vem 50% mais forte) ou o necromante pega uma ao acaso.</div>
   <div class="tr"><b>Baú, fonte, almas presas</b>: entre os combates o necromante encontra salas especiais. Ele resolve sozinho; se você tocar no objeto antes, rende 50% a mais (e o baú nunca é um mímico).</div>
   <div class="tr"><b>Mercador</b>: troca Ossos da própria expedição por um item (40% de desconto com o seu toque). <b>Altar de sangue</b>: cobra 15% da vida de todos por +80% de chance de alma no andar; se você tocar, não cobra. <b>Armadilha</b>: fere todo o grupo; tocando nela antes, você a desarma e ainda leva Ossos.</div>
-  <div class="tr"><b>Masmorra</b>: cada andar é uma masmorra sorteada, inteira à vista. O grupo caminha de sala em sala pelos corredores e explora todas antes de descer. O botão ⤢ alterna entre perto, médio e o andar inteiro.</div>
+  <div class="tr"><b>Masmorra</b>: cada andar é uma masmorra sorteada, inteira à vista. O grupo caminha de sala em sala pelos corredores e explora todas antes de descer. O botão ⤢ alterna entre perto, médio e o andar inteiro; arraste para mover a vista e use a pinça (ou a roda do mouse) para o zoom.</div>
   <div class="tr"><b>Sala do chefe</b>: cada luta tem um ambiente sorteado (lava, névoa pútrida, geada, desabamento) que vale para os dois lados.</div>
   <h3>As cores</h3>
   <div class="tr">Anel dos seus minions: <span class="q0">cinza Fraca</span>, <span class="q1">branco Comum</span>, <span class="q2">azul Vigorosa</span>, <span class="q3">dourado Ancestral</span>, <span class="q4">vermelho Profana</span>.</div>
