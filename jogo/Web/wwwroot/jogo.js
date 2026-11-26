@@ -539,6 +539,7 @@ let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = tr
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['?', 'Inexplorada']];
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
+const DICA_SALA = { 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
@@ -845,6 +846,7 @@ function desenhar(dt) {
   // rótulos das salas: o que há em cada uma, sempre do mesmo tamanho na tela
   if (mapa.length > 1) {
     ctx.textAlign = 'center';
+    const porSala = {}; for (const a of aEspera) porSala[a[0]] = (porSala[a[0]] || 0) + 1;
     mapa.forEach((m, i) => {
       if (i === masm.sala && zoomModo !== 2) return;
       const o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), t = masm.tipos[i] || 0, k = 1 / esc, feita = i < masm.sala, ly = ly0 - (feita ? 0 : 62 * k + 40);   // acima do que há na sala, para não cobrir
@@ -853,7 +855,12 @@ function desenhar(dt) {
       if (i === masm.sala + 1) { ctx.strokeStyle = `rgba(255,216,74,${0.5 + 0.4 * Math.sin(tempoSim * 5)})`; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, (20 + 3 * Math.sin(tempoSim * 5)) * k, 0, 7); ctx.stroke(); }
       ctx.fillStyle = 'rgba(8,5,7,0.8)'; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, 15 * k, 0, 7); ctx.fill(); ctx.strokeStyle = cor; ctx.lineWidth = 1.5 * k; ctx.stroke();
       ctx.fillStyle = cor; ctx.font = `${18 * k}px Georgia`; ctx.fillText(feita ? '✓' : SALAS[t][0], lx, ly + 2 * k);
-      if (!feita && t !== 0 && t !== 11) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(SALAS[t][1], lx, ly + 24 * k); }
+      if (!feita) {
+        // o que a sala guarda: quantos inimigos esperam lá, ou o que o objeto dá — para a rota valer a escolha
+        const n = porSala[i] || 0, nome = t === 0 || t === 1 || t === 2 ? (n ? `${n} inimigo${n > 1 ? 's' : ''}${t === 1 ? ' + campeão' : ''}` : '') : t === 11 ? '' : SALAS[t][1];
+        if (nome) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(nome, lx, ly + 24 * k); }
+        if (DICA_SALA[t] && (larg >= 900 * (window.devicePixelRatio || 1) || i === masm.sala + 1)) { ctx.font = `${9.5 * k}px Georgia`; ctx.fillStyle = '#8fd89f'; ctx.fillText(DICA_SALA[t], lx, ly + 36 * k); }
+      }
       ctx.globalAlpha = 1;
     });
   }

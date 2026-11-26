@@ -267,3 +267,4 @@ Dono pediu ciclos a cada 5 minutos.
 99. Fim do andar: o grupo anda até a escada da última sala e some por ela; no andar novo entra em fila pela porta. Escada também na sala do chefe.
 100. Mapa mais compacto (PASSO 29x21) e figuras maiores na vista do andar inteiro em telas estreitas; avisos de dica duplicados removidos (ficam as lições).
 101. Rota do jogador: tocar no símbolo de uma sala ainda não visitada faz dela a próxima (núcleo: ComandoIrPara reordena Salas/Mapa e as ondas pré-postas; a última sala fica sempre por último). Não muda o balanceamento do robô (ele não usa). 102 testes.
+102. Rótulos das salas mostram o que cada uma guarda: número de inimigos à espera (e campeão) nas de combate; nome e efeito nas especiais (a dica de efeito aparece na próxima sala ou em telas largas).
