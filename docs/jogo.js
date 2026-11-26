@@ -15,7 +15,7 @@ const monstros = {};
 const K = 40, PAREDE = 150, OX = 40 + 2 * K, OY = PAREDE + 20 + 7 * K, CW = OX + 34 * K + 40, CH = OY + 11 * K + 40, VISTA_H = 640;
 const P = (x, y) => [OX + (x + y) * K, OY + (x - y) * K / 2];
 // o andar inteiro é um só mundo: cada sala fica na sua célula do mapa, ligada às vizinhas por corredores
-const PASSO_X = 33, PASSO_Y = 25;                      // distância entre salas vizinhas, em unidades da simulação
+const PASSO_X = 29, PASSO_Y = 21;                      // distância entre salas vizinhas, em unidades da simulação
 const W = (x, y) => [(x + y) * K, (x - y) * K / 2];
 const offDaSala = (i) => (mapa[i] ? [mapa[i][0] * PASSO_X, mapa[i][1] * PASSO_Y] : [0, 0]);
 let so = [0, 0];                                       // deslocamento da sala atual no mundo
@@ -533,14 +533,14 @@ function atualizarLicao() {
   const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '';
   if (c.textContent !== tx) { c.textContent = tx; c.hidden = !tx; }
 }
-let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = false, dicaMarca = false;
+let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['?', 'Inexplorada']];
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
-let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = false;
+let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
 function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.pop(); }
 function lerMasmorra(p) {
@@ -689,7 +689,7 @@ function desenhar(dt) {
   if (zoomLivre) zoomLivre = Math.max(escTudo * 0.7, Math.min(escPerto * 1.4, zoomLivre));
   const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5));
   escAtual += (escAlvo - escAtual) * Math.min(1, dt * 4); if (Math.abs(escAlvo - escAtual) < 0.0005) escAtual = escAlvo;
-  const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(2.4, (escPerto * 0.55) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
+  const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(3.2, (escPerto * (larg < 900 ? 0.7 : 0.55)) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
   {
     let sx = 0, sy = 0, n = 0;
     for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }

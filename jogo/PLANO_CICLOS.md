@@ -265,3 +265,4 @@ Dono pediu ciclos a cada 5 minutos.
 97. Setas douradas correndo pelos corredores até a próxima sala, fio verde nos corredores já percorridos, anel pulsando na próxima sala; adormecidos com a tinta certa.
 98. Pedido do dono: mapa mais 'quadrado'. ColocarNoMapa agora escolhe a célula que deixa o andar mais próximo de um bloco (menor caixa, mais vizinhas, preferência pela sala anterior); toda sala vizinha na grade é ligada por corredor e o grupo anda pelo caminho mais curto (busca em largura no núcleo e na web). Portão 9/9: andar 37,7 s; chefe Ato 1 1,09 h (8 tentativas); andar 15 3,11 h; chefe Ato 2 10,58 h.
 99. Fim do andar: o grupo anda até a escada da última sala e some por ela; no andar novo entra em fila pela porta. Escada também na sala do chefe.
+100. Mapa mais compacto (PASSO 29x21) e figuras maiores na vista do andar inteiro em telas estreitas; avisos de dica duplicados removidos (ficam as lições).
