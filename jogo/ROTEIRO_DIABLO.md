@@ -31,3 +31,29 @@ battle.net clássico (pacotes de campeões/únicos).
 14. Árvore de ascensão muito maior.
 15. Imbuir/melhorar armaduras com ouro.
 Andares maiores (mais salas, formas irregulares) entram junto com 4 e 11: o dono agora pediu "mais profundidade nos mapas".
+
+
+## Fase 2 — grandes mudanças (pedido do dono em 26/11: "quero grandes mudanças a partir de agora")
+
+O dono escolheu três frentes: masmorra contínua, combate e feitiços, progressão longa.
+
+### A. Masmorra contínua (o andar como um lugar só, não uma fila de arenas)
+- A1. [feito] Salas ligadas: a luta atrai a matilha de uma sala vizinha, que entra pela porta; a sala de origem fica vazia.
+- A2. Corredores com vida: inimigos e armadilhas nos corredores entre salas; portas fechadas que o grupo abre; emboscada ao abrir.
+- A3. Andar em grade única: o grupo anda pelo andar inteiro (sem troca de arena), monstros espalhados despertam por raio de luz e linha de visão. É a reescrita espacial do núcleo; fazer em etapas com o modo antigo atrás de uma chave de config até o portão passar.
+- A4. Raio de luz de verdade: o que está fora da luz não aparece nem ataca à distância (fecha a parte 2 da fatia 4).
+- A5. Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.
+
+### B. Combate e feitiços
+- B1. Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.
+- B2. Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
+- B3. Comportamento por espécie: quem foge com pouca vida, quem cerca, quem atira e recua, quem carrega em linha.
+- B4. Mais minions: Golem (um só, forte), Magos esqueletos por elemento, Espectros.
+- B5. Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).
+
+### C. Progressão longa
+- C1. Ferreiro: melhorar (+1 a +5) e imbuir itens com ouro (fatia 15).
+- C2. Itens únicos com nome e efeito próprio, por tabela de dificuldade.
+- C3. Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
+- C4. Poções e cinto: vida e mana, uso automático com regra do jogador.
+- C5. Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.

@@ -179,6 +179,7 @@ namespace Necro.Nucleo
         public int AcougueiroSorteio; public bool AcougueiroMorto;
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
+        public int SalasAtraidas;
         public int ObjetosQuebrados;
         public long Ouro;
         public int RotasEscolhidas;

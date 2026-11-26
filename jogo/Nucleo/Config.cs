@@ -323,6 +323,10 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        // ---- Masmorra contínua: as salas se ouvem ----
+        public bool SalasLigadas = true;
+        public float ChanceDeAtrairVizinha = 0.4f;        // por luta: a matilha de uma sala vizinha não visitada vem pela porta
+        public float AtrairAtraso = 3.5f;                 // segundos até os primeiros chegarem
         // ---- Dificuldades (Normal, Pesadelo, Inferno) ----
         public int DificuldadeAbreNoAto = 2;                                  // vencer o chefe deste Ato abre a dificuldade seguinte
         public float[] DificuldadeVida = { 1f, 2.4f, 5.5f };                  // vida dos inimigos

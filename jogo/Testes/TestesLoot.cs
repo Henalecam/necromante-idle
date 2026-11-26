@@ -395,7 +395,7 @@ namespace Necro.Testes
             });
             Teste("sorte: mais itens e almas, e melhores; sem sorte nada muda", () =>
             {
-                var semObjetos = new ConfigJogo { ObjetosPorSala = 0 };   // urnas largam itens sem sorte: fora da conta
+                var semObjetos = new ConfigJogo { ObjetosPorSala = 0, SalasLigadas = false };   // urnas largam itens sem sorte: fora da conta
                 Func<float, ResultadoExpedicao> rodar = sorte =>
                 {
                     var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 5f; p.Sorte = sorte;
@@ -438,7 +438,7 @@ namespace Necro.Testes
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;
                 var achados = new List<Item>();
-                for (ulong sem = 1; sem <= 12; sem++) achados.AddRange(ExecutorSemTela.RodarExpedicao(Cfg, p, sem, ModoExpedicao.Avancar, 1, 6).Itens);
+                for (ulong sem = 1; sem <= 12; sem++) achados.AddRange(ExecutorSemTela.RodarExpedicao(new ConfigJogo { ChanceDeSalaEspecial = 0f, MissoesDeCenario = false }, p, sem, ModoExpedicao.Avancar, 1, 6).Itens);
                 bool viuRaro = false;
                 foreach (var it in achados) { if (it.Raridade >= RaridadeItem.Raro) viuRaro = true; Afirmar(it.NaoIdentificado == (it.Raridade >= RaridadeItem.Raro), "só Raro para cima cai sem identificar: " + it.Raridade + " " + it.NaoIdentificado); }
                 Afirmar(viuRaro, "nenhum raro caiu no teste");

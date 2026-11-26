@@ -621,12 +621,49 @@ namespace Necro.Nucleo
                 var plano = PlanoDasOndas[Onda - 1];
                 for (int i = 0; i < plano.Count; i++)
                     _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
+                if (Cfg.SalasLigadas && !ondaDeChefe && !ondaDeElite) AtrairSalaVizinha(plano);
                 _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }
             for (int i = 0; i < _minions.Count; i++) _minions[i].Aparou = false;   // cada sala, um aparo novo
             TalvezJuntarPatrulha();
             Fase = FaseExpedicao.EmOnda;
             Emitir(new EventoSim { Tipo = TipoEvento.OndaIniciada, Extra = Onda, Valor = TotalDeOndas, Critico = ondaDeChefe || ondaDeElite, Alvo = -1, Origem = -1 });
+        }
+
+        /// <summary>
+        /// Masmorra contínua (Diablo 1): as salas não são arenas isoladas. O barulho da luta pode atrair a matilha de uma sala
+        /// vizinha ainda não visitada: ela entra pela porta que liga as duas, e aquela sala fica vazia quando o grupo chegar lá.
+        /// </summary>
+        private void AtrairSalaVizinha(List<InimigoPlanejado> planoAqui)
+        {
+            if (Onda - 1 >= _salaDaOnda.Count) return;
+            int aqui = _salaDaOnda[Onda - 1];
+            if (aqui < 0 || aqui >= Mapa.Count) return;
+            for (int w = Onda; w < PlanoDasOndas.Count && w < _salaDaOnda.Count; w++)
+            {
+                int la = _salaDaOnda[w]; var pl = PlanoDasOndas[w];
+                if (pl.Count == 0 || la < 0 || la >= Mapa.Count || la == PatrulhaSala) continue;
+                if ((_ondaEliteNesteAndar && w + 1 == TotalDeOndas) || w + 1 == _ondaDoUnico) continue;   // elite e Único esperam na sala deles
+                int dx = Mapa[la].X - Mapa[aqui].X, dy = Mapa[la].Y - Mapa[aqui].Y;
+                if (Math.Abs(dx) + Math.Abs(dy) != 1) continue;
+                if (!_rngMasmorra.Chance(Cfg.ChanceDeAtrairVizinha)) continue;
+                // a porta entre as duas salas e a direção "para dentro" desta
+                float L = Cfg.LarguraArena, A = Cfg.AlturaArena;
+                var porta = dx == 1 ? new Vec2(L - 0.8f, A * 0.5f) : dx == -1 ? new Vec2(0.8f, A * 0.5f) : dy == 1 ? new Vec2(L * 0.5f, A - 0.8f) : new Vec2(L * 0.5f, 0.8f);
+                int atraso = (int)(Cfg.AtrairAtraso * Cfg.TicksPorSegundo + 0.5f);
+                for (int j = 0; j < pl.Count; j++)
+                {
+                    var q = pl[j]; float lado = ((j % 3) - 1) * 0.9f, fundo = (j / 3) * 0.7f;
+                    q.Sala = aqui; q.Atraso = atraso + j * 2;
+                    q.Pos = Limitar(dx != 0 ? new Vec2(porta.X - dx * fundo, porta.Y + lado) : new Vec2(porta.X + lado, porta.Y - dy * fundo));
+                    planoAqui.Add(q);
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = q.Especie, Elite = q.Elite, Mods = q.Mods, Chefe = q.Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + q.Atraso, Planejado = q });
+                }
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 23, Valor = pl.Count, Alvo = la, Origem = -1, Pos = porta });
+                Resultado.SalasAtraidas++;
+                pl.Clear();
+                return;   // uma vizinha por luta
+            }
         }
 
         /// <summary>Sorteia, no começo do andar, quem está em cada sala de combate e onde. Assim o mapa inteiro já mostra o que espera o grupo.</summary>

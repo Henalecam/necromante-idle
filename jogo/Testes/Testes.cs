@@ -1508,6 +1508,40 @@ namespace Necro.Testes
                 Afirmar(pp.Ouro - antes == (long)(100 * Cfg.DificuldadeOuro[1]), "o ouro do Pesadelo deveria vir multiplicado (" + (pp.Ouro - antes) + ")");
             });
 
+            Teste("salas ligadas: a luta atrai a matilha de uma sala vizinha pela porta, e a sala esvaziada não trava a descida", () =>
+            {
+                int atraidas = 0, andares = 0;
+                for (ulong sm = 1; sm <= 10; sm++)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ChanceDeAtrairVizinha = 1f };
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 20;
+                    var s = new Simulacao(c, p, sm, ModoExpedicao.Avancar, 2) { LimiteDeAndares = 2 }; int g = 0; bool naPorta = false;
+                    while (!s.Encerrada && g++ < 30000)
+                    {
+                        s.Tick();
+                        foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 23) { atraidas++; if (ev.Pos.X < 1.5f || ev.Pos.X > c.LarguraArena - 1.5f || ev.Pos.Y < 1.5f || ev.Pos.Y > c.AlturaArena - 1.5f) naPorta = true; else Afirmar(false, "a matilha atraída deveria entrar por uma porta (borda da sala)"); }
+                    }
+                    Afirmar(s.Encerrada, "a descida não deveria travar com uma sala esvaziada (semente " + sm + ")");
+                    andares += s.Resultado.MaiorAndarConcluido >= 3 ? 1 : 0;
+                }
+                Afirmar(atraidas >= 3, "com chance 100%, salas vizinhas deveriam ser atraídas (" + atraidas + ")");
+                Afirmar(andares >= 8, "um exército forte deveria concluir os dois andares mesmo com salas atraídas (" + andares + "/10)");
+            });
+
+            Teste("salas ligadas: com a configuração padrão a atração acontece com frequência perceptível", () =>
+            {
+                int atraidas = 0, andares = 0;
+                for (ulong sm = 1; sm <= 12; sm++)
+                {
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 20;
+                    var s = new Simulacao(new ConfigJogo { MissoesDeCenario = false }, p, sm, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 3 }; int g = 0;
+                    while (!s.Encerrada && g++ < 40000) s.Tick();
+                    atraidas += s.Resultado.SalasAtraidas; andares += 3;
+                }
+                Console.WriteLine("        (salas atraídas: " + atraidas + " em " + andares + " andares)");
+                Afirmar(atraidas * 3 >= andares, "deveria haver ao menos 1 sala atraída a cada 3 andares (" + atraidas + " em " + andares + ")");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)
