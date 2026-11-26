@@ -85,9 +85,10 @@ namespace Necro.Nucleo
             for (int w = 1; w <= TotalDeOndas; w++)
             {
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
-                if (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial))
+                bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
+                if (forcar || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
                 {
-                    float r = _rngMasmorra.Proximo01() * 100f;
+                    float r = forcar ? 99f : _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
                     Salas.Add(r < 28f ? TipoSala.Bau : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);

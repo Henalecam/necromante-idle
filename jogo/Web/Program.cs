@@ -35,11 +35,12 @@ public static partial class Jogo
 
     static void NovaExpedicao()
     {
+        _cfg.ForcarCofre = _forcarCofre; _forcarCofre = false;
         _sim = new Simulacao(_cfg, _p, 1003UL + _p.ContadorDeSementes++, ModoExpedicao.Avancar, Progressao.AndarDePartida(_p, _cfg));
         Oferendas.ConsumirRito(_p);
         if (_forcarSecreto) { _sim.ForcarNivelSecreto = true; _forcarSecreto = false; }
     }
-    static bool _forcarSecreto;
+    static bool _forcarSecreto, _forcarCofre;
 
     [JSExport]
     public static string Salvar() { return JsonSerializer.Serialize(_p, Json); }
@@ -388,6 +389,7 @@ public static partial class Jogo
                 break;
             case "missao": if (Missoes.Atual(_p, _cfg) != null) { _p.MissaoAtual++; _p.ProgressoMissao = 0; } break;
             case "secreto": _forcarSecreto = true; break;
+            case "cofre": _forcarCofre = true; break;
             case "reiniciar": break;
         }
         NovaExpedicao();    // o que foi mexido vale já
