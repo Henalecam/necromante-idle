@@ -1,5 +1,5 @@
 // Desenho e interface da versão de navegador. As regras do jogo rodam no núcleo C# (WebAssembly): aqui só se desenha.
-const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'necromante_foice', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite', 'carnical', 'diabodeguerra', 'aparicao', 'colossodeossos'];
+const ESPECIES = ['esqueleto', 'zumbi', 'diabrete', 'necromante', 'necromante_foice', 'arqueiroossudo', 'acolitocaido', 'abadessacosturada', 'caodecripta', 'esqueleto_elite', 'carnical', 'diabodeguerra', 'aparicao', 'colossodeossos', 'resprofana'];
 const ACAO = { Parado: 'parado', Andando: 'andar', Atacando: 'atacar', Conjurando: 'conjurar', Morrendo: 'morrer' };
 const TPS = 10, CHAVE = 'necromante-idle-save-v1';
 const $ = (id) => document.getElementById(id);

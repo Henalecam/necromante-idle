@@ -254,3 +254,4 @@ Dono pediu ciclos a cada 5 minutos.
 86. Cenário próprio do Ato 2 (criptas alagadas: pedra esverdeada, poças, raízes nas paredes, fogo-fátuo no lugar das tochas).
 87. Arte: Aparição com sprites próprios (com tom azul espectral aplicado no cliente). Variante Rês Profana escrita na fábrica; Colosso de Ossos em render.
 88. Arte: Colosso de Ossos com sprites próprios. Rês Profana em render.
+89. Arte: Rês Profana com sprites próprios. Todas as 12 espécies têm arte própria.
