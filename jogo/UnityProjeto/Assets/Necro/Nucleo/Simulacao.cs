@@ -186,6 +186,7 @@ namespace Necro.Nucleo
             if (Fase == FaseExpedicao.Encerrada) return;
             AtualizarEfeitosGlobais();
             AtualizarAmbiente();
+            AtualizarPatrulha();
 
             AtualizarComandosDoJogador();
             AtualizarFeiticosDeItem();
@@ -529,6 +530,7 @@ namespace Necro.Nucleo
             _temporizadorDeFase = 1.0f;
             Emitir(new EventoSim { Tipo = TipoEvento.AndarIniciado, Extra = Andar, Alvo = -1, Origem = -1 });
             PlanejarInimigos();
+            PlanejarPatrulha();
             ComecarPelaPrimeiraSala();
         }
 
@@ -598,6 +600,7 @@ namespace Necro.Nucleo
                     _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
                 _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }
+            TalvezJuntarPatrulha();
             Fase = FaseExpedicao.EmOnda;
             Emitir(new EventoSim { Tipo = TipoEvento.OndaIniciada, Extra = Onda, Valor = TotalDeOndas, Critico = ondaDeChefe || ondaDeElite, Alvo = -1, Origem = -1 });
         }

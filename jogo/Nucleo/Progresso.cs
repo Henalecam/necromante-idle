@@ -168,6 +168,7 @@ namespace Necro.Nucleo
         public int NiveisSecretos;
         public int InteracoesPorToque;
         public int RotasEscolhidas;
+        public int PatrulhasEnfrentadas;
         public int CofresAbertos;
         public int InimigosMortos;
         public int[] MortesPorEspecie = new int[16];   // indexado por EspecieId

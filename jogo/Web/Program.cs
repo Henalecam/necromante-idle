@@ -80,6 +80,7 @@ public static partial class Jogo
         foreach (var plano in _sim.PlanoDasOndas) foreach (var ip in plano) if (!ip.Desperto)
             _sb.Append("I ").Append(ip.Sala).Append(' ').Append(ip.Especie).Append(' ').Append(F(ip.Pos.X)).Append(' ').Append(F(ip.Pos.Y)).Append(' ').Append(ip.Elite ? 1 : 0).Append(' ').Append(ip.Chefe ? 1 : 0).Append('\n');
         if (_sim.ChaveNaSala >= 0) _sb.Append("C ").Append(_sim.ChaveNaSala).Append(' ').Append(_sim.TemChave ? 1 : 0).Append('\n');
+        if (_sim.PatrulhaSala >= 0) { _sb.Append("R ").Append(_sim.PatrulhaSala); foreach (var pe in _sim.Patrulha) _sb.Append(' ').Append(pe); _sb.Append('\n'); }
         _sb.Append('G'); foreach (var c in _sim.Mapa) _sb.Append(' ').Append(c.X).Append(' ').Append(c.Y).Append(' ').Append(c.Pai);
         _sb.Append('\n');
         if (_sim.PactosOferecidos != null)

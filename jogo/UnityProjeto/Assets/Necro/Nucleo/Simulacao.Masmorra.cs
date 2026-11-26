@@ -116,6 +116,48 @@ namespace Necro.Nucleo
             GerarMapa();
         }
 
+        // ---- patrulha errante: um bando que muda de sala enquanto o grupo explora; quem cruzar com ele luta contra mais gente ----
+        /// <summary>Sala em que a patrulha está agora (-1 = não há patrulha neste andar, ou ela já foi enfrentada).</summary>
+        public int PatrulhaSala { get; private set; } = -1;
+        public readonly List<EspecieId> Patrulha = new List<EspecieId>(4);
+        private float _tempoPatrulha; private bool _patrulhaEmCampo;
+
+        private void PlanejarPatrulha()
+        {
+            PatrulhaSala = -1; Patrulha.Clear(); _patrulhaEmCampo = false;
+            if (Formulas.AndarDeChefe(Andar, Cfg) || Andar < Cfg.PatrulhaAPartirDoAndar || _salaDaOnda.Count < 2 || !_rngMasmorra.Chance(Cfg.ChanceDePatrulha)) return;
+            int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
+            for (int k = 0; k < Cfg.PatrulhaTamanho; k++) { var esp = SortearEspecie(noAto, 2.01f); if (esp != EspecieId.Necromante) Patrulha.Add(esp); }
+            if (Patrulha.Count == 0) return;
+            PatrulhaSala = _salaDaOnda[_salaDaOnda.Count - 1];
+            _tempoPatrulha = Cfg.PatrulhaIntervalo;
+        }
+
+        private void AtualizarPatrulha()
+        {
+            if (PatrulhaSala < 0) return;
+            _tempoPatrulha -= DT;
+            if (_tempoPatrulha > 0f) return;
+            _tempoPatrulha = Cfg.PatrulhaIntervalo;
+            // muda para outra sala de combate ainda não visitada (se houver)
+            int opcoes = 0;
+            for (int w = Onda; w < _salaDaOnda.Count; w++) if (_salaDaOnda[w] != PatrulhaSala) opcoes++;
+            if (opcoes == 0) return;
+            int qual = _rngMasmorra.Intervalo(0, opcoes);
+            for (int w = Onda; w < _salaDaOnda.Count; w++) if (_salaDaOnda[w] != PatrulhaSala && qual-- == 0) { PatrulhaSala = _salaDaOnda[w]; break; }
+        }
+
+        /// <summary>Chamado quando uma onda começa: se a patrulha está nesta sala, entra na luta.</summary>
+        private void TalvezJuntarPatrulha()
+        {
+            if (PatrulhaSala < 0 || Onda - 1 >= _salaDaOnda.Count || _salaDaOnda[Onda - 1] != PatrulhaSala) return;
+            for (int k = 0; k < Patrulha.Count; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = Patrulha[k], Portal = k % 3, TickDeSpawn = TickAtual + 15 + k * 6 });
+            _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
+            PatrulhaSala = -1; _patrulhaEmCampo = true; Resultado.PatrulhasEnfrentadas++;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 14, Alvo = -1, Origem = -1, Pos = Necromante.Pos });
+        }
+
         /// <summary>Sala de combate cujos inimigos guardam a chave do cofre (-1 se o andar não tem cofre).</summary>
         public int ChaveNaSala { get; private set; } = -1;
         public bool TemChave { get; private set; }
@@ -180,6 +222,7 @@ namespace Necro.Nucleo
             {
                 int s0 = _salaDaOnda[w], s1 = s0 == sala ? p : (s0 >= p && s0 < sala ? s0 + 1 : s0);
                 _salaDaOnda[w] = s1;
+                if (w == 0 && PatrulhaSala >= 0) PatrulhaSala = PatrulhaSala == sala ? p : (PatrulhaSala >= p && PatrulhaSala < sala ? PatrulhaSala + 1 : PatrulhaSala);
                 if (w == 0 && ChaveNaSala >= 0 && !_chaveRemapeada) { ChaveNaSala = ChaveNaSala == sala ? p : (ChaveNaSala >= p && ChaveNaSala < sala ? ChaveNaSala + 1 : ChaveNaSala); _chaveRemapeada = true; }
                 for (int k = 0; k < PlanoDasOndas[w].Count; k++) PlanoDasOndas[w][k].Sala = s1;
             }
@@ -232,6 +275,13 @@ namespace Necro.Nucleo
         /// <summary>Chamado quando a sala de combate fica vazia. Devolve true se assumiu o fluxo (o chamador não faz mais nada).</summary>
         private bool AoLimparSala()
         {
+            if (_patrulhaEmCampo && !_emEmboscada && !_emSecreto)
+            {
+                // a patrulha carregava o que saqueou pelo caminho
+                _patrulhaEmCampo = false;
+                SoltarItemEm(Necromante.Pos, RaridadeItem.Magico);
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 15, Alvo = -1, Origem = -1, Pos = Necromante.Pos });
+            }
             if (!_emEmboscada && !_emSecreto && SalaAtual == ChaveNaSala && !TemChave)
             {
                 TemChave = true;

@@ -272,3 +272,4 @@ Dono pediu ciclos a cada 5 minutos.
 104. Inimigos adormecidos encaram o grupo onde quer que ele esteja. README do repositório com capturas do mapa, dos rótulos e da descida.
 105. Cheat 'Cofre em todo andar' (Config.ForcarCofre) para testar; conferido na tela: mapa marca a sala da chave e o cofre, 'Chave do cofre encontrada!' e 'Cofre aberto!' aparecem. O caso trancado segue coberto só pelo teste do núcleo.
 106. Duas missões no fim da cadeia: Cartógrafo (escolher a rota 3 vezes) e Arrombador (abrir 1 cofre). Contadores RotasEscolhidas e CofresAbertos. Sem efeito no portão (vêm depois do chefe do Ato 2).
+107. Patrulha errante (andar 6+, 30% dos andares comuns): 3 inimigos que mudam de sala de combate a cada 9 s; se estiverem na sala quando a onda começa, entram na luta e, vencidos, deixam um item Mágico. Visível no mapa e no rótulo da sala. Portão 9/9: chefe Ato 1 1,04 h (7 tentativas); andar 15 2,91 h; chefe Ato 2 8,77 h.

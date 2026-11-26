@@ -266,7 +266,7 @@ function aviso(texto) {
 }
 
 function ler(texto) {
-  chaveCofre = [-1, false];
+  chaveCofre = [-1, false]; patrulha = null;
   const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null; aEspera = [];
   for (const ln of texto.split('\n')) {
     if (!ln) continue;
@@ -302,6 +302,7 @@ function ler(texto) {
       case 'A': ativos = p.slice(1).map(Number); break;
       case 'M': lerMasmorra(p); break;
       case 'G': lerMapa(p); break;
+      case 'R': patrulha = { sala: +p[1], especies: p.slice(2) }; break;
       case 'C': chaveCofre = [+p[1], p[2] === '1']; break;
       case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
@@ -367,6 +368,8 @@ function evento(v) {
   const tipo = v[1], x = +v[10], y = +v[11], dx = +v[12], dy = +v[13];
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '14') { aviso('A patrulha entrou na luta!'); som('chefe'); tremor = 0.25; anotar('A <b style="color:#ff7a5a">patrulha errante</b> cruzou com o grupo e entrou na luta.'); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '15') { aviso('Patrulha vencida: ela carregava um item'); som('bau'); anotar('Patrulha vencida: o que ela saqueou agora é seu.'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '13') { aviso('Chave do cofre encontrada!'); som('bau'); anotar('<b style="color:#ffd84a">Chave do cofre</b> tomada dos inimigos.'); for (let i = 0; i < 20; i++) particulas.push([x, y, 1, rnd(-2, 2), rnd(-1.5, 1.5), rnd(3, 7), '#ffd84a', rnd(0.6, 1.1)]); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '12') { const g = estado.get(+v[3]); if (g) g.preso = tempoSim + (+v[4] || 2); som('perigo'); if (!evento.avisouGrilhoes) { evento.avisouGrilhoes = true; aviso('Grilhões! Seus minions mais fortes ficam presos'); } return; }
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
@@ -541,7 +544,8 @@ function atualizarLicao() {
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado']];
-let chaveCofre = [-1, false];   // [sala de combate que guarda a chave do cofre, já foi pega]
+let chaveCofre = [-1, false];
+let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const DICA_SALA = { 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
@@ -772,6 +776,21 @@ function desenhar(dt) {
     lista.push([s, dvg && !s.inimigo ? 'andar' : ACAO[s.anim] || 'parado', dvg && !s.inimigo ? tempoSim * 1.6 : tempoSim - s.t, false]);
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
+  // a patrulha errante: um bando que anda pelo andar; se estiver na sala quando o grupo chegar, entra na luta
+  if (patrulha && mapa[patrulha.sala]) {
+    const o = offDaSala(patrulha.sala), alvoP = [o[0] + 15, o[1] + 3];
+    if (!patPos || silencio) patPos = alvoP.slice();
+    const ddx = alvoP[0] - patPos[0], ddy = alvoP[1] - patPos[1], dist = Math.hypot(ddx, ddy), andando = dist > 0.3;
+    if (andando) { const passo = Math.min(dist, 9 * dt * Math.max(1, velocidade)); patPos[0] += ddx / dist * passo; patPos[1] += ddy / dist * passo; }
+    patrulha.especies.forEach((esp, q) => {
+      const [px, py] = W(patPos[0] + (q - 1) * 1.3, patPos[1] + (q % 2) * 1.1), m = monstro(esp, false), e = reforco;
+      const [img, sx, sy] = quadro(m, andando ? 'andar' : 'parado', andando ? direcao(ddx, ddy) : direcao(-1, 0), tempoSim * (andando ? 1.4 : 0.6) + q);
+      ctx.strokeStyle = 'rgba(255,110,80,0.75)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(px, py, 22 * reforco, 9 * reforco, 0, 0, 7); ctx.stroke();
+      ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
+    });
+    const [tx2, ty2] = W(patPos[0], patPos[1]), kk = 1 / esc;
+    ctx.textAlign = 'center'; ctx.font = `${11 * kk}px Georgia`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('patrulha', tx2, ty2 - 100 * reforco - 6 * kk);
+  } else if (!patrulha) patPos = null;
   // inimigos à espera nas salas: parados, virados para a entrada, um pouco apagados até despertarem
   for (const [sala, especie, ix, iy, elite, ehChefe] of [...aEspera].sort((a, b) => b[3] - a[3] + (a[2] - b[2]))) {
     const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * reforco;
@@ -871,6 +890,7 @@ function desenhar(dt) {
         // o que a sala guarda: quantos inimigos esperam lá, ou o que o objeto dá — para a rota valer a escolha
         const n = porSala[i] || 0, nome = t === 0 || t === 1 || t === 2 ? (n ? `${n} inimigo${n > 1 ? 's' : ''}${t === 1 ? ' + campeão' : ''}` : '') : t === 11 ? '' : SALAS[t][1];
         if (nome) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(t === 13 && chaveCofre[1] ? 'Cofre (você tem a chave)' : nome, lx, ly + 24 * k); }
+        if (patrulha && patrulha.sala === i) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('+ patrulha (' + patrulha.especies.length + ')', lx, ly + (i === chaveCofre[0] && !chaveCofre[1] ? 50 : 37) * k); }
         if (i === chaveCofre[0] && !chaveCofre[1]) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#ffd84a'; ctx.fillText('guardam a chave do cofre', lx, ly + 37 * k); }
         if (DICA_SALA[t] && (larg >= 900 * (window.devicePixelRatio || 1) || i === masm.sala + 1)) { ctx.font = `${9.5 * k}px Georgia`; ctx.fillStyle = '#8fd89f'; ctx.fillText(DICA_SALA[t], lx, ly + 36 * k); }
       }
@@ -1421,6 +1441,7 @@ window.__orbeNaTela = () => {
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
+window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
