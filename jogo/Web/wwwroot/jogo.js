@@ -472,7 +472,7 @@ function cenaDoGrupo(s) {
   return null;
 }
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
-let reordenado = false, camSalto = false;
+let reordenado = false, camSalto = false, camForcar = false;
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 const vizinhas = (a, b) => mapa[a] && mapa[b] && Math.abs(mapa[a][0] - mapa[b][0]) + Math.abs(mapa[a][1] - mapa[b][1]) === 1;
@@ -740,7 +740,7 @@ function desenhar(dt) {
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
-    if (camSalto && zoomModo === 2 && !zoomLivre) { camSalto = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
+    if (camForcar || (camSalto && zoomModo === 2 && !zoomLivre)) { camSalto = false; camForcar = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
     else if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#050305'; ctx.fillRect(0, 0, larg, alt);
@@ -1480,6 +1480,7 @@ window.__orbeNaTela = () => {
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
+window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];

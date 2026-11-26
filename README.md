@@ -36,6 +36,10 @@ Cada espécie erguida como minion tem uma habilidade passiva própria: Esqueleto
 (Fúria de Guerra), Aparição (Incorpórea), Colosso de Ossos (Baluarte) e Rês Profana (Investida). Elas aparecem na ficha
 do minion, na lista do exército e no Bestiário.
 
+Salas mais novas: Forja de Ossos (couraça de ossos para o grupo, visível como uma faixa clara sobre a barra de vida) e
+Ninho (toque para esmagar os ovos e levar Ossos; se ninguém tocar, as crias chocam e a sala vira luta). Dois conjuntos
+Profanos de três peças (Vestes do Coveiro, Garras do Carniceiro), com painel de bônus na ficha do item.
+
 ## Rodar
 
 ```bash
