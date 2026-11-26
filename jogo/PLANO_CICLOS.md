@@ -276,3 +276,4 @@ Dono pediu ciclos a cada 5 minutos.
 108. A patrulha anda pelos corredores (de centro em centro de sala, pelo caminho mais curto) em vez de cortar em linha reta.
 109. Teste do núcleo para a patrulha (104 testes). Doc de design com o ciclo 17 (rota, cofre, patrulha). README com capturas do cofre e da patrulha.
 110. Medição do jogador ativo (robô que toca em tudo e escolhe rota: chave antes do cofre, santuário cedo): chefe do Ato 1 em 0,58 h (ausente 1,04 h), andar 15 em 1,80 h (2,91 h), chefe do Ato 2 em 5,32 h (8,77 h), 4 tentativas no chefe do Ato 1 (7). O ativo perfeito anda ~40% mais rápido; é o teto do 'meio a meio'.
+111. Conferido na tela: 'Cofre trancado: a chave estava em outra sala' (cofre antes da chave) e 'Cofre aberto!' no mesmo teste, sem erros.
