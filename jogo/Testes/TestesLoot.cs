@@ -395,13 +395,14 @@ namespace Necro.Testes
             });
             Teste("sorte: mais itens e almas, e melhores; sem sorte nada muda", () =>
             {
+                var semObjetos = new ConfigJogo { ObjetosPorSala = 0 };   // urnas largam itens sem sorte: fora da conta
                 Func<float, ResultadoExpedicao> rodar = sorte =>
                 {
                     var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 5f; p.Sorte = sorte;
                     var total = new ResultadoExpedicao();
                     for (ulong sem = 1; sem <= 30; sem++)
                     {
-                        var r = ExecutorSemTela.RodarExpedicao(Cfg, p, sem, ModoExpedicao.Avancar, 1, 8);
+                        var r = ExecutorSemTela.RodarExpedicao(semObjetos, p, sem, ModoExpedicao.Avancar, 1, 8);
                         total.Itens.AddRange(r.Itens); total.Almas.AddRange(r.Almas); total.OrbesCaidos += r.OrbesCaidos;
                     }
                     return total;

@@ -158,7 +158,7 @@ namespace Necro.Testes
                 var rng = new Rng(8);
                 var pc = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pc, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Cajado));
                 var pf = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pf, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Foice));
-                var semSalas = new ConfigJogo { ChanceDeSalaEspecial = 0f, ChanceDeSalaVazia = 0f };   // sem baús no caminho: o teste mede só o combate
+                var semSalas = new ConfigJogo { ChanceDeSalaEspecial = 0f, ChanceDeSalaVazia = 0f, ObjetosPorSala = 0 };   // sem baús nem barris no caminho: o teste mede só o combate
                 var sc = new Simulacao(semSalas, pc, 12, ModoExpedicao.Avancar, 1);
                 var sf = new Simulacao(semSalas, pf, 12, ModoExpedicao.Avancar, 1);
                 Afirmar(!sc.NecromanteCorpoACorpo && sf.NecromanteCorpoACorpo, "foice liga o corpo a corpo");
@@ -1238,7 +1238,7 @@ namespace Necro.Testes
                     while (!s.Encerrada && g++ < 1500) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.Dano) { Entidade al = null; foreach (var e in s.Entidades) if (e.Id == ev.Alvo) al = e; if (al != null && al.Faccao == Faccao.Minion && al.Especie == EspecieId.Esqueleto) tot += ev.Valor; } }
                     return tot;
                 }
-                float com = Sofrido(new ConfigJogo { BaluarteReducao = 0.9f }), sem = Sofrido(new ConfigJogo { BaluarteReducao = 0f });
+                float com = Sofrido(new ConfigJogo { BaluarteReducao = 0.9f, ObjetosPorSala = 0 }), sem = Sofrido(new ConfigJogo { BaluarteReducao = 0f, ObjetosPorSala = 0 });
                 Afirmar(com < sem, "o Baluarte deveria reduzir o dano sofrido pelos outros minions (" + com + " vs " + sem + ")");
             });
 
@@ -1322,6 +1322,27 @@ namespace Necro.Testes
                 }
                 Afirmar(viu && morreu, "o único deveria surgir e morrer: " + viu + "/" + morreu);
                 Afirmar(sim.Resultado.Itens.Count > itensAntes, "o único deveria largar um item");
+            });
+
+            Teste("estilo Diablo: salas de combate têm objetos quebráveis; aliados os quebram ao passar e o barril explosivo fere", () =>
+            {
+                var c = new ConfigJogo();
+                var p = Progressao.NovoJogo(c); p.PoderNecromantico = 30f;
+                var sim = new Simulacao(c, p, 31UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; sim.Tick();
+                Afirmar(sim.Objetos.Count >= 3, "o andar deveria ter objetos: " + sim.Objetos.Count);
+                foreach (var o in sim.Objetos) Afirmar(sim.Salas[o.Sala] == TipoSala.Combate || sim.Salas[o.Sala] == TipoSala.Elite, "objeto fora de sala de combate");
+                int guarda = 0; bool viuEvento = false;
+                while (!sim.Encerrada && guarda++ < 20000) { sim.Tick(); foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 21) viuEvento = true; }
+                Afirmar(viuEvento && sim.Resultado.ObjetosQuebrados > 0, "os aliados deveriam quebrar objetos ao lutar: " + sim.Resultado.ObjetosQuebrados);
+                // toque: só vale na sala atual e durante a luta
+                var s2 = new Simulacao(c, Progressao.NovoJogo(c), 31UL, ModoExpedicao.Avancar, 3); s2.Tick();
+                int alvo = -1; guarda = 0;
+                while (alvo < 0 && guarda++ < 3000) { s2.Tick(); if (s2.Fase == FaseExpedicao.EmOnda) for (int i = 0; i < s2.Objetos.Count; i++) if (!s2.Objetos[i].Quebrado && s2.Objetos[i].Sala == s2.SalaAtual) { alvo = i; break; } }
+                Afirmar(alvo >= 0, "nenhum objeto na sala atual para tocar");
+                int outro = -1; for (int i = 0; i < s2.Objetos.Count; i++) if (s2.Objetos[i].Sala != s2.SalaAtual) outro = i;
+                Afirmar(s2.ComandoQuebrar(alvo) && s2.Objetos[alvo].Quebrado, "o toque deveria quebrar o objeto");
+                Afirmar(!s2.ComandoQuebrar(alvo), "não se quebra duas vezes");
+                if (outro >= 0) Afirmar(!s2.ComandoQuebrar(outro), "objeto de outra sala não pode ser quebrado");
             });
 
             RodarLoot();

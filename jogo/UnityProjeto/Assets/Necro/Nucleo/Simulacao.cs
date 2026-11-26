@@ -189,6 +189,7 @@ namespace Necro.Nucleo
             AtualizarEfeitosGlobais();
             AtualizarAmbiente();
             AtualizarPatrulha();
+            AtualizarObjetos();
 
             AtualizarComandosDoJogador();
             AtualizarFeiticosDeItem();
@@ -534,6 +535,7 @@ namespace Necro.Nucleo
             Emitir(new EventoSim { Tipo = TipoEvento.AndarIniciado, Extra = Andar, Alvo = -1, Origem = -1 });
             PlanejarInimigos();
             PlanejarPatrulha();
+            PlanejarObjetos();
             ComecarPelaPrimeiraSala();
         }
 

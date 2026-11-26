@@ -86,6 +86,7 @@ public static partial class Jogo
         if (_sim.PactosOferecidos != null)
             _sb.Append("K ").Append(_sim.PactosOferecidos[0]).Append(' ').Append(_sim.PactosOferecidos[1]).Append(' ').Append(_sim.PactosOferecidos[2]).Append(' ').Append(F(_sim.TempoDaOferta)).Append('\n');
         if (_sim.PactosAtivos.Count > 0) { _sb.Append('A'); foreach (int pa in _sim.PactosAtivos) _sb.Append(' ').Append(pa); _sb.Append('\n'); }
+        foreach (var ob in _sim.Objetos) _sb.Append("Q ").Append(ob.Sala).Append(' ').Append((int)ob.Tipo).Append(' ').Append(F(ob.Pos.X)).Append(' ').Append(F(ob.Pos.Y)).Append(' ').Append(ob.Quebrado ? 1 : 0).Append('\n');
         foreach (var e in _sim.Entidades) if (e.Unico && e.Viva) _sb.Append("U ").Append(e.Id).Append(' ').Append(e.NomeProprio).Append('\n');
         foreach (var e in _sim.Entidades)
             _sb.Append("E ").Append(e.Id).Append(' ').Append(e.Especie).Append(' ').Append(e.Faccao == Faccao.Inimigo ? 1 : 0).Append(' ')
@@ -311,6 +312,7 @@ public static partial class Jogo
     [JSExport] public static void EscolherBencao(int opcao) { _sim.ComandoEscolherBencao(opcao); }
     [JSExport] public static bool IrPara(int sala) { return _sim.ComandoIrPara(sala); }
     [JSExport] public static void Interagir() { _sim.ComandoInteragir(); }
+    [JSExport] public static bool Quebrar(int indice) { return _sim.ComandoQuebrar(indice); }
     [JSExport] public static void Detonar() { _sim.ComandoDetonar(); }
     [JSExport] public static void Frenesi() { _sim.ComandoFrenesi(); }
     [JSExport] public static bool Fundir(int especie, int qualidade) { return Fusao.Fundir(_p, (EspecieId)especie, (Qualidade)qualidade, _cfg) != null; }

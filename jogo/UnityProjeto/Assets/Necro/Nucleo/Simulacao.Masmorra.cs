@@ -227,6 +227,7 @@ namespace Necro.Nucleo
                 if (w == 0 && ChaveNaSala >= 0 && !_chaveRemapeada) { ChaveNaSala = ChaveNaSala == sala ? p : (ChaveNaSala >= p && ChaveNaSala < sala ? ChaveNaSala + 1 : ChaveNaSala); _chaveRemapeada = true; }
                 for (int k = 0; k < PlanoDasOndas[w].Count; k++) PlanoDasOndas[w][k].Sala = s1;
             }
+            for (int q = 0; q < Objetos.Count; q++) { int so = Objetos[q].Sala; Objetos[q].Sala = so == sala ? p : (so >= p && so < sala ? so + 1 : so); }
             for (int a = Onda; a < PlanoDasOndas.Count; a++)
                 for (int b = a + 1; b < PlanoDasOndas.Count; b++)
                     if (_salaDaOnda[b] < _salaDaOnda[a])

@@ -167,6 +167,7 @@ namespace Necro.Nucleo
         public int BausAbertos;
         public int NiveisSecretos;
         public int InteracoesPorToque;
+        public int ObjetosQuebrados;
         public int RotasEscolhidas;
         public int PatrulhasEnfrentadas;
         public int CofresAbertos;

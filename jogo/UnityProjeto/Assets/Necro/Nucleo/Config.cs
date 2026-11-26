@@ -38,7 +38,7 @@ namespace Necro.Nucleo
 
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
-        public float AlivioInicial = 0.88f;
+        public float AlivioInicial = 0.84f;
         public float CrescimentoPorAndar = 0.29f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.105f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.112f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -67,6 +67,10 @@ namespace Necro.Nucleo
         // Campeões: pacote de N da mesma espécie, mais fortes que os comuns (azuis)
         public float ChanceDeCampeoes = 0.3f; public int CampeoesAPartirDoAndar = 3, CampeoesPorPacote = 3;
         public float CampeaoMultVida = 2.2f, CampeaoMultDano = 1.25f, CampeaoPremio = 2.5f, CampeaoCusto = 2f;
+        // Objetos quebráveis das salas de combate (barris, urnas, sarcófagos)
+        public int ObjetosPorSala = 5; public float ObjetoRaioDeQuebra = 1.0f;
+        public float BarrilOssos = 2f, BarrilChanceDeOssos = 0.5f, UrnaOssos = 3f, UrnaChanceDeItem = 0.04f, SarcofagoOssos = 8f, SarcofagoChanceDeMorto = 0.45f;
+        public float BarrilExplosivoRaio = 2.2f, BarrilExplosivoDano = 0.35f, BarrilExplosivoDanoElite = 0.08f, BarrilExplosivoDanoAliado = 0.06f;
         // Únicos: um monstro com nome próprio e séquito da mesma espécie, num ponto sorteado do andar (como no Diablo)
         public float ChanceDeUnico = 0.5f; public int UnicosAPartirDoAndar = 4, SequitoDoUnico = 4;
         public float UnicoMultVida = 1.35f, SequitoMultVida = 1.3f, UnicoCusto = 0.8f;   // o único já é elite; isto multiplica por cima

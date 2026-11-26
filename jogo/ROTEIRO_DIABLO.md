@@ -17,7 +17,7 @@ battle.net clássico (pacotes de campeões/únicos).
 ## Fatias (uma por ciclo, sempre com teste + portão + captura)
 1. [feito] Hordas maiores em matilhas + pacotes de Campeões (azuis).
 2. [feito] Únicos com nome próprio e séquito (nome dourado sobre a barra; 1-2 por andar a partir do andar 4), com prêmio garantido.
-3. Objetos quebráveis dentro das salas: barris (ossos/explosivos), sarcófagos (esqueleto sai ou tesouro), urnas — os minions quebram ao passar.
+3. [feito] Objetos quebráveis dentro das salas: barris (ossos/explosivos), sarcófagos (esqueleto sai ou tesouro), urnas — os minions quebram ao passar.
 4. Luz e névoa: raio de luz ao redor do grupo; salas não visitadas escuras no mapa (silhueta), reveladas ao entrar; inimigos fora da luz invisíveis.
 5. Ouro como moeda própria (cai dos monstros/objetos) + Mercador da cidade: comprar, vender, reparar.
 6. Itens não identificados (identificar custa ouro ou pergaminho) e durabilidade com reparo.

@@ -285,7 +285,7 @@ function aviso(texto) {
 
 function ler(texto) {
   chaveCofre = [-1, false]; patrulha = null;
-  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null; aEspera = [];
+  const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null; aEspera = []; quebraveis = [];
   for (const ln of texto.split('\n')) {
     if (!ln) continue;
     const p = ln.split(' ');
@@ -322,6 +322,7 @@ function ler(texto) {
       case 'G': lerMapa(p); break;
       case 'R': patrulha = { sala: +p[1], especies: p.slice(2) }; break;
       case 'C': chaveCofre = [+p[1], p[2] === '1']; break;
+      case 'Q': quebraveis.push([+p[1], +p[2], +p[3], +p[4], p[5] === '1']); break;
       case 'U': nomesUnicos.set(+p[1], p.slice(2).join(' ')); break;
       case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1', p[7] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
@@ -388,6 +389,16 @@ function evento(v) {
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '16') { const g = estado.get(+v[3]); if (g) { g.flash = 0.18; numeros.push({ x: g.x, y: g.y, txt: 'Aparou!', cor: '#cfe6ff', t: 1, amigo: true }); for (let i = 0; i < 6; i++) particulas.push([g.x, g.y, 0.9, rnd(-2, 2), rnd(-1.5, 1.5), rnd(1, 3), '#e8f2ff', 0.35]); } som('golpe'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '17') { const g = estado.get(+v[3]); if (g) { g.sede = tempoSim + (+v[4] || 4); numeros.push({ x: g.x, y: g.y, txt: 'Sede!', cor: '#ff8a6a', t: 1, amigo: true }); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '21') {   // objeto quebrado: v[2] = índice, v[3] = 1 item / 2 morto se levanta, v[4] = Ossos
+    const q = quebraveis[+v[2]], qx = q ? q[2] : 10, qy = q ? q[3] : 6, tq = q ? q[1] : 0, val = +v[4] || 0;
+    if (q) q[4] = true;
+    for (let i = 0; i < 9; i++) particulas.push([qx, qy, 0.4, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(2, 6), tq === 2 ? '#8a8880' : tq === 3 ? '#b08a5a' : '#6a4a2a', rnd(0.3, 0.7)]);
+    if (tq === 1) { tremor = Math.max(tremor, 0.3); for (let i = 0; i < 16; i++) particulas.push([qx, qy, 0.5, rnd(-4, 4), rnd(-2.5, 2.5), rnd(3, 9), i % 2 ? '#ff9a40' : '#ffd070', rnd(0.3, 0.7)]); som('explosao'); } else som('golpe');
+    if (val > 0) numeros.push({ x: qx, y: qy, txt: '+' + Math.round(val), cor: '#e8dcb0', t: 1, amigo: true });
+    if (v[3] === '2') { aviso('O morto se levanta!'); numeros.push({ x: qx, y: qy, txt: 'Morto-vivo!', cor: '#ff8a6a', t: 1, amigo: true }); }
+    else if (v[3] === '1') numeros.push({ x: qx, y: qy - 0.6, txt: 'Item!', cor: '#9ad0ff', t: 1, amigo: true });
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
@@ -576,6 +587,7 @@ const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos 
 const DICA_SALA = { 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
+let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
@@ -680,6 +692,34 @@ function desenharObjeto(dt) {
   if (!objeto) return;
   const o = objeto; o.t += dt; if (o.aberto) { o.aberto += dt; if (o.aberto > 1.6 && masm.fase !== 'Explorando') { objeto = null; return; } }
   { const [px, py] = naTela(o.x, o.y); pintarObjeto(o, px, py); }
+}
+// barril (0), barril explosivo (1), sarcófago (2), urna (3)
+function pintarQuebravel(tipo, px, py, quebrado, sem) {
+  ctx.save(); ctx.translate(px, py); ctx.scale(1.4, 1.4);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, 2, tipo === 2 ? 30 : 15, tipo === 2 ? 11 : 6, 0, 0, 7); ctx.fill();
+  if (quebrado) {
+    // destroços: tábuas, cacos ou a tampa caída
+    ctx.fillStyle = tipo === 2 ? '#5a5650' : tipo === 3 ? '#8a6a48' : '#4a3422';
+    for (let q = 0; q < 5; q++) { const a0 = sem + q * 1.9, r = 6 + (q * 5) % 13; ctx.save(); ctx.translate(Math.cos(a0) * r, Math.sin(a0) * r * 0.45); ctx.rotate(a0); ctx.fillRect(-6, -1.5, 12, 3); ctx.restore(); }
+    if (tipo === 1) { ctx.fillStyle = 'rgba(20,14,10,0.55)'; ctx.beginPath(); ctx.ellipse(0, 0, 26, 11, 0, 0, 7); ctx.fill(); }
+    if (tipo === 2) { ctx.fillStyle = '#3a3834'; ctx.fillRect(-26, -10, 52, 10); ctx.fillStyle = '#0c0a0a'; ctx.fillRect(-22, -9, 44, 6); }
+  } else if (tipo === 0 || tipo === 1) {
+    const g = ctx.createLinearGradient(-12, 0, 12, 0); g.addColorStop(0, '#3a2616'); g.addColorStop(0.5, tipo === 1 ? '#8a3a22' : '#7a5632'); g.addColorStop(1, '#2c1c10');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.quadraticCurveTo(-14, -15, -9, -30); ctx.lineTo(9, -30); ctx.quadraticCurveTo(14, -15, 10, 0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = tipo === 1 ? '#5a2414' : '#5a4026'; ctx.beginPath(); ctx.ellipse(0, -30, 9, 3.5, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#1a1410'; ctx.lineWidth = 2; for (const h of [-7, -22]) { ctx.beginPath(); ctx.moveTo(-12, h); ctx.quadraticCurveTo(0, h + 4, 12, h); ctx.stroke(); }
+    if (tipo === 1) { ctx.fillStyle = `rgba(255,${120 + 60 * Math.sin(tempoSim * 5 + sem) | 0},40,0.9)`; ctx.beginPath(); ctx.arc(0, -34, 2.6, 0, 7); ctx.fill(); ctx.fillStyle = '#e8c070'; ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'center'; ctx.fillText('✹', 0, -12); }
+  } else if (tipo === 3) {
+    const g = ctx.createLinearGradient(-9, 0, 9, 0); g.addColorStop(0, '#5a4028'); g.addColorStop(0.45, '#b08a5a'); g.addColorStop(1, '#3a2818');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-5, 0); ctx.quadraticCurveTo(-13, -10, -6, -20); ctx.lineTo(-4, -25); ctx.lineTo(4, -25); ctx.lineTo(6, -20); ctx.quadraticCurveTo(13, -10, 5, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#2a1c10'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.beginPath(); ctx.moveTo(-8, -14); ctx.lineTo(8, -14); ctx.stroke();
+  } else {
+    // sarcófago de pedra com tampa
+    ctx.fillStyle = '#4a4844'; ctx.beginPath(); ctx.moveTo(-28, -2); ctx.lineTo(0, 10); ctx.lineTo(28, -2); ctx.lineTo(28, -16); ctx.lineTo(0, -4); ctx.lineTo(-28, -16); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6a6862'; ctx.beginPath(); ctx.moveTo(-28, -16); ctx.lineTo(0, -28); ctx.lineTo(28, -16); ctx.lineTo(0, -4); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#22201e'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, -9); ctx.moveTo(-9, -18); ctx.lineTo(9, -18); ctx.stroke();
+  }
+  ctx.restore();
 }
 function pintarObjeto(o, px, py) {
   const ab = o.aberto > 0, pulso = 0.6 + 0.4 * Math.sin(o.t * 5);
@@ -844,6 +884,12 @@ function desenhar(dt) {
     const [tx2, ty2] = W(patPos[0], patPos[1]), kk = 1 / esc;
     ctx.textAlign = 'center'; ctx.font = `${11 * kk}px Georgia`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('patrulha', tx2, ty2 - 100 * reforco - 6 * kk);
   } else if (!patrulha) patPos = null;
+  // barris, urnas e sarcófagos de todas as salas (os quebrados viram destroços)
+  for (const [sala, tipoQ, qx, qy, quebrado] of quebraveis) {
+    const o = offDaSala(sala), [px, py] = W(o[0] + qx, o[1] + qy);
+    if (px < camX - 200 || px > camX + visivel + 200 || py < camY - 200 || py > camY + visAlt + 200) continue;
+    pintarQuebravel(tipoQ, px, py, quebrado, qx * 7 + qy * 13);
+  }
   // inimigos à espera nas salas: parados, virados para a entrada, um pouco apagados até despertarem
   for (const [sala, especie, ix, iy, elite, ehChefe] of [...aEspera].sort((a, b) => b[3] - a[3] + (a[2] - b[2]))) {
     const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * reforco;
@@ -1452,6 +1498,12 @@ function toqueNaArena(ev) {
       return;
     }
   }
+  // toque num barril, urna ou sarcófago da sala atual: quebra na hora
+  if (masm.fase === 'EmOnda') {
+    let qi = -1, mq = 34 * 34;
+    quebraveis.forEach((q, i) => { if (q[4] || q[0] !== masm.sala) return; const [px, py] = naTela(q[2], q[3]), d = (px - ax) ** 2 + (py - 14 - ay) ** 2; if (d < mq) { mq = d; qi = i; } });
+    if (qi >= 0 && J.Quebrar(qi)) { som('toque'); return; }
+  }
   let melhor = null, md = 70 * 70;
   for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); const d = (px - ax) ** 2 + (py - 30 - ay) ** 2; if (d < md) { md = d; melhor = o; } }
   if (melhor) { J.Ceifar(melhor[2]); aprendeu('orbe'); try { localStorage.setItem(CHAVE + '-dica', '1'); } catch (e) { /* tudo bem */ } return; }
@@ -1513,6 +1565,7 @@ window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no 
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
 window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };
+window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]).length;
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];

@@ -150,6 +150,7 @@ namespace Necro.Testes
                     if (sant > sim.SalaAtual + 1 && sant < sim.Salas.Count - 1 && sim.BencaoAtual == Bencao.Nenhuma && !(cofre > sim.SalaAtual && !sim.TemChave)) sim.ComandoIrPara(sant);
                 }
                 if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();
+                if (sim.Fase == FaseExpedicao.EmOnda && sim.TickAtual % 25 == 0) for (int qi = 0; qi < sim.Objetos.Count; qi++) if (sim.ComandoQuebrar(qi)) break;   // quebra um barril de vez em quando
                 if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao(0);   // toca no baú/santuário/fonte
                 // interrompe o Golpe Brutal: marca quem está armando (com meio segundo de reação)
                 for (int i = 0; i < sim.Entidades.Count; i++)
