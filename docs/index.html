@@ -28,6 +28,7 @@
   #salas svg { max-width:100%; height:auto; }
   #licao { position:absolute; left:8px; right:8px; bottom:58px; padding:6px 10px; text-align:center; font-size:13px; color:#fff; background:#2a1216e6; border:1px solid var(--ouro); border-radius:14px; pointer-events:none; animation:pulso 1.2s infinite; }
   #licao[hidden] { display:none; }
+  #b-zoom { position:absolute; left:6px; bottom:12px; padding:6px 9px; font-size:12px; background:#1b1317e6; border-color:var(--ouro); z-index:2; }
   #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
   .diario div { font-size:13px; padding:4px 0; border-bottom:1px solid #2a1f22; } .diario small { color:var(--fraco); margin-right:6px; }
   @media (max-width:1050px) {
@@ -194,6 +195,7 @@
   <div id="t-pactos"></div>
   <div id="salas"></div>
   <div id="licao" hidden></div>
+  <button id="b-zoom" title="Aproximar ou ver o andar inteiro"></button>
   <div id="t-sala"></div>
   <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
   <div id="resumo" hidden></div>
@@ -238,7 +240,7 @@
   <div class="tr"><b>Santuário</b>: oferece três bênçãos; escolha uma em 4 segundos (vem 50% mais forte) ou o necromante pega uma ao acaso.</div>
   <div class="tr"><b>Baú, fonte, almas presas</b>: entre os combates o necromante encontra salas especiais. Ele resolve sozinho; se você tocar no objeto antes, rende 50% a mais (e o baú nunca é um mímico).</div>
   <div class="tr"><b>Mercador</b>: troca Ossos da própria expedição por um item (40% de desconto com o seu toque). <b>Altar de sangue</b>: cobra 15% da vida de todos por +80% de chance de alma no andar; se você tocar, não cobra. <b>Armadilha</b>: fere todo o grupo; tocando nela antes, você a desarma e ainda leva Ossos.</div>
-  <div class="tr"><b>Mapa</b>: cada andar é uma masmorra sorteada. O grupo explora todas as salas antes de descer. Toque no mapa do canto para vê-lo inteiro.</div>
+  <div class="tr"><b>Masmorra</b>: cada andar é uma masmorra sorteada, inteira à vista. O grupo caminha de sala em sala pelos corredores e explora todas antes de descer. O botão ⤢ alterna entre perto, médio e o andar inteiro.</div>
   <div class="tr"><b>Sala do chefe</b>: cada luta tem um ambiente sorteado (lava, névoa pútrida, geada, desabamento) que vale para os dois lados.</div>
   <h3>As cores</h3>
   <div class="tr">Anel dos seus minions: <span class="q0">cinza Fraca</span>, <span class="q1">branco Comum</span>, <span class="q2">azul Vigorosa</span>, <span class="q3">dourado Ancestral</span>, <span class="q4">vermelho Profana</span>.</div>

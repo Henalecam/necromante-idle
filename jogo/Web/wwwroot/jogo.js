@@ -14,6 +14,11 @@ const monstros = {};
 // ---- vista isométrica (losango 2:1, como nos ARPGs clássicos): x da simulação desce para a direita, y sobe para a direita ----
 const K = 40, PAREDE = 150, OX = 40 + 2 * K, OY = PAREDE + 20 + 7 * K, CW = OX + 34 * K + 40, CH = OY + 11 * K + 40, VISTA_H = 640;
 const P = (x, y) => [OX + (x + y) * K, OY + (x - y) * K / 2];
+// o andar inteiro é um só mundo: cada sala fica na sua célula do mapa, ligada às vizinhas por corredores
+const PASSO_X = 33, PASSO_Y = 25;                      // distância entre salas vizinhas, em unidades da simulação
+const W = (x, y) => [(x + y) * K, (x - y) * K / 2];
+const offDaSala = (i) => (mapa[i] ? [mapa[i][0] * PASSO_X, mapa[i][1] * PASSO_Y] : [0, 0]);
+let so = [0, 0];                                       // deslocamento da sala atual no mundo
 let arena, chao, sangue, sctx;
 
 async function carregarArte() {
@@ -43,28 +48,28 @@ function monstro(especie, elite) {
 function direcao(dx, dy) { return Math.round(((Math.atan2(dx + dy, dx - dy) * 180 / Math.PI + 360) % 360) / 45) % 8; }
 function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie === 'CarcereiroDeAlmas' ? 'O Carcereiro de Almas' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
 function escHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-function naTela(x, y) { return P(x, y); }
+function naTela(x, y) { return W(x + so[0], y + so[1]); }
 const rnd = (a, b) => a + Math.random() * (b - a);
 // ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
 const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
-function construirSala() {
-  if (!chao) return;
-  const c = chao.getContext('2d'), tipo = masm.tipos[masm.sala] || 0, ato = Math.floor((Math.max(1, andar) - 1) / 10);
-  let sem = (andar * 131 + masm.sala * 17 + 7) >>> 0; const r01 = () => { sem = (sem + 0x6D2B79F5) >>> 0; let t = sem; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
+  if (!alvo) return;
+  const c = alvo.getContext('2d'), tipo = masm.tipos[idx] || 0, ato = Math.floor((Math.max(1, andar) - 1) / 10);
+  let sem = (andar * 131 + idx * 17 + 7) >>> 0; const r01 = () => { sem = (sem + 0x6D2B79F5) >>> 0; let t = sem; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   // Ato 2 em diante: as criptas alagadas. Pedra esverdeada, limo, fogo-fátuo no lugar das tochas e raízes nas paredes
   const alagado = ato >= 1, fogo = alagado ? '90,255,170' : '255,150,60', fogoForte = alagado ? '120,255,190' : '255,170,70';
   let base = TEMA[tipo] || [58, 53, 50]; if (alagado) base = TEMA[tipo] ? TEMA[tipo].map((v, i) => Math.round(v * [0.7, 0.95, 0.9][i])) : [38, 56, 52];
   base = base.map((v) => Math.round(v * 1.3));
-  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#050305'; c.fillRect(0, 0, CW, CH);
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, alvo.width, alvo.height); c.setTransform(escala, 0, 0, escala, 0, 0);
   const poli = (pts, cor, borda) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (cor) { c.fillStyle = cor; c.fill(); } if (borda) { c.strokeStyle = borda; c.stroke(); } };
   // portas: vizinhos no mapa (pai e filhos). leste = borda da frente à direita; oeste = parede esquerda; norte = parede direita; sul = borda da frente à esquerda
-  const eu = mapa[masm.sala], portas = { l: false, o: false, n: false, s: false };
-  if (eu) mapa.forEach((m, i) => { if (i === masm.sala) return; const liga = m[2] === masm.sala || eu[2] === i; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
+  const eu = mapa[idx], portas = { l: false, o: false, n: false, s: false };
+  if (eu) mapa.forEach((m, i) => { if (i === idx) return; const liga = m[2] === idx || eu[2] === i; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
   // por qual porta o grupo sai: para a próxima sala se for vizinha; senão volta pelo caminho de onde veio
-  let saida = ''; const prox = mapa[masm.sala + 1];
-  if (eu) { const alvo = prox && prox[2] === masm.sala ? prox : prox && eu[2] >= 0 ? mapa[eu[2]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
-  saidaAtual = saida;
-  const ultima = masm.sala >= masm.tipos.length - 1 && tipo !== 2;
+  let saida = ''; const prox = mapa[idx + 1];
+  if (eu) { const alvo = prox && prox[2] === idx ? prox : prox && eu[2] >= 0 ? mapa[eu[2]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
+  if (idx !== masm.sala) saida = ''; else saidaAtual = saida;   // só a sala em que o grupo está mostra a saída acesa
+  const ultima = idx >= masm.tipos.length - 1 && tipo !== 2;
   // espessura da laje nas duas bordas da frente
   const A = P(-1, -1), B = P(21, -1), C = P(21, 13), D = P(-1, 13), esp = 26;
   poli([A, B, [B[0], B[1] + esp], [A[0], A[1] + esp]], '#141012'); poli([B, C, [C[0], C[1] + esp], [B[0], B[1] + esp]], '#0e0b0d');
@@ -144,7 +149,7 @@ function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) 
 
 // marcas no chão conforme a morte: o jeito de matar fica escrito na arena
 function marcaDeCondicao(x, y, cond, grande) {
-  const [px, py] = naTela(x, y), r = grande ? 46 : 28;
+  const [px, py] = P(x, y), r = grande ? 46 : 28;
   if (cond === 'Queimado') {
     const g = sctx.createRadialGradient(px, py, 2, px, py, r); g.addColorStop(0, 'rgba(8,6,5,0.85)'); g.addColorStop(0.6, 'rgba(20,12,8,0.5)'); g.addColorStop(1, 'rgba(20,12,8,0)');
     sctx.save(); sctx.translate(px, py); sctx.scale(1, 0.5); sctx.translate(-px, -py); sctx.fillStyle = g; sctx.beginPath(); sctx.arc(px, py, r, 0, 7); sctx.fill(); sctx.restore();
@@ -163,7 +168,7 @@ function marcaDeCondicao(x, y, cond, grande) {
   }
 }
 function pilhaDeOssos(x, y) {
-  const [px, py] = naTela(x, y);
+  const [px, py] = P(x, y);
   for (let i = 0; i < 6; i++) {
     const a = rnd(0, 3.14), l = rnd(5, 11), ox = rnd(-12, 12), oy = rnd(-5, 5);
     sctx.strokeStyle = `rgba(${190 + rnd(-20, 20) | 0},${175 + rnd(-20, 20) | 0},140,0.75)`; sctx.lineWidth = 2.2; sctx.lineCap = 'round';
@@ -186,7 +191,7 @@ function ambiente(dt, larg, alt) {
   else if (masm.amb === 3) tom = 'rgba(120,180,255,0.14)';
   else if (masm.amb === 4) tom = 'rgba(90,80,70,0.14)';
   if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
-  if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, 1.25 * (1 - Math.abs(2 * transicao - 1)))})`; ctx.fillRect(0, 0, larg, alt); }
+  if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${transicao * transicao})`; ctx.fillRect(0, 0, larg, alt); }
   ctx.globalCompositeOperation = 'lighter';
   for (const p of poeira) {
     p.y -= dt * 0.02 * p.v * (p.brasa ? 2.2 : 1); p.x += dt * 0.008 * Math.sin(tempoSim * 0.7 + p.z * 9);
@@ -202,7 +207,7 @@ function ambiente(dt, larg, alt) {
   }
 }
 function mancha(x, y, raio, n, cor = [70, 4, 8]) {
-  const [px, py] = naTela(x, y);
+  const [px, py] = P(x, y);
   for (let i = 0; i < n; i++) {
     const ox = gauss() * raio * 0.6, oy = gauss() * raio * 0.3, r = rnd(raio * 0.15, raio * 0.6), k = rnd(0.6, 1.1);
     sctx.fillStyle = `rgba(${cor[0] * k | 0},${cor[1] * k | 0},${cor[2] * k | 0},${rnd(0.6, 0.9)})`;
@@ -440,6 +445,46 @@ function quadro(m, acao, dir, tempo) {
 }
 
 let saidaAtual = '', viagem = [1, 0];
+// ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
+let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2;   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
+try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
+function caminhoNoMapa(a, b) {      // salas entre a e b, pela árvore
+  const ida = [a], volta = [b]; let x = a, y = b, guarda = 0;
+  while (x !== y && guarda++ < 64) { if (x > y) { x = mapa[x] ? mapa[x][2] : -1; ida.push(x); } else { y = mapa[y] ? mapa[y][2] : -1; volta.push(y); } if (x < 0 || y < 0) return [a, b]; }
+  volta.pop(); return ida.concat(volta.reverse());
+}
+function iniciarViagem(de, para) {
+  if (!mapa[de] || !mapa[para]) { viag = null; return; }
+  const cam = caminhoNoMapa(de, para), pts = [];
+  const centro = (i, x, y) => { const o = offDaSala(i); return [o[0] + x, o[1] + y]; };
+  pts.push(centro(de, 5, 6));
+  for (let k = 0; k + 1 < cam.length; k++) {
+    const a = cam[k], b = cam[k + 1];
+    if (mapa[a][1] !== mapa[b][1]) { pts.push(centro(a, 10, 6)); pts.push(centro(b, 10, 6)); }   // corredor vertical: passa pelo eixo da porta
+    else pts.push(centro(b, 5, 6));
+  }
+  pts.push(centro(para, 5, 6));
+  let total = 0; const seg = []; for (let k = 0; k + 1 < pts.length; k++) { const d = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); seg.push(d); total += d; }
+  const passos = cam.length - 1, T = Math.min(2.9, 0.8 + 0.7 * passos) * 0.95;   // igual a Config.ViagemBase/PorPassagem/Maxima
+  viag = { pts, seg, total, t0: tempoSim, T, fim: centro(para, 5, 6) };
+}
+// deslocamento (em unidades da simulação) dos aliados em relação à posição final, e para onde olham
+function deltaDaViagem() {
+  if (!viag) return null;
+  const t = (tempoSim - viag.t0) / viag.T; if (t >= 1 || viag.total < 0.01) { viag = null; return null; }
+  let d = viag.total * (t * t * (3 - 2 * t)), k = 0; while (k < viag.seg.length - 1 && d > viag.seg[k]) { d -= viag.seg[k]; k++; }
+  const a = viag.pts[k], b = viag.pts[k + 1], f = viag.seg[k] > 0 ? d / viag.seg[k] : 1;
+  return [a[0] + (b[0] - a[0]) * f - viag.fim[0], a[1] + (b[1] - a[1]) * f - viag.fim[1], b[0] - a[0], b[1] - a[1]];
+}
+function reconstruirMundo() {
+  salasCv = mapa.map((m, i) => { const cv = document.createElement('canvas'); cv.width = CW / 2; cv.height = CH / 2; construirSala(i, cv, 0.5); return cv; });
+  construirSala(); sctx.clearRect(0, 0, CW, CH);
+}
+function limitesDoMundo() {
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  mapa.forEach((m, i) => { const o = offDaSala(i); for (const [x, y] of [[-1, -1], [21, -1], [21, 13], [-1, 13]]) { const [px, py] = W(o[0] + x, o[1] + y); x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py - PAREDE); y1 = Math.max(y1, py + 30); } });
+  return mapa.length ? [x0, y0, x1, y1] : [0, 0, CW, CH];
+}
 // ---- campeões: todo elite ganha nome próprio e epíteto conforme os modificadores ----
 const campeoes = new Map();
 const NOME_A = ['Gor', 'Vel', 'Mor', 'Kaz', 'Ul', 'Thar', 'Bel', 'Nox', 'Sar', 'Dru', 'Hex', 'Ruk', 'Zul', 'Ael', 'Org'], NOME_B = ['vax', 'drin', 'goth', 'mund', 'rak', 'thas', 'zeth', 'gan', 'vor', 'lith', 'mor', 'kul', 'nar', 'dûm', 'iel'];
@@ -455,7 +500,7 @@ const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () =>
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
   ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
   ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
-  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Toque no mapa do canto para ver o andar inteiro', () => mapa.length >= 4]];
+  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Use o botão ⤢ para aproximar ou ver o andar inteiro', () => mapa.length >= 4]];
 let licoes = {}; try { licoes = JSON.parse(localStorage.getItem('necromante-idle-save-v1-licoes') || '{}'); } catch (e) { /* começa do zero */ }
 function aprendeu(k) { if (licoes[k]) return; licoes[k] = 1; try { localStorage.setItem('necromante-idle-save-v1-licoes', JSON.stringify(licoes)); } catch (e) { /* tudo bem */ } }
 function atualizarLicao() {
@@ -475,8 +520,11 @@ function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.
 function lerMasmorra(p) {
   const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
-  if (masm.sala !== antes && !silencio) { som('porta'); transicao = 1; objeto = null; viagem = masm.sala === 0 ? [1, 0] : ({ l: [1, 0], o: [-1, 0], n: [0, 1], s: [0, -1] }[saidaAtual] || [1, 0]); }
-  if (masm.sala !== antes) salaSuja = true;
+  if (masm.sala !== antes) {
+    objeto = null;
+    if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; if (!silencio) transicao = 1; }     // andar novo: tudo de novo, com um escurecer só aqui
+    else { assar = antes; salaSuja = true; if (!silencio) { som('porta'); iniciarViagem(antes, masm.sala); } }
+  }
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
   if (masm.secreto && !secAntes && !silencio) { som('secreto'); aviso('NÍVEL SECRETO · ' + NOME_SECRETO[masm.qualSecreto]); clarao = 0.8; tremor = 0.4; }
   const t = masm.tipos[masm.sala], rot = (t === undefined ? '' : `Sala ${masm.sala + 1}/${masm.tipos.length} · ${SALAS[t][1]}`) + (masm.amb ? ' · ' + AMBIENTES[masm.amb][0] : '') + (masm.bencao ? ' · Bênção: ' + BENCAOS[masm.bencao].split(':')[0] : '');
@@ -485,9 +533,10 @@ function lerMasmorra(p) {
 let mapaChave = '';
 function lerMapa(p) {
   const m = []; for (let i = 1; i + 2 < p.length; i += 3) m.push([+p[i], +p[i + 1], +p[i + 2]]);
-  const chave = p.join(' ') + '|' + masm.sala + '|' + masm.tipos.join(',');
+  const geo = p.join(' ') + '|' + masm.tipos.join(',') + '|' + andar, chave = geo + '|' + masm.sala;
+  if (geo !== lerMapa.geo) { lerMapa.geo = geo; mapa = m; mapaSujo = true; }
   if (chave === mapaChave) return;
-  mapaChave = chave; mapa = m; salaSuja = true;
+  mapaChave = chave; mapa = m;
   $('salas').innerHTML = mapaSvg(13, false);
   if (!$('mapa-grande').hidden) $('mapa-corpo').innerHTML = mapaGrandeHtml();
 }
@@ -501,7 +550,7 @@ function mapaSvg(c, rotulos) {
   mapa.forEach((m, i) => {
     const [x, y] = pos(m), real = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
     // névoa: só se conhece o que já foi visitado, a sala seguinte e o covil do chefe
-    const oculto = i > masm.sala + 1 && real !== 2, t = oculto ? 13 : real;
+    const t = real;   // visão completa do andar: todas as salas conhecidas desde a entrada
     const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
     h += `<rect x="${x}" y="${y}" width="${c}" height="${c}" rx="${c * 0.18}" fill="${atual ? '#5a1a20' : feita ? '#241a1d' : '#120c0f'}" stroke="${atual ? '#ffd84a' : feita ? '#5c4c30' : '#4a3a3c'}" stroke-width="${atual ? 2 : 1}"><title>${SALAS[t][1]}</title></rect>`;
     h += `<text x="${x + c / 2}" y="${y + c * 0.72}" text-anchor="middle" font-size="${c * 0.62}" fill="${cor}" opacity="${feita ? 0.4 : 1}">${SALAS[t][0]}</text>`;
@@ -512,7 +561,7 @@ function mapaSvg(c, rotulos) {
 function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
-    `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer; o que há nas salas distantes só se descobre chegando perto.</p>` +
+    `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
     '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
 }
 function eventoDeSala(tipo, v, x, y) {
@@ -589,23 +638,56 @@ function desenharObjeto(dt) {
 }
 try { dica = localStorage.getItem(CHAVE + '-dica') === '1'; } catch (e) { /* sem armazenamento */ }
 function desenhar(dt) {
-  if (salaSuja && transicao <= 0.5) { salaSuja = false; limparArena(); construirSala(); }
-  const larg = tela.width, alt = tela.height, esc = alt / VISTA_H, visivel = larg / esc;
+  if (mapaSujo && mapa.length) { mapaSujo = false; salaSuja = false; assar = -1; so = offDaSala(masm.sala); limparArena(true); reconstruirMundo(); }
+  if (salaSuja) {
+    salaSuja = false;
+    // o sangue da sala que ficou para trás passa a fazer parte dela; a sala nova ganha o chão em detalhe
+    if (assar >= 0 && salasCv[assar]) { const cv = salasCv[assar], c2 = cv.getContext('2d'); construirSala(assar, cv, 0.5); c2.setTransform(1, 0, 0, 1, 0, 0); c2.drawImage(sangue, 0, 0, cv.width, cv.height); }
+    assar = -1; mortos.clear(); cadaverDe.clear(); sctx.clearRect(0, 0, CW, CH);
+    so = offDaSala(masm.sala); construirSala();
+  }
+  const dvg = deltaDaViagem();
+  const larg = tela.width, alt = tela.height, escPerto = alt / VISTA_H;
+  const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt / (lim[3] - lim[1] + 160));
+  const escAlvo = zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5);
+  escAtual += (escAlvo - escAtual) * Math.min(1, dt * 4); if (Math.abs(escAlvo - escAtual) < 0.0005) escAtual = escAlvo;
+  const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(2.4, (escPerto * 0.55) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
   {
     let sx = 0, sy = 0, n = 0;
-    for (const s of estado.values()) if (s.viva) { const [px, py] = naTela(s.rx, s.ry), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }
-    for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; }
-    if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; }
-    const c0 = P(10, 6), cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
-    let ax = visivel >= CW ? (CW - visivel) / 2 : Math.max(0, Math.min(CW - visivel, cx - visivel / 2));
-    let ay = VISTA_H >= CH ? (CH - VISTA_H) / 2 : Math.max(0, Math.min(CH - VISTA_H, cy - VISTA_H * 0.56));
-    const kc = Math.min(1, dt * 2.5); camX += (ax - camX) * kc; camY += (ay - camY) * kc;
+    for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }
+    if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
+    const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
+    if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.06; }
+    const ax = cx - visivel / 2, ay = cy - visAlt * 0.56, kc = Math.min(1, dt * 3);
+    if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#050305'; ctx.fillRect(0, 0, larg, alt);
   const tx = tremor > 0 ? rnd(-1, 1) * tremor * 14 : 0, ty = tremor > 0 ? rnd(-1, 1) * tremor * 9 : 0; tremor = Math.max(0, tremor - dt);
   ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
-  ctx.drawImage(chao, 0, 0); ctx.drawImage(sangue, 0, 0);
-  if (transicao > 0) transicao = Math.max(0, transicao - dt * 1.1);
+  // corredores: lajes entre as portas de salas vizinhas
+  mapa.forEach((m, i) => {
+    if (m[2] < 0 || !mapa[m[2]]) return;
+    const a = offDaSala(i), b = offDaSala(m[2]), percorrido = i <= masm.sala;
+    let q;
+    if (a[1] === b[1]) { const x0 = Math.min(a[0], b[0]) + 20.6, x1 = Math.max(a[0], b[0]) - 0.6; q = [[x0, a[1] + 3.6], [x1, a[1] + 3.6], [x1, a[1] + 8.4], [x0, a[1] + 8.4]]; }
+    else { const y0 = Math.min(a[1], b[1]) + 12.6, y1 = Math.max(a[1], b[1]) - 0.6; q = [[a[0] + 7.6, y0], [a[0] + 12.4, y0], [a[0] + 12.4, y1], [a[0] + 7.6, y1]]; }
+    const pt = q.map(([x, y]) => W(x, y));
+    ctx.beginPath(); pt.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
+    ctx.fillStyle = percorrido ? '#3a3432' : '#2a2626'; ctx.fill(); ctx.strokeStyle = '#0a0808'; ctx.lineWidth = 3; ctx.stroke();
+    // juntas das lajes
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    for (let f = 0.2; f < 1; f += 0.2) { const p0 = [pt[0][0] + (pt[1][0] - pt[0][0]) * f, pt[0][1] + (pt[1][1] - pt[0][1]) * f], p1 = [pt[3][0] + (pt[2][0] - pt[3][0]) * f, pt[3][1] + (pt[2][1] - pt[3][1]) * f]; ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+  });
+  // salas, das do fundo para as da frente
+  const ordem = mapa.map((m, i) => i).sort((a, b) => W(...offDaSala(a))[1] - W(...offDaSala(b))[1]);
+  for (const i of ordem) {
+    const o = offDaSala(i), [wx, wy] = W(o[0], o[1]);
+    if (wx - OX > camX + visivel || wx - OX + CW < camX || wy - OY > camY + visAlt || wy - OY + CH < camY) continue;   // fora da tela
+    if (i === masm.sala) { ctx.drawImage(chao, wx - OX, wy - OY); ctx.drawImage(sangue, wx - OX, wy - OY); }
+    else if (salasCv[i]) { if (i > masm.sala) ctx.globalAlpha = 0.8; ctx.drawImage(salasCv[i], wx - OX, wy - OY, CW, CH); ctx.globalAlpha = 1; }
+  }
+  if (!mapa.length) { ctx.drawImage(chao, -OX, -OY); ctx.drawImage(sangue, -OX, -OY); }
+  if (transicao > 0) transicao = Math.max(0, transicao - dt * 1.6);
   desenharObjeto(dt);
 
   for (const [x, y, r] of pocas) {
@@ -618,11 +700,12 @@ function desenhar(dt) {
     const k = Math.min(1, dt * 14); s.rx += (s.x - s.rx) * k; s.ry += (s.y - s.ry) * k;
     if (!s.viva && mortos.has(s.id)) continue;
     if (!s.viva) continue;
-    lista.push([s, transicao > 0 && !s.inimigo ? 'andar' : ACAO[s.anim] || 'parado', transicao > 0 && !s.inimigo ? tempoSim : tempoSim - s.t, false]);
+    lista.push([s, dvg && !s.inimigo ? 'andar' : ACAO[s.anim] || 'parado', dvg && !s.inimigo ? tempoSim * 1.6 : tempoSim - s.t, false]);
   }
   lista.sort((a, b) => b[0].ry - a[0].ry);
   for (const [s, acao, tempo, morto] of lista) {
-    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dv = transicao > 0 && !s.inimigo && !morto ? (transicao > 0.5 ? (1 - transicao) * 2 * 7 : -transicao * 2 * 7) : 0, [px, py] = naTela(s.rx + viagem[0] * dv, s.ry + viagem[1] * dv);
+    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? dvg : null, [px, py] = naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
+    if (reforco > 1.01) { ctx.save(); ctx.translate(px, py); ctx.scale(reforco, reforco); ctx.translate(-px, -py); }
     if (!morto) {
       // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
       const corQ = ['160,160,160', '235,228,210', '110,168,255', '255,216,74', '255,77,106'];
@@ -650,7 +733,7 @@ function desenhar(dt) {
       ctx.strokeStyle = '#ff3040'; ctx.lineWidth = 3; ctx.setLineDash([14, 9]); ctx.beginPath(); ctx.arc(0, 0, s.chefe ? 60 : 34, 0, 7); ctx.stroke(); ctx.restore();
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
-    const [img, sx, sy] = quadro(m, acao, transicao > 0 && !s.inimigo && !morto ? direcao(viagem[0], viagem[1]) : s.dir, tempo);
+    const [img, sx, sy] = quadro(m, acao, dvE ? direcao(dvE[2], dvE[3]) : s.dir, tempo);
     const prov = s.necro ? null : visual(s.especie), e = prov ? prov[1] : 1;
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (prov && !(morto && COR_MORTE[s.cond])) {
@@ -683,6 +766,21 @@ function desenhar(dt) {
       ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(px - w / 2, topo, w, 4);
       ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
     }
+    if (reforco > 1.01) ctx.restore();
+  }
+  // rótulos das salas: o que há em cada uma, sempre do mesmo tamanho na tela
+  if (mapa.length > 1) {
+    ctx.textAlign = 'center';
+    mapa.forEach((m, i) => {
+      if (i === masm.sala && zoomModo !== 2) return;
+      const o = offDaSala(i), [lx, ly] = W(o[0] + 10, o[1] + 6), t = masm.tipos[i] || 0, k = 1 / esc, feita = i < masm.sala;
+      const cor = t === 2 ? '#ff5060' : t === 8 ? '#ff9ad0' : t >= 3 && t !== 11 ? '#d9b25f' : '#b8a890';
+      ctx.globalAlpha = feita ? 0.4 : i === masm.sala ? 0.55 : 0.95;
+      ctx.fillStyle = 'rgba(8,5,7,0.8)'; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, 15 * k, 0, 7); ctx.fill(); ctx.strokeStyle = cor; ctx.lineWidth = 1.5 * k; ctx.stroke();
+      ctx.fillStyle = cor; ctx.font = `${18 * k}px Georgia`; ctx.fillText(feita ? '✓' : SALAS[t][0], lx, ly + 2 * k);
+      if (!feita && t !== 0 && t !== 11) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(SALAS[t][1], lx, ly + 24 * k); }
+      ctx.globalAlpha = 1;
+    });
   }
 
   // orbes por cima de tudo: são alvo de toque
@@ -1158,7 +1256,7 @@ let confirmarNovo = 0;
 // toque na arena: ceifa o orbe mais próximo do dedo
 tela.addEventListener('pointerdown', (ev) => {
   if (!J) return;
-  const r = tela.getBoundingClientRect(), k = VISTA_H / r.height;
+  const r = tela.getBoundingClientRect(), k = (tela.width / r.width) / escAtual;
   const ax = (ev.clientX - r.left) * k + camX, ay = (ev.clientY - r.top) * k + camY;
   if (objeto && !objeto.aberto && masm.fase === 'Explorando') { const [ox, oy] = naTela(objeto.x, objeto.y); if ((ox - ax) ** 2 + (oy - 30 - ay) ** 2 < 90 * 90) { J.Interagir(); aprendeu('sala'); if (!objeto.tocado) { objeto.tocado = true; aviso('Você pôs a mão: rende mais'); } return; } }
   let melhor = null, md = 70 * 70;
@@ -1186,11 +1284,11 @@ tela.addEventListener('pointerdown', (ev) => {
 // usado pelos testes automatizados: posição na página do primeiro orbe visível
 window.__orbeNaTela = () => {
   if (!orbes.length) return null;
-  const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(orbes[0][0], orbes[0][1]);
+  const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(orbes[0][0], orbes[0][1]);
   const x = r.left + (px - camX) * k, y = r.top + (py - 30 - camY) * k;
   return x > r.left + 4 && x < r.right - 4 ? [x, y] : null;
 };
-window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = r.height / VISTA_H, [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
+window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
 let encAberta = false;
@@ -1226,6 +1324,10 @@ $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
+const NOMES_ZOOM = ['Perto', 'Médio', 'Andar inteiro'];
+const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + NOMES_ZOOM[zoomModo]; $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
+$('b-zoom').addEventListener('click', () => { aprendeu('mapa'); zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
+pintarZoom();
 $('salas').addEventListener('click', () => { aprendeu('mapa'); $('mapa-corpo').innerHTML = mapaGrandeHtml(); $('mapa-grande').hidden = false; });
 $('mapa-grande').addEventListener('click', (ev) => { if (ev.target === $('mapa-grande') || ev.target.id === 'b-mapa-fechar') $('mapa-grande').hidden = true; });
 $('grupo').addEventListener('click', (ev) => { const r = ev.target.closest('[data-ret]'); if (!r || !J) return; const s = estado.get(+r.dataset.ret); if (s && s.viva && s.vida < 0.85 && sopro <= 0) { J.Curar(s.id); aprendeu('cura'); aviso('Sopro Profano'); for (let i = 0; i < 18; i++) particulas.push([s.rx, s.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); } else if (s && sopro > 0) aviso(`Sopro em recarga: ${Math.ceil(sopro)} s`); });

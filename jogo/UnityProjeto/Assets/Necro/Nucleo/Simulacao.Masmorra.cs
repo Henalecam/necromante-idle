@@ -54,6 +54,9 @@ namespace Necro.Nucleo
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 3 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
         private int _ticksDeExploracao;
+        private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
+        /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
+        public bool CaminhandoAteASala { get { return Fase == FaseExpedicao.Explorando && _temporizadorDeFase > (TipoDaSalaAtual == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial); } }
 
         public TipoSala TipoDaSalaAtual { get { return SalaAtual >= 0 && SalaAtual < Salas.Count ? Salas[SalaAtual] : TipoSala.Combate; } }
 
@@ -65,7 +68,7 @@ namespace Necro.Nucleo
             Salas.Clear(); SalaAtual = 0;
             BencaoAtual = Bencao.Nenhuma; _bDanoAliado = 1f; _bProtecao = 1f; _bOssos = 1f; _bAlma = 0f; _bItem = 0f; BencaosOferecidas = null; _escolhaDeBencao = -1;
             _emEmboscada = false; _mimico = false; _emSecreto = false; _secretoTestado = false; _toqueNaSala = false;
-            _perigos.Clear(); _tempoAmbiente = 0f; _ticksDeExploracao = 0;
+            _perigos.Clear(); _tempoAmbiente = 0f; _ticksDeExploracao = 0; _viagem = 0f;
             Ambiente = AmbienteDeChefe.Nenhum;
             if (chefe)
             {
@@ -132,12 +135,29 @@ namespace Necro.Nucleo
             if (t != TipoSala.Combate && t != TipoSala.Elite && t != TipoSala.Chefe) IniciarSalaEspecial(t);
         }
 
+        /// <summary>Quantas passagens o grupo atravessa para ir de uma sala a outra no mapa (caminho pela árvore).</summary>
+        public int DistanciaNoMapa(int a, int b)
+        {
+            if (a < 0 || b < 0 || a >= Mapa.Count || b >= Mapa.Count) return 1;
+            int passos = 0;
+            // sobe pelos pais até os caminhos se encontrarem (índice maior = mais fundo na árvore)
+            while (a != b && passos < 64) { if (a > b) a = Mapa[a].Pai; else b = Mapa[b].Pai; passos++; if (a < 0 || b < 0) break; }
+            return Math.Max(1, passos);
+        }
+
+        /// <summary>Tempo de caminhada entre duas salas: o grupo anda pelo mapa, não se teletransporta.</summary>
+        private float TempoDeViagem(int de, int para)
+        {
+            return Math.Min(Cfg.ViagemMaxima, Cfg.ViagemBase + Cfg.ViagemPorPassagem * DistanciaNoMapa(de, para));
+        }
+
         /// <summary>Entra na próxima sala do plano: combate volta ao fluxo das ondas; as outras abrem a exploração.</summary>
         private void EntrarNaProximaSala(float pausa)
         {
             SalaAtual++;
             var t = TipoDaSalaAtual;
-            if (t == TipoSala.Combate || t == TipoSala.Elite || t == TipoSala.Chefe || SalaAtual >= Salas.Count) { Fase = FaseExpedicao.EntreOndas; _temporizadorDeFase = pausa; }
+            _viagem = SalaAtual < Salas.Count ? TempoDeViagem(SalaAtual - 1, SalaAtual) : pausa;
+            if (t == TipoSala.Combate || t == TipoSala.Elite || t == TipoSala.Chefe || SalaAtual >= Salas.Count) { Fase = FaseExpedicao.EntreOndas; _temporizadorDeFase = _viagem; }
             else IniciarSalaEspecial(t);
         }
 
@@ -176,10 +196,7 @@ namespace Necro.Nucleo
             }
             if (Onda < TotalDeOndas)
             {
-                SalaAtual++;
-                var t = TipoDaSalaAtual;
-                if (t == TipoSala.Combate || t == TipoSala.Elite) return false;
-                IniciarSalaEspecial(t);
+                EntrarNaProximaSala(Cfg.PausaEntreOndas);
                 return true;
             }
             if (!_secretoTestado)
@@ -200,7 +217,7 @@ namespace Necro.Nucleo
             Emitir(new EventoSim { Tipo = TipoEvento.SalaIniciada, Extra = (int)t, Valor = SalaAtual, Alvo = Salas.Count, Pos = PosDoObjeto, Origem = -1 });
             if (t == TipoSala.Emboscada) { IniciarEmboscada(false); return; }
             Fase = FaseExpedicao.Explorando;
-            _temporizadorDeFase = t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial;
+            _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
         }
 
         private void IniciarEmboscada(bool mimico)

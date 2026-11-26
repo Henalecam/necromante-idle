@@ -274,11 +274,12 @@ namespace Necro.Nucleo
         // ---- Masmorra: salas especiais entre os combates ----
         public float ChanceDeSalaEspecial = 0.45f;       // por intervalo entre duas salas de combate
         public int SalasEspeciaisAPartirDoAndar = 2;
-        public float TempoDeSalaEspecial = 3.2f;         // s: o necromante anda até o objeto e interage
+        public float TempoDeSalaEspecial = 1.9f;         // s na sala: o necromante anda até o objeto e interage
+        public float ViagemBase = 0.8f, ViagemPorPassagem = 0.7f, ViagemMaxima = 2.9f;   // s de caminhada entre salas (visível no mapa)
         public float PausaAposSalaEspecial = 0.8f;
         public float ChanceDeSegundaSalaVazia = 0.35f;
         public float ChanceDeSalaVazia = 0.7f;           // câmaras e corredores sem evento: dão corpo ao mapa
-        public float TempoDeSalaVazia = 1.2f;
+        public float TempoDeSalaVazia = 0.3f;
         public float SalaVaziaChanceDeOssos = 0.3f;
         public float ToqueBonusDeSala = 0.5f;            // o toque do jogador melhora o resultado da sala
         public float BauOssos = 14f;                     // x (1 + 10% por andar)

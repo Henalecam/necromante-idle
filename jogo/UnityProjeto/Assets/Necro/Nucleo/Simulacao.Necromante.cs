@@ -31,7 +31,7 @@ namespace Necro.Nucleo
             if (_ceifaEspera > 0f) _ceifaEspera -= DT;
 
             // Sala especial: caminha até o objeto (baú, santuário...) se não houver alma para ceifar.
-            if (Fase == FaseExpedicao.Explorando && _ceifaOrbe == null && Orbes.Count == 0)
+            if (Fase == FaseExpedicao.Explorando && !CaminhandoAteASala && _ceifaOrbe == null && Orbes.Count == 0)
             {
                 var alvoSala = new Vec2(PosDoObjeto.X - 1.1f, PosDoObjeto.Y);
                 if (!_temPosto) { _postoNecro = n.Pos; _temPosto = true; }   // depois da sala ele volta para trás do exército
