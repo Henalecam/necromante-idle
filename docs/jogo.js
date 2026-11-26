@@ -587,12 +587,12 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 19: 'uma arma ou armadura (Rara se você tocar)', 18: 'Sangue dos supliciados', 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
@@ -651,7 +651,7 @@ function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
     `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
-    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
+    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
 }
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
@@ -678,6 +678,8 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
   else if (ts === 13) { if (sub === 1) { aviso('Cofre aberto! +' + fmt(Math.round(val)) + ' Ossos e um item'); anotar(`<b style="color:#ffd84a">Cofre aberto</b> com a chave: +${fmt(Math.round(val))} Ossos e um item.`); brilho('#ffd84a', 60); clarao = 0.5; } else { if (objeto) objeto.aberto = 0; aviso('Cofre trancado: a chave estava em outra sala'); anotar('O cofre estava trancado. A chave ficava com os inimigos de outra sala: toque nela antes para mudar a rota.'); } }
   else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
+  else if (ts === 18) { aviso('Sala de tortura · +' + Math.round(val) + ' Sangue'); anotar(`Sala de tortura: o necromante colheu ${Math.round(val)} de Sangue${toque ? ' (um a mais pelo seu toque)' : ''}.`); brilho('#c8323c', 30); for (let i = 0; i < 6; i++) mancha(x + rnd(-1, 1), y + rnd(-0.6, 0.6), 7, 3); }
+  else if (ts === 19) { aviso('Arsenal · ' + TIPOS[sub] + ' ' + RARIDADES[Math.round(val)]); anotar(`Arsenal: nos suportes havia ${TIPOS[sub] ? TIPOS[sub].toLowerCase() : 'um item'} (${RARIDADES[Math.round(val)]})${toque ? ', escolhido por você' : ''}.`); brilho('#c8d0e0', 30); }
   else if (ts === 17) { aviso('Fosso limpo · item e +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Fosso de monstros limpo: um item (ao menos Mágico) e +${fmt(Math.round(val))} Ossos.`); brilho('#c8e06a', 30); }
   else if (ts === 16) { aviso('Tomo lido · +' + fmt(Math.round(val)) + ' de experiência'); anotar(`Biblioteca: o necromante leu um tomo${toque ? ' escolhido por você' : ''}: +${fmt(Math.round(val))} de experiência.`); brilho('#b8a0ff', 30); }
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
@@ -697,7 +699,7 @@ function desenharObjeto(dt) {
   mapa.forEach((m, i) => {
     const t = masm.tipos[i];
     if (!revelada(i)) return;
-    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14 || t === 15 || t === 16)) return;
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14 || t === 15 || t === 16 || t === 18 || t === 19)) return;
     if (objeto && i === masm.sala) return;
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
@@ -769,6 +771,22 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#34282c'; ctx.fillRect(-30, -22, 60, 24); ctx.fillStyle = '#463a3e'; ctx.fillRect(-36, -30, 72, 10);
     ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 18) {    // sala de tortura: trave de madeira com correntes, um corpo pendurado e o chão manchado
+    ctx.fillStyle = 'rgba(110,10,14,0.55)'; ctx.beginPath(); ctx.ellipse(0, 2, 34, 12, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#2c1c12'; ctx.fillRect(-34, -84, 5, 86); ctx.fillRect(29, -84, 5, 86); ctx.fillRect(-36, -88, 72, 6);
+    ctx.strokeStyle = '#7a7a80'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]); for (const cx2 of [-16, 0, 16]) { ctx.beginPath(); ctx.moveTo(cx2, -82); ctx.lineTo(cx2 + Math.sin(o.t * 1.5 + cx2) * 1.5, cx2 === 0 ? -58 : -44); ctx.stroke(); } ctx.setLineDash([]);
+    const bal = Math.sin(o.t * 1.5) * 1.5;
+    ctx.fillStyle = '#8a8478'; ctx.beginPath(); ctx.arc(bal, -53, 5, 0, 7); ctx.fill(); ctx.fillRect(bal - 4, -48, 8, 20); ctx.fillRect(bal - 6, -46, 2.5, 14); ctx.fillRect(bal + 3.5, -46, 2.5, 14); ctx.fillRect(bal - 3.5, -28, 3, 16); ctx.fillRect(bal + 0.5, -28, 3, 16);
+    ctx.fillStyle = '#5a0c10'; ctx.fillRect(bal - 4, -40, 8, 3);
+    for (const hx of [-16, 16]) { ctx.strokeStyle = '#9a9aa0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hx, -40, 4, 0.3, 5.2); ctx.stroke(); }
+    if (!ab) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(200,30,40,${0.10 + 0.10 * pulso})`; ctx.beginPath(); ctx.arc(0, -40, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 19) {    // arsenal: suporte de armas com lâminas e um escudo, e um manequim de armadura
+    ctx.fillStyle = '#2c1c12'; ctx.fillRect(-36, -8, 44, 8); ctx.fillRect(-36, -50, 4, 44); ctx.fillRect(4, -50, 4, 44); ctx.fillRect(-36, -52, 44, 4);
+    ctx.strokeStyle = '#b8c0cc'; ctx.lineWidth = 2.5; for (const lx of [-26, -16, -6]) { ctx.beginPath(); ctx.moveTo(lx, -6); ctx.lineTo(lx, -64 + (lx === -16 ? -8 : 0)); ctx.stroke(); ctx.strokeStyle = '#6a5030'; ctx.beginPath(); ctx.moveTo(lx - 4, -14); ctx.lineTo(lx + 4, -14); ctx.stroke(); ctx.strokeStyle = '#b8c0cc'; }
+    ctx.fillStyle = '#5a3a22'; ctx.beginPath(); ctx.moveTo(-34, -30); ctx.quadraticCurveTo(-24, -34, -14, -30); ctx.lineTo(-14, -18); ctx.quadraticCurveTo(-24, -8, -34, -18); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#a8a090'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = '#3a2a1a'; ctx.fillRect(26, -40, 3, 40); ctx.fillRect(18, -2, 19, 4);
+    if (!ab) { const ga = ctx.createLinearGradient(16, 0, 40, 0); ga.addColorStop(0, '#4a5058'); ga.addColorStop(0.5, '#a8b0bc'); ga.addColorStop(1, '#3a4048'); ctx.fillStyle = ga; ctx.beginPath(); ctx.moveTo(17, -44); ctx.lineTo(38, -44); ctx.lineTo(36, -18); ctx.lineTo(19, -18); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.arc(27.5, -50, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#14181c'; ctx.fillRect(24, -52, 7, 2);
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(200,215,240,${0.10 + 0.12 * pulso})`; ctx.beginPath(); ctx.arc(27, -34, 26, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 16) {    // biblioteca: estante alta de livros entre duas velas, com um tomo aberto no atril
     ctx.fillStyle = '#2a1a10'; ctx.fillRect(-30, -74, 60, 74); ctx.fillStyle = '#3c2616'; ctx.fillRect(-33, -78, 66, 6); ctx.fillRect(-33, -2, 66, 5);
     for (let pr = 0; pr < 4; pr++) {

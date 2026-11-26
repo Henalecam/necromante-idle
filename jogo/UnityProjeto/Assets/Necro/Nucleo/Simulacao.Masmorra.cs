@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -93,7 +93,7 @@ namespace Necro.Nucleo
                     float r = forcar ? 99f : _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 48f ? TipoSala.AlmasPresas : r < 52f ? TipoSala.FossoDeMonstros : r < 60f ? TipoSala.Fonte : r < 65f ? TipoSala.Biblioteca : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
+                    Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 48f ? TipoSala.AlmasPresas : r < 52f ? TipoSala.FossoDeMonstros : r < 60f ? TipoSala.Fonte : r < 65f ? TipoSala.Biblioteca : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 81f ? TipoSala.Mercador : r < 84f ? TipoSala.Arsenal : r < 88f ? TipoSala.AltarDeSangue : r < 91f ? TipoSala.SalaDeTortura : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
                     if (forcarTipo) Salas[Salas.Count - 1] = (TipoSala)Cfg.ForcarSalaEspecial;
                     if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
@@ -586,6 +586,24 @@ namespace Necro.Nucleo
                     }
                     long restos = (long)(Cfg.BauOssos * Cfg.NinhoOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                     Resultado.Ossos += restos; valor = restos; sub = 1;
+                    break;
+                }
+                case TipoSala.SalaDeTortura:
+                {
+                    // Sala de tortura: o necromante colhe o sangue dos supliciados
+                    int sangue = Cfg.TorturaSangue + (toque ? Cfg.TorturaSangueDoToque : 0);
+                    Resultado.Sangue += sangue; valor = sangue;
+                    break;
+                }
+                case TipoSala.Arsenal:
+                {
+                    // Arsenal: nos suportes sobrou uma arma ou peça de armadura (ao menos Mágica; Rara se você mesmo escolher)
+                    var tipoDoItem = (TipoItem)_rngItens.Intervalo(0, 8);   // Cajado..Botas
+                    var achado = GeradorDeItens.GerarDoTipo(_rngItens, Cfg, Andar, toque ? RaridadeItem.Raro : RaridadeItem.Magico, tipoDoItem);
+                    achado.NaoIdentificado = Cfg.ItensNaoIdentificados && achado.Raridade >= RaridadeItem.Raro;
+                    Resultado.Itens.Add(achado);
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)achado.Raridade, Valor = achado.Nivel });
+                    valor = (int)achado.Raridade; sub = (int)tipoDoItem;
                     break;
                 }
                 case TipoSala.Biblioteca:

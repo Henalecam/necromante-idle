@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         // ---- Escala dos inimigos ----
         public int AlivioAteOAndar = 5;
         public float AlivioInicial = 0.84f;
-        public float CrescimentoPorAndar = 0.298f;
+        public float CrescimentoPorAndar = 0.303f;
         public float DegrauPorAto = 1.42f;           // multiplicador extra de vida/dano a cada Ato novo (composto): torna o 1º andar do Ato um degrau   // composto, vida e dano
         public float FatorVidaInimigo = 0.275f;      // inimigo comum = base da espécie x fator
         public float FatorDanoInimigo = 0.16f;
@@ -325,6 +325,7 @@ namespace Necro.Nucleo
         public int EspelhosMaximo = 6;                     // Cripta dos Espelhos: reflexos no máximo
         public int ForcarSalaEspecial = 0;                 // só para testes: põe este TipoSala logo depois da primeira sala de combate
         public int ForcarSecreto = 0;                      // só para testes: 1..3 escolhe o nível secreto
+        public int TorturaSangue = 2, TorturaSangueDoToque = 1;   // Sala de tortura
         public float BibliotecaXp = 30f;                   // Biblioteca: XP do tomo (x escala do andar; um inimigo médio dá 3)
         public float FossoMult = 1.4f; public int FossoMaximo = 26;   // Fosso de monstros: horda de uma espécie só
         public float ForjaEscudo = 0.25f;                 // Forja de Ossos: couraça = fração da vida máxima de cada aliado

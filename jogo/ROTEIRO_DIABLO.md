@@ -23,7 +23,7 @@ battle.net clássico (pacotes de campeões/únicos).
 6. [feito: 6a não identificados + 6b durabilidade e reparo] Itens não identificados (identificar custa ouro ou pergaminho) e durabilidade com reparo.
 7. [já existia: o inventário é uma grade limitada (Cfg.LarguraDoInventario x AlturaDoInventario) com itens de tamanhos diferentes] Inventário em grade de espaço limitado.
 8. [feito] Atributos do necromante (Força/Magia/Destreza/Vitalidade) com pontos por nível.
-9. [9a feito: Biblioteca e Fosso de monstros; falta 9b: Sala de tortura e Arsenal] Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
+9. [feito: Biblioteca, Fosso de monstros, Sala de tortura, Arsenal] Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
 10. Santuários de efeito incerto (nomes crípticos, bom ou ruim) no lugar das bênçãos escolhidas.
 11. Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
 12. Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).

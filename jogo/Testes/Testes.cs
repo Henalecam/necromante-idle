@@ -1372,6 +1372,39 @@ namespace Necro.Testes
                 Afirmar(leu && fosso, "salas não exercitadas: biblioteca " + leu + ", fosso " + fosso);
             });
 
+            Teste("salas temáticas: a Sala de Tortura dá Sangue e o Arsenal dá uma arma ou armadura (Rara com o toque)", () =>
+            {
+                for (int toque = 0; toque < 2; toque++)
+                {
+                    foreach (var tipo in new[] { TipoSala.SalaDeTortura, TipoSala.Arsenal })
+                    {
+                        var c = new ConfigJogo { ForcarSalaEspecial = (int)tipo };
+                        var p = Progressao.NovoJogo(c); p.PoderNecromantico = 60f;
+                        var sim = new Simulacao(c, p, 9UL, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; sim.Tick();
+                        Afirmar(sim.Salas.Contains(tipo), "a sala forçada deveria estar no andar: " + tipo);
+                        bool viu = false; int guarda = 0;
+                        while (!sim.Encerrada && guarda++ < 20000 && !viu)
+                        {
+                            long sangue = sim.Resultado.Sangue; int itens = sim.Resultado.Itens.Count;
+                            if (toque == 1 && sim.Fase == FaseExpedicao.Explorando && sim.Salas[sim.SalaAtual] == tipo) sim.ComandoInteragir();
+                            sim.Tick();
+                            foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)tipo)
+                            {
+                                viu = true;
+                                if (tipo == TipoSala.SalaDeTortura) Afirmar(sim.Resultado.Sangue == sangue + c.TorturaSangue + (toque == 1 ? c.TorturaSangueDoToque : 0), "sangue da sala de tortura");
+                                else
+                                {
+                                    Afirmar(sim.Resultado.Itens.Count == itens + 1, "o arsenal dá um item");
+                                    var it = sim.Resultado.Itens[sim.Resultado.Itens.Count - 1];
+                                    Afirmar((int)it.Tipo <= (int)TipoItem.Botas && it.Raridade >= (toque == 1 ? RaridadeItem.Raro : RaridadeItem.Magico), "arma ou armadura, " + it.Tipo + " " + it.Raridade);
+                                }
+                            }
+                        }
+                        Afirmar(viu, "sala não resolvida: " + tipo);
+                    }
+                }
+            });
+
             RodarLoot();
 
             Console.WriteLine();
