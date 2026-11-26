@@ -694,7 +694,7 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 14) {    // forja de ossos: bigorna de pedra, brasa e ossos empilhados
-    ctx.fillStyle = '#2c2628'; ctx.fillRect(-22, -14, 44, 14); ctx.fillStyle = '#3c3438'; ctx.fillRect(-28, -24, 56, 10); ctx.fillStyle = '#1c181a'; ctx.fillRect(-12, -4, 24, 6);
+    ctx.fillStyle = '#4a4246'; ctx.fillRect(-22, -14, 44, 14); ctx.fillStyle = '#62585c'; ctx.fillRect(-28, -24, 56, 10); ctx.strokeStyle = '#0a0808'; ctx.lineWidth = 1.5; ctx.strokeRect(-28, -24, 56, 10); ctx.strokeRect(-22, -14, 44, 14); ctx.fillStyle = '#1c181a'; ctx.fillRect(-12, -4, 24, 6);
     ctx.fillStyle = '#d8d0b8'; for (const [bx, by, bw] of [[-40, -6, 18], [-38, -11, 14], [24, -5, 16], [27, -10, 12]]) { ctx.fillRect(bx, by, bw, 3); ctx.beginPath(); ctx.arc(bx, by + 1.5, 2.6, 0, 7); ctx.arc(bx + bw, by + 1.5, 2.6, 0, 7); ctx.fill(); }
     ctx.globalCompositeOperation = 'lighter'; const gf = ctx.createRadialGradient(0, -26, 0, 0, -26, 46); gf.addColorStop(0, `rgba(255,150,60,${0.45 + 0.25 * pulso})`); gf.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = gf; ctx.beginPath(); ctx.arc(0, -26, 46, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = `rgba(255,${150 + 60 * pulso | 0},70,0.95)`; ctx.fillRect(-18, -27, 36, 3);
@@ -729,7 +729,8 @@ function desenhar(dt) {
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
-    const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * 0.56, kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
+    const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
+    const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.74 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (camSalto && zoomModo === 2 && !zoomLivre) { camSalto = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
     else if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
@@ -1469,6 +1470,7 @@ window.__orbeNaTela = () => {
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
+window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
