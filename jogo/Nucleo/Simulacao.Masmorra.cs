@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -65,7 +65,7 @@ namespace Necro.Nucleo
 
         private void PlanejarSalas(bool chefe)
         {
-            Salas.Clear(); SalaAtual = 0;
+            Salas.Clear(); SalaAtual = 0; ChaveNaSala = -1; TemChave = false;
             BencaoAtual = Bencao.Nenhuma; _bDanoAliado = 1f; _bProtecao = 1f; _bOssos = 1f; _bAlma = 0f; _bItem = 0f; BencaosOferecidas = null; _escolhaDeBencao = -1;
             _emEmboscada = false; _mimico = false; _emSecreto = false; _secretoTestado = false; _toqueNaSala = false;
             _perigos.Clear(); _tempoAmbiente = 0f; _ticksDeExploracao = 0; _viagem = 0f;
@@ -81,6 +81,7 @@ namespace Necro.Nucleo
                 GerarMapa();
                 return;
             }
+            bool temCofre = false;
             for (int w = 1; w <= TotalDeOndas; w++)
             {
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
@@ -89,7 +90,8 @@ namespace Necro.Nucleo
                     float r = _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    Salas.Add(r < 28f ? TipoSala.Bau : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 92f ? TipoSala.AltarDeSangue : TipoSala.Armadilha);
+                    Salas.Add(r < 28f ? TipoSala.Bau : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 76f ? TipoSala.Emboscada : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
+                    if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
                 else if (w < TotalDeOndas)
                 {
@@ -97,8 +99,25 @@ namespace Necro.Nucleo
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
                 }
             }
+            // cofre trancado: a chave fica com os inimigos de uma sala de combate comum. Na ordem sorteada o cofre pode vir antes
+            // da chave (e fica fechado); o jogador que olha o mapa muda a rota e passa primeiro pela chave.
+            if (temCofre)
+            {
+                int candidatas = 0;
+                for (int i = 0; i < Salas.Count - 1; i++) if (Salas[i] == TipoSala.Combate) candidatas++;
+                if (candidatas == 0) { for (int i = 0; i < Salas.Count; i++) if (Salas[i] == TipoSala.Cofre) Salas[i] = TipoSala.Bau; }
+                else
+                {
+                    int qual = _rngMasmorra.Intervalo(0, candidatas);
+                    for (int i = 0; i < Salas.Count - 1; i++) if (Salas[i] == TipoSala.Combate && qual-- == 0) { ChaveNaSala = i; break; }
+                }
+            }
             GerarMapa();
         }
+
+        /// <summary>Sala de combate cujos inimigos guardam a chave do cofre (-1 se o andar não tem cofre).</summary>
+        public int ChaveNaSala { get; private set; } = -1;
+        public bool TemChave { get; private set; }
 
         private static readonly int[] DX = { 1, 0, 0, -1 }, DY = { 0, 1, -1, 0 };
 
@@ -152,7 +171,7 @@ namespace Necro.Nucleo
         {
             int p = SalaAtual + 1;
             if (_emSecreto || sala <= p || sala >= Salas.Count - 1 || p >= Salas.Count - 1) return sala == p && p < Salas.Count;
-            var tipo = Salas[sala]; var celula = Mapa[sala];
+            var tipo = Salas[sala]; var celula = Mapa[sala]; _chaveRemapeada = false;
             for (int i = sala; i > p; i--) { Salas[i] = Salas[i - 1]; Mapa[i] = Mapa[i - 1]; }
             Salas[p] = tipo; Mapa[p] = celula;
             // os inimigos já postos acompanham as suas salas, e as ondas voltam a seguir a ordem de visita
@@ -160,6 +179,7 @@ namespace Necro.Nucleo
             {
                 int s0 = _salaDaOnda[w], s1 = s0 == sala ? p : (s0 >= p && s0 < sala ? s0 + 1 : s0);
                 _salaDaOnda[w] = s1;
+                if (w == 0 && ChaveNaSala >= 0 && !_chaveRemapeada) { ChaveNaSala = ChaveNaSala == sala ? p : (ChaveNaSala >= p && ChaveNaSala < sala ? ChaveNaSala + 1 : ChaveNaSala); _chaveRemapeada = true; }
                 for (int k = 0; k < PlanoDasOndas[w].Count; k++) PlanoDasOndas[w][k].Sala = s1;
             }
             for (int a = Onda; a < PlanoDasOndas.Count; a++)
@@ -173,6 +193,7 @@ namespace Necro.Nucleo
             return true;
         }
         private readonly List<int> _salaDaOnda = new List<int>(4);
+        private bool _chaveRemapeada;
 
         /// <summary>Quantas passagens o grupo atravessa para ir de uma sala a outra no mapa (caminho pela árvore).</summary>
         public int DistanciaNoMapa(int a, int b)
@@ -210,6 +231,11 @@ namespace Necro.Nucleo
         /// <summary>Chamado quando a sala de combate fica vazia. Devolve true se assumiu o fluxo (o chamador não faz mais nada).</summary>
         private bool AoLimparSala()
         {
+            if (!_emEmboscada && !_emSecreto && SalaAtual == ChaveNaSala && !TemChave)
+            {
+                TemChave = true;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 13, Alvo = -1, Origem = -1, Pos = Necromante.Pos });
+            }
             if (_emEmboscada)
             {
                 _emEmboscada = false;
@@ -400,6 +426,17 @@ namespace Necro.Nucleo
                     Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = valor, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
                     EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
                     return;
+                }
+                case TipoSala.Cofre:
+                {
+                    if (TemChave)
+                    {
+                        long ossos = (long)(Cfg.BauOssos * Cfg.CofreOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                        Resultado.Ossos += ossos; valor = ossos; sub = 1; especial = true;
+                        SoltarItemEm(PosDoObjeto, _rngItens.Chance(Cfg.CofreChanceDeRaro) ? RaridadeItem.Raro : RaridadeItem.Magico);
+                        Resultado.BausAbertos++;
+                    }
+                    break;      // sem a chave, fica trancado: o grupo segue adiante
                 }
                 case TipoSala.Armadilha:
                 {

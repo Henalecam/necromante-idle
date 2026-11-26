@@ -1138,6 +1138,26 @@ namespace Necro.Testes
                 Afirmar(trocas >= 8, "trocas " + trocas);
             });
 
+            Teste("cofre trancado: a chave fica numa sala de combate comum; com a chave o cofre paga, sem ela fica fechado", () =>
+            {
+                int achados = 0, abertos = 0, fechados = 0;
+                for (ulong s = 1; s <= 400 && (abertos == 0 || fechados == 0 || achados < 3); s++)
+                {
+                    var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 30f;
+                    var sim = new Simulacao(Cfg, p, s, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 };
+                    int cofre = sim.Salas.IndexOf(TipoSala.Cofre);
+                    if (cofre < 0) { Afirmar(sim.ChaveNaSala == -1, "chave sem cofre"); continue; }
+                    achados++;
+                    Afirmar(sim.ChaveNaSala >= 0 && sim.ChaveNaSala < sim.Salas.Count - 1 && sim.Salas[sim.ChaveNaSala] == TipoSala.Combate, "a chave deveria estar numa sala de combate comum");
+                    bool chaveAntes = sim.ChaveNaSala < cofre, pagou = false; int guarda = 0;
+                    while (!sim.Encerrada && guarda++ < 20000) { sim.Tick(); foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.Cofre && ev.Origem == 1) pagou = true; }
+                    if (sim.Resultado.Motivo != MotivoFim.LimiteDeAndares) continue;
+                    Afirmar(pagou == chaveAntes, "cofre " + (pagou ? "abriu" : "fechado") + " com a chave " + (chaveAntes ? "antes" : "depois"));
+                    if (pagou) abertos++; else fechados++;
+                }
+                Afirmar(achados >= 3 && abertos > 0 && fechados > 0, "andares com cofre " + achados + ", abertos " + abertos + ", fechados " + fechados);
+            });
+
             RodarLoot();
 
             Console.WriteLine();

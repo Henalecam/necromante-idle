@@ -266,6 +266,7 @@ function aviso(texto) {
 }
 
 function ler(texto) {
+  chaveCofre = [-1, false];
   const vivos = new Set(); orbes = []; projeteis = []; pocas = []; oferta = null; ativos = []; bencaos = null; aEspera = [];
   for (const ln of texto.split('\n')) {
     if (!ln) continue;
@@ -301,6 +302,7 @@ function ler(texto) {
       case 'A': ativos = p.slice(1).map(Number); break;
       case 'M': lerMasmorra(p); break;
       case 'G': lerMapa(p); break;
+      case 'C': chaveCofre = [+p[1], p[2] === '1']; break;
       case 'I': aEspera.push([+p[1], p[2], +p[3], +p[4], p[5] === '1', p[6] === '1']); break;
       case 'B': bencaos = [+p[1], +p[2], +p[3], +p[4]]; break;
       case 'V': evento(p); break;
@@ -365,6 +367,7 @@ function evento(v) {
   const tipo = v[1], x = +v[10], y = +v[11], dx = +v[12], dy = +v[13];
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '13') { aviso('Chave do cofre encontrada!'); som('bau'); anotar('<b style="color:#ffd84a">Chave do cofre</b> tomada dos inimigos.'); for (let i = 0; i < 20; i++) particulas.push([x, y, 1, rnd(-2, 2), rnd(-1.5, 1.5), rnd(3, 7), '#ffd84a', rnd(0.6, 1.1)]); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '12') { const g = estado.get(+v[3]); if (g) g.preso = tempoSim + (+v[4] || 2); som('perigo'); if (!evento.avisouGrilhoes) { evento.avisouGrilhoes = true; aviso('Grilhões! Seus minions mais fortes ficam presos'); } return; }
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
   if (tipo === 'AndarConcluido' && !silencio) { descida = { t0: tempoSim, T: 2.4 }; som('porta'); }
@@ -537,9 +540,10 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['?', 'Inexplorada']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado']];
+let chaveCofre = [-1, false];   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
@@ -607,7 +611,7 @@ function eventoDeSala(tipo, v, x, y) {
   const sub = +v[2], toque = v[6] === '1', val = +v[4];
   if (!(ts === 3 && sub === 1)) { explor.salas++; if (ts === 3) explor.baus++; if (ts === 8) explor.secretos++; if (toque && ts !== 8 && ts !== 6) explor.toques++; }
   if (objeto) { objeto.aberto = 0.01; }
-  som(ts === 12 ? (sub === 1 ? 'bau' : 'critico') : ts === 3 || ts === 9 ? 'bau' : ts === 8 ? 'secreto' : ts === 11 ? 'toque' : 'bencao');
+  som(ts === 13 ? (sub === 1 ? 'bau' : 'porta') : ts === 12 ? (sub === 1 ? 'bau' : 'critico') : ts === 3 || ts === 9 ? 'bau' : ts === 8 ? 'secreto' : ts === 11 ? 'toque' : 'bencao');
   const brilho = (cor, n) => { for (let i = 0; i < n; i++) particulas.push([x, y, 0.6, rnd(-2.5, 2.5), rnd(-1.5, 1.5), rnd(3, 8), cor, rnd(0.6, 1.2)]); };
   if (ts === 3) {
     if (sub === 1) { aviso('Era um mímico!'); tremor = 0.3; anotar('O baú era um <b>mímico</b>. Vencê-lo paga em dobro.'); brilho('#a01420', 30); }
@@ -617,6 +621,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 7) { aviso('Fonte de sangue: todos curados'); anotar(`Fonte: aliados recuperam ${Math.round(val * 100)}% da vida.`); brilho('#ff5060', 30); }
   else if (ts === 9) { if (sub === 1) { aviso('Mercador: item comprado por ' + fmt(Math.round(val)) + ' Ossos'); anotar(`Mercador de ossos: um item por ${fmt(Math.round(val))} Ossos${toque ? ' (com seu desconto)' : ''}.`); brilho('#ffd84a', 24); } else { aviso('Mercador: Ossos insuficientes'); anotar('Mercador de ossos: faltaram Ossos nesta expedição.'); } }
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
+  else if (ts === 13) { if (sub === 1) { aviso('Cofre aberto! +' + fmt(Math.round(val)) + ' Ossos e um item'); anotar(`<b style="color:#ffd84a">Cofre aberto</b> com a chave: +${fmt(Math.round(val))} Ossos e um item.`); brilho('#ffd84a', 60); clarao = 0.5; } else { if (objeto) objeto.aberto = 0; aviso('Cofre trancado: a chave estava em outra sala'); anotar('O cofre estava trancado. A chave ficava com os inimigos de outra sala: toque nela antes para mudar a rota.'); } }
   else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
@@ -634,7 +639,7 @@ function desenharObjeto(dt) {
   // o que espera nas salas ainda não visitadas: o baú, o santuário, o mercador... já estão lá, à vista
   mapa.forEach((m, i) => {
     const t = masm.tipos[i];
-    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12)) return;
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13)) return;
     if (objeto && i === masm.sala) return;
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
@@ -661,6 +666,11 @@ function pintarObjeto(o, px, py) {
     ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 40); g.addColorStop(0, `rgba(120,255,170,${ab ? 0.2 : 0.7 * pulso})`); g.addColorStop(1, 'rgba(120,255,170,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#2a2a2e'; ctx.lineWidth = 4; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * 9, 0); ctx.lineTo(i * 9 * (ab ? 1.8 : 1), -62); ctx.stroke(); }
     ctx.beginPath(); ctx.ellipse(0, 0, 22, 7, 0, 0, 7); ctx.stroke(); if (!ab) { ctx.beginPath(); ctx.ellipse(0, -62, 22, 7, 0, 0, 7); ctx.stroke(); }
+  } else if (o.tipo === 13) {   // cofre: arca de ferro com cadeado; aberta, derrama ouro
+    ctx.fillStyle = '#2c2c34'; ctx.fillRect(-30, -40, 60, 42); ctx.strokeStyle = '#8a8a96'; ctx.lineWidth = 3; ctx.strokeRect(-30, -40, 60, 42);
+    for (const bx of [-18, 0, 18]) { ctx.fillStyle = '#5a5a66'; ctx.fillRect(bx - 2, -40, 4, 42); }
+    if (!ab) { ctx.fillStyle = '#d9b25f'; ctx.fillRect(-7, -24, 14, 13); ctx.strokeStyle = '#d9b25f'; ctx.beginPath(); ctx.arc(0, -25, 6, Math.PI, 0); ctx.stroke(); }
+    else { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -40, 0, 0, -40, 70); g.addColorStop(0, 'rgba(255,220,100,0.8)'); g.addColorStop(1, 'rgba(255,220,100,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -40, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 12) {   // armadilha: placa de espinhos
     ctx.fillStyle = '#2a2428'; ctx.beginPath(); ctx.ellipse(0, 0, 46, 20, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#5a1a20'; ctx.lineWidth = 2; ctx.stroke();
     const sobe = ab ? Math.min(1, o.aberto * 6) : 0.35 + 0.15 * pulso;
@@ -858,7 +868,8 @@ function desenhar(dt) {
       if (!feita) {
         // o que a sala guarda: quantos inimigos esperam lá, ou o que o objeto dá — para a rota valer a escolha
         const n = porSala[i] || 0, nome = t === 0 || t === 1 || t === 2 ? (n ? `${n} inimigo${n > 1 ? 's' : ''}${t === 1 ? ' + campeão' : ''}` : '') : t === 11 ? '' : SALAS[t][1];
-        if (nome) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(nome, lx, ly + 24 * k); }
+        if (nome) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(t === 13 && chaveCofre[1] ? 'Cofre (você tem a chave)' : nome, lx, ly + 24 * k); }
+        if (i === chaveCofre[0] && !chaveCofre[1]) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#ffd84a'; ctx.fillText('guardam a chave do cofre', lx, ly + 37 * k); }
         if (DICA_SALA[t] && (larg >= 900 * (window.devicePixelRatio || 1) || i === masm.sala + 1)) { ctx.font = `${9.5 * k}px Georgia`; ctx.fillStyle = '#8fd89f'; ctx.fillText(DICA_SALA[t], lx, ly + 36 * k); }
       }
       ctx.globalAlpha = 1;

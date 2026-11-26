@@ -296,6 +296,7 @@ namespace Necro.Nucleo
         public float MercadorPreco = 40f;                // Ossos da própria expedição, x (1 + 10% por andar)
         public float MercadorDescontoComToque = 0.4f;
         public float MercadorChanceDeRaro = 0.2f;
+        public float CofreOssos = 3f, CofreChanceDeRaro = 0.4f;   // cofre trancado: precisa da chave que está em outra sala
         public float ArmadilhaDano = 0.08f, ArmadilhaDanoNoNecromante = 0.05f;   // fração da vida máxima; nunca mata
         public float AltarCustoDeVida = 0.15f;           // o toque do jogador evita o custo
         public float AltarBonusDeAlma = 0.8f;            // até o fim do andar
