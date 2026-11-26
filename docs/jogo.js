@@ -52,6 +52,24 @@ function naTela(x, y) { return W(x + so[0], y + so[1]); }
 const rnd = (a, b) => a + Math.random() * (b - a);
 // ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
 const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
+// grade levadiça na porta de saída (paredes do fundo): fechada enquanto houver inimigo na sala, sobe quando ela é limpa
+let gradeAberta = 1, gradeSala = -1;
+function pintarGrade(ox, oy, dt) {
+  if (saidaAtual !== 'o' && saidaAtual !== 'n') return;
+  if (gradeSala !== masm.sala + '|' + andar) { gradeSala = masm.sala + '|' + andar; gradeAberta = 0; }
+  let fechada = false; for (const s of estado.values()) if (s.inimigo && s.viva) { fechada = true; break; }
+  if (!fechada) for (const e of aEspera) if (+e[0] === masm.sala) { fechada = true; break; }
+  const antes = gradeAberta; gradeAberta = Math.max(0, Math.min(1, gradeAberta + (fechada ? -3 : 1.6) * dt));
+  if (antes < 1 && gradeAberta >= 1 && !silencio) som('porta');
+  const p0 = saidaAtual === 'o' ? P(-1, -1) : P(-1, 13), p1 = saidaAtual === 'o' ? P(-1, 13) : P(21, 13);
+  const em = (t, h) => [ox + p0[0] + (p1[0] - p0[0]) * t, oy + p0[1] + (p1[1] - p0[1]) * t - h];
+  const sobe = gradeAberta * 96;   // quanto a grade já subiu
+  ctx.save(); ctx.beginPath(); for (const [t, h] of [[0.42, 0], [0.58, 0], [0.58, 104], [0.5, 124], [0.42, 104]]) { const q = em(t, h); ctx.lineTo(q[0], q[1]); } ctx.closePath(); ctx.clip();
+  ctx.strokeStyle = '#6a6258'; ctx.lineWidth = 3; ctx.lineCap = 'butt';
+  for (let k = 0; k <= 5; k++) { const t = 0.43 + k * 0.028, a0 = em(t, sobe), a1 = em(t, 130 + sobe); ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke(); const pt = em(t, sobe - 5); ctx.fillStyle = '#8a8070'; ctx.beginPath(); ctx.moveTo(a0[0] - 2.5, a0[1]); ctx.lineTo(a0[0] + 2.5, a0[1]); ctx.lineTo(pt[0], pt[1]); ctx.closePath(); ctx.fill(); }
+  ctx.lineWidth = 2.5; for (const h of [30, 62, 94]) { const a0 = em(0.42, h + sobe), a1 = em(0.58, h + sobe); ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke(); }
+  ctx.restore();
+}
 function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
   if (!alvo) return;
   const c = alvo.getContext('2d'), tipo = masm.tipos[idx] || 0, ato = Math.floor((Math.max(1, andar) - 1) / 10);
@@ -779,7 +797,7 @@ function desenhar(dt) {
   for (const i of ordem) {
     const o = offDaSala(i), [wx, wy] = W(o[0], o[1]);
     if (wx - OX > camX + visivel || wx - OX + CW < camX || wy - OY > camY + visAlt || wy - OY + CH < camY) continue;   // fora da tela
-    if (i === masm.sala) { ctx.drawImage(chao, wx - OX, wy - OY); ctx.drawImage(sangue, wx - OX, wy - OY); }
+    if (i === masm.sala) { ctx.drawImage(chao, wx - OX, wy - OY); ctx.drawImage(sangue, wx - OX, wy - OY); pintarGrade(wx - OX, wy - OY, dt); }
     else if (salasCv[i]) { if (i > masm.sala) ctx.globalAlpha = 0.8; ctx.drawImage(salasCv[i], wx - OX, wy - OY, CW, CH); ctx.globalAlpha = 1; }
   }
   if (!mapa.length) { ctx.drawImage(chao, -OX, -OY); ctx.drawImage(sangue, -OX, -OY); }
@@ -1481,6 +1499,7 @@ window.__orbeNaTela = () => {
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
 window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), o = offDaSala(i), [lx, ly0] = W(o[0] + 10, o[1] + 6), kk = 1 / escAtual; return [r.left + (lx - camX) * k, r.top + (ly0 - (62 * kk + 40) - 4 * kk - camY) * k, masm.sala, mapa.length, masm.tipos.join(',')]; };
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
+window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
