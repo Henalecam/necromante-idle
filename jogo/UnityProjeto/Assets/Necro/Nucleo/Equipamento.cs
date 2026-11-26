@@ -42,6 +42,7 @@ namespace Necro.Nucleo
         public bool MareRubra;
         /// <summary>Peças equipadas de cada conjunto (índice = (int)ConjuntoId).</summary>
         public int[] PecasDeConjunto = new int[3];
+        public int ItensQuebrados;
         public int ItensEquipados;
 
         public bool Tem(EfeitoLendario efeito)
@@ -331,6 +332,7 @@ namespace Necro.Nucleo
             {
                 var item = equipados[i];
                 if (Vazio(item)) continue;
+                if (Ferreiro.Quebrado(item, cfg)) { b.ItensQuebrados++; continue; }   // quebrado: ocupa o espaço mas não dá nada
                 b.ItensEquipados++;
                 if (item.Implicito != null && item.Implicito.Valor != 0f) b.Somar(item.Implicito.Afixo, item.Implicito.Valor);
                 if (item.Afixos != null)

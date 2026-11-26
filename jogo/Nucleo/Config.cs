@@ -45,12 +45,12 @@ namespace Necro.Nucleo
         public float FatorDanoInimigo = 0.16f;
         public float EliteMultVida = 3.5f;
         public float EliteMultDano = 1.4f;
-        public float ChefeMultVida = 2.2f;
+        public float ChefeMultVida = 2.05f;
         public float ChefeMultDano = 1.0f;
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.12f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.13f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -73,6 +73,9 @@ namespace Necro.Nucleo
         public long[] OuroVendaPorRaridade = { 3, 10, 40, 200, 1000 };
         public float OuroPorNivelDeItem = 0.25f, LojaMargem = 12f;
         public int LojaItens = 4;
+        // Durabilidade (Diablo 1): o equipamento gasta com o uso e o Ferreiro repara por ouro
+        public bool Durabilidade = true; public int DurabilidadeBase = 30, DurabilidadePorRaridade = 10, DesgastePorExpedicao = 3;
+        public float ReparoFracao = 0.6f;   // reparar do zero custa esta fração do valor de venda do item
         public bool ItensNaoIdentificados = true;                       // Raros para cima caem sem identificar
         public long[] OuroParaIdentificar = { 0, 0, 60, 200, 600 };   // por raridade; +10% por nível do item
         public float VendaNaoIdentificado = 0.4f;                       // vender sem identificar rende só uma fração

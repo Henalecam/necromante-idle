@@ -225,7 +225,7 @@ public static partial class Jogo
         sb.Append("],\"grade\":{\"w\":").Append(_cfg.LarguraDoInventario).Append(",\"h\":").Append(_cfg.AlturaDoInventario).Append(",\"pos\":[");
         for (int i = 0; i < gx.Length; i++) { if (i > 0) sb.Append(','); sb.Append('[').Append(gx[i]).Append(',').Append(gy[i]).Append(']'); }
         var armaEq = Equipamento.Obter(_p, EspacoEquipamento.Arma);
-        sb.Append("]},\"ouroTotal\":").Append(_p.Ouro).Append(",\"ouroDaExpedicao\":").Append(_sim.Resultado.Ouro).Append(",\"loja\":[");
+        sb.Append("]},\"autoReparo\":").Append(B(!_p.SemAutoReparo)).Append(",\"reparoTotal\":").Append(Ferreiro.CustoDeRepararTudo(_p, _cfg)).Append(",\"ouroTotal\":").Append(_p.Ouro).Append(",\"ouroDaExpedicao\":").Append(_sim.Resultado.Ouro).Append(",\"loja\":[");
         if (_p.Loja == null || (_p.Loja.Count == 0 && _p.LojaRenovacoes == 0)) Ferreiro.Renovar(_p, _cfg);
         for (int i = 0; i < _p.Loja.Count; i++) { if (i > 0) sb.Append(','); sb.Append("{\"preco\":").Append(Ferreiro.PrecoDeCompra(_p.Loja[i], _cfg)).Append(",\"pode\":").Append(B(Ferreiro.PodeComprar(_p, i, _cfg))).Append(",\"item\":"); AppendItem(sb, _p.Loja[i]); sb.Append('}'); }
         sb.Append("],\"fragmentos\":").Append(_p.FragmentosDeAlma).Append(",\"corpoACorpo\":").Append(B(!Equipamento.Vazio(armaEq) && armaEq.Tipo == TipoItem.Foice))
@@ -244,10 +244,10 @@ public static partial class Jogo
             // fechado: só o tipo, a raridade e o nível aparecem; nome e propriedades só depois de identificar
             sb.Append("{\"nome\":").Append(S("Não identificado")).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":0,\"tipo\":").Append((int)it.Tipo)
               .Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg))
-              .Append(",\"nid\":true,\"custoId\":").Append(Ferreiro.CustoDeIdentificar(it, _cfg)).Append(",\"afixos\":[]}");
+              .Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"nid\":true,\"custoId\":").Append(Ferreiro.CustoDeIdentificar(it, _cfg)).Append(",\"afixos\":[]}");
             return;
         }
-        sb.Append("{\"nome\":").Append(S(it.Nome)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"afixos\":[");
+        sb.Append("{\"nome\":").Append(S(it.Nome)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"afixos\":[");
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
@@ -441,6 +441,10 @@ public static partial class Jogo
     [JSExport] public static void Desequipar(int espaco) { Equipamento.Desequipar(_p, (EspacoEquipamento)espaco, _cfg); }
     [JSExport] public static bool IdentificarItem(int i) { return i >= 0 && i < _p.Inventario.Count && Ferreiro.Identificar(_p, _p.Inventario[i], _cfg); }
     [JSExport] public static int IdentificarTudo() { return Ferreiro.IdentificarTudo(_p, _cfg); }
+    [JSExport] public static bool RepararEquipado(int espaco) { return espaco >= 0 && espaco < _p.Equipados.Length && Ferreiro.Reparar(_p, _p.Equipados[espaco], _cfg); }
+    [JSExport] public static void AlternarAutoReparo() { _p.SemAutoReparo = !_p.SemAutoReparo; }
+    [JSExport] public static int RepararTudo() { return Ferreiro.RepararTudo(_p, _cfg); }
+    [JSExport] public static int VenderFechados() { int n = 0; for (int i = _p.Inventario.Count - 1; i >= 0; i--) if (_p.Inventario[i] != null && _p.Inventario[i].NaoIdentificado && Ferreiro.Vender(_p, _p.Inventario[i], _cfg) > 0) n++; return n; }
     [JSExport] public static void VenderItem(int i) { if (i >= 0 && i < _p.Inventario.Count) Ferreiro.Vender(_p, _p.Inventario[i], _cfg); }
     [JSExport] public static bool ComprarItem(int i) { return Ferreiro.Comprar(_p, i, _cfg); }
     [JSExport] public static void Desmanchar(int i) { if (i >= 0 && i < _p.Inventario.Count) Equipamento.Desmanchar(_p, _p.Inventario[i], _cfg); }

@@ -455,6 +455,28 @@ namespace Necro.Testes
                 var semId = new ConfigJogo { ItensNaoIdentificados = false };
                 foreach (var it in ExecutorSemTela.RodarExpedicao(semId, p, 3UL, ModoExpedicao.Avancar, 1, 6).Itens) Afirmar(!it.NaoIdentificado, "com a regra desligada tudo cai identificado");
             });
+            Teste("durabilidade: cada expedição gasta o equipado; quebrado não dá bônus; o Ferreiro repara por ouro", () =>
+            {
+                var rng = new Rng(4); var p = Progressao.NovoJogo(Cfg);
+                var anel = GeradorDeItens.GerarDoTipo(rng, Cfg, 3, RaridadeItem.Magico, TipoItem.Anel); Equipamento.Equipar(p, anel);
+                var solto = GeradorDeItens.GerarDoTipo(rng, Cfg, 3, RaridadeItem.Magico, TipoItem.Elmo); p.Inventario.Add(solto);
+                int max = Ferreiro.DurabilidadeMax(anel, Cfg);
+                Afirmar(max == Cfg.DurabilidadeBase + Cfg.DurabilidadePorRaridade && Ferreiro.CustoDeReparo(anel, Cfg) == 0, "item novo: cheio e sem custo");
+                var cheio = Equipamento.CalcularBonus(p.Equipados, Cfg); Afirmar(cheio.ItensEquipados == 1, "equipado conta");
+                p.SemAutoReparo = true; Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg);
+                Afirmar(anel.Desgaste == Cfg.DesgastePorExpedicao && solto.Desgaste == 0, "só o equipado gasta");
+                p.SemAutoReparo = false; p.Ouro = 1000; Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg);
+                Afirmar(anel.Desgaste == 0 && p.Ouro < 1000, "com o reparo automático ligado a volta já conserta e cobra"); p.Ouro = 0; p.SemAutoReparo = true; Ferreiro.Desgastar(p, Cfg);
+                long parcial = Ferreiro.CustoDeReparo(anel, Cfg);
+                for (int i = 0; i < 100; i++) Ferreiro.Desgastar(p, Cfg);
+                Afirmar(anel.Desgaste == max && Ferreiro.Quebrado(anel, Cfg) && Ferreiro.DurabilidadeAtual(anel, Cfg) == 0, "depois de muitas descidas, quebra (e não passa do máximo)");
+                var qb = Equipamento.CalcularBonus(p.Equipados, Cfg); Afirmar(qb.ItensEquipados == 0 && qb.ItensQuebrados == 1, "quebrado não dá bônus");
+                long total = Ferreiro.CustoDeReparo(anel, Cfg); Afirmar(total > parcial && total == Ferreiro.CustoDeRepararTudo(p, Cfg), "reparar do zero custa mais que um arranhão");
+                p.Ouro = total - 1; Afirmar(!Ferreiro.Reparar(p, anel, Cfg), "sem ouro não repara");
+                p.Ouro = total + 5; Afirmar(Ferreiro.RepararTudo(p, Cfg) == 1 && anel.Desgaste == 0 && p.Ouro == 5, "reparado");
+                Afirmar(Equipamento.CalcularBonus(p.Equipados, Cfg).ItensEquipados == 1, "reparado volta a valer");
+                var semDur = new ConfigJogo { Durabilidade = false }; anel.Desgaste = 9999; Afirmar(!Ferreiro.Quebrado(anel, semDur), "com a regra desligada nada quebra");
+            });
             Teste("distribuição de raridade 70 / 22 / 7 / 0,9 / 0,1 % (400 mil sorteios)", () =>
             {
                 var rng = new Rng(2024);

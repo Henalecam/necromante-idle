@@ -121,8 +121,9 @@ namespace Necro.Nucleo
         public bool OferendasAutomaticas = true;
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
+        public bool SemAutoReparo;                          // false (padrão): ao voltar de cada descida o Ferreiro já conserta o que o ouro alcançar
         public long Ouro;                                   // moeda da cidade: cai na masmorra, compra e vende no Ferreiro
-        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados;
+        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados, ItensReparados;
         public int MinionsSacrificados;
         /// <summary>Regra automática: minions NA RESERVA com qualidade abaixo desta são sacrificados ao fim de cada expedição.</summary>
         public Qualidade SacrificarAbaixoDe = Qualidade.Fraca;
@@ -367,7 +368,9 @@ namespace Necro.Nucleo
             Bestiario.Registrar(p, r);
             p.Ossos += (long)Math.Round(r.Ossos * (double)(Necropole.MultOssos(p, cfg) + Talentos.Total(p, EfeitoDeTalento.Ossos, cfg) + Oferendas.Total(p, EfeitoDeTalento.Ossos, cfg) + Ascensao.Valor(p, 0, cfg)));
             p.Sangue += r.Sangue;
-            p.Ouro += r.Ouro; Ferreiro.Renovar(p, cfg);   // cada volta da masmorra, o Ferreiro tem estoque novo
+            Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento
+            p.Ouro += r.Ouro; Ferreiro.Renovar(p, cfg);
+            if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;
             if (r.AncoragemAlcancada > p.AndarDeAncoragem) p.AndarDeAncoragem = r.AncoragemAlcancada;

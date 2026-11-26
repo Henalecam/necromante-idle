@@ -126,6 +126,9 @@
   #inventario .vaga.r0, #inventario .vaga.r1, #inventario .vaga.r2, #inventario .vaga.r3, #inventario .vaga.r4 { border-color:currentColor; }
   #inventario .item img, #inventario .vaga img { width:100%; height:100%; object-fit:contain; pointer-events:none; filter:drop-shadow(0 0 3px currentColor); }
   #inventario .item.r0 img, #inventario .vaga.r0 img { filter:none; }
+  #inventario .vaga { position:relative; } #inventario .vaga .dur { position:absolute; left:2px; right:2px; bottom:2px; height:3px; background:#0a0708; border-radius:2px; overflow:hidden; } #inventario .vaga .dur b { display:block; height:100%; }
+  #inventario .vaga .quebrado { position:absolute; left:0; right:0; top:18%; font-size:18px; line-height:1; text-align:center; color:#ff5a5a; text-shadow:0 0 4px #000; }
+  #inventario .vaga:has(.quebrado) img { filter:grayscale(1) brightness(0.5); }
   #inventario .item .marca-nid { position:absolute; left:3px; top:1px; font:bold 13px Georgia, serif; color:#ffd84a; text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; }
   #inventario .item:has(.marca-nid) img { filter:brightness(0.45) saturate(0.4); }
   #inventario .item .marca-conj { position:absolute; right:2px; top:1px; font-size:10px; line-height:1; color:#d58cf0; text-shadow:0 0 4px #000; pointer-events:none; }
@@ -256,6 +259,7 @@
   <div class="tr"><b>Ossos</b>: de todo inimigo morto. Pagam as construções da Necrópole.</div>
   <div class="tr"><b>Essência</b>: de vender itens e dissolver almas. Paga erguer, fundir e evoluir minions.</div>
   <div class="tr"><b>Sangue</b>: de elites, chefes e execuções. Paga os Ritos da próxima expedição.</div>
+  <div class="tr"><b>Durabilidade</b>: cada descida gasta o que está equipado. Com durabilidade zero o item quebra e não dá bônus até o Ferreiro reparar. <b>Não identificados</b>: Raros para cima caem fechados; identificar custa ouro.</div>
   <div class="tr"><b>Ouro</b>: cai dos monstros, barris, urnas, sarcófagos e baús. Compra e vende itens no Ferreiro, cujo estoque muda a cada expedição.</div>
   <div class="tr"><b>Fragmentos</b>: de sacrificar minions. Servem para Imbuir (subir a qualidade de um minion).</div>
   <div class="tr"><b>Poder</b>: a força do seu exército em um número, calculada da vida e do dano reais. Verde cobre o que o andar pede; amarelo está perto; vermelho está abaixo. É estimativa: jogando com a mão você passa com menos.</div>
