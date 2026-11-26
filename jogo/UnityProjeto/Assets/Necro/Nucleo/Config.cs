@@ -322,6 +322,15 @@ namespace Necro.Nucleo
         public bool MapaIrregularNosTemasFundos = true;  // Cavernas e Inferno: galerias tortas com ramais em vez do bloco compacto
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
+        public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        public bool ForcarAcougueiro;                    // só para testes e capturas
+        public int AcougueiroAndar = 2;
+        public float AcougueiroMultVida = 5f;            // sobre um elite da espécie
+        public float AcougueiroMultDano = 1.8f;
+        public float AcougueiroMultVelocidade = 1.35f;
+        public int AcougueiroAbreSozinhoNoRecorde = 5;   // sem resposta do jogador, o necromante só abre a porta depois de já ter concluído este andar
+        public int AcougueiroNivelDoCutelo = 6;          // o Cutelo cai como se fosse deste andar (ou do atual, se maior)
+        public long AcougueiroOuro = 150;
         public bool TemasDeAndar = true;                 // tema a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno): puxa o elenco para a família da casa
         public float TemaAfinidade = 1.8f;               // peso de sorteio das espécies da casa
         public float TemaForaDeCasa = 0.8f;              // peso das demais

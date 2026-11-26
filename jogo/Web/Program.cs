@@ -229,7 +229,7 @@ public static partial class Jogo
         sb.Append("],\"grade\":{\"w\":").Append(_cfg.LarguraDoInventario).Append(",\"h\":").Append(_cfg.AlturaDoInventario).Append(",\"pos\":[");
         for (int i = 0; i < gx.Length; i++) { if (i > 0) sb.Append(','); sb.Append('[').Append(gx[i]).Append(',').Append(gy[i]).Append(']'); }
         var armaEq = Equipamento.Obter(_p, EspacoEquipamento.Arma);
-        sb.Append("]},\"santuarios\":").Append(_p.SantuariosVistos | _sim.Resultado.SantuariosVistos).Append(",\"autoReparo\":").Append(B(!_p.SemAutoReparo)).Append(",\"reparoTotal\":").Append(Ferreiro.CustoDeRepararTudo(_p, _cfg)).Append(",\"ouroTotal\":").Append(_p.Ouro).Append(",\"ouroDaExpedicao\":").Append(_sim.Resultado.Ouro).Append(",\"loja\":[");
+        sb.Append("]},\"acougueiro\":").Append(_sim.Resultado.AcougueiroMorto ? 3 : _p.MissaoAcougueiro != 0 ? _p.MissaoAcougueiro : _sim.Resultado.AcougueiroSorteio).Append(",\"santuarios\":").Append(_p.SantuariosVistos | _sim.Resultado.SantuariosVistos).Append(",\"autoReparo\":").Append(B(!_p.SemAutoReparo)).Append(",\"reparoTotal\":").Append(Ferreiro.CustoDeRepararTudo(_p, _cfg)).Append(",\"ouroTotal\":").Append(_p.Ouro).Append(",\"ouroDaExpedicao\":").Append(_sim.Resultado.Ouro).Append(",\"loja\":[");
         if (_p.Loja == null || (_p.Loja.Count == 0 && _p.LojaRenovacoes == 0)) Ferreiro.Renovar(_p, _cfg);
         for (int i = 0; i < _p.Loja.Count; i++) { if (i > 0) sb.Append(','); sb.Append("{\"preco\":").Append(Ferreiro.PrecoDeCompra(_p.Loja[i], _cfg)).Append(",\"pode\":").Append(B(Ferreiro.PodeComprar(_p, i, _cfg))).Append(",\"item\":"); AppendItem(sb, _p.Loja[i]); sb.Append('}'); }
         sb.Append("],\"fragmentos\":").Append(_p.FragmentosDeAlma).Append(",\"corpoACorpo\":").Append(B(!Equipamento.Vazio(armaEq) && armaEq.Tipo == TipoItem.Foice))
@@ -426,6 +426,7 @@ public static partial class Jogo
                 { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
                 break;
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
+            case "acougueiro": _cfg.ForcarAcougueiro = true; _p.MissaoAcougueiro = 1; break;
             case "santuario": _cfg.ForcarSalaEspecial = 4; _cfg.ForcarSantuario = (int)v; break;
             case "secreto": _forcarSecreto = true; _cfg.ForcarSecreto = v >= 1 && v <= 3 ? (int)v : 0; break;
             case "cofre": _forcarCofre = true; break;

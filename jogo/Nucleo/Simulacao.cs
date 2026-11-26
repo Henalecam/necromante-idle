@@ -13,7 +13,7 @@ namespace Necro.Nucleo
         private struct SpawnPendente
         {
             public EspecieId Especie;
-            public bool Fraco;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
+            public bool Fraco; public bool Acougueiro;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
             public bool Elite;
             public bool Chefe;
             public ModificadorElite Mods;
@@ -143,6 +143,10 @@ namespace Necro.Nucleo
             _nivelNecromante = progresso.NivelNecromante;
             _bonusAlmaNecropole = Necropole.BonusChanceDeAlma(progresso, cfg);
             _santuariosVistos = progresso.SantuariosVistos;
+            // missões sorteadas por save (Diablo 1): 2 em cada 3 saves têm o Açougueiro. O sorteio sai da semente da primeira descida e fica gravado
+            _recordeInicial = progresso.MaiorAndarConcluido; _acougueiro = progresso.MissaoAcougueiro;
+            if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
+            if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
             PrepararFeiticosDeItem(progresso);
             _sorte = Math.Max(0f, progresso.Sorte);
@@ -568,6 +572,7 @@ namespace Necro.Nucleo
                         if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                         if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        else if (s.Acougueiro) { novo.Unico = true; novo.NomeProprio = "O Açougueiro"; novo.VidaMax *= Cfg.AcougueiroMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.AcougueiroMultDano; novo.VelMovimento *= Cfg.AcougueiroMultVelocidade; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Planejado != null && s.Planejado.Sequito) { novo.VidaMax *= Cfg.SequitoMultVida; novo.Vida = novo.VidaMax; }
                         else if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }
                         else if ((s.Planejado != null || s.Fraco) && !s.Elite && !s.Chefe && Cfg.Horda > 1f) { novo.DaHorda = true; novo.VidaMax /= Cfg.Horda; novo.Vida = novo.VidaMax; novo.Dano /= Cfg.Horda; }

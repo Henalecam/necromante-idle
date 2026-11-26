@@ -26,7 +26,7 @@ battle.net clássico (pacotes de campeões/únicos).
 9. [feito: Biblioteca, Fosso de monstros, Sala de tortura, Arsenal] Salas temáticas do Diablo 1: Biblioteca (livro = XP/feitiço), Fosso de monstros, Sala de tortura, Arsenal.
 10. [feito] Santuários de efeito incerto: 10 tipos de nome críptico (Misterioso, Sombrio, Estranho, Reluzente, Oculto, Religioso, Mágico, Ornado, Tétrico, Profano), usar ou seguir adiante, efeito só revelado depois de usado e anotado no Livro dos Santuários. Fontes: diablo2.diablowiki.net/D1_Shrines, strategywiki, gamebanshee, valarguild.
 11. [feito: tema a cada 4 andares com paleta, fogo, família da casa e decoração própria; Cavernas e Inferno com andares maiores e irregulares] Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
-12. Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
+12. [feito parte 1: o Açougueiro (andar 2, 2 em cada 3 saves, porta opcional, Cutelo do Açougueiro); falta o Rei Esqueleto] Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
 13. Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
 14. Árvore de ascensão muito maior.
 15. Imbuir/melhorar armaduras com ouro.

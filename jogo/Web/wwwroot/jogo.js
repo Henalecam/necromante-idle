@@ -604,12 +604,12 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal'], ['🜏', 'Porta do Açougueiro']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 19: 'uma arma ou armadura (Rara se você tocar)', 18: 'Sangue dos supliciados', 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'santuário de efeito incerto: pode ajudar ou cobrar um preço', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 20: 'missão: abrir é escolha sua. Ele é forte e rápido', 19: 'uma arma ou armadura (Rara se você tocar)', 18: 'Sangue dos supliciados', 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'santuário de efeito incerto: pode ajudar ou cobrar um preço', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 // Santuários de efeito incerto (Diablo 1): [nome, frase enigmática, efeito revelado depois de usado]
 const SANTUARIOS = [null,
@@ -709,6 +709,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 13) { if (sub === 1) { aviso('Cofre aberto! +' + fmt(Math.round(val)) + ' Ossos e um item'); anotar(`<b style="color:#ffd84a">Cofre aberto</b> com a chave: +${fmt(Math.round(val))} Ossos e um item.`); brilho('#ffd84a', 60); clarao = 0.5; } else { if (objeto) objeto.aberto = 0; aviso('Cofre trancado: a chave estava em outra sala'); anotar('O cofre estava trancado. A chave ficava com os inimigos de outra sala: toque nela antes para mudar a rota.'); } }
   else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
   else if (ts === 18) { aviso('Sala de tortura · +' + Math.round(val) + ' Sangue'); anotar(`Sala de tortura: o necromante colheu ${Math.round(val)} de Sangue${toque ? ' (um a mais pelo seu toque)' : ''}.`); brilho('#c8323c', 30); for (let i = 0; i < 6; i++) mancha(x + rnd(-1, 1), y + rnd(-0.6, 0.6), 7, 3); }
+  else if (ts === 20) { if (val < 0) { aviso('A porta do Açougueiro ficou fechada'); anotar('Você deixou a porta do Açougueiro fechada. Ele espera no andar 2.'); } else { aviso('O Açougueiro caiu · Cutelo do Açougueiro'); anotar('<b style="color:#ffcf5a">Missão cumprida: o Açougueiro está morto.</b> O Cutelo do Açougueiro é seu.'); som('chefe'); clarao = 0.6; } }
   else if (ts === 19) { aviso('Arsenal · ' + TIPOS[sub] + ' ' + RARIDADES[Math.round(val)]); anotar(`Arsenal: nos suportes havia ${TIPOS[sub] ? TIPOS[sub].toLowerCase() : 'um item'} (${RARIDADES[Math.round(val)]})${toque ? ', escolhido por você' : ''}.`); brilho('#c8d0e0', 30); }
   else if (ts === 17) { aviso('Fosso limpo · item e +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Fosso de monstros limpo: um item (ao menos Mágico) e +${fmt(Math.round(val))} Ossos.`); brilho('#c8e06a', 30); }
   else if (ts === 16) { aviso('Tomo lido · +' + fmt(Math.round(val)) + ' de experiência'); anotar(`Biblioteca: o necromante leu um tomo${toque ? ' escolhido por você' : ''}: +${fmt(Math.round(val))} de experiência.`); brilho('#b8a0ff', 30); }
@@ -810,6 +811,13 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#5a0c10'; ctx.fillRect(bal - 4, -40, 8, 3);
     for (const hx of [-16, 16]) { ctx.strokeStyle = '#9a9aa0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hx, -40, 4, 0.3, 5.2); ctx.stroke(); }
     if (!ab) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(200,30,40,${0.10 + 0.10 * pulso})`; ctx.beginPath(); ctx.arc(0, -40, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 20) {    // porta do Açougueiro: batente de madeira manchado, ganchos e uma poça de sangue saindo por baixo
+    ctx.fillStyle = 'rgba(120,8,14,0.7)'; ctx.beginPath(); ctx.ellipse(0, 6, 46, 16, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1c1210'; ctx.fillRect(-30, -86, 60, 86); ctx.fillStyle = '#3a2416'; ctx.fillRect(-25, -80, 50, 80);
+    ctx.strokeStyle = '#1a0f0a'; ctx.lineWidth = 2; for (const lx of [-12, 0, 12]) { ctx.beginPath(); ctx.moveTo(lx, -80); ctx.lineTo(lx, 0); ctx.stroke(); }
+    ctx.fillStyle = '#6a6a70'; ctx.fillRect(-25, -62, 50, 5); ctx.fillRect(-25, -24, 50, 5);
+    ctx.fillStyle = 'rgba(150,10,16,0.85)'; ctx.beginPath(); ctx.moveTo(-18, -70); ctx.lineTo(-6, -40); ctx.lineTo(-14, -8); ctx.lineTo(-22, -36); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.ellipse(10, -46, 9, 13, 0.3, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#8a8a90'; ctx.lineWidth = 2; for (const hx of [-44, 44]) { ctx.beginPath(); ctx.moveTo(hx, -84); ctx.lineTo(hx, -56); ctx.arc(hx + 5, -56, 5, Math.PI, 0, true); ctx.stroke(); }
   } else if (o.tipo === 19) {    // arsenal: suporte de armas com lâminas e um escudo, e um manequim de armadura
     ctx.fillStyle = '#2c1c12'; ctx.fillRect(-36, -8, 44, 8); ctx.fillRect(-36, -50, 4, 44); ctx.fillRect(4, -50, 4, 44); ctx.fillRect(-36, -52, 44, 4);
     ctx.strokeStyle = '#b8c0cc'; ctx.lineWidth = 2.5; for (const lx of [-26, -16, -6]) { ctx.beginPath(); ctx.moveTo(lx, -6); ctx.lineTo(lx, -64 + (lx === -16 ? -8 : 0)); ctx.stroke(); ctx.strokeStyle = '#6a5030'; ctx.beginPath(); ctx.moveTo(lx - 4, -14); ctx.lineTo(lx + 4, -14); ctx.stroke(); ctx.strokeStyle = '#b8c0cc'; }
@@ -1012,7 +1020,7 @@ function desenhar(dt) {
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
-    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
+    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
@@ -1179,7 +1187,9 @@ function desenhar(dt) {
   const chB = bencaos ? bencaos.slice(0, 3).join(',') : '';
   if (chB !== bencaosMostradas) {
     bencaosMostradas = chB; $('bencaos').hidden = !chB;
-    if (chB) { const sv = SANTUARIOS[bencaos[0]] || ['Santuário', '', ''], conhecido = bencaos[1] === 1;
+    if (chB && bencaos[0] === 11) {
+      $('bencaos').innerHTML = `<div class="cab"><span>A porta do Açougueiro</span><span id="ben-t"></span></div><p class="frase">“Ah... carne fresca!”</p><p class="nota">Missão deste save. Atrás da porta, entre os corpos, está o Açougueiro: um só inimigo, muito forte e rápido. Vencê-lo dá o <b>Cutelo do Açougueiro</b> e ouro. Sem resposta, o necromante só abre depois de já ter concluído o andar 5.</p><div class="ops"><button data-b="0"><b>Abrir a porta</b><span class="g">enfrentar o Açougueiro</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">ele continua aqui na próxima descida</span></button></div>`;
+    } else if (chB) { const sv = SANTUARIOS[bencaos[0]] || ['Santuário', '', ''], conhecido = bencaos[1] === 1;
       $('bencaos').innerHTML = `<div class="cab"><span>${escHtml(sv[0])}</span><span id="ben-t"></span></div><p class="frase">“${escHtml(sv[1])}”</p><p class="nota">${conhecido ? 'Você já conhece este santuário: ' + escHtml(sv[2]) + '.' : 'Você ainda não sabe o que ele faz. Pode ajudar ou cobrar um preço.'} Sem resposta, o necromante usa.</p><div class="ops"><button data-b="0"><b>Usar o santuário</b><span class="g">${conhecido ? escHtml(sv[2]) : 'descobrir o efeito'}</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">deixar o santuário intocado</span></button></div>`; }
   }
   if (chB) { const t = $('ben-t'); if (t) t.textContent = Math.ceil(bencaos[3]) + 's'; }
@@ -1415,6 +1425,7 @@ function atualizarPainel(forcar) {
     if (masm.amb) h += `<div class="linha"><div class="corpo">Ambiente: ${AMBIENTES[masm.amb][0]}<small>${AMBIENTES[masm.amb][1]}</small></div></div>`;
     if (masm.bencao) h += `<div class="linha"><div class="corpo">Santuário ativo<small>${BENCAOS[masm.bencao]} · até o fim do andar</small></div></div>`;
     santuariosVistos |= d.santuarios;
+    if (d.acougueiro === 1 || d.acougueiro === 3) h += `<h3>Missões deste save</h3><div class="linha"><div class="corpo">${d.acougueiro === 3 ? '<b style="color:#8fd89f">O Açougueiro · cumprida</b>' : '<b style="color:#ffcf5a">O Açougueiro</b>'}<small>${d.acougueiro === 3 ? 'Morto. O Cutelo do Açougueiro é seu.' : 'Andar 2, atrás de uma porta trancada. Forte e rápido: volte quando estiver pronto. Recompensa: o Cutelo do Açougueiro.'}</small></div></div>`;
     h += `<h3>Livro dos Santuários</h3><p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}).</p>` +
       SANTUARIOS.map((x, k) => (x ? `<div class="linha"><div class="corpo"><span style="color:${d.santuarios & (1 << k) ? '#7fd8ff' : '#8d7c6c'}">${x[0]}</span> <span class="nota">“${x[1]}”</span><small>${d.santuarios & (1 << k) ? x[2] : '? ? ?'}</small></div></div>` : '')).join('');
     if (pressagio) h += `<div class="linha"><div class="corpo">Presságio: ${PRESSAGIOS[pressagio][0]}<small>${PRESSAGIOS[pressagio][1]}</small></div></div>`;
@@ -1688,6 +1699,7 @@ window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual 
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
+window.__nomesUnicos = () => { const r = []; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) r.push(nomesUnicos.get(s.id)); return r.join('|'); };
 window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };
 window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]).length;
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);

@@ -158,7 +158,7 @@ namespace Necro.Testes
                 var rng = new Rng(8);
                 var pc = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pc, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Cajado));
                 var pf = Progressao.NovoJogo(Cfg); Equipamento.Equipar(pf, GeradorDeItens.GerarDoTipo(rng, Cfg, 1, RaridadeItem.Comum, TipoItem.Foice));
-                var semSalas = new ConfigJogo { ChanceDeSalaEspecial = 0f, ChanceDeSalaVazia = 0f, ObjetosPorSala = 0 };   // sem baús nem barris no caminho: o teste mede só o combate
+                var semSalas = new ConfigJogo { ChanceDeSalaEspecial = 0f, ChanceDeSalaVazia = 0f, ObjetosPorSala = 0, MissoesDeCenario = false };   // sem baús nem barris no caminho: o teste mede só o combate
                 var sc = new Simulacao(semSalas, pc, 12, ModoExpedicao.Avancar, 1);
                 var sf = new Simulacao(semSalas, pf, 12, ModoExpedicao.Avancar, 1);
                 Afirmar(!sc.NecromanteCorpoACorpo && sf.NecromanteCorpoACorpo, "foice liga o corpo a corpo");
@@ -1447,6 +1447,28 @@ namespace Necro.Testes
                 Afirmar(okC && okF, "todas as salas deveriam estar ligadas e sem sobreposição");
                 Afirmar(caverna < catedral - 0.05f, "o andar das Cavernas deveria preencher menos o seu retângulo (" + caverna + " vs " + catedral + ")");
                 Afirmar(ladoF <= Cfg.MapaFundoLadoMaximo, "o andar irregular não deveria passar de " + Cfg.MapaFundoLadoMaximo + " salas de lado (" + ladoF + ")");
+            });
+
+            Teste("missão do Açougueiro: sala no andar 2, abrir é escolha; vencê-lo dá o Cutelo e encerra a missão no save", () =>
+            {
+                var c = new ConfigJogo { ForcarAcougueiro = true, ObjetosPorSala = 0 };
+                // fraco e sem resposta: o necromante não abre a porta
+                var s1 = new Simulacao(c, ProgressoCom(EspecieId.Esqueleto), 3, ModoExpedicao.Avancar, 2); int g = 0; bool viu = false, lutou = false;
+                Afirmar(s1.Salas.Contains(TipoSala.Acougue), "o andar 2 deveria ter a sala do Açougueiro");
+                while (!s1.Encerrada && g++ < 6000 && s1.Andar == 2) { s1.Tick(); if (s1.BencaosOferecidas != null && s1.BencaosOferecidas[0] == 11) viu = true; foreach (var e in s1.Entidades) if (e.NomeProprio == "O Açougueiro") lutou = true; }
+                Afirmar(viu && !lutou, "sem resposta e sem recorde, a porta deveria ficar fechada (viu " + viu + ", lutou " + lutou + ")");
+                // forte e abrindo a porta: luta, Cutelo e missão vencida
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.DiaboDeGuerra); p.NivelNecromante = 40; foreach (var m in p.Minions) m.Nivel = 20;
+                var s2 = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 2); g = 0; lutou = false;
+                while (!s2.Encerrada && g++ < 9000 && s2.Andar == 2) { s2.Tick(); if (s2.BencaosOferecidas != null) s2.ComandoEscolherBencao(0); foreach (var e in s2.Entidades) if (e.NomeProprio == "O Açougueiro") lutou = true; }
+                Afirmar(lutou, "abrindo a porta, o Açougueiro deveria aparecer");
+                Afirmar(s2.Resultado.AcougueiroMorto, "um exército forte deveria vencer o Açougueiro");
+                bool cutelo = false; foreach (var it in s2.Resultado.Itens) if (it.Nome == "Cutelo do Açougueiro" && !it.NaoIdentificado) cutelo = true;
+                Afirmar(cutelo, "o Açougueiro deveria largar o Cutelo, já identificado");
+                Progressao.AplicarResultado(p, s2.Resultado, c);
+                Afirmar(p.MissaoAcougueiro == 3, "a missão deveria ficar gravada como vencida");
+                var s3 = new Simulacao(new ConfigJogo { ObjetosPorSala = 0 }, p, 7, ModoExpedicao.Avancar, 2);
+                Afirmar(!s3.Salas.Contains(TipoSala.Acougue), "depois de vencido, o Açougueiro não deveria voltar");
             });
 
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>

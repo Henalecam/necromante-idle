@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,6 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
+        private int _acougueiro, _recordeInicial; private bool _lutaDoAcougueiro;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -92,6 +93,7 @@ namespace Necro.Nucleo
             for (int w = 1; w <= TotalDeOndas; w++)
             {
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
+                if (w == 1 && TotalDeOndas > 1 && (_acougueiro == 1 || (Cfg.ForcarAcougueiro && _acougueiro != 3)) && Andar == Cfg.AcougueiroAndar) Salas.Add(TipoSala.Acougue);   // missão do Açougueiro: a porta trancada do andar 2
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -307,6 +309,17 @@ namespace Necro.Nucleo
                 long ossos = (long)(Cfg.BauOssos * (_mimico ? 2f : _ninhoChocou ? Cfg.NinhoPremioDaLuta : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                 Resultado.Ossos += ossos;
                 if (_mimico || _fosso) SoltarItemEm(PosDoObjeto, RaridadeItem.Magico);
+                if (_lutaDoAcougueiro)
+                {
+                    _lutaDoAcougueiro = false; _acougueiro = 3; Resultado.AcougueiroMorto = true;
+                    var cutelo = GeradorDeItens.GerarDoTipo(_rngItens, Cfg, Math.Max(Andar, Cfg.AcougueiroNivelDoCutelo), RaridadeItem.Raro, TipoItem.Foice);
+                    cutelo.Nome = "Cutelo do Açougueiro"; cutelo.NaoIdentificado = false; cutelo.Bloqueado = true;
+                    Resultado.Itens.Add(cutelo); Resultado.Ouro += Cfg.AcougueiroOuro;
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)cutelo.Raridade, Valor = cutelo.Nivel });
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.Acougue, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_fosso) { ossos *= 2; Resultado.Ossos += ossos / 2; }
                 Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)(_fosso ? TipoSala.FossoDeMonstros : TipoSala.Emboscada), Valor = ossos, Critico = _mimico, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
                 _mimico = false; _ninhoChocou = false; _fosso = false;
@@ -370,6 +383,14 @@ namespace Necro.Nucleo
             int n = Math.Max(6, Math.Min(Cfg.FossoMaximo, (int)(orcamento / Math.Max(0.5f, TabelaEspecies.Obter(esp).CustoOnda))));
             for (int k = 0; k < n; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = esp, Fraco = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 2 });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>O Açougueiro (Diablo 1): um Único de nome fixo, forte e rápido, sozinho numa sala de corpos. Vencido, larga o Cutelo.</summary>
+        private void IniciarAcougueiro()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDoAcougueiro = true;
+            _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Carnical, Elite = true, Acougueiro = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
             Fase = FaseExpedicao.EmOnda;
         }
 
@@ -459,6 +480,19 @@ namespace Necro.Nucleo
                 }
                 TempoDaBencao -= DT;
                 if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+            }
+            if (t == TipoSala.Acougue)
+            {
+                // a porta do Açougueiro: [11, 0, 0]. Abrir (0) ou seguir (1). Sem resposta, o necromante só abre se já foi fundo o bastante para aguentar.
+                if (BencaosOferecidas == null) { BencaosOferecidas = new[] { 11, 0, 0 }; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1; return; }
+                TempoDaBencao -= DT;
+                if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+                bool abre = _escolhaDeBencao == 0 || (_escolhaDeBencao < 0 && _recordeInicial >= Cfg.AcougueiroAbreSozinhoNoRecorde);
+                BencaosOferecidas = null; _escolhaDeBencao = -1;
+                if (abre) { IniciarAcougueiro(); return; }
+                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = -1f, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
+                EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
+                return;
             }
             bool toque = _toqueNaSala || _escolhaDeBencao >= 0;
             float valor = 0f; int sub = 0; bool especial = toque;
