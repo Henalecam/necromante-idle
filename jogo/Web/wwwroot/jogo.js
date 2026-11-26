@@ -31,7 +31,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5] };
+const PROVISORIO = { carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -41,7 +41,7 @@ function monstro(especie, elite) {
   return (elite && monstros[n + '_elite']) || monstros[n] || monstros.esqueleto;
 }
 function direcao(dx, dy) { return Math.round(((Math.atan2(dx + dy, dx - dy) * 180 / Math.PI + 360) % 360) / 45) % 8; }
-function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
+function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie === 'CarcereiroDeAlmas' ? 'O Carcereiro de Almas' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
 function escHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function naTela(x, y) { return P(x, y); }
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -306,7 +306,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -359,6 +359,7 @@ function evento(v) {
   const tipo = v[1], x = +v[10], y = +v[11], dx = +v[12], dy = +v[13];
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '12') { const g = estado.get(+v[3]); if (g) g.preso = tempoSim + (+v[4] || 2); som('perigo'); if (!evento.avisouGrilhoes) { evento.avisouGrilhoes = true; aviso('Grilhões! Seus minions mais fortes ficam presos'); } return; }
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
   if (tipo === 'AndarConcluido') anotar(`Andar ${v[14]} concluído em ${Math.round(+v[4])} s.`);
   if (tipo === 'EntidadeSurgiu' && +v[14] > 0 && v[6] !== '1') { batizar(+v[3], +v[14], v[15] || ''); return; }
@@ -637,6 +638,7 @@ function desenhar(dt) {
       }
     }
     if (!morto && s.gelo > tempoSim) { ctx.fillStyle = 'rgba(140,200,255,0.35)'; ctx.beginPath(); ctx.ellipse(px, py - 30, 26, 44, 0, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(200,235,255,0.8)'; ctx.lineWidth = 2; ctx.stroke(); }
+    if (!morto && s.preso > tempoSim) { ctx.strokeStyle = 'rgba(170,110,255,0.9)'; ctx.lineWidth = 3; for (let q = 0; q < 3; q++) { ctx.beginPath(); ctx.ellipse(px, py - 14 - q * 22, 22 - q * 2, 8, 0, 0, 7); ctx.stroke(); } }
     if (!morto && s.golpe > 0) {
       const k = Math.min(1, s.golpe / 1.4), R = 2.3 * arena.px_por_unidade_x;
       ctx.fillStyle = `rgba(255,40,20,${0.10 + 0.12 * (1 - k)})`; ctx.beginPath(); ctx.ellipse(px, py, R, R * 0.5, 0, 0, 7); ctx.fill();

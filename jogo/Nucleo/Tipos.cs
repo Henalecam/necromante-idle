@@ -41,7 +41,7 @@ namespace Necro.Nucleo
         Necromante = 0, Esqueleto = 1, ArqueiroOssudo = 2, Zumbi = 3, CaoDeCripta = 4,
         Diabrete = 5, AcolitoCaido = 6, AbadessaCosturada = 7,
         Carnical = 8, DiaboDeGuerra = 9, Aparicao = 10, ColossoDeOssos = 11,
-        ResProfana = 12
+        ResProfana = 12, CarcereiroDeAlmas = 13
     }
 
     public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5 }

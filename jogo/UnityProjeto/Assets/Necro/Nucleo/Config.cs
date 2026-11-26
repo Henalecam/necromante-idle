@@ -311,6 +311,9 @@ namespace Necro.Nucleo
         public float GeadaIntervalo = 6f, GeadaDuracao = 1.8f;
         public float DesabamentoIntervalo = 4f, DesabamentoAviso = 1.3f, DesabamentoRaio = 1.1f, DesabamentoFator = 0.7f;   // pedras: menores e mais frequentes que a lava
         public float TesouroChanceDeLendario = 0.15f;
+        // chefe do Ato 2 (Carcereiro de Almas)
+        public float GrilhoesIntervalo = 9f, GrilhoesDuracao = 2.0f;
+        public int GrilhoesAlvos = 2, GrilhoesMaximoDeAparicoes = 3;
 
         public float ChanceDePressagio = 0.35f;          // chance de um andar comum ter um presságio
         public int PressagioAPartirDoAndar = 7;         // a primeira expedição (até o andar 6) fica sem surpresas

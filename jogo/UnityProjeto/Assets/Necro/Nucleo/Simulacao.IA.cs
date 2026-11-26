@@ -376,11 +376,36 @@ namespace Necro.Nucleo
             Ocioso(e);
         }
 
+        /// <summary>O Carcereiro de Almas: acorrenta os minions de mais vida e chama uma Aparição (até o limite em campo).</summary>
+        private void Grilhoes(Entidade e)
+        {
+            e.TempoHabilidade = Cfg.GrilhoesIntervalo;
+            e.TempoAcao = 1.0f;
+            e.Animacao = EstadoAnimacao.Conjurando;
+            for (int k = 0; k < Cfg.GrilhoesAlvos; k++)
+            {
+                Entidade alvo = null;
+                for (int i = 0; i < _minions.Count; i++)
+                {
+                    var m = _minions[i];
+                    if (m.Viva && m.TempoAcao < Cfg.GrilhoesDuracao * 0.5f && (alvo == null || m.Vida > alvo.Vida)) alvo = m;
+                }
+                if (alvo == null) break;
+                alvo.TempoAcao = Cfg.GrilhoesDuracao; alvo.Animacao = EstadoAnimacao.Parado;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 12, Alvo = alvo.Id, Origem = e.Id, Valor = Cfg.GrilhoesDuracao, Pos = alvo.Pos });
+            }
+            int servas = 0;
+            for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Viva && Entidades[i].Faccao == Faccao.Inimigo && Entidades[i].Especie == EspecieId.Aparicao) servas++;
+            if (servas < Cfg.GrilhoesMaximoDeAparicoes)
+                CriarInimigo(EspecieId.Aparicao, Limitar(new Vec2(e.Pos.X + Rng.Intervalo(-2f, 2f), e.Pos.Y + Rng.Intervalo(-2f, 2f))));
+        }
+
         /// <summary>A Abadessa Costurada: periodicamente invoca uma poça de sangue que a cura. Retorna true se gastou o tick.</summary>
         private bool HabilidadeDoChefe(Entidade e)
         {
             e.TempoHabilidade -= DT;
             if (e.TempoHabilidade > 0f) return false;
+            if (e.Especie == EspecieId.CarcereiroDeAlmas) { Grilhoes(e); return true; }
             e.TempoHabilidade = Cfg.PocaIntervalo;
             e.TempoAcao = 1.0f;
             e.Animacao = EstadoAnimacao.Conjurando;

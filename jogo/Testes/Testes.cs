@@ -1096,6 +1096,26 @@ namespace Necro.Testes
                 }
             });
 
+            Teste("chefe do Ato 2: o Carcereiro de Almas surge no andar 20, acorrenta minions e chama Aparições", () =>
+            {
+                Afirmar(TabelaEspecies.ChefeDoAto(1) == EspecieId.AbadessaCosturada && TabelaEspecies.ChefeDoAto(2) == EspecieId.CarcereiroDeAlmas, "chefe por Ato");
+                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 400f;
+                var sim = new Simulacao(Cfg, p, 3, ModoExpedicao.Avancar, 20) { LimiteDeAndares = 1 };
+                bool viu = false, grilhoes = false, aparicao = false; int guarda = 0;
+                while (!sim.Encerrada && guarda++ < 6000)
+                {
+                    sim.Tick();
+                    foreach (var ev in sim.Eventos)
+                    {
+                        if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.CarcereiroDeAlmas && ev.Critico) viu = true;
+                        if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 12) grilhoes = true;
+                        if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Aparicao && viu) aparicao = true;
+                    }
+                    if (viu && grilhoes && aparicao) break;
+                }
+                Afirmar(viu && grilhoes && aparicao, "chefe " + viu + " grilhões " + grilhoes + " aparição " + aparicao);
+            });
+
             RodarLoot();
 
             Console.WriteLine();

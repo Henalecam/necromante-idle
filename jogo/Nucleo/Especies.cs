@@ -53,7 +53,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[13];
+            var t = new DadosEspecie[14];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -134,10 +134,17 @@ namespace Necro.Nucleo
                 Vida = 60f, Dano = 6f, VelAtaque = 0.9f, Armadura = 5f, Alcance = 1.1f, VelMovimento = 2.6f, TipoDano = TipoDano.Fisico,
                 Resistencias = Res(0.1f, 0f, 0f, 0f, 0f, 0f), AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 1f
             };
+            // Chefe do Ato 2: um espectro que acorrenta os teus minions e chama Aparições para o lado dele.
+            t[(int)EspecieId.CarcereiroDeAlmas] = new DadosEspecie
+            {
+                Id = EspecieId.CarcereiroDeAlmas, Nome = "O Carcereiro de Almas", Familia = Familia.Espirito, Porte = Porte.Colossal, Papel = Papel.Lutador,
+                Vida = 640f, Dano = 26f, VelAtaque = 0.75f, Armadura = 40f, Alcance = 2.0f, VelMovimento = 1.7f, TipoDano = TipoDano.Sombra,
+                Resistencias = Res(0.2f, 0f, 0f, 0f, 0.2f, 0.5f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
+            };
             return t;
         }
 
         /// <summary>Chefe de um Ato. Por enquanto só existe o conteúdo do Ato 1; os demais reutilizam a Abadessa.</summary>
-        public static EspecieId ChefeDoAto(int ato) { return EspecieId.AbadessaCosturada; }
+        public static EspecieId ChefeDoAto(int ato) { return ato % 2 == 0 ? EspecieId.CarcereiroDeAlmas : EspecieId.AbadessaCosturada; }
     }
 }
