@@ -367,6 +367,8 @@ function evento(v) {
   if (silencio && v[1] !== 'CadaverCriado' && v[1] !== 'CadaverConsumido' && v[1] !== 'CadaverRemovido' && v[1] !== 'Morte') return;
   const tipo = v[1], x = +v[10], y = +v[11], dx = +v[12], dy = +v[13];
   if (tipo === 'SalaIniciada' || tipo === 'SalaResolvida' || tipo === 'AmbienteDefinido' || tipo === 'PerigoAnunciado') { eventoDeSala(tipo, v, x, y); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '16') { const g = estado.get(+v[3]); if (g) { g.flash = 0.18; numeros.push({ x: g.x, y: g.y, txt: 'Aparou!', cor: '#cfe6ff', t: 1, amigo: true }); for (let i = 0; i < 6; i++) particulas.push([g.x, g.y, 0.9, rnd(-2, 2), rnd(-1.5, 1.5), rnd(1, 3), '#e8f2ff', 0.35]); } som('golpe'); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '17') { const g = estado.get(+v[3]); if (g) { g.sede = tempoSim + (+v[4] || 4); numeros.push({ x: g.x, y: g.y, txt: 'Sede!', cor: '#ff8a6a', t: 1, amigo: true }); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '14') { aviso('A patrulha entrou na luta!'); som('chefe'); tremor = 0.25; anotar('A <b style="color:#ff7a5a">patrulha errante</b> cruzou com o grupo e entrou na luta.'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '15') { aviso('Patrulha vencida: ela carregava um item'); som('bau'); anotar('Patrulha vencida: o que ela saqueou agora é seu.'); return; }
@@ -982,9 +984,9 @@ function desenhar(dt) {
   for (const n of numeros) {
     const [px, py] = naTela(n.x, n.y); n.t -= dt;
     ctx.globalAlpha = Math.min(1, n.t * 2.5); ctx.font = (n.crit ? 'bold 22px' : '15px') + ' Georgia';
-    ctx.fillStyle = n.amigo ? '#ff6a6a' : (n.crit ? '#ffd84a' : '#f0e8d8');
+    ctx.fillStyle = n.cor || (n.amigo ? '#ff6a6a' : (n.crit ? '#ffd84a' : '#f0e8d8')); if (n.txt) ctx.font = 'bold 14px Georgia';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    const yy = py - 95 - (0.8 - n.t) * 45; ctx.strokeText(n.v, px, yy); ctx.fillText(n.v, px, yy);
+    const yy = py - 95 - (0.8 - n.t) * 45; ctx.textAlign = 'center'; ctx.strokeText(n.txt || n.v, px, yy); ctx.fillText(n.txt || n.v, px, yy);
   }
   ctx.globalAlpha = 1; numeros = numeros.filter((n) => n.t > 0);
   if (numeros.length > 60) numeros.splice(0, numeros.length - 60);
@@ -1089,6 +1091,7 @@ function thumb(sprite) {
   const k = 46 / Math.min(m.W, m.H) * 1.9, x = 23 - m.pivo[0] * k, y = 40 - (m.H - m.pivo[1]) * k;
   return `<div class="thumb" style="background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
 }
+const HABILIDADE = { esqueleto: ['Aparar', 'ignora o primeiro golpe que levar em cada sala'], zumbi: ['Miasma', 'ao cair, envenena os inimigos em volta'], caodecripta: ['Sede', 'ataca 25% mais rápido por 4 s depois de matar'] };
 const tracosHtml = (t) => t.length ? '<small>' + t.map((k) => TRACOS[k] ? `<b style="color:#c8a86a;font-weight:normal">${TRACOS[k][0]}</b>: ${TRACOS[k][1]}` : '').join(' · ') + '</small>' : '';
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
@@ -1338,6 +1341,7 @@ function desenharFicha(d) {
   h += `<div class="tr" style="text-align:center;font-size:16px"><b>Poder ${fmt(f.poder)}</b></div>` + (f.dons.some((x) => x) ? `<div class="tr">${donsHtml(f.dons).replace(/<\/?small>/g, '')} <span class="nota">(de nascença, já nos números)</span></div>` : '');
   h += `<div class="tr">${esc(f.papel)}</div>`;
   if (f.dominio) h += `<div class="tr"><b>Domínio ${f.dominio}</b>: bônus do Bestiário já incluído nos números acima</div>`;
+  { const hb = HABILIDADE[f.sprite]; if (hb) h += `<div class="tr" style="border-left:3px solid #7fd6a0;padding-left:8px"><b style="color:#7fd6a0">${hb[0]}</b> <span class="nota">(habilidade da espécie)</span>: ${hb[1]}</div>`; }
   m.tracos.forEach((k) => { if (TRACOS[k]) h += `<div class="tr"><b>${TRACOS[k][0]}</b>: ${TRACOS[k][1]}</div>`; });
   if (!m.tracos.length) h += '<div class="tr nota">Alma sem traços. Fundir ou Imbuir sobe a qualidade; almas melhores trazem traços.</div>';
   h += '<p class="nota">Toque no retrato para trocar a animação. Os números valem para a próxima expedição.</p><div class="rodape">' +

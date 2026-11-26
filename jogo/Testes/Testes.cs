@@ -1182,6 +1182,23 @@ namespace Necro.Testes
                 Afirmar(surgiu >= 8 && mudou >= 3 && lutou >= 6 && pagou >= 6, "surgiu " + surgiu + " mudou " + mudou + " lutou " + lutou + " pagou " + pagou);
             });
 
+            Teste("habilidades de espécie: o Esqueleto apara o primeiro golpe da sala; o Zumbi solta miasma ao cair", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg);
+                var sim = new Simulacao(Cfg, p, 3, ModoExpedicao.Avancar, 1);
+                bool aparou = false; int guarda = 0;
+                while (!sim.Encerrada && guarda++ < 3000 && !aparou) { sim.Tick(); foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 16) aparou = true; }
+                Afirmar(aparou, "nenhum esqueleto aparou um golpe");
+                var semHab = new ConfigJogo { HabilidadesDeEspecie = false };
+                var s2 = new Simulacao(semHab, Progressao.NovoJogo(semHab), 3, ModoExpedicao.Avancar, 1); bool aparou2 = false; guarda = 0;
+                while (!s2.Encerrada && guarda++ < 1500) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 16) aparou2 = true; }
+                Afirmar(!aparou2, "com as habilidades desligadas ninguém deveria aparar");
+                var pz = ProgressoCom(EspecieId.Zumbi);
+                var sz = new Simulacao(Cfg, pz, 4, ModoExpedicao.Avancar, 9); bool miasma = false; guarda = 0;
+                while (!sz.Encerrada && guarda++ < 6000 && !miasma) { sz.Tick(); foreach (var ev in sz.Eventos) if (ev.Tipo == TipoEvento.Explosao && ev.TipoDano == TipoDano.Veneno) miasma = true; }
+                Afirmar(miasma, "o zumbi deveria soltar miasma ao morrer");
+            });
+
             RodarLoot();
 
             Console.WriteLine();

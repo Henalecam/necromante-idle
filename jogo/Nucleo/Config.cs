@@ -45,12 +45,12 @@ namespace Necro.Nucleo
         public float FatorDanoInimigo = 0.16f;
         public float EliteMultVida = 3.5f;
         public float EliteMultDano = 1.4f;
-        public float ChefeMultVida = 2.2f;
+        public float ChefeMultVida = 2.4f;
         public float ChefeMultDano = 1.0f;
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.085f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.1f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -298,6 +298,10 @@ namespace Necro.Nucleo
         public float MercadorPreco = 40f;                // Ossos da própria expedição, x (1 + 10% por andar)
         public float MercadorDescontoComToque = 0.4f;
         public float MercadorChanceDeRaro = 0.2f;
+        // habilidades de espécie (só para minions erguidos)
+        public bool HabilidadesDeEspecie = true;
+        public float MiasmaMult = 1.5f, MiasmaRaio = 1.6f;      // Zumbi
+        public float SedeBonus = 0.25f, SedeDuracao = 4f;        // Cão de Cripta
         // patrulha errante
         public float ChanceDePatrulha = 0.3f, PatrulhaIntervalo = 9f;
         public int PatrulhaAPartirDoAndar = 6, PatrulhaTamanho = 3;

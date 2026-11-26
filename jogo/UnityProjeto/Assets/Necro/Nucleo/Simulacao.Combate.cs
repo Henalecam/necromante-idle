@@ -17,6 +17,13 @@ namespace Necro.Nucleo
         public float CausarDano(Entidade atacante, Entidade alvo, float danoBase, TipoDano tipo, bool golpe)
         {
             if (alvo == null || !alvo.Viva || danoBase <= 0f) return 0f;
+            // Habilidade da espécie — Esqueleto erguido: apara o primeiro golpe que recebe em cada sala
+            if (golpe && atacante != null && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.Esqueleto && !alvo.Aparou && Cfg.HabilidadesDeEspecie)
+            {
+                alvo.Aparou = true;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 16, Alvo = alvo.Id, Origem = atacante.Id, Pos = alvo.Pos });
+                return 0f;
+            }
 
             float aumentos = 0f, mais = 1f, fracaoFogo = 0f;
             bool critico = false;
@@ -162,6 +169,18 @@ namespace Necro.Nucleo
                 Overkill = overkill, Execucao = execucao, Dir = dir, Pos = alvo.Pos, Especie = alvo.Especie, TipoDano = tipo, Valor = danoFinal
             });
 
+            if (Cfg.HabilidadesDeEspecie)
+            {
+                // Zumbi erguido: ao cair, solta um miasma que envenena os inimigos em volta
+                if (alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.Zumbi && !alvo.Temporario)
+                    _explosoes.Add(new ExplosaoPendente { Pos = alvo.Pos, Dano = alvo.Dano * Cfg.MiasmaMult, Raio = Cfg.MiasmaRaio, AtingeInimigos = true, OrigemId = alvo.Id, Tipo = TipoDano.Veneno });
+                // Cão de Cripta erguido: o cheiro de sangue o deixa mais rápido por alguns segundos
+                if (matador != null && matador.Viva && matador.Faccao == Faccao.Minion && matador.Especie == EspecieId.CaoDeCripta && alvo.Faccao == Faccao.Inimigo)
+                {
+                    matador.SedeTempo = Cfg.SedeDuracao;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 17, Alvo = matador.Id, Origem = -1, Valor = Cfg.SedeDuracao, Pos = matador.Pos });
+                }
+            }
             if (overkill) Resultado.Overkills++;
             else if (alvo != Necromante && !alvo.Temporario) CriarCadaver(alvo, condicao);
 

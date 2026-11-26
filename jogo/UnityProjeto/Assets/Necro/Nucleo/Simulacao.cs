@@ -600,6 +600,7 @@ namespace Necro.Nucleo
                     _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
                 _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }
+            for (int i = 0; i < _minions.Count; i++) _minions[i].Aparou = false;   // cada sala, um aparo novo
             TalvezJuntarPatrulha();
             Fase = FaseExpedicao.EmOnda;
             Emitir(new EventoSim { Tipo = TipoEvento.OndaIniciada, Extra = Onda, Valor = TotalDeOndas, Critico = ondaDeChefe || ondaDeElite, Alvo = -1, Origem = -1 });

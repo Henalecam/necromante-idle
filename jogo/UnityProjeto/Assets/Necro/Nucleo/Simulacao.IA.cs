@@ -112,7 +112,7 @@ namespace Necro.Nucleo
 
         private void Atacar(Entidade e, Entidade alvo, float multiplicador)
         {
-            e.Recarga = 1f / e.VelAtaque;
+            e.Recarga = 1f / (e.VelAtaque * (e.SedeTempo > 0f ? 1f + Cfg.SedeBonus : 1f));
             e.TempoAcao = Math.Min(0.3f, 0.5f / e.VelAtaque);
             e.Animacao = EstadoAnimacao.Atacando;
             Olhar(e, alvo.Pos);
@@ -198,6 +198,7 @@ namespace Necro.Nucleo
             }
             if (e.Recarga > 0f) e.Recarga -= DT;
             if (e.FraquezaTempo > 0f) e.FraquezaTempo -= DT;
+            if (e.SedeTempo > 0f) e.SedeTempo -= DT;
             if (e.ProvocadoTempo > 0f) { e.ProvocadoTempo -= DT; if (e.ProvocadoTempo <= 0f) e.ProvocadoPor = -1; }
             if (e.TempoAcao > 0f) { e.TempoAcao -= DT; return; } // presa na animação de ataque/conjuração
 

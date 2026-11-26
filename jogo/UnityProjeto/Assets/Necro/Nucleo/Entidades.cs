@@ -46,6 +46,8 @@ namespace Necro.Nucleo
         public float Recarga;           // s até o próximo ataque
         public float TempoAcao;         // s presa na animação atual
         public float TempoMorrendo;
+        public bool Aparou;             // Esqueleto (minion): já aparou um golpe nesta sala
+        public float SedeTempo;         // Cão de Cripta (minion): ataca mais rápido depois de matar
         public float FraquezaTempo;     // Maldição da Fraqueza
         public int ProvocadoPor = -1;
         public float ProvocadoTempo;
