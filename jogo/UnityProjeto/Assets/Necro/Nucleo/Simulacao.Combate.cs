@@ -25,6 +25,14 @@ namespace Necro.Nucleo
                 return 0f;
             }
 
+            // Aparição erguida: incorpórea, um a cada tantos golpes simplesmente a atravessa
+            if (golpe && atacante != null && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.Aparicao && Cfg.HabilidadesDeEspecie && ++alvo.GolpesSofridos >= Cfg.IncorporeaACada)
+            {
+                alvo.GolpesSofridos = 0;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 19, Alvo = alvo.Id, Origem = atacante.Id, Pos = alvo.Pos });
+                return 0f;
+            }
+
             float aumentos = 0f, mais = 1f, fracaoFogo = 0f;
             bool critico = false;
             if (atacante != null)
@@ -50,6 +58,10 @@ namespace Necro.Nucleo
                         if (outros > Cfg.MatilhaMaximo) outros = Cfg.MatilhaMaximo;
                         mais *= 1f + outros * Cfg.MatilhaBonus;
                     }
+                    // Diabo de Guerra: ferido, bate mais forte
+                    else if (atacante.Especie == EspecieId.DiaboDeGuerra && atacante.Vida < atacante.VidaMax * Cfg.FuriaDeGuerraLimiar) mais *= 1f + Cfg.FuriaDeGuerraBonus;
+                    // Rês Profana: a primeira chifrada de cada sala é uma investida
+                    else if (atacante.Especie == EspecieId.ResProfana && !atacante.Aparou) { atacante.Aparou = true; mais *= Cfg.InvestidaMult; }
                     // Acólito Caído: o golpe deixa um agouro que enfraquece quem não é chefe
                     else if (atacante.Especie == EspecieId.AcolitoCaido && !alvo.Chefe && alvo.FraquezaTempo < Cfg.AgouroDuracao) alvo.FraquezaTempo = Cfg.AgouroDuracao;
                 }
@@ -71,6 +83,9 @@ namespace Necro.Nucleo
                 dano += Formulas.Dano(danoBase * fracaoFogo, aumentos, mais, MitigacaoDe(alvo, TipoDano.Fogo));
                 if (Rng.Chance(fracaoFogo)) tipoFinal = TipoDano.Fogo; // define a condição do cadáver se for o golpe final
             }
+            // Colosso de Ossos erguido: enquanto estiver de pé, os outros minions apanham menos
+            if (Cfg.HabilidadesDeEspecie && alvo.Faccao == Faccao.Minion && alvo.Especie != EspecieId.ColossoDeOssos)
+                for (int i = 0; i < _minions.Count; i++) if (_minions[i].Viva && _minions[i].Especie == EspecieId.ColossoDeOssos) { dano *= 1f - Cfg.BaluarteReducao; break; }
             if (alvo.Leal && Vec2.Dist2(alvo.Pos, Necromante.Pos) <= Cfg.LealRaio * Cfg.LealRaio) dano *= 1f - Cfg.LealReducao;
 
             // Execução: elites/chefes abaixo de 10% de vida, 25% por golpe do necromante ou de minion Grande+.

@@ -1209,6 +1209,21 @@ namespace Necro.Testes
                 Afirmar(fraco, "o acólito deveria deixar o alvo enfraquecido");
             });
 
+            Teste("habilidades de espécie, lote 3: a Aparição deixa um golpe atravessá-la; com Colosso vivo os outros apanham menos", () =>
+            {
+                var sa = new Simulacao(Cfg, ProgressoCom(EspecieId.Aparicao, EspecieId.Aparicao), 3, ModoExpedicao.Avancar, 5); bool passou = false; int guarda = 0;
+                while (!sa.Encerrada && guarda++ < 8000 && !passou) { sa.Tick(); foreach (var ev in sa.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 19) passou = true; }
+                Afirmar(passou, "a aparição deveria ignorar um golpe");
+                float Sofrido(ConfigJogo c)
+                {
+                    var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto), 2, ModoExpedicao.Avancar, 7); float tot = 0f; int g = 0;
+                    while (!s.Encerrada && g++ < 1500) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.Dano) { Entidade al = null; foreach (var e in s.Entidades) if (e.Id == ev.Alvo) al = e; if (al != null && al.Faccao == Faccao.Minion && al.Especie == EspecieId.Esqueleto) tot += ev.Valor; } }
+                    return tot;
+                }
+                float com = Sofrido(new ConfigJogo { BaluarteReducao = 0.9f }), sem = Sofrido(new ConfigJogo { BaluarteReducao = 0f });
+                Afirmar(com < sem, "o Baluarte deveria reduzir o dano sofrido pelos outros minions (" + com + " vs " + sem + ")");
+            });
+
             RodarLoot();
 
             Console.WriteLine();

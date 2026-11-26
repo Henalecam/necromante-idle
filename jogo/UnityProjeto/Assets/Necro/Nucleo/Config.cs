@@ -306,6 +306,10 @@ namespace Necro.Nucleo
         public float MatilhaBonus = 0.08f; public int MatilhaMaximo = 3; // Diabrete: por outro diabrete vivo
         public float AgouroDuracao = 2.5f;                               // Acólito Caído: fraqueza no alvo (não chefe)
         public float BanqueteCura = 0.15f;                               // Carniçal: fração da vida máxima ao matar
+        public float FuriaDeGuerraBonus = 0.25f, FuriaDeGuerraLimiar = 0.5f; // Diabo de Guerra: dano extra abaixo de metade da vida
+        public int IncorporeaACada = 4;                                  // Aparição: ignora 1 a cada N golpes
+        public float BaluarteReducao = 0.10f;                            // Colosso de Ossos: os outros minions sofrem menos dano
+        public float InvestidaMult = 2f;                                 // Rês Profana: primeiro golpe de cada sala
         // patrulha errante
         public float ChanceDePatrulha = 0.3f, PatrulhaIntervalo = 9f;
         public int PatrulhaAPartirDoAndar = 6, PatrulhaTamanho = 3;
