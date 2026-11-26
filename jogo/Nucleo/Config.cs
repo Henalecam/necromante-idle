@@ -232,6 +232,8 @@ namespace Necro.Nucleo
             new DadosMissao { Titulo = "Além da abadia", Historia = "O filactério estava vazio. Alguém levou o que havia dentro, mais para baixo.", Objetivo = "Conclua o andar 15", Tipo = TipoMissao.AlcancarAndar, Alvo = 15, Ossos = 2000 },
             new DadosMissao { Titulo = "Caçador de ancestrais", Historia = "Há almas aqui mais velhas do que a pedra.", Objetivo = "Ceife 1 alma Ancestral ou melhor", Tipo = TipoMissao.CeifarAlmas, Alvo = (int)Qualidade.Ancestral, Quantidade = 1, Essencia = 200 },
             new DadosMissao { Titulo = "O segundo selo", Historia = "Quem te roubou deixou um guardião. Ele sabe o teu nome.", Objetivo = "Derrote o chefe do Ato 2 (andar 20)", Tipo = TipoMissao.DerrotarChefe, Alvo = 2, Ossos = 5000, Essencia = 400 },
+            new DadosMissao { Titulo = "Cartógrafo", Historia = "Quem enxerga o andar inteiro não precisa andar às cegas.", Objetivo = "Escolha a rota 3 vezes (toque no símbolo de uma sala no mapa)", Tipo = TipoMissao.EscolherRota, Quantidade = 3, Essencia = 150 },
+            new DadosMissao { Titulo = "Arrombador", Historia = "Toda tranca tem um dono. Todo dono tem um pescoço.", Objetivo = "Abra 1 cofre trancado (pegue a chave antes)", Tipo = TipoMissao.AbrirCofres, Quantidade = 1, Ossos = 1500 }
         };
 
         // ---- Itens (loot) ----

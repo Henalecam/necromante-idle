@@ -271,3 +271,4 @@ Dono pediu ciclos a cada 5 minutos.
 103. Cofre trancado (TipoSala.Cofre): a chave fica com os inimigos de uma sala de combate comum, marcada no mapa; na ordem sorteada o cofre pode vir antes e ficar fechado — mudar a rota resolve. Paga 3x os Ossos de um baú e um item (40% Raro). Portão 9/9: andar 37,8 s; chefe Ato 1 1,10 h (8 tentativas); andar 15 3,03 h; chefe Ato 2 9,99 h. 103 testes.
 104. Inimigos adormecidos encaram o grupo onde quer que ele esteja. README do repositório com capturas do mapa, dos rótulos e da descida.
 105. Cheat 'Cofre em todo andar' (Config.ForcarCofre) para testar; conferido na tela: mapa marca a sala da chave e o cofre, 'Chave do cofre encontrada!' e 'Cofre aberto!' aparecem. O caso trancado segue coberto só pelo teste do núcleo.
+106. Duas missões no fim da cadeia: Cartógrafo (escolher a rota 3 vezes) e Arrombador (abrir 1 cofre). Contadores RotasEscolhidas e CofresAbertos. Sem efeito no portão (vêm depois do chefe do Ato 2).

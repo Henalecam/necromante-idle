@@ -190,7 +190,7 @@ namespace Necro.Nucleo
                         int ts = _salaDaOnda[a]; _salaDaOnda[a] = _salaDaOnda[b]; _salaDaOnda[b] = ts;
                         var tl = PlanoDasOndas[a]; PlanoDasOndas[a] = PlanoDasOndas[b]; PlanoDasOndas[b] = tl;
                     }
-            Resultado.InteracoesPorToque++;
+            Resultado.InteracoesPorToque++; Resultado.RotasEscolhidas++;
             return true;
         }
         private readonly List<int> _salaDaOnda = new List<int>(4);
@@ -435,7 +435,7 @@ namespace Necro.Nucleo
                         long ossos = (long)(Cfg.BauOssos * Cfg.CofreOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                         Resultado.Ossos += ossos; valor = ossos; sub = 1; especial = true;
                         SoltarItemEm(PosDoObjeto, _rngItens.Chance(Cfg.CofreChanceDeRaro) ? RaridadeItem.Raro : RaridadeItem.Magico);
-                        Resultado.BausAbertos++;
+                        Resultado.BausAbertos++; Resultado.CofresAbertos++;
                     }
                     break;      // sem a chave, fica trancado: o grupo segue adiante
                 }

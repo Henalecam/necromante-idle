@@ -13,7 +13,7 @@ namespace Necro.Nucleo
         // estado (novo; fica no fim para não mudar os números já salvos)
         DominioDeEspecie,
         // contadores da masmorra
-        AbrirBaus, SalasEspeciais
+        AbrirBaus, SalasEspeciais, EscolherRota, AbrirCofres
     }
 
     /// <summary>Ações fora da expedição que contam para missões.</summary>
@@ -69,6 +69,8 @@ namespace Necro.Nucleo
                 case TipoMissao.AceitarPactos: return r.PactosAceitos;
                 case TipoMissao.AbrirBaus: return r.BausAbertos;
                 case TipoMissao.SalasEspeciais: return r.SalasEspeciais;
+                case TipoMissao.EscolherRota: return r.RotasEscolhidas;
+                case TipoMissao.AbrirCofres: return r.CofresAbertos;
                 case TipoMissao.MatarEspecie: return m.Alvo >= 0 && m.Alvo < r.MortesPorEspecie.Length ? r.MortesPorEspecie[m.Alvo] : 0;
                 case TipoMissao.CeifarAlmas:
                     int n = 0;
