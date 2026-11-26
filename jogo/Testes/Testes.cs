@@ -1406,6 +1406,23 @@ namespace Necro.Testes
                 }
             });
 
+            Teste("temas de andar: mudam a cada 4 andares e puxam o elenco para a família da casa", () =>
+            {
+                Afirmar(Temas.Do(1) == TemaDeAndar.Catedral && Temas.Do(4) == TemaDeAndar.Catedral && Temas.Do(5) == TemaDeAndar.Catacumbas && Temas.Do(9) == TemaDeAndar.Cavernas && Temas.Do(13) == TemaDeAndar.Inferno && Temas.Do(17) == TemaDeAndar.Catedral, "o tema deveria mudar a cada 4 andares e repetir depois do Inferno");
+                float Bestas(ConfigJogo c)
+                {
+                    int b = 0, n = 0; var vistos = new System.Collections.Generic.HashSet<int>();
+                    for (ulong sm = 1; sm <= 6; sm++)
+                    {
+                        var s = new Simulacao(c, ProgressoCom(EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto), sm, ModoExpedicao.Avancar, 9); int g = 0; vistos.Clear();
+                        while (!s.Encerrada && g++ < 2500 && s.Andar == 9) { s.Tick(); foreach (var e in s.Entidades) if (e.Faccao == Faccao.Inimigo && vistos.Add(e.Id)) { n++; if (TabelaEspecies.Obter(e.Especie).Familia == Familia.Besta) b++; } }
+                    }
+                    return n > 0 ? (float)b / n : 0f;
+                }
+                float com = Bestas(new ConfigJogo { ObjetosPorSala = 0 }), sem = Bestas(new ConfigJogo { ObjetosPorSala = 0, TemasDeAndar = false });
+                Afirmar(com > sem * 1.2f, "nas Cavernas (andar 9) deveria haver mais bestas com o tema ligado (" + com + " vs " + sem + ")");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

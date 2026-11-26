@@ -319,6 +319,9 @@ namespace Necro.Nucleo
         public float BauChanceDeMimico = 0.12f;
         public float BauChanceDourado = 0.06f;
         public int BauDouradoSangue = 3;
+        public bool TemasDeAndar = true;                 // tema a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno): puxa o elenco para a família da casa
+        public float TemaAfinidade = 1.8f;               // peso de sorteio das espécies da casa
+        public float TemaForaDeCasa = 0.8f;              // peso das demais
         public float BencaoForca = 0.10f;                // Fúria: +dano; Proteção: -dano sofrido; Colheita: +ossos (x2,5)
         public float TempoDeEscolhaDaBencao = 4f;        // s para o jogador escolher; depois o necromante pega uma ao acaso
         public float FonteCura = 0.20f;

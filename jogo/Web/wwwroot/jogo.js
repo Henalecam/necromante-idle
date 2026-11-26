@@ -51,6 +51,9 @@ function escHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;'
 function naTela(x, y) { return W(x + so[0], y + so[1]); }
 const rnd = (a, b) => a + Math.random() * (b - a);
 // ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
+// tema do andar, como no Diablo 1: muda a cada 4 andares [nome, multiplicador da pedra, fogo, fogo forte, frase]
+const TEMAS_ANDAR = [['Catedral', [1, 1, 1], '255,150,60', '255,170,70', 'pedra lavrada e mortos-vivos'], ['Catacumbas', [0.7, 0.8, 1.08], '130,165,255', '170,200,255', 'frio de túmulo: espíritos e aberrações'], ['Cavernas', [1.2, 0.92, 0.6], '255,120,30', '255,160,50', 'terra crua e brasas: território das bestas'], ['Inferno', [1.3, 0.52, 0.48], '255,50,30', '255,90,50', 'pedra em sangue: os demônios mandam aqui']];
+const temaDoAndar = (a) => Math.floor((Math.max(1, a) - 1) / 4) % 4;
 const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
 // grade levadiça na porta de saída (paredes do fundo): fechada enquanto houver inimigo na sala, sobe quando ela é limpa
 let gradeAberta = 1, gradeSala = -1;
@@ -75,8 +78,9 @@ function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
   const c = alvo.getContext('2d'), tipo = masm.tipos[idx] || 0, ato = Math.floor((Math.max(1, andar) - 1) / 10);
   let sem = (andar * 131 + idx * 17 + 7) >>> 0; const r01 = () => { sem = (sem + 0x6D2B79F5) >>> 0; let t = sem; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   // Ato 2 em diante: as criptas alagadas. Pedra esverdeada, limo, fogo-fátuo no lugar das tochas e raízes nas paredes
-  const alagado = ato >= 1, fogo = alagado ? '90,255,170' : '255,150,60', fogoForte = alagado ? '120,255,190' : '255,170,70';
+  const tm = temaDoAndar(andar), alagado = ato >= 1 && !tm, fogo = tm ? TEMAS_ANDAR[tm][2] : alagado ? '90,255,170' : '255,150,60', fogoForte = tm ? TEMAS_ANDAR[tm][3] : alagado ? '120,255,190' : '255,170,70';
   let base = TEMA[tipo] || [58, 53, 50]; if (alagado) base = TEMA[tipo] ? TEMA[tipo].map((v, i) => Math.round(v * [0.7, 0.95, 0.9][i])) : [38, 56, 52];
+  if (tm) base = base.map((v, i) => Math.round(v * TEMAS_ANDAR[tm][1][i]));   // tema do andar por cima da cor da sala
   base = base.map((v) => Math.round(v * 1.3));
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, alvo.width, alvo.height); c.setTransform(escala, 0, 0, escala, 0, 0);
   const poli = (pts, cor, borda) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (cor) { c.fillStyle = cor; c.fill(); } if (borda) { c.strokeStyle = borda; c.stroke(); } };
@@ -292,7 +296,7 @@ function ler(texto) {
     switch (p[0]) {
       case 'T': {
         const a = +p[1];
-        if (a !== andar) { if (andar) limparArena(); andar = a; aviso('Andar ' + a); }
+        if (a !== andar) { if (andar) limparArena(); andar = a; aviso('Andar ' + a); if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
         { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
@@ -1258,7 +1262,7 @@ function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <s
 function atualizarPainel(forcar) {
   const d = JSON.parse(J.Painel());
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
-  $('t-andar').textContent = `Andar ${d.andar}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
+  $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
   const IC = {
     ossos: '<path d="M5 5l14 14M4 7a2 2 0 1 1 3-3M17 20a2 2 0 1 0 3-3" stroke="#d8c9b4"/>', ess: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" stroke="#6dffa8"/>',

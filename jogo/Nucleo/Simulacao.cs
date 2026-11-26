@@ -715,7 +715,7 @@ namespace Necro.Nucleo
             for (int i = 0; i < todas.Length; i++)
             {
                 var d = todas[i];
-                if (d.PesoOnda > 0f && !d.Chefe && d.AndarMinimo <= andarNoAto && d.CustoOnda <= orcamento + 0.01f) total += d.PesoOnda;
+                if (d.PesoOnda > 0f && !d.Chefe && d.AndarMinimo <= andarNoAto && d.CustoOnda <= orcamento + 0.01f) total += d.PesoOnda * Temas.Peso(Cfg, Andar, d.Familia);
             }
             if (total <= 0f) return EspecieId.Necromante;
             float r = Rng.Proximo01() * total;
@@ -726,7 +726,7 @@ namespace Necro.Nucleo
                 if (d.PesoOnda > 0f && !d.Chefe && d.AndarMinimo <= andarNoAto && d.CustoOnda <= orcamento + 0.01f)
                 {
                     ultima = d.Id;
-                    r -= d.PesoOnda;
+                    r -= d.PesoOnda * Temas.Peso(Cfg, Andar, d.Familia);
                     if (r < 0f) return d.Id;
                 }
             }
