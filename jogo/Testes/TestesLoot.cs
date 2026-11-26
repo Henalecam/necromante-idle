@@ -454,6 +454,26 @@ namespace Necro.Testes
                 Afirmar(Ferreiro.CustoDeImbuir(raro, Cfg) == 0, "Raro não se imbui");
             });
 
+            Teste("itens Únicos: nome e afixos fixos no topo da faixa, tabela por dificuldade, e o Livro guarda os achados", () =>
+            {
+                var rng = new Rng(5); var d = Unicos.Obter(3);
+                var u = Unicos.Gerar(rng, Cfg, 10, d); var comum = GeradorDeItens.GerarDoTipo(rng, Cfg, 10, RaridadeItem.Raro, TipoItem.Cajado);
+                Afirmar(u.Nome == d.Nome && u.UnicoId == 3 && u.Tipo == TipoItem.Cajado && u.Afixos.Count == d.Afixos.Length, "o Único sai com nome, tipo e afixos da tabela");
+                float min, max; TabelaItens.Faixa(d.Afixos[0], 10, Cfg, out min, out max);
+                Perto(u.Afixos[0].Valor, max * Cfg.UnicoForcaDosAfixos, 1e-3f, "afixo no topo da faixa x força de Único");
+                for (int k = 0; k < 200; k++) { var s0 = Unicos.Sortear(rng, 20, 0); Afirmar(s0 != null && !s0.SoDeMissao && s0.DificuldadeMinima == 0, "no Normal só caem Únicos do Normal, nunca os de missão"); }
+                bool viuInferno = false; for (int k = 0; k < 400; k++) if (Unicos.Sortear(rng, 20, 2).DificuldadeMinima == 2) viuInferno = true;
+                Afirmar(viuInferno, "no Inferno os Únicos do Inferno entram na tabela");
+                Afirmar(Unicos.Sortear(rng, 1, 0) == null, "no andar 1 do Normal não há Único disponível");
+                var p = Progressao.NovoJogo(Cfg); Unicos.Registrar(p, new List<Item> { u, comum });
+                Afirmar(p.UnicosAchados == (1 << 3), "o Livro de Únicos marca só o Único achado");
+                // na masmorra, com chance forçada, Únicos caem
+                var c = new ConfigJogo { ChanceDeItemUnico = new[] { 1f, 1f, 1f }, MissoesDeCenario = false };
+                var pf = Progressao.NovoJogo(c); pf.PoderNecromantico = 60f; pf.Sorte = 200f; int unicos = 0;
+                for (ulong sem = 1; sem <= 4; sem++) foreach (var it in ExecutorSemTela.RodarExpedicao(c, pf, sem, ModoExpedicao.Avancar, 3, 6).Itens) if (it.UnicoId > 0) unicos++;
+                Afirmar(unicos >= 3, "com chance 100% deveriam cair Únicos (" + unicos + ")");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

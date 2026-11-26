@@ -1,0 +1,60 @@
+using System.Collections.Generic;
+
+namespace Necro.Nucleo
+{
+    /// <summary>Um item Único (Diablo 1): nome fixo, tipo fixo e afixos fixos, sempre no topo da faixa e ainda mais fortes.</summary>
+    public sealed class DadosUnico
+    {
+        public int Id; public string Nome; public TipoItem Tipo; public AfixoItem[] Afixos; public int DificuldadeMinima; public int AndarMinimo; public bool SoDeMissao; public string Lenda;
+    }
+
+    public static class Unicos
+    {
+        public static readonly DadosUnico[] Todos =
+        {
+            new DadosUnico { Id = 1, Nome = "Cutelo do Açougueiro", Tipo = TipoItem.Foice, Afixos = new[] { AfixoItem.DanoDosMinions, AfixoItem.ChanceCritico, AfixoItem.RouboDeVidaDosMinions }, SoDeMissao = true, Lenda = "Largado pelo Açougueiro, no andar 2." },
+            new DadosUnico { Id = 2, Nome = "Coroa do Rei Morto", Tipo = TipoItem.Elmo, Afixos = new[] { AfixoItem.Comando, AfixoItem.VidaDosMinions, AfixoItem.ResSombra }, SoDeMissao = true, Lenda = "Tirada do Rei Esqueleto, no andar 3." },
+            new DadosUnico { Id = 3, Nome = "Cajado do Coveiro Cego", Tipo = TipoItem.Cajado, Afixos = new[] { AfixoItem.DanoDeFeiticos, AfixoItem.Mana, AfixoItem.ReducaoDeRecarga }, AndarMinimo = 3, Lenda = "Qualquer dificuldade, do andar 3 em diante." },
+            new DadosUnico { Id = 4, Nome = "Mortalha da Abadessa", Tipo = TipoItem.Peitoral, Afixos = new[] { AfixoItem.Vida, AfixoItem.Armadura, AfixoItem.ResVeneno }, AndarMinimo = 5, Lenda = "Qualquer dificuldade, do andar 5 em diante." },
+            new DadosUnico { Id = 5, Nome = "Anel dos Mil Sussurros", Tipo = TipoItem.Anel, Afixos = new[] { AfixoItem.ChanceDeAlma, AfixoItem.VelocidadeDeCeifa, AfixoItem.PoderNecromantico }, AndarMinimo = 6, Lenda = "Qualquer dificuldade, do andar 6 em diante." },
+            new DadosUnico { Id = 6, Nome = "Garras do Primeiro Carniçal", Tipo = TipoItem.Luvas, Afixos = new[] { AfixoItem.VelAtaqueDosMinions, AfixoItem.DanoCritico, AfixoItem.DanoDosMinions }, AndarMinimo = 8, Lenda = "Qualquer dificuldade, do andar 8 em diante." },
+            new DadosUnico { Id = 7, Nome = "Grimório de Pele Humana", Tipo = TipoItem.Grimorio, Afixos = new[] { AfixoItem.DanoDeFeiticos, AfixoItem.RegenMana, AfixoItem.ChanceCritico, AfixoItem.PoderNecromantico }, DificuldadeMinima = 1, Lenda = "Só no Pesadelo ou no Inferno." },
+            new DadosUnico { Id = 8, Nome = "Botas do Peregrino Enforcado", Tipo = TipoItem.Botas, Afixos = new[] { AfixoItem.Vida, AfixoItem.ResFogo, AfixoItem.ResGelo, AfixoItem.ResRaio }, DificuldadeMinima = 1, Lenda = "Só no Pesadelo ou no Inferno." },
+            new DadosUnico { Id = 9, Nome = "Amuleto do Senhor do Terror", Tipo = TipoItem.Amuleto, Afixos = new[] { AfixoItem.Comando, AfixoItem.DanoDosMinions, AfixoItem.VidaDosMinions, AfixoItem.PoderNecromantico }, DificuldadeMinima = 2, Lenda = "Só no Inferno." },
+            new DadosUnico { Id = 10, Nome = "Relicário das Almas Presas", Tipo = TipoItem.Relicario, Afixos = new[] { AfixoItem.ChanceDeAlma, AfixoItem.Mana, AfixoItem.RouboDeVidaDosMinions, AfixoItem.Armadura }, DificuldadeMinima = 2, Lenda = "Só no Inferno." },
+        };
+
+        public static DadosUnico Obter(int id) { for (int i = 0; i < Todos.Length; i++) if (Todos[i].Id == id) return Todos[i]; return null; }
+
+        /// <summary>Cria o Único: cada afixo no topo da faixa do nível, multiplicado pela força de Único.</summary>
+        public static Item Gerar(Rng rng, ConfigJogo cfg, int nivel, DadosUnico d)
+        {
+            var item = GeradorDeItens.GerarDoTipo(rng, cfg, nivel, RaridadeItem.Raro, d.Tipo);
+            item.Afixos.Clear();
+            for (int i = 0; i < d.Afixos.Length; i++)
+            {
+                float min, max; TabelaItens.Faixa(d.Afixos[i], item.Nivel, cfg, out min, out max);
+                item.Afixos.Add(new AfixoRolado(d.Afixos[i], d.Afixos[i] == AfixoItem.Comando ? max : max * cfg.UnicoForcaDosAfixos));
+            }
+            item.Nome = d.Nome; item.UnicoId = d.Id; item.Bloqueado = true;
+            return item;
+        }
+
+        /// <summary>Sorteia um Único que possa cair neste andar e nesta dificuldade (nunca os de missão). null = nenhum disponível.</summary>
+        public static DadosUnico Sortear(Rng rng, int andar, int dificuldade)
+        {
+            int n = 0;
+            for (int i = 0; i < Todos.Length; i++) if (!Todos[i].SoDeMissao && Todos[i].DificuldadeMinima <= dificuldade && Todos[i].AndarMinimo <= andar) n++;
+            if (n == 0) return null;
+            int qual = rng.Intervalo(0, n);
+            for (int i = 0; i < Todos.Length; i++) if (!Todos[i].SoDeMissao && Todos[i].DificuldadeMinima <= dificuldade && Todos[i].AndarMinimo <= andar && qual-- == 0) return Todos[i];
+            return null;
+        }
+
+        public static void Registrar(EstadoProgresso p, List<Item> itens)
+        {
+            if (itens == null) return;
+            for (int i = 0; i < itens.Count; i++) if (itens[i] != null && itens[i].UnicoId > 0 && itens[i].UnicoId < 31) p.UnicosAchados |= 1 << itens[i].UnicoId;
+        }
+    }
+}

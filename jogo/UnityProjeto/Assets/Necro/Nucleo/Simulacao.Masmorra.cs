@@ -332,8 +332,7 @@ namespace Necro.Nucleo
                 if (_lutaDoRei)
                 {
                     _lutaDoRei = false; _reiEsqueleto = 3; Resultado.ReiEsqueletoMorto = true;
-                    var coroa = GeradorDeItens.GerarDoTipo(_rngItens, Cfg, Math.Max(Andar, Cfg.ReiNivelDaCoroa), RaridadeItem.Raro, TipoItem.Elmo);
-                    coroa.Nome = "Coroa do Rei Morto"; coroa.NaoIdentificado = false; coroa.Bloqueado = true;
+                    var coroa = Unicos.Gerar(_rngItens, Cfg, Math.Max(Andar, Cfg.ReiNivelDaCoroa), Unicos.Obter(2));
                     Resultado.Itens.Add(coroa); Resultado.Ouro += Cfg.ReiOuro;
                     Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)coroa.Raridade, Valor = coroa.Nivel });
                     Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.TumbaDoRei, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
@@ -343,8 +342,7 @@ namespace Necro.Nucleo
                 if (_lutaDoAcougueiro)
                 {
                     _lutaDoAcougueiro = false; _acougueiro = 3; Resultado.AcougueiroMorto = true;
-                    var cutelo = GeradorDeItens.GerarDoTipo(_rngItens, Cfg, Math.Max(Andar, Cfg.AcougueiroNivelDoCutelo), RaridadeItem.Raro, TipoItem.Foice);
-                    cutelo.Nome = "Cutelo do Açougueiro"; cutelo.NaoIdentificado = false; cutelo.Bloqueado = true;
+                    var cutelo = Unicos.Gerar(_rngItens, Cfg, Math.Max(Andar, Cfg.AcougueiroNivelDoCutelo), Unicos.Obter(1));
                     Resultado.Itens.Add(cutelo); Resultado.Ouro += Cfg.AcougueiroOuro;
                     Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)cutelo.Raridade, Valor = cutelo.Nivel });
                     Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.Acougue, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
@@ -764,6 +762,16 @@ namespace Necro.Nucleo
             EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
         }
 
+        /// <summary>Um item Mágico ou melhor pode, raramente, cair como um Único da tabela (mais chance em Pesadelo e Inferno).</summary>
+        private Item TalvezUnico(Item item)
+        {
+            if (item.Raridade < RaridadeItem.Magico || item.Raridade > RaridadeItem.Raro || !_rngItens.Chance(Cfg.ChanceDeItemUnico[_dif])) return item;
+            var d = Unicos.Sortear(_rngItens, Andar, _dif);
+            if (d == null) return item;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 28, Valor = d.Id, Alvo = -1, Origem = -1, Pos = Necromante.Pos });
+            return Unicos.Gerar(_rngItens, Cfg, item.Nivel, d);
+        }
+
         private void SoltarItemEm(Vec2 pos, RaridadeItem raridadeMinima)
         {
             if (_dif > 0 && raridadeMinima < RaridadeItem.Raro && _rngItens.Chance(Cfg.DificuldadeChanceDeSubirRaridade[_dif])) raridadeMinima++;   // Pesadelo e Inferno: saque um degrau acima
@@ -773,6 +781,7 @@ namespace Necro.Nucleo
                 var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
                 if (outro.Raridade > item.Raridade) item = outro;
             }
+            item = TalvezUnico(item);
             item.NaoIdentificado = Cfg.ItensNaoIdentificados && item.Raridade >= RaridadeItem.Raro;
             Resultado.Itens.Add(item);
             Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = pos, Extra = (int)item.Raridade, Valor = item.Nivel });

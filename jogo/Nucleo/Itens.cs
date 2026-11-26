@@ -83,6 +83,7 @@ namespace Necro.Nucleo
         /// <summary>Travado pelo jogador: nunca é desmanchado (nem pelo "vender tudo", nem para abrir espaço).</summary>
         public bool Bloqueado;
         public int Desgaste;           // durabilidade gasta (0 = novo). Ao chegar na durabilidade máxima o item quebra e para de dar bônus até o reparo
+        public int UnicoId;            // > 0: item Único da tabela (Nucleo/Unicos.cs)
         public int Melhoria;           // +0 a +5: melhorado no Ferreiro com ouro; cada nível aumenta o implícito e os afixos
         public bool NaoIdentificado;   // caiu sem identificar (Diablo 1): não equipa nem mostra as propriedades até pagar a identificação
 

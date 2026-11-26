@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.16f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.19f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -323,6 +323,9 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        // ---- Itens Únicos ----
+        public float UnicoForcaDosAfixos = 1.25f;                          // cada afixo vem no topo da faixa x isto
+        public float[] ChanceDeItemUnico = { 0.006f, 0.015f, 0.03f };      // por item Mágico ou melhor que cai, por dificuldade
         // ---- Livros de feitiço ----
         public bool LivrosDeFeitico = true;
         public int LivroNivelMaximo = 10;

@@ -130,6 +130,15 @@ public static partial class Jogo
         sb.Append(']');
         if (!_p.SemAutoAtributos) Atributos.AutoDistribuir(_p, _cfg);
         Grimorio.LerGuardados(_p, _cfg);   // Magia nova (pontos gastos agora) já lê o que estava guardado
+        sb.Append(",\"unicos\":[");
+        for (int ui = 0; ui < Unicos.Todos.Length; ui++)
+        {
+            var ud = Unicos.Todos[ui]; bool achado = (_p.UnicosAchados & (1 << ud.Id)) != 0;
+            if (!achado) for (int k = 0; k < _sim.Resultado.Itens.Count; k++) if (_sim.Resultado.Itens[k].UnicoId == ud.Id) achado = true;
+            if (ui > 0) sb.Append(',');
+            sb.Append("{\"nome\":").Append(S(ud.Nome)).Append(",\"tipo\":").Append((int)ud.Tipo).Append(",\"achado\":").Append(B(achado)).Append(",\"lenda\":").Append(S(ud.Lenda)).Append('}');
+        }
+        sb.Append(']');
         sb.Append(",\"grimorio\":[");
         for (int fi = 0; fi < Grimorio.Quantos; fi++)
         {
@@ -261,10 +270,11 @@ public static partial class Jogo
               .Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"nid\":true,\"custoId\":").Append(Ferreiro.CustoDeIdentificar(it, _cfg)).Append(",\"afixos\":[]}");
             return;
         }
-        sb.Append("{\"nome\":").Append(S(it.Melhoria > 0 ? it.Nome + " +" + it.Melhoria : it.Nome)).Append(",\"mel\":").Append(it.Melhoria).Append(",\"custoMel\":").Append(Ferreiro.CustoDeMelhorar(it, _cfg)).Append(",\"custoImb\":").Append(Ferreiro.CustoDeImbuir(it, _cfg)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"afixos\":[");
+        sb.Append("{\"nome\":").Append(S((it.UnicoId > 0 ? "★ " : "") + (it.Melhoria > 0 ? it.Nome + " +" + it.Melhoria : it.Nome))).Append(",\"mel\":").Append(it.Melhoria).Append(",\"custoMel\":").Append(Ferreiro.CustoDeMelhorar(it, _cfg)).Append(",\"custoImb\":").Append(Ferreiro.CustoDeImbuir(it, _cfg)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"afixos\":[");
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
+        if (it.UnicoId > 0) { if (!primeiro) sb.Append(','); sb.Append(S("Item Único: afixos fixos, no topo da faixa e 25% mais fortes")); primeiro = false; }
         if (it.Melhoria > 0) { if (!primeiro) sb.Append(','); sb.Append(S("Melhoria +" + it.Melhoria + ": tudo acima vale " + (int)Math.Round((Ferreiro.FatorDeMelhoria(it, _cfg) - 1f) * 100f) + "% a mais")); primeiro = false; }
         if (it.Efeito != EfeitoLendario.Nenhum) { if (!primeiro) sb.Append(','); sb.Append(S("Lendário: " + it.Efeito)); }
         sb.Append(']');
@@ -438,6 +448,7 @@ public static partial class Jogo
                 break;
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
+            case "unico": { var ud = Unicos.Obter((int)v); if (ud != null) { var ui2 = Unicos.Gerar(rng, _cfg, Math.Max(5, _p.MaiorAndarConcluido), ud); _p.Inventario.Add(ui2); _p.UnicosAchados |= 1 << ud.Id; } break; }
             case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % 6), _cfg); break;
             case "rei": _cfg.ForcarReiEsqueleto = true; _p.MissaoReiEsqueleto = 1; break;
             case "acougueiro": _cfg.ForcarAcougueiro = true; _p.MissaoAcougueiro = 1; break;

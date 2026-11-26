@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
         public int[] NiveisDeFeitico = new int[6], LivrosGuardados = new int[6]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
@@ -391,6 +392,7 @@ namespace Necro.Nucleo
             if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);
             if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);
             if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);
+            Unicos.Registrar(p, r.Itens);
             if (r.Livros != null) for (int li = 0; li < r.Livros.Count; li++) Grimorio.Receber(p, (FeiticoId)r.Livros[li], cfg);
             Grimorio.LerGuardados(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];

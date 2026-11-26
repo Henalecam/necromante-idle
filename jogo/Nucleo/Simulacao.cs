@@ -471,6 +471,7 @@ namespace Necro.Nucleo
                 var outro = GeradorDeItens.Gerar(_rngItens, Cfg, Andar + Cfg.DificuldadeNivelDeItem[_dif], raridadeMinima);
                 if (outro.Raridade > item.Raridade) item = outro;
             }
+            item = TalvezUnico(item);
             item.NaoIdentificado = Cfg.ItensNaoIdentificados && item.Raridade >= RaridadeItem.Raro;
             Resultado.Itens.Add(item);
             Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = origem.Id, Alvo = Resultado.Itens.Count - 1, Pos = origem.Pos, Extra = (int)item.Raridade, Valor = item.Nivel, Especie = origem.Especie });
