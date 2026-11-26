@@ -64,10 +64,10 @@ function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
   const poli = (pts, cor, borda) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (cor) { c.fillStyle = cor; c.fill(); } if (borda) { c.strokeStyle = borda; c.stroke(); } };
   // portas: vizinhos no mapa (pai e filhos). leste = borda da frente à direita; oeste = parede esquerda; norte = parede direita; sul = borda da frente à esquerda
   const eu = mapa[idx], portas = { l: false, o: false, n: false, s: false };
-  if (eu) mapa.forEach((m, i) => { if (i === idx) return; const liga = m[2] === idx || eu[2] === i; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
+  if (eu) mapa.forEach((m, i) => { if (i === idx) return; const liga = Math.abs(m[0] - eu[0]) + Math.abs(m[1] - eu[1]) === 1; if (!liga) return; const dx = m[0] - eu[0], dy = m[1] - eu[1]; if (dx === 1) portas.l = true; else if (dx === -1) portas.o = true; else if (dy === 1) portas.n = true; else if (dy === -1) portas.s = true; });
   // por qual porta o grupo sai: para a próxima sala se for vizinha; senão volta pelo caminho de onde veio
   let saida = ''; const prox = mapa[idx + 1];
-  if (eu) { const alvo = prox && prox[2] === idx ? prox : prox && eu[2] >= 0 ? mapa[eu[2]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
+  if (eu) { const cam0 = prox ? caminhoNoMapa(idx, idx + 1) : [], alvo = cam0.length > 1 ? mapa[cam0[1]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
   if (idx !== masm.sala) saida = ''; else saidaAtual = saida;   // só a sala em que o grupo está mostra a saída acesa
   const ultima = idx >= masm.tipos.length - 1 && tipo !== 2;
   // espessura da laje nas duas bordas da frente
@@ -449,10 +449,13 @@ let saidaAtual = '', viagem = [1, 0];
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
-function caminhoNoMapa(a, b) {      // salas entre a e b, pela árvore
-  const ida = [a], volta = [b]; let x = a, y = b, guarda = 0;
-  while (x !== y && guarda++ < 64) { if (x > y) { x = mapa[x] ? mapa[x][2] : -1; ida.push(x); } else { y = mapa[y] ? mapa[y][2] : -1; volta.push(y); } if (x < 0 || y < 0) return [a, b]; }
-  volta.pop(); return ida.concat(volta.reverse());
+const vizinhas = (a, b) => mapa[a] && mapa[b] && Math.abs(mapa[a][0] - mapa[b][0]) + Math.abs(mapa[a][1] - mapa[b][1]) === 1;
+function caminhoNoMapa(a, b) {      // salas entre a e b: vizinhas na grade têm sempre um corredor; caminho mais curto
+  if (!mapa[a] || !mapa[b]) return [a, b];
+  const ant = new Array(mapa.length).fill(-2), fila = [a]; ant[a] = -1;
+  while (fila.length) { const u = fila.shift(); if (u === b) break; for (let v = 0; v < mapa.length; v++) if (ant[v] === -2 && vizinhas(u, v)) { ant[v] = u; fila.push(v); } }
+  if (ant[b] === -2) return [a, b];
+  const cam = []; for (let u = b; u !== -1; u = ant[u]) cam.unshift(u); return cam;
 }
 function iniciarViagem(de, para) {
   if (!mapa[de] || !mapa[para]) { viag = null; return; }
@@ -554,7 +557,7 @@ function mapaSvg(c, rotulos) {
   const xs = mapa.map((m) => m[0]), ys = mapa.map((m) => m[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const passo = c * 1.55, W = (x1 - x0) * passo + c + 6, H = (y1 - y0) * passo + c + 6, pos = (m) => [3 + (m[0] - x0) * passo, 3 + (y1 - m[1]) * passo];
   let h = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
-  mapa.forEach((m, i) => { if (m[2] < 0 || !mapa[m[2]]) return; const [ax, ay] = pos(m), [bx, by] = pos(mapa[m[2]]); h += `<line x1="${ax + c / 2}" y1="${ay + c / 2}" x2="${bx + c / 2}" y2="${by + c / 2}" stroke="${i <= masm.sala ? '#8a744a' : '#4a3a3c'}" stroke-width="${Math.max(2, c * 0.22)}"/>`; });
+  for (let i = 0; i < mapa.length; i++) for (let j2 = 0; j2 < i; j2++) { if (!vizinhas(i, j2)) continue; const [ax, ay] = pos(mapa[i]), [bx, by] = pos(mapa[j2]); h += `<line x1="${ax + c / 2}" y1="${ay + c / 2}" x2="${bx + c / 2}" y2="${by + c / 2}" stroke="${i <= masm.sala && j2 <= masm.sala ? '#8a744a' : '#4a3a3c'}" stroke-width="${Math.max(2, c * 0.22)}"/>`; }
   mapa.forEach((m, i) => {
     const [x, y] = pos(m), real = masm.tipos[i] || 0, atual = i === masm.sala, feita = i < masm.sala;
     // névoa: só se conhece o que já foi visitado, a sala seguinte e o covil do chefe
@@ -685,9 +688,9 @@ function desenhar(dt) {
   const tx = tremor > 0 ? rnd(-1, 1) * tremor * 14 : 0, ty = tremor > 0 ? rnd(-1, 1) * tremor * 9 : 0; tremor = Math.max(0, tremor - dt);
   ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
   // corredores: lajes entre as portas de salas vizinhas
-  mapa.forEach((m, i) => {
-    if (m[2] < 0 || !mapa[m[2]]) return;
-    const a = offDaSala(i), b = offDaSala(m[2]), percorrido = i <= masm.sala;
+  const pares = []; for (let i = 0; i < mapa.length; i++) for (let j2 = 0; j2 < i; j2++) if (vizinhas(i, j2)) pares.push([i, j2]);
+  pares.forEach(([i, j2]) => {
+    const a = offDaSala(i), b = offDaSala(j2), percorrido = i <= masm.sala && j2 <= masm.sala;
     let q;
     if (a[1] === b[1]) { const x0 = Math.min(a[0], b[0]) + 20.6, x1 = Math.max(a[0], b[0]) - 0.6; q = [[x0, a[1] + 3.6], [x1, a[1] + 3.6], [x1, a[1] + 8.4], [x0, a[1] + 8.4]]; }
     else { const y0 = Math.min(a[1], b[1]) + 12.6, y1 = Math.max(a[1], b[1]) - 0.6; q = [[a[0] + 7.6, y0], [a[0] + 12.4, y0], [a[0] + 12.4, y1], [a[0] + 7.6, y1]]; }

@@ -112,20 +112,29 @@ namespace Necro.Nucleo
         private void ColocarNoMapa(int i)
         {
             if (i == 0) { Mapa.Add(new CelulaDoMapa { X = 0, Y = 0, Pai = -1 }); return; }
-            int primeiro = _rngMasmorra.Chance(0.7f) ? i - 1 : _rngMasmorra.Intervalo(0, i);
-            for (int t = 0; t < i; t++)
+            // Mapa compacto ("quadrado"): entre todas as células livres coladas a uma sala já posta, fica a que deixa o
+            // andar mais próximo de um bloco, com preferência por continuar da sala anterior (o grupo anda menos).
+            int x0 = int.MaxValue, x1 = int.MinValue, y0 = int.MaxValue, y1 = int.MinValue;
+            for (int j = 0; j < Mapa.Count; j++) { x0 = Math.Min(x0, Mapa[j].X); x1 = Math.Max(x1, Mapa[j].X); y0 = Math.Min(y0, Mapa[j].Y); y1 = Math.Max(y1, Mapa[j].Y); }
+            float melhor = float.MaxValue; var escolha = new CelulaDoMapa { X = Mapa[i - 1].X + 1, Y = Mapa[i - 1].Y, Pai = i - 1 };
+            for (int pai = i - 1; pai >= 0; pai--)
             {
-                int pai = (primeiro - t + i) % i;
-                int d0 = _rngMasmorra.Chance(0.45f) ? 0 : _rngMasmorra.Intervalo(0, 4);   // puxa para o leste: a masmorra avança
-                for (int k = 0; k < 4; k++)
+                for (int d = 0; d < 4; d++)
                 {
-                    int d = (d0 + k) % 4, x = Mapa[pai].X + DX[d], y = Mapa[pai].Y + DY[d];
-                    bool livre = true;
-                    for (int j = 0; j < Mapa.Count; j++) if (Mapa[j].X == x && Mapa[j].Y == y) { livre = false; break; }
-                    if (livre) { Mapa.Add(new CelulaDoMapa { X = x, Y = y, Pai = pai }); return; }
+                    int x = Mapa[pai].X + DX[d], y = Mapa[pai].Y + DY[d];
+                    bool livre = true; int vizinhas = 0;
+                    for (int j = 0; j < Mapa.Count; j++)
+                    {
+                        if (Mapa[j].X == x && Mapa[j].Y == y) { livre = false; break; }
+                        if (Math.Abs(Mapa[j].X - x) + Math.Abs(Mapa[j].Y - y) == 1) vizinhas++;
+                    }
+                    if (!livre) continue;
+                    int larg = Math.Max(x1, x) - Math.Min(x0, x) + 1, alt = Math.Max(y1, y) - Math.Min(y0, y) + 1;
+                    float nota = Math.Max(larg, alt) * 10f + (larg + alt) - vizinhas * 0.8f + (pai == i - 1 ? 0f : 2.5f) + _rngMasmorra.Proximo01() * 1.5f;
+                    if (nota < melhor) { melhor = nota; escolha = new CelulaDoMapa { X = x, Y = y, Pai = pai }; }
                 }
             }
-            Mapa.Add(new CelulaDoMapa { X = Mapa[i - 1].X + 1, Y = Mapa[i - 1].Y, Pai = i - 1 });   // nunca acontece numa árvore, mas não trava
+            Mapa.Add(escolha);
         }
 
         /// <summary>Se o andar começa por uma sala sem combate (antecâmara do chefe), abre a exploração já.</summary>
@@ -138,11 +147,18 @@ namespace Necro.Nucleo
         /// <summary>Quantas passagens o grupo atravessa para ir de uma sala a outra no mapa (caminho pela árvore).</summary>
         public int DistanciaNoMapa(int a, int b)
         {
-            if (a < 0 || b < 0 || a >= Mapa.Count || b >= Mapa.Count) return 1;
-            int passos = 0;
-            // sobe pelos pais até os caminhos se encontrarem (índice maior = mais fundo na árvore)
-            while (a != b && passos < 64) { if (a > b) a = Mapa[a].Pai; else b = Mapa[b].Pai; passos++; if (a < 0 || b < 0) break; }
-            return Math.Max(1, passos);
+            if (a < 0 || b < 0 || a >= Mapa.Count || b >= Mapa.Count || a == b) return 1;
+            // salas vizinhas na grade são sempre ligadas por um corredor: busca em largura pelo caminho mais curto
+            int n = Mapa.Count; var dist = new int[n]; for (int k = 0; k < n; k++) dist[k] = -1;
+            var fila = new Queue<int>(); fila.Enqueue(a); dist[a] = 0;
+            while (fila.Count > 0)
+            {
+                int u = fila.Dequeue();
+                if (u == b) return Math.Max(1, dist[u]);
+                for (int v = 0; v < n; v++)
+                    if (dist[v] < 0 && Math.Abs(Mapa[u].X - Mapa[v].X) + Math.Abs(Mapa[u].Y - Mapa[v].Y) == 1) { dist[v] = dist[u] + 1; fila.Enqueue(v); }
+            }
+            return 1;
         }
 
         /// <summary>Tempo de caminhada entre duas salas: o grupo anda pelo mapa, não se teletransporta.</summary>
