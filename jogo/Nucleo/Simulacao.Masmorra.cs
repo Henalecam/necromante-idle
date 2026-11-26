@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -44,7 +44,7 @@ namespace Necro.Nucleo
 
         private readonly Rng _rngMasmorra;
         private readonly List<Perigo> _perigos = new List<Perigo>(4);
-        private bool _ninhoChocou;
+        private bool _ninhoChocou, _fosso;
         private bool _toqueNaSala, _emEmboscada, _mimico, _emSecreto, _secretoTestado;
         private float _bDanoAliado = 1f, _bProtecao = 1f, _bOssos = 1f, _bAlma, _bItem;
         /// <summary>Santuário: três bênçãos à escolha (null quando não há oferta). Sem escolha no prazo, o necromante pega uma ao acaso.</summary>
@@ -68,7 +68,7 @@ namespace Necro.Nucleo
         {
             Salas.Clear(); SalaAtual = 0; ChaveNaSala = -1; TemChave = false;
             BencaoAtual = Bencao.Nenhuma; _bDanoAliado = 1f; _bProtecao = 1f; _bOssos = 1f; _bAlma = 0f; _bItem = 0f; BencaosOferecidas = null; _escolhaDeBencao = -1;
-            _ninhoChocou = false; _emEmboscada = false; _mimico = false; _emSecreto = false; _secretoTestado = false; _toqueNaSala = false;
+            _fosso = false; _ninhoChocou = false; _emEmboscada = false; _mimico = false; _emSecreto = false; _secretoTestado = false; _toqueNaSala = false;
             _perigos.Clear(); _tempoAmbiente = 0f; _ticksDeExploracao = 0; _viagem = 0f;
             Ambiente = AmbienteDeChefe.Nenhum;
             if (chefe)
@@ -87,12 +87,14 @@ namespace Necro.Nucleo
             {
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
-                if (forcar || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
+                bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
+                if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
                 {
                     float r = forcar ? 99f : _rngMasmorra.Proximo01() * 100f;
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSalaVazia)) Salas.Add(TipoSala.Vazia);
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia)) Salas.Add(TipoSala.Vazia);
-                    Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 52f ? TipoSala.AlmasPresas : r < 65f ? TipoSala.Fonte : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
+                    Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 48f ? TipoSala.AlmasPresas : r < 52f ? TipoSala.FossoDeMonstros : r < 60f ? TipoSala.Fonte : r < 65f ? TipoSala.Biblioteca : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 84f ? TipoSala.Mercador : r < 91f ? TipoSala.AltarDeSangue : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
+                    if (forcarTipo) Salas[Salas.Count - 1] = (TipoSala)Cfg.ForcarSalaEspecial;
                     if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
                 else if (w < TotalDeOndas)
@@ -294,9 +296,10 @@ namespace Necro.Nucleo
                 _emEmboscada = false;
                 long ossos = (long)(Cfg.BauOssos * (_mimico ? 2f : _ninhoChocou ? Cfg.NinhoPremioDaLuta : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                 Resultado.Ossos += ossos;
-                if (_mimico) SoltarItemEm(PosDoObjeto, RaridadeItem.Magico);
-                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.Emboscada, Valor = ossos, Critico = _mimico, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
-                _mimico = false; _ninhoChocou = false;
+                if (_mimico || _fosso) SoltarItemEm(PosDoObjeto, RaridadeItem.Magico);
+                if (_fosso) { ossos *= 2; Resultado.Ossos += ossos / 2; }
+                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)(_fosso ? TipoSala.FossoDeMonstros : TipoSala.Emboscada), Valor = ossos, Critico = _mimico, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                _mimico = false; _ninhoChocou = false; _fosso = false;
                 EntrarNaProximaSala(Cfg.PausaEntreOndas);
                 return true;
             }
@@ -341,8 +344,23 @@ namespace Necro.Nucleo
             if (t != TipoSala.Vazia) Resultado.SalasEspeciais++;
             Emitir(new EventoSim { Tipo = TipoEvento.SalaIniciada, Extra = (int)t, Valor = SalaAtual, Alvo = Salas.Count, Pos = PosDoObjeto, Origem = -1 });
             if (t == TipoSala.Emboscada) { IniciarEmboscada(false); return; }
+            if (t == TipoSala.FossoDeMonstros) { IniciarFosso(); return; }
             Fase = FaseExpedicao.Explorando;
             _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
+        }
+
+        /// <summary>Fosso de monstros (Diablo 1): uma sala entupida de uma única espécie, guardando um item no meio.</summary>
+        private void IniciarFosso()
+        {
+            _emEmboscada = true; _mimico = false; _fosso = true;
+            int noAto = Formulas.AtoDoAndar(Andar, Cfg) > 1 ? Cfg.AndaresPorAto : Formulas.AndarNoAto(Andar, Cfg);
+            EspecieId esp = SortearEspecie(noAto, 2.01f);
+            if (esp == EspecieId.Necromante) esp = EspecieId.Esqueleto;
+            float orcamento = Math.Min(Cfg.OrcamentoMaximo, Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (Andar - 1)) * Cfg.Horda * Cfg.FossoMult;
+            int n = Math.Max(6, Math.Min(Cfg.FossoMaximo, (int)(orcamento / Math.Max(0.5f, TabelaEspecies.Obter(esp).CustoOnda))));
+            for (int k = 0; k < n; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = esp, Fraco = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 2 });
+            Fase = FaseExpedicao.EmOnda;
         }
 
         private void IniciarEmboscada(bool mimico)
@@ -568,6 +586,13 @@ namespace Necro.Nucleo
                     }
                     long restos = (long)(Cfg.BauOssos * Cfg.NinhoOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
                     Resultado.Ossos += restos; valor = restos; sub = 1;
+                    break;
+                }
+                case TipoSala.Biblioteca:
+                {
+                    // Biblioteca: o necromante lê um tomo e aprende (XP); quem toca escolhe o tomo certo
+                    float xp = Cfg.BibliotecaXp * Formulas.EscalaInimigo(Andar, Cfg) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
+                    Resultado.Xp += xp; valor = xp;
                     break;
                 }
                 case TipoSala.ForjaDeOssos:

@@ -13,6 +13,7 @@ namespace Necro.Nucleo
         private struct SpawnPendente
         {
             public EspecieId Especie;
+            public bool Fraco;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
             public bool Elite;
             public bool Chefe;
             public ModificadorElite Mods;
@@ -568,7 +569,7 @@ namespace Necro.Nucleo
                         if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Planejado != null && s.Planejado.Sequito) { novo.VidaMax *= Cfg.SequitoMultVida; novo.Vida = novo.VidaMax; }
                         else if (s.Planejado != null && s.Planejado.Campeao) { novo.Campeao = true; novo.VidaMax *= Cfg.CampeaoMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.CampeaoMultDano; }
-                        else if (s.Planejado != null && !s.Elite && !s.Chefe && Cfg.Horda > 1f) { novo.DaHorda = true; novo.VidaMax /= Cfg.Horda; novo.Vida = novo.VidaMax; novo.Dano /= Cfg.Horda; }
+                        else if ((s.Planejado != null || s.Fraco) && !s.Elite && !s.Chefe && Cfg.Horda > 1f) { novo.DaHorda = true; novo.VidaMax /= Cfg.Horda; novo.Vida = novo.VidaMax; novo.Dano /= Cfg.Horda; }
                     }
                     // Fúria: garante que nenhum andar empate para sempre.
                     float tempoNoAndar = (TickAtual - _tickInicioDoAndar - _ticksDeExploracao) * DT;

@@ -425,6 +425,7 @@ public static partial class Jogo
                 for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) for (int i = 0; i < 3; i++)
                 { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
                 break;
+            case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "secreto": _forcarSecreto = true; _cfg.ForcarSecreto = v >= 1 && v <= 3 ? (int)v : 0; break;
             case "cofre": _forcarCofre = true; break;
             case "reiniciar": break;

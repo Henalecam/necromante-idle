@@ -1345,6 +1345,33 @@ namespace Necro.Testes
                 if (outro >= 0) Afirmar(!s2.ComandoQuebrar(outro), "objeto de outra sala não pode ser quebrado");
             });
 
+            Teste("salas temáticas: a Biblioteca dá XP e o Fosso de Monstros é uma horda de uma espécie só que guarda um item", () =>
+            {
+                bool leu = false, fosso = false;
+                for (int semente = 1; semente < 900 && !(leu && fosso); semente++)
+                {
+                    var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f;
+                    var sim = new Simulacao(Cfg, p, (ulong)semente, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 };
+                    sim.Tick();
+                    bool temB = sim.Salas.Contains(TipoSala.Biblioteca), temF = sim.Salas.Contains(TipoSala.FossoDeMonstros);
+                    if (!(temB && !leu) && !(temF && !fosso)) continue;
+                    int guarda = 0; bool noFosso = false; EspecieId especieDoFosso = EspecieId.Necromante; int nFosso = 0, itensAntes = 0;
+                    while (!sim.Encerrada && guarda++ < 20000)
+                    {
+                        float xpAntes = sim.Resultado.Xp; int itens = sim.Resultado.Itens.Count;
+                        sim.Tick();
+                        foreach (var ev in sim.Eventos)
+                        {
+                            if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.Biblioteca) { leu = true; Afirmar(ev.Valor > 0f && sim.Resultado.Xp >= xpAntes + ev.Valor - 0.01f, "o tomo deveria dar XP"); }
+                            if (ev.Tipo == TipoEvento.SalaIniciada && ev.Extra == (int)TipoSala.FossoDeMonstros) { noFosso = true; itensAntes = itens; }
+                            if (noFosso && ev.Tipo == TipoEvento.EntidadeSurgiu) foreach (var e in sim.Entidades) if (e.Id == ev.Alvo && e.Faccao == Faccao.Inimigo) { if (nFosso == 0) especieDoFosso = e.Especie; Afirmar(e.Especie == especieDoFosso && e.DaHorda, "o fosso é de uma espécie só, em versão de horda"); nFosso++; }
+                            if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.FossoDeMonstros) { fosso = true; noFosso = false; Afirmar(nFosso >= 6, "fosso lotado: " + nFosso); Afirmar(sim.Resultado.Itens.Count > itensAntes, "o fosso guarda um item"); }
+                        }
+                    }
+                }
+                Afirmar(leu && fosso, "salas não exercitadas: biblioteca " + leu + ", fosso " + fosso);
+            });
+
             RodarLoot();
 
             Console.WriteLine();

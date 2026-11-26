@@ -587,12 +587,12 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
-const DICA_SALA = { 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
+const DICA_SALA = { 17: 'horda de uma espécie só, guardando um item', 16: 'um tomo: experiência para o necromante', 15: 'ovos: toque para esmagar antes que choquem', 14: 'couraça de ossos para todos (25% da vida)', 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 const BENCAOS = ['', 'Fúria: seus aliados causam mais dano', 'Proteção: inimigos causam menos dano', 'Colheita: mais Ossos', 'Fartura: mais itens caem', 'Devoção: mais almas caem'];
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
@@ -651,13 +651,14 @@ function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
     `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
-    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
+    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
 }
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
   if (tipo === 'AmbienteDefinido') { som('chefe'); const a = AMBIENTES[ts]; if (a) { aviso('Sala do chefe · ' + a[0]); anotar(`Sala do chefe: <b>${a[0]}</b>, ${a[1]}.`); } return; }
   if (tipo === 'PerigoAnunciado') { som('perigo'); perigos.push({ x, y, r: +v[4], t: 0, dur: ts / TPS, pedra: v[5] === 'Fisico' }); return; }
   if (tipo === 'SalaResolvida' && ts === 11) { if (+v[4] > 0) aviso('Ossos esquecidos: +' + fmt(Math.round(+v[4]))); return; }
+  if (tipo === 'SalaIniciada' && ts === 17) { aviso('Fosso de monstros!'); tremor = 0.35; som('secreto'); anotar('<b style="color:#c8e06a">Fosso de monstros</b>: a sala está entupida deles, e guardam alguma coisa.'); return; }
   if (tipo === 'SalaIniciada') { if (ts === 6) { aviso('Emboscada!'); tremor = 0.25; anotar('Emboscada: inimigos por todos os lados.'); } else if (ts === 8) anotar(`<b style="color:#ff9ad0">Nível secreto: ${NOME_SECRETO[+v[2]] || 'desconhecido'}.</b>`); return; }
   // SalaResolvida
   const sub = +v[2], toque = v[6] === '1', val = +v[4];
@@ -677,6 +678,8 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 10) { aviso(toque ? 'Altar de sangue: você pagou o preço por eles' : 'Altar de sangue: vida por almas'); anotar(`Altar de sangue: +${Math.round(val * 100)}% de chance de alma neste andar${toque ? ', sem custo graças ao seu toque' : ', ao custo de 15% da vida de todos'}.`); brilho('#a01420', 40); }
   else if (ts === 13) { if (sub === 1) { aviso('Cofre aberto! +' + fmt(Math.round(val)) + ' Ossos e um item'); anotar(`<b style="color:#ffd84a">Cofre aberto</b> com a chave: +${fmt(Math.round(val))} Ossos e um item.`); brilho('#ffd84a', 60); clarao = 0.5; } else { if (objeto) objeto.aberto = 0; aviso('Cofre trancado: a chave estava em outra sala'); anotar('O cofre estava trancado. A chave ficava com os inimigos de outra sala: toque nela antes para mudar a rota.'); } }
   else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
+  else if (ts === 17) { aviso('Fosso limpo · item e +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Fosso de monstros limpo: um item (ao menos Mágico) e +${fmt(Math.round(val))} Ossos.`); brilho('#c8e06a', 30); }
+  else if (ts === 16) { aviso('Tomo lido · +' + fmt(Math.round(val)) + ' de experiência'); anotar(`Biblioteca: o necromante leu um tomo${toque ? ' escolhido por você' : ''}: +${fmt(Math.round(val))} de experiência.`); brilho('#b8a0ff', 30); }
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
@@ -694,7 +697,7 @@ function desenharObjeto(dt) {
   mapa.forEach((m, i) => {
     const t = masm.tipos[i];
     if (!revelada(i)) return;
-    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14 || t === 15)) return;
+    if (i <= masm.sala || !(t === 3 || t === 4 || t === 5 || t === 7 || t === 9 || t === 10 || t === 12 || t === 13 || t === 14 || t === 15 || t === 16)) return;
     if (objeto && i === masm.sala) return;
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
@@ -766,6 +769,14 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#34282c'; ctx.fillRect(-30, -22, 60, 24); ctx.fillStyle = '#463a3e'; ctx.fillRect(-36, -30, 72, 10);
     ctx.fillStyle = `rgba(190,20,36,${0.7 + 0.3 * pulso})`; ctx.fillRect(-28, -30, 56, 4); ctx.fillRect(-20, -26, 5, 18); ctx.fillRect(8, -26, 4, 12);
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -36, 0, 0, -36, 70); g.addColorStop(0, 'rgba(255,40,60,0.6)'); g.addColorStop(1, 'rgba(255,40,60,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -36, 70, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  } else if (o.tipo === 16) {    // biblioteca: estante alta de livros entre duas velas, com um tomo aberto no atril
+    ctx.fillStyle = '#2a1a10'; ctx.fillRect(-30, -74, 60, 74); ctx.fillStyle = '#3c2616'; ctx.fillRect(-33, -78, 66, 6); ctx.fillRect(-33, -2, 66, 5);
+    for (let pr = 0; pr < 4; pr++) {
+      const y0 = -70 + pr * 17; ctx.fillStyle = '#140c08'; ctx.fillRect(-27, y0, 54, 14);
+      for (let lv = 0; lv < 9; lv++) { const hh = 9 + ((lv * 7 + pr * 5) % 5); ctx.fillStyle = ['#6a2a22', '#2a4a5a', '#5a4a22', '#3a2a5a', '#2a5a3a'][(lv + pr * 2) % 5]; ctx.fillRect(-26 + lv * 6, y0 + 14 - hh, 5, hh); }
+    }
+    for (const sx2 of [-44, 44]) { ctx.fillStyle = '#3a3028'; ctx.fillRect(sx2 - 2, -30, 4, 30); ctx.fillStyle = '#e8dcc0'; ctx.fillRect(sx2 - 2.5, -40, 5, 10); ctx.globalCompositeOperation = 'lighter'; const gv = ctx.createRadialGradient(sx2, -45, 0, sx2, -45, 26); gv.addColorStop(0, `rgba(255,200,110,${0.55 + 0.2 * pulso})`); gv.addColorStop(1, 'rgba(255,170,80,0)'); ctx.fillStyle = gv; ctx.beginPath(); ctx.arc(sx2, -45, 26, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+    if (!ab) { ctx.fillStyle = '#3c2616'; ctx.fillRect(-3, 6, 6, 16); ctx.fillStyle = '#e8dcc0'; ctx.beginPath(); ctx.moveTo(-14, 8); ctx.lineTo(0, 4); ctx.lineTo(14, 8); ctx.lineTo(14, 0); ctx.lineTo(0, -4); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#4a3a2a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(0, 4); ctx.stroke(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(170,140,255,${0.15 + 0.15 * pulso})`; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 15) {    // ninho: ovos pálidos numa cama de teia e ossos, pulsando
     ctx.fillStyle = 'rgba(30,24,20,0.9)'; ctx.beginPath(); ctx.ellipse(0, 0, 40, 15, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = 'rgba(210,200,170,0.35)'; ctx.lineWidth = 1; for (let q = 0; q < 9; q++) { const a0 = q * 0.7; ctx.beginPath(); ctx.moveTo(Math.cos(a0) * 40, Math.sin(a0) * 15); ctx.lineTo(Math.cos(a0 + 2.4) * 34, Math.sin(a0 + 2.4) * 12); ctx.stroke(); }
