@@ -714,6 +714,7 @@ namespace Necro.Nucleo
                     // Biblioteca: o necromante lê um tomo e aprende (XP); quem toca escolhe o tomo certo
                     float xp = Cfg.BibliotecaXp * Formulas.EscalaInimigo(Andar, Cfg) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
                     Resultado.Xp += xp; valor = xp;
+                    SoltarLivro(PosDoObjeto);   // e leva um livro de feitiço da estante
                     break;
                 }
                 case TipoSala.ForjaDeOssos:

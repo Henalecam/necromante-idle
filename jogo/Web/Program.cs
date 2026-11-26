@@ -129,6 +129,16 @@ public static partial class Jogo
         }
         sb.Append(']');
         if (!_p.SemAutoAtributos) Atributos.AutoDistribuir(_p, _cfg);
+        Grimorio.LerGuardados(_p, _cfg);   // Magia nova (pontos gastos agora) já lê o que estava guardado
+        sb.Append(",\"grimorio\":[");
+        for (int fi = 0; fi < Grimorio.Quantos; fi++)
+        {
+            var fd = _cfg.Feitico((FeiticoId)fi); int nv = Grimorio.Nivel(_p, (FeiticoId)fi);
+            if (fi > 0) sb.Append(',');
+            sb.Append("{\"nome\":").Append(S(fd.Nome)).Append(",\"nivel\":").Append(nv).Append(",\"max\":").Append(_cfg.LivroNivelMaximo).Append(",\"guardados\":").Append(Grimorio.Guardados(_p, (FeiticoId)fi))
+              .Append(",\"magia\":").Append(Grimorio.MagiaExigida(nv + 1, _cfg)).Append(",\"mana\":").Append(F(fd.CustoMana * Grimorio.FatorDeMana(nv, _cfg))).Append(",\"pot\":").Append((int)Math.Round((Grimorio.FatorDePotencia(nv, _cfg) - 1f) * 100f)).Append('}');
+        }
+        sb.Append("],\"livrosNaDescida\":").Append(_sim.Resultado.Livros.Count);
         sb.Append(",\"atributos\":{\"v\":[").Append(Atributos.Valor(_p, Atributo.Forca)).Append(',').Append(Atributos.Valor(_p, Atributo.Magia)).Append(',').Append(Atributos.Valor(_p, Atributo.Destreza)).Append(',').Append(Atributos.Valor(_p, Atributo.Vitalidade))
           .Append("],\"livres\":").Append(Atributos.Livres(_p, _cfg)).Append(",\"auto\":").Append(B(!_p.SemAutoAtributos)).Append(",\"redistribuir\":").Append(Atributos.CustoDeRedistribuir(_p, _cfg))
           .Append(",\"porPonto\":[").Append(F(_cfg.ForcaDanoDosMinions * 100f)).Append(',').Append(F(_cfg.MagiaDanoDeFeiticos * 100f)).Append(',').Append(F(_cfg.MagiaMana)).Append(',').Append(F(_cfg.DestrezaCritico * 100f)).Append(',').Append(F(_cfg.DestrezaVelAtaque * 100f)).Append(',').Append(F(_cfg.VitalidadeVidaDosMinions * 100f)).Append(',').Append(F(_cfg.VitalidadeVidaDoNecromante * 100f)).Append("]}");
@@ -428,6 +438,7 @@ public static partial class Jogo
                 break;
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
+            case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % 6), _cfg); break;
             case "rei": _cfg.ForcarReiEsqueleto = true; _p.MissaoReiEsqueleto = 1; break;
             case "acougueiro": _cfg.ForcarAcougueiro = true; _p.MissaoAcougueiro = 1; break;
             case "santuario": _cfg.ForcarSalaEspecial = 4; _cfg.ForcarSantuario = (int)v; break;

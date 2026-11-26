@@ -94,6 +94,16 @@ namespace Necro.Nucleo
         private readonly List<Ordem> _ordens = new List<Ordem>(8);
         private readonly List<int> _chefesDerrotados = new List<int>(4);
         private readonly float[] _recargaFeitico = new float[6];
+        private readonly DadosFeitico[] _feiticos = new DadosFeitico[6];   // os feitiços já no nível dos livros lidos
+        private DadosFeitico Fei(FeiticoId id) { return _feiticos[(int)id]; }
+        /// <summary>Um livro de feitiço cai: sorteia qual e avisa a tela.</summary>
+        private void SoltarLivro(Vec2 pos)
+        {
+            if (!Cfg.LivrosDeFeitico) return;
+            int qual = _rngItens.Intervalo(0, 6);
+            Resultado.Livros.Add(qual);
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 24, Valor = qual, Alvo = -1, Origem = -1, Pos = pos });
+        }
         private int _proximoId = 1;
         private float _temporizadorDeFase;
         private int _tickInicioDoAndar;
@@ -148,6 +158,11 @@ namespace Necro.Nucleo
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
+            for (int fi = 0; fi < 6; fi++)
+            {
+                var b0 = cfg.Feitico((FeiticoId)fi); int nv = cfg.LivrosDeFeitico ? Grimorio.Nivel(progresso, (FeiticoId)fi) : 1;
+                _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
+            }
             _reiEsqueleto = progresso.MissaoReiEsqueleto;
             if (_reiEsqueleto == 0 && Cfg.MissoesDeCenario) { _reiEsqueleto = (semente * 0x9E3779B97F4A7C15UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.ReiEsqueletoSorteio = _reiEsqueleto; }
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)

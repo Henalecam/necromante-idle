@@ -323,6 +323,15 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        // ---- Livros de feitiço ----
+        public bool LivrosDeFeitico = true;
+        public int LivroNivelMaximo = 10;
+        public int LivroMagiaPorNivel = 3;                // Magia exigida = 3 x (nível alvo - 1)
+        public float LivroPotenciaPorNivel = 0.03f;       // +3% de potência por nível
+        public float LivroManaPorNivel = 0.02f;           // -2% de custo de mana por nível
+        public float ChanceDeLivroDeElite = 0.06f;        // elites e Campeões
+        public float ChanceDeLivroDeUnico = 0.2f;
+        public long LivroRepetidoOuro = 120;              // livro de feitiço já no máximo vira ouro
         // ---- Ferreiro: melhorar e imbuir ----
         public int MelhoriaMaxima = 5;
         public float MelhoriaPorNivel = 0.06f;            // cada +1 aumenta em 6% o implícito e os afixos do item

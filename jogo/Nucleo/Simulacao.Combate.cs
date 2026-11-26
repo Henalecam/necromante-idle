@@ -39,8 +39,8 @@ namespace Necro.Nucleo
             {
                 aumentos = atacante.AumentoDano;
                 mais = atacante.MaisDano;
-                if (atacante.FraquezaTempo > 0f) mais *= 1f - Cfg.Feitico(FeiticoId.MaldicaoDaFraqueza).Potencia;
-                if (atacante.Faccao == Faccao.Minion && SacrificioTempo > 0f) mais *= 1f + Cfg.Feitico(FeiticoId.Sacrificio).Potencia;
+                if (atacante.FraquezaTempo > 0f) mais *= 1f - Fei(FeiticoId.MaldicaoDaFraqueza).Potencia;
+                if (atacante.Faccao == Faccao.Minion && SacrificioTempo > 0f) mais *= 1f + Fei(FeiticoId.Sacrificio).Potencia;
                 if (atacante.Faccao == Faccao.Minion && FrenesiTempo > 0f) mais *= 1f + Cfg.FrenesiBonusDeDano;
                 if (atacante.Faccao == Faccao.Minion) mais *= _pDanoMinion;
                 if (alvo.Id == MarcadoId && atacante.Faccao != Faccao.Inimigo) mais *= 1f + Cfg.MarcaBonusDeDano;
@@ -244,6 +244,8 @@ namespace Necro.Nucleo
                 // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
                 _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1)) * premio * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
                 { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
+                // livros de feitiço: o chefe sempre larga um; Únicos com frequência; elites e Campeões de vez em quando
+                if (Cfg.LivrosDeFeitico && (alvo.Chefe || (alvo.Unico && _rngItens.Chance(Cfg.ChanceDeLivroDeUnico)) || (!alvo.Unico && (alvo.Elite || alvo.Campeao) && _rngItens.Chance(Cfg.ChanceDeLivroDeElite)))) SoltarLivro(alvo.Pos);
 
                 // Sangue: elites, chefes e execuções.
                 int sangue = (alvo.Chefe ? Cfg.SangueChefe : alvo.Elite ? Cfg.SangueElite : 0) + (execucao ? Cfg.SangueExecucao : 0);

@@ -171,7 +171,7 @@ namespace Necro.Nucleo
         {
             if (RecargaDetonar > 0f || !Necromante.Viva || CadaveresDetonaveis == 0) return;
             RecargaDetonar = Cfg.DetonarRecarga;
-            var f = Cfg.Feitico(FeiticoId.ExplosaoDeCadaver);
+            var f = Fei(FeiticoId.ExplosaoDeCadaver);
             float r2 = f.Raio * f.Raio;
             int consumidos = 0;
             for (int i = Cadaveres.Count - 1; i >= 0 && consumidos < Cfg.DetonarMaxCorpos; i--)

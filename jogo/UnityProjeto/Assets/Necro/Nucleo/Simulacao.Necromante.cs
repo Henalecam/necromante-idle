@@ -244,12 +244,12 @@ namespace Necro.Nucleo
 
         private bool PodeLancar(FeiticoId id)
         {
-            return _recargaFeitico[(int)id] <= 0f && Necromante.Mana >= Cfg.Feitico(id).CustoMana;
+            return _recargaFeitico[(int)id] <= 0f && Necromante.Mana >= Fei(id).CustoMana;
         }
 
         private void PagarFeitico(FeiticoId id, Entidade alvo, Vec2 ponto, float valor)
         {
-            var f = Cfg.Feitico(id);
+            var f = Fei(id);
             var n = Necromante;
             n.Mana -= f.CustoMana;
             _recargaFeitico[(int)id] = f.Recarga * _fatorRecarga;
@@ -263,7 +263,7 @@ namespace Necro.Nucleo
         private bool LancarLancaDeOssos()
         {
             if (!PodeLancar(FeiticoId.LancaDeOssos)) return false;
-            var f = Cfg.Feitico(FeiticoId.LancaDeOssos);
+            var f = Fei(FeiticoId.LancaDeOssos);
             var alvo = InimigoMaisProximoNoAlcance(f.Alcance);
             if (alvo == null) return false;
             var n = Necromante;
@@ -282,7 +282,7 @@ namespace Necro.Nucleo
         private bool LancarDrenarVida()
         {
             if (!PodeLancar(FeiticoId.DrenarVida)) return false;
-            var f = Cfg.Feitico(FeiticoId.DrenarVida);
+            var f = Fei(FeiticoId.DrenarVida);
             var alvo = InimigoMaisProximoNoAlcance(f.Alcance);
             if (alvo == null) return false;
             PagarFeitico(FeiticoId.DrenarVida, alvo, alvo.Pos, 0f);
@@ -295,7 +295,7 @@ namespace Necro.Nucleo
         private bool LancarExplosaoDeCadaver()
         {
             if (!PodeLancar(FeiticoId.ExplosaoDeCadaver)) return false;
-            var f = Cfg.Feitico(FeiticoId.ExplosaoDeCadaver);
+            var f = Fei(FeiticoId.ExplosaoDeCadaver);
             float r2 = f.Raio * f.Raio, a2 = f.Alcance * f.Alcance;
             Cadaver melhor = null;
             int melhorN = 0;
@@ -347,7 +347,7 @@ namespace Necro.Nucleo
                 if (Cadaveres[i].DeMinion && Cadaveres[i].Minion != null && !Cadaveres[i].Minion.Viva && (idx < 0 || Cadaveres[i].Custo > Cadaveres[idx].Custo)) idx = i;
             if (idx < 0) return false;
             var c = Cadaveres[idx];
-            var f = Cfg.Feitico(FeiticoId.Reerguer);
+            var f = Fei(FeiticoId.Reerguer);
             PagarFeitico(FeiticoId.Reerguer, c.Minion, c.Pos, 0f);
             Cadaveres.RemoveAt(idx);
             Emitir(new EventoSim { Tipo = TipoEvento.CadaverConsumido, Alvo = c.Id, Pos = c.Pos, Extra = (int)FeiticoId.Reerguer, Origem = Necromante.Id });
@@ -360,7 +360,7 @@ namespace Necro.Nucleo
         private bool LancarMaldicao()
         {
             if (!PodeLancar(FeiticoId.MaldicaoDaFraqueza)) return false;
-            var f = Cfg.Feitico(FeiticoId.MaldicaoDaFraqueza);
+            var f = Fei(FeiticoId.MaldicaoDaFraqueza);
             float a2 = f.Alcance * f.Alcance;
             Entidade alvo = null;
             float melhorD = float.MaxValue;
@@ -401,7 +401,7 @@ namespace Necro.Nucleo
                 if (vitima == null || m.Custo < vitima.Custo || (m.Custo == vitima.Custo && m.Vida < vitima.Vida)) vitima = m;
             }
             if (vivos < 2) return false;
-            var f = Cfg.Feitico(FeiticoId.Sacrificio);
+            var f = Fei(FeiticoId.Sacrificio);
             PagarFeitico(FeiticoId.Sacrificio, vitima, vitima.Pos, 0f);
             DestruirMinionSemCadaver(vitima, Necromante.Id);
             SacrificioTempo = f.Duracao;

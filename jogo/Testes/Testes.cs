@@ -1542,6 +1542,25 @@ namespace Necro.Testes
                 Afirmar(atraidas * 3 >= andares, "deveria haver ao menos 1 sala atraída a cada 3 andares (" + atraidas + " em " + andares + ")");
             });
 
+            Teste("livros de feitiço: cada livro sobe um nível, exige Magia, o que não dá para ler fica guardado; o nível deixa o feitiço mais forte e mais barato", () =>
+            {
+                var p = ProgressoCom(EspecieId.Esqueleto); p.NivelNecromante = 20; p.SemAutoAtributos = true;
+                Afirmar(Grimorio.Nivel(p, FeiticoId.LancaDeOssos) == 1, "todo feitiço começa no nível 1");
+                Afirmar(!Grimorio.Receber(p, FeiticoId.LancaDeOssos, Cfg) && Grimorio.Guardados(p, FeiticoId.LancaDeOssos) == 1, "sem Magia o livro fica guardado");
+                Afirmar(Atributos.Gastar(p, Atributo.Magia, Cfg.LivroMagiaPorNivel, Cfg), "pontos de Magia");
+                Afirmar(Grimorio.LerGuardados(p, Cfg) == 1 && Grimorio.Nivel(p, FeiticoId.LancaDeOssos) == 2 && Grimorio.Guardados(p, FeiticoId.LancaDeOssos) == 0, "com Magia o livro guardado é lido");
+                Afirmar(!Grimorio.Receber(p, FeiticoId.LancaDeOssos, Cfg), "o nível 3 pede mais Magia");
+                Afirmar(Grimorio.FatorDePotencia(3, Cfg) > Grimorio.FatorDePotencia(1, Cfg) && Grimorio.FatorDeMana(3, Cfg) < 1f, "nível maior: mais potência, menos mana");
+                // na masmorra: a Biblioteca sempre dá um livro
+                var c = new ConfigJogo { ForcarSalaEspecial = (int)TipoSala.Biblioteca, ObjetosPorSala = 0, MissoesDeCenario = false };
+                var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos), 4, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
+                while (!s.Encerrada && g++ < 20000) s.Tick();
+                Afirmar(s.Resultado.Livros.Count >= 1, "a Biblioteca deveria render um livro de feitiço");
+                var q = ProgressoCom(EspecieId.Esqueleto); q.NivelNecromante = 30; int antes = 0; for (int i = 0; i < 6; i++) antes += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
+                Progressao.AplicarResultado(q, s.Resultado, c); int depois = 0; for (int i = 0; i < 6; i++) depois += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
+                Afirmar(depois == antes + s.Resultado.Livros.Count, "os livros achados deveriam entrar no grimório (lidos ou guardados)");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

@@ -45,8 +45,8 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - A5. Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.
 
 ### B. Combate e feitiços
-- B1. Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.
-- B2. Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
+- B1. [feito] Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.
+- B2. [já existiam 6 feitiços com mana e ordens automáticas: Lança de Ossos, Drenar Vida, Explosão de Cadáver, Reerguer, Maldição, Sacrifício; falta feitiço novo: Muralha de Ossos, Golem, Praga] Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
 - B3. Comportamento por espécie: quem foge com pouca vida, quem cerca, quem atira e recua, quem carrega em linha.
 - B4. Mais minions: Golem (um só, forte), Magos esqueletos por elemento, Espectros.
 - B5. Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).

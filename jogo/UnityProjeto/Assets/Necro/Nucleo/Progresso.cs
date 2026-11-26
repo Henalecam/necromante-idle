@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public int[] NiveisDeFeitico = new int[6], LivrosGuardados = new int[6]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
         public int MissaoAcougueiro;                        // 0 = ainda não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -180,6 +181,7 @@ namespace Necro.Nucleo
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
         public int SalasAtraidas;
+        public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;
         public long Ouro;
         public int RotasEscolhidas;
@@ -388,7 +390,9 @@ namespace Necro.Nucleo
             p.Ouro += (long)Math.Round(r.Ouro * (double)cfg.DificuldadeOuro[r.Dificuldade]); Ferreiro.Renovar(p, cfg);
             if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);
             if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);
-            if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
+            if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);
+            if (r.Livros != null) for (int li = 0; li < r.Livros.Count; li++) Grimorio.Receber(p, (FeiticoId)r.Livros[li], cfg);
+            Grimorio.LerGuardados(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;
             if (r.AncoragemAlcancada > p.AndarDeAncoragem) p.AndarDeAncoragem = r.AncoragemAlcancada;
