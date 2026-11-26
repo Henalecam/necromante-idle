@@ -90,7 +90,7 @@ public static partial class Jogo
             _sb.Append("E ").Append(e.Id).Append(' ').Append(e.Especie).Append(' ').Append(e.Faccao == Faccao.Inimigo ? 1 : 0).Append(' ')
               .Append(F(e.Pos.X)).Append(' ').Append(F(e.Pos.Y)).Append(' ').Append(F(e.Olhar.X)).Append(' ').Append(F(e.Olhar.Y)).Append(' ')
               .Append(e.Animacao).Append(' ').Append(e.Viva ? 1 : 0).Append(' ').Append(F(e.Vida / Math.Max(1f, e.VidaMax))).Append(' ')
-              .Append(e.Elite ? 1 : 0).Append(' ').Append(e.Chefe ? 1 : 0).Append(' ').Append(e == _sim.Necromante ? 1 : 0).Append(' ').Append(F(Math.Max(0f, e.PreparandoGolpe))).Append(' ').Append(e.Faccao == Faccao.Minion && e.IndiceMinion >= 0 && e.IndiceMinion < _p.Minions.Count ? (int)_p.Minions[e.IndiceMinion].Alma.Qualidade : -1).Append('\n');
+              .Append(e.Elite ? 1 : 0).Append(' ').Append(e.Chefe ? 1 : 0).Append(' ').Append(e == _sim.Necromante ? 1 : 0).Append(' ').Append(F(Math.Max(0f, e.PreparandoGolpe))).Append(' ').Append(e.Faccao == Faccao.Minion && e.IndiceMinion >= 0 && e.IndiceMinion < _p.Minions.Count ? (int)_p.Minions[e.IndiceMinion].Alma.Qualidade : -1).Append(' ').Append(F(Math.Min(1f, Math.Max(0f, e.Escudo) / Math.Max(1f, e.VidaMax)))).Append('\n');
         foreach (var o in _sim.Orbes) _sb.Append("O ").Append(o.Id).Append(' ').Append(F(o.Pos.X)).Append(' ').Append(F(o.Pos.Y)).Append('\n');
         foreach (var pj in _sim.Projeteis)
             _sb.Append("P ").Append(pj.Id).Append(' ').Append(F(pj.Pos.X)).Append(' ').Append(F(pj.Pos.Y)).Append(' ').Append(F(pj.Dir.X)).Append(' ').Append(F(pj.Dir.Y)).Append(' ').Append(pj.Perfurante ? 1 : 0).Append('\n');

@@ -290,7 +290,7 @@ function ler(texto) {
         if (Math.abs(dx) + Math.abs(dy) > 1e-6) s.dir = direcao(dx, dy);
         s.especie = p[2]; s.inimigo = p[3] === '1'; s.x = x; s.y = y; s.viva = p[9] === '1'; s.vida = +p[10];
         s.elite = p[11] === '1'; s.chefe = p[12] === '1'; s.necro = p[13] === '1';
-        s.golpe = +p[14] || 0; s.qual = p[15] === undefined ? -1 : +p[15];
+        s.golpe = +p[14] || 0; s.qual = p[15] === undefined ? -1 : +p[15]; s.escudo = +p[16] || 0;
         if (s.golpe > 0 && !dicaGolpe && !silencio) { dicaGolpe = true; aviso('Toque no inimigo que brilha para interromper o golpe'); }
         if (s.necro) necro = s;
         break;
@@ -730,7 +730,7 @@ function desenhar(dt) {
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
-    const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.74 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
+    const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (camSalto && zoomModo === 2 && !zoomLivre) { camSalto = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
     else if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
@@ -889,10 +889,11 @@ function desenhar(dt) {
       const topoM = py - (s.chefe ? 172 : 128), b2 = Math.sin(tempoSim * 6) * 3;
       ctx.fillStyle = '#ff3040'; ctx.beginPath(); ctx.moveTo(px, topoM + 12 + b2); ctx.lineTo(px - 8, topoM + b2); ctx.lineTo(px + 8, topoM + b2); ctx.fill();
     }
-    if (!morto && s.vida < 0.999) {
+    if (!morto && (s.vida < 0.999 || s.escudo > 0.01)) {
       const w = s.chefe ? 70 : 30, topo = py - (s.chefe ? 150 : 108);
       ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(px - w / 2, topo, w, 4);
       ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
+      if (s.escudo > 0.01) { ctx.fillStyle = '#e8e0c8'; ctx.fillRect(px - w / 2, topo - 3, w * Math.min(1, s.escudo), 2); }   // couraça de ossos / escudo: faixa clara por cima da vida
     }
     if (reforco > 1.01) ctx.restore();
   }
@@ -1045,7 +1046,7 @@ function desenhar(dt) {
     const grupo = [...estado.values()].filter((s) => !s.inimigo).sort((a, b) => (b.necro ? 1 : 0) - (a.necro ? 1 : 0) || a.id - b.id).slice(0, 24);
     for (const s of grupo) {
       const v = s.viva ? Math.max(0, Math.min(1, s.vida)) : 0, cor = s.necro ? '#6dffa8' : corQ[Math.max(0, s.qual)] || corQ[1];
-      hg += `<div class="ret ${s.viva ? '' : 'morto'} ${s.viva && v < 0.5 && sopro <= 0 ? 'cura' : ''}" data-ret="${s.id}" style="border-color:${cor}">${thumb(s.necro && deFoice && monstros.necromante_foice ? 'necromante_foice' : s.especie)}<i><b style="width:${Math.round(v * 100)}%;background:${v > 0.5 ? '#5a9f5a' : v > 0.25 ? '#c8a030' : '#c8323c'}"></b></i></div>`;
+      hg += `<div class="ret ${s.viva ? '' : 'morto'} ${s.viva && v < 0.5 && sopro <= 0 ? 'cura' : ''}" data-ret="${s.id}" style="border-color:${cor}">${thumb(s.necro && deFoice && monstros.necromante_foice ? 'necromante_foice' : s.especie)}<i><b style="width:${Math.round(v * 100)}%;background:${v > 0.5 ? '#5a9f5a' : v > 0.25 ? '#c8a030' : '#c8323c'}"></b></i>${s.viva && s.escudo > 0.01 ? `<u style="width:${Math.round(Math.min(1, s.escudo) * 100)}%"></u>` : ''}</div>`;
     }
     if (hg !== desenhar.hg) { desenhar.hg = hg; $('grupo').innerHTML = hg; }
     atualizarLicao();
