@@ -434,6 +434,26 @@ namespace Necro.Testes
                 alvo.Bloqueado = true; Afirmar(Ferreiro.Vender(p, alvo, Cfg) == 0, "item travado não se vende"); alvo.Bloqueado = false;
                 Afirmar(Ferreiro.Vender(p, alvo, Cfg) == venda && p.Ouro == 7 + venda && !p.Inventario.Contains(alvo), "venda feita");
             });
+            Teste("Ferreiro: melhorar (+1 a +5) aumenta o que o item dá e custa cada vez mais; imbuir dá um afixo novo a item Comum ou Mágico", () =>
+            {
+                var rng = new Rng(21); var p = Progressao.NovoJogo(Cfg);
+                var cajado = GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Magico, TipoItem.Cajado); Equipamento.Equipar(p, cajado);
+                float antes = cajado.Implicito.Valor * Ferreiro.FatorDeMelhoria(cajado, Cfg);
+                Afirmar(!Ferreiro.Melhorar(p, cajado, Cfg), "sem ouro não melhora");
+                p.Ouro = 1000000; long c1 = Ferreiro.CustoDeMelhorar(cajado, Cfg);
+                Afirmar(Ferreiro.Melhorar(p, cajado, Cfg) && cajado.Melhoria == 1, "com ouro, +1");
+                Afirmar(Ferreiro.CustoDeMelhorar(cajado, Cfg) > c1, "o segundo nível deveria custar mais");
+                Perto(cajado.Implicito.Valor * Ferreiro.FatorDeMelhoria(cajado, Cfg), antes * (1f + Cfg.MelhoriaPorNivel), 1e-3f, "implícito com +1");
+                Afirmar(Ferreiro.MelhorarTudo(p, Cfg) >= Cfg.MelhoriaMaxima - 1 && cajado.Melhoria == Cfg.MelhoriaMaxima && Ferreiro.CustoDeMelhorar(cajado, Cfg) == 0, "MelhorarTudo leva ao +5 e para");
+                var comum = GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Comum, TipoItem.Elmo); int n0 = comum.Afixos.Count;
+                Afirmar(Ferreiro.CustoDeImbuir(comum, Cfg) > 0 && Ferreiro.Imbuir(p, comum, Cfg), "um Comum deveria poder ser imbuído");
+                Afirmar(comum.Afixos.Count == n0 + 1 && comum.Raridade == RaridadeItem.Magico, "imbuir dá um afixo e o item vira Mágico");
+                while (Ferreiro.Imbuir(p, comum, Cfg)) { }
+                Afirmar(comum.Afixos.Count == Cfg.ImbuirMaximoDeAfixos && Ferreiro.CustoDeImbuir(comum, Cfg) == 0, "imbuir para em " + Cfg.ImbuirMaximoDeAfixos + " afixos");
+                var raro = GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Raro, TipoItem.Elmo);
+                Afirmar(Ferreiro.CustoDeImbuir(raro, Cfg) == 0, "Raro não se imbui");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

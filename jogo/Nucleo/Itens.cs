@@ -83,6 +83,7 @@ namespace Necro.Nucleo
         /// <summary>Travado pelo jogador: nunca é desmanchado (nem pelo "vender tudo", nem para abrir espaço).</summary>
         public bool Bloqueado;
         public int Desgaste;           // durabilidade gasta (0 = novo). Ao chegar na durabilidade máxima o item quebra e para de dar bônus até o reparo
+        public int Melhoria;           // +0 a +5: melhorado no Ferreiro com ouro; cada nível aumenta o implícito e os afixos
         public bool NaoIdentificado;   // caiu sem identificar (Diablo 1): não equipa nem mostra as propriedades até pagar a identificação
 
         public bool Tem(AfixoItem a)
@@ -510,6 +511,24 @@ namespace Necro.Nucleo
                 item.Afixos.Add(new AfixoRolado(escolhido, Rolar(rng, cfg, escolhido, nivel)));
             }
             return item;
+        }
+
+        /// <summary>Imbuir: acrescenta ao item um afixo que ele ainda não tem (sorteio por peso). Devolve false se não houver nenhum possível.</summary>
+        public static bool AcrescentarAfixo(Rng rng, ConfigJogo cfg, Item item)
+        {
+            var possiveis = TabelaItens.AfixosPossiveis(item.Tipo);
+            float total = 0f;
+            for (int i = 0; i < possiveis.Length; i++) if (!item.Tem(possiveis[i])) total += TabelaItens.Afixo(possiveis[i]).PesoSorteio;
+            if (total <= 0f) return false;
+            float x = rng.Proximo01() * total; AfixoItem escolhido = possiveis[0];
+            for (int i = 0; i < possiveis.Length; i++)
+            {
+                if (item.Tem(possiveis[i])) continue;
+                escolhido = possiveis[i]; x -= TabelaItens.Afixo(possiveis[i]).PesoSorteio;
+                if (x < 0f) break;
+            }
+            item.Afixos.Add(new AfixoRolado(escolhido, Rolar(rng, cfg, escolhido, item.Nivel)));
+            return true;
         }
 
         private static float Rolar(Rng rng, ConfigJogo cfg, AfixoItem afixo, int nivel)

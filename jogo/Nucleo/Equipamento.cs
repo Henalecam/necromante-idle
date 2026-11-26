@@ -335,9 +335,10 @@ namespace Necro.Nucleo
                 if (Vazio(item)) continue;
                 if (Ferreiro.Quebrado(item, cfg)) { b.ItensQuebrados++; continue; }   // quebrado: ocupa o espaço mas não dá nada
                 b.ItensEquipados++;
-                if (item.Implicito != null && item.Implicito.Valor != 0f) b.Somar(item.Implicito.Afixo, item.Implicito.Valor);
+                float mel = Ferreiro.FatorDeMelhoria(item, cfg);   // +N do Ferreiro: tudo o que o item dá cresce junto
+                if (item.Implicito != null && item.Implicito.Valor != 0f) b.Somar(item.Implicito.Afixo, item.Implicito.Valor * mel);
                 if (item.Afixos != null)
-                    for (int k = 0; k < item.Afixos.Count; k++) b.Somar(item.Afixos[k].Afixo, item.Afixos[k].Valor);
+                    for (int k = 0; k < item.Afixos.Count; k++) b.Somar(item.Afixos[k].Afixo, item.Afixos[k].Valor * mel);
                 switch (item.Efeito)
                 {
                     case EfeitoLendario.CeifeiroFaminto: b.CeifeiroFaminto = true; break;
@@ -373,6 +374,7 @@ namespace Necro.Nucleo
             float s = 0f;
             if (item.Implicito != null && item.Implicito.Valor != 0f) s += PontosDoAfixo(item.Implicito);
             if (item.Afixos != null) for (int i = 0; i < item.Afixos.Count; i++) s += PontosDoAfixo(item.Afixos[i]);
+            s *= Ferreiro.FatorDeMelhoria(item, cfg);
             float fatorNivel = TabelaItens.FatorDeNivel(EscalaAfixo.Linear, item.Nivel, cfg);
             if (item.Efeito != EfeitoLendario.Nenhum)
             {

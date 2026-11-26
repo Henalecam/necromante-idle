@@ -323,6 +323,13 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        // ---- Ferreiro: melhorar e imbuir ----
+        public int MelhoriaMaxima = 5;
+        public float MelhoriaPorNivel = 0.06f;            // cada +1 aumenta em 6% o implícito e os afixos do item
+        public float MelhoriaCustoBase = 30f;             // x (1 + raridade) x (1 + 0,25 x nível do item) x crescimento^melhoria
+        public float MelhoriaCrescimento = 2.2f;
+        public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
+        public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
         public bool SalasLigadas = true;
         public float ChanceDeAtrairVizinha = 0.4f;        // por luta: a matilha de uma sala vizinha não visitada vem pela porta

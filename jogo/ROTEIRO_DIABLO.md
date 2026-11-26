@@ -29,7 +29,7 @@ battle.net clássico (pacotes de campeões/únicos).
 12. [feito: Açougueiro (andar 2) e Rei Esqueleto (andar 3), cada um sorteado por save (2 em 3), opcionais, com sala e recompensa próprias] Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
 13. [feito: Normal, Pesadelo e Inferno; abre ao vencer o chefe do Ato 2; multiplicadores de inimigo e tabela de saque própria; falta medir o ritmo de Pesadelo/Inferno com o robô] Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
 14. Árvore de ascensão muito maior.
-15. Imbuir/melhorar armaduras com ouro.
+15. [feito: melhorar +1 a +5 e imbuir afixo com ouro no Ferreiro] Imbuir/melhorar armaduras com ouro.
 Andares maiores (mais salas, formas irregulares) entram junto com 4 e 11: o dono agora pediu "mais profundidade nos mapas".
 
 
@@ -52,7 +52,7 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - B5. Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).
 
 ### C. Progressão longa
-- C1. Ferreiro: melhorar (+1 a +5) e imbuir itens com ouro (fatia 15).
+- C1. [feito] Ferreiro: melhorar (+1 a +5) e imbuir itens com ouro (fatia 15).
 - C2. Itens únicos com nome e efeito próprio, por tabela de dificuldade.
 - C3. Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
 - C4. Poções e cinto: vida e mana, uso automático com regra do jogador.

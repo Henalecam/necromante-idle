@@ -50,6 +50,59 @@ namespace Necro.Nucleo
             return true;
         }
 
+        // ---- melhorar (+1 a +5) e imbuir, com ouro ----
+        public static float FatorDeMelhoria(Item item, ConfigJogo cfg) { return 1f + cfg.MelhoriaPorNivel * Math.Max(0, Math.Min(cfg.MelhoriaMaxima, item.Melhoria)); }
+
+        /// <summary>Custo do próximo nível de melhoria; 0 = não dá (vazio, fechado ou já no máximo).</summary>
+        public static long CustoDeMelhorar(Item item, ConfigJogo cfg)
+        {
+            if (Equipamento.Vazio(item) || item.NaoIdentificado || item.Melhoria >= cfg.MelhoriaMaxima) return 0;
+            double c = cfg.MelhoriaCustoBase * (1 + (int)item.Raridade) * (1.0 + cfg.OuroPorNivelDeItem * item.Nivel) * Math.Pow(cfg.MelhoriaCrescimento, item.Melhoria);
+            return Math.Max(1, (long)Math.Round(c));
+        }
+
+        public static bool Melhorar(EstadoProgresso p, Item item, ConfigJogo cfg)
+        {
+            long c = CustoDeMelhorar(item, cfg);
+            if (c <= 0 || p.Ouro < c) return false;
+            p.Ouro -= c; item.Melhoria++; p.ItensMelhorados++;
+            return true;
+        }
+
+        /// <summary>Melhora os equipados enquanto o ouro der, sempre o mais barato primeiro. Devolve quantos níveis comprou.</summary>
+        public static int MelhorarTudo(EstadoProgresso p, ConfigJogo cfg)
+        {
+            int n = 0; if (p.Equipados == null) return 0;
+            while (true)
+            {
+                Item melhor = null; long menor = long.MaxValue;
+                for (int i = 0; i < p.Equipados.Length; i++) { long c = CustoDeMelhorar(p.Equipados[i], cfg); if (c > 0 && c < menor) { menor = c; melhor = p.Equipados[i]; } }
+                if (melhor == null || !Melhorar(p, melhor, cfg)) break;
+                n++;
+            }
+            return n;
+        }
+
+        /// <summary>Imbuir: paga para o item ganhar um afixo novo. Só Comum e Mágico, até 2 afixos. 0 = não dá.</summary>
+        public static long CustoDeImbuir(Item item, ConfigJogo cfg)
+        {
+            if (Equipamento.Vazio(item) || item.NaoIdentificado || item.Raridade > RaridadeItem.Magico || item.Afixos == null || item.Afixos.Count >= cfg.ImbuirMaximoDeAfixos) return 0;
+            double c = cfg.ImbuirCustoBase * (1.0 + cfg.OuroPorNivelDeItem * item.Nivel) * (1 + 2 * item.Afixos.Count);
+            return Math.Max(1, (long)Math.Round(c));
+        }
+
+        public static bool Imbuir(EstadoProgresso p, Item item, ConfigJogo cfg)
+        {
+            long c = CustoDeImbuir(item, cfg);
+            if (c <= 0 || p.Ouro < c) return false;
+            var rng = new Rng((ulong)(p.ItensImbuidos * 7919L + item.Nivel * 31L + (long)item.Tipo * 131L + 17L));
+            if (!GeradorDeItens.AcrescentarAfixo(rng, cfg, item)) return false;
+            p.Ouro -= c; p.ItensImbuidos++;
+            if (item.Raridade == RaridadeItem.Comum) item.Raridade = RaridadeItem.Magico;
+            if (string.IsNullOrEmpty(item.Nome) || item.Conjunto == ConjuntoId.Nenhum && item.Efeito == 0 && !item.Bloqueado) item.Nome = GeradorDeItens.MontarNome(item);
+            return true;
+        }
+
         public static long CustoDeRepararTudo(EstadoProgresso p, ConfigJogo cfg)
         {
             long t = 0; if (p.Equipados != null) for (int i = 0; i < p.Equipados.Length; i++) t += CustoDeReparo(p.Equipados[i], cfg);

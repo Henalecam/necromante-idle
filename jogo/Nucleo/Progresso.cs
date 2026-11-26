@@ -128,7 +128,7 @@ namespace Necro.Nucleo
         public int SantuariosVistos;                        // bits: santuários cujo efeito já foi descoberto (o Livro dos Santuários)
         public bool SemAutoReparo;                          // false (padrão): ao voltar de cada descida o Ferreiro já conserta o que o ouro alcançar
         public long Ouro;                                   // moeda da cidade: cai na masmorra, compra e vende no Ferreiro
-        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados, ItensReparados;
+        public List<Item> Loja = new List<Item>(); public int LojaRenovacoes, ItensVendidos, ItensComprados, ItensIdentificados, ItensReparados, ItensMelhorados, ItensImbuidos; public bool AutoMelhoria;
         public int MinionsSacrificados;
         /// <summary>Regra automática: minions NA RESERVA com qualidade abaixo desta são sacrificados ao fim de cada expedição.</summary>
         public Qualidade SacrificarAbaixoDe = Qualidade.Fraca;
@@ -387,6 +387,7 @@ namespace Necro.Nucleo
             if (!r.SemDesgaste) Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento (salvo pelo Santuário Oculto)
             p.Ouro += (long)Math.Round(r.Ouro * (double)cfg.DificuldadeOuro[r.Dificuldade]); Ferreiro.Renovar(p, cfg);
             if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);
+            if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);
             if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];
             if (r.MaiorAndarConcluido > p.MaiorAndarConcluido) p.MaiorAndarConcluido = r.MaiorAndarConcluido;

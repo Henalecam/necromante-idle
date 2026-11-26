@@ -1392,6 +1392,14 @@ function atualizarPainel(forcar) {
         `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? '' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Inventário cheio' : `Comprar · ${fmt(l.preco)} ouro`}</button></div>`;
     });
     h += `<div class="linha"><div class="corpo">Reparo automático<small>ao voltar de cada descida, o Ferreiro já conserta o equipamento com o seu ouro (se der)</small></div><button data-ac="auto-reparo" class="${d.autoReparo ? 'ativo' : ''}">${d.autoReparo ? 'Ligado' : 'Desligado'}</button></div>`;
+    // melhorar e imbuir o que está vestido
+    const vestidos = d.equipados.map((it, i) => [it, i]).filter(([it]) => it && !it.nid);
+    h += `<h3>Melhorar e imbuir</h3><p class="nota">Cada <b>+1</b> aumenta em 6% tudo o que o item dá (até +5). <b>Imbuir</b> dá um afixo novo a itens Comuns e Mágicos (até 2).</p>` +
+      `<div class="linha"><div class="corpo">Melhoria automática<small>ao voltar de cada descida, o ouro que sobrar do reparo vira +1 no item mais barato de melhorar</small></div><button data-ac="auto-melhoria" class="${d.autoMelhoria ? 'ativo' : ''}">${d.autoMelhoria ? 'Ligada' : 'Desligada'}</button></div>`;
+    if (!vestidos.length) h += '<p class="nota">Equipe um item para melhorá-lo.</p>';
+    vestidos.forEach(([it, i]) => { h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span><small>nível ${it.nivel}${it.mel >= 5 ? ' · melhoria máxima' : ''}</small></div>` +
+      (it.custoMel > 0 ? `<button data-ac="melhorar-item" data-i="${i}" ${it.custoMel > d.ouroTotal ? 'disabled title="Falta ouro"' : ''}>+${it.mel + 1} · ${fmt(it.custoMel)} ouro</button>` : '') +
+      (it.custoImb > 0 ? `<button data-ac="imbuir" data-i="${i}" ${it.custoImb > d.ouroTotal ? 'disabled title="Falta ouro"' : ''}>Imbuir · ${fmt(it.custoImb)} ouro</button>` : '') + '</div>'; });
     const gastos = d.equipados.map((it, i) => [it, i]).filter(([it]) => it && it.reparo > 0);
     if (gastos.length) {
       const quebrados = gastos.filter(([it]) => it.dur <= 0).length;
@@ -1800,6 +1808,9 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'identificar': if (J.IdentificarItem(i)) { som('bencao'); aviso('Item identificado'); } break;
     case 'reparar': if (J.RepararEquipado(i)) { som('golpe'); aviso('Item reparado'); } break;
     case 'auto-reparo': J.AlternarAutoReparo(); break;
+    case 'auto-melhoria': J.AlternarAutoMelhoria(); break;
+    case 'melhorar-item': if (J.MelhorarEquipado(i)) { som('golpe'); aviso('Item melhorado'); } break;
+    case 'imbuir': if (J.ImbuirEquipado(i)) { som('bencao'); aviso('Item imbuído: afixo novo'); } break;
     case 'dificuldade': if (J.DefinirDificuldade(i)) aviso('Dificuldade: ' + DIFICULDADES[i][0] + ' · vale na próxima descida'); break;
     case 'auto-atributos': J.AlternarAutoAtributos(); break;
     case 'redistribuir-atributos': if (J.RedistribuirAtributos()) aviso('Pontos de atributo devolvidos'); break;
