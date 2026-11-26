@@ -69,7 +69,7 @@ function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
   let saida = ''; const prox = mapa[idx + 1];
   if (eu) { const cam0 = prox ? caminhoNoMapa(idx, idx + 1) : [], alvo = cam0.length > 1 ? mapa[cam0[1]] : null; if (alvo) { const dx = alvo[0] - eu[0], dy = alvo[1] - eu[1]; saida = dx === 1 ? 'l' : dx === -1 ? 'o' : dy === 1 ? 'n' : dy === -1 ? 's' : ''; } }
   if (idx !== masm.sala) saida = ''; else saidaAtual = saida;   // só a sala em que o grupo está mostra a saída acesa
-  const ultima = idx >= masm.tipos.length - 1 && tipo !== 2;
+  const ultima = idx >= masm.tipos.length - 1;
   // espessura da laje nas duas bordas da frente
   const A = P(-1, -1), B = P(21, -1), C = P(21, 13), D = P(-1, 13), esp = 26;
   poli([A, B, [B[0], B[1] + esp], [A[0], A[1] + esp]], '#141012'); poli([B, C, [C[0], C[1] + esp], [B[0], B[1] + esp]], '#0e0b0d');
@@ -367,6 +367,7 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '12') { const g = estado.get(+v[3]); if (g) g.preso = tempoSim + (+v[4] || 2); som('perigo'); if (!evento.avisouGrilhoes) { evento.avisouGrilhoes = true; aviso('Grilhões! Seus minions mais fortes ficam presos'); } return; }
   if (tipo === 'ItemCaiu' && +v[14] >= 2) anotar(`Caiu um item <span class="r${v[14]}">${RARIDADES[+v[14]]}</span>.`);
+  if (tipo === 'AndarConcluido' && !silencio) { descida = { t0: tempoSim, T: 2.4 }; som('porta'); }
   if (tipo === 'AndarConcluido') anotar(`Andar ${v[14]} concluído em ${Math.round(+v[4])} s.`);
   if (tipo === 'EntidadeSurgiu' && +v[14] > 0 && v[6] !== '1') { batizar(+v[3], +v[14], v[15] || ''); return; }
   if (tipo === 'Morte' && campeoes.has(+v[3])) { const cp = campeoes.get(+v[3]); campeoes.delete(+v[3]); if (!silencio) { aviso(cp.nome + ' tombou'); anotar(`<b style="color:#ffd84a">${cp.nome}</b> tombou.`); } }
@@ -446,6 +447,20 @@ function quadro(m, acao, dir, tempo) {
 }
 
 let saidaAtual = '', viagem = [1, 0];
+// ---- descer e chegar: o grupo anda até a escada e some por ela; no andar novo, entra pela porta ----
+const ESCADA = [18.3, 10.6]; let descida = null, chegada = null;
+function cenaDoGrupo(s) {
+  if (descida) {
+    const f = Math.max(0, Math.min(1, (tempoSim - descida.t0) / descida.T * 1.25 - 0.25 * ((s.id * 7) % 10) / 10)), k = f * f * (3 - 2 * f);
+    return [s.rx + (ESCADA[0] - s.rx) * k, s.ry + (ESCADA[1] - s.ry) * k, f > 0.93 ? 0 : 1, ESCADA[0] - s.rx, ESCADA[1] - s.ry];
+  }
+  if (chegada) {
+    const f0 = (tempoSim - chegada.t0) / chegada.T; if (f0 >= 1.3) { chegada = null; return null; }
+    const f = Math.max(0, Math.min(1, f0 * 1.3 - 0.3 * ((s.id * 7) % 10) / 10)), k = f * f * (3 - 2 * f);
+    return [-1.5 + (s.rx + 1.5) * k, 6 + (s.ry - 6) * k, f <= 0.02 ? 0 : 1, 1, 0, f >= 1];
+  }
+  return null;
+}
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
@@ -533,7 +548,7 @@ function lerMasmorra(p) {
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
   if (masm.sala !== antes) {
     objeto = null;
-    if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; if (!silencio) transicao = 1; }     // andar novo: tudo de novo, com um escurecer só aqui
+    if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; descida = null; chegada = silencio ? null : { t0: tempoSim, T: 1.1 }; if (!silencio) transicao = 1; }     // andar novo: tudo de novo, com um escurecer só aqui
     else { assar = antes; salaSuja = true; if (!silencio) { som('porta'); iniciarViagem(antes, masm.sala); } }
   }
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
@@ -756,7 +771,8 @@ function desenhar(dt) {
     ctx.globalAlpha = 1;
   }
   for (const [s, acao, tempo, morto] of lista) {
-    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, [px, py] = naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
+    const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, cen = !s.inimigo && !morto ? cenaDoGrupo(s) : null, [px, py] = cen ? naTela(cen[0], cen[1]) : naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
+    if (cen && !cen[2]) continue;      // já desceu a escada (ou ainda não entrou)
     if (reforco > 1.01) { ctx.save(); ctx.translate(px, py); ctx.scale(reforco, reforco); ctx.translate(-px, -py); }
     if (!morto) {
       // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
@@ -785,7 +801,7 @@ function desenhar(dt) {
       ctx.strokeStyle = '#ff3040'; ctx.lineWidth = 3; ctx.setLineDash([14, 9]); ctx.beginPath(); ctx.arc(0, 0, s.chefe ? 60 : 34, 0, 7); ctx.stroke(); ctx.restore();
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
-    const [img, sx, sy] = quadro(m, acao, dvE ? direcao(dvE[2], dvE[3]) : s.dir, tempo);
+    const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
     const prov = s.necro ? null : visual(s.especie), e = prov ? prov[1] : 1;
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (prov && !(morto && COR_MORTE[s.cond])) {
@@ -1369,6 +1385,7 @@ window.__orbeNaTela = () => {
   return x > r.left + 4 && x < r.right - 4 ? [x, y] : null;
 };
 window.__objetoNaTela = () => { if (!objeto || objeto.aberto) return null; const r = tela.getBoundingClientRect(), k = escAtual / (tela.width / r.width), [px, py] = naTela(objeto.x, objeto.y); return [r.left + (px - camX) * k, r.top + (py - 30 - camY) * k, objeto.tocado]; };
+window.__cena = () => [!!descida, !!chegada];
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
 let encAberta = false;
