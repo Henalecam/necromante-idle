@@ -545,6 +545,7 @@ let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = tr
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado']];
 let chaveCofre = [-1, false];
+let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
 const DICA_SALA = { 13: 'só abre com a chave: passe antes pela sala que a guarda', 3: 'Ossos e talvez um item', 4: 'bênção até o fim do andar: quanto antes, melhor', 5: 'uma alma de graça', 7: 'cura 20% de todos', 9: 'troca Ossos por um item', 10: 'vida por +80% de almas no andar', 12: 'fere o grupo; toque para desarmar' };
@@ -778,10 +779,18 @@ function desenhar(dt) {
   lista.sort((a, b) => b[0].ry - a[0].ry);
   // a patrulha errante: um bando que anda pelo andar; se estiver na sala quando o grupo chegar, entra na luta
   if (patrulha && mapa[patrulha.sala]) {
-    const o = offDaSala(patrulha.sala), alvoP = [o[0] + 15, o[1] + 3];
-    if (!patPos || silencio) patPos = alvoP.slice();
-    const ddx = alvoP[0] - patPos[0], ddy = alvoP[1] - patPos[1], dist = Math.hypot(ddx, ddy), andando = dist > 0.3;
-    if (andando) { const passo = Math.min(dist, 9 * dt * Math.max(1, velocidade)); patPos[0] += ddx / dist * passo; patPos[1] += ddy / dist * passo; }
+    const o = offDaSala(patrulha.sala), destino = [o[0] + 15, o[1] + 3];
+    if (!patPos || silencio) { patPos = destino.slice(); patRota = []; patAlvo = patrulha.sala; }
+    if (patAlvo !== patrulha.sala || patGeo !== lerMapa.geo) {
+      // mudou de sala: segue pelos corredores, de centro em centro, a partir da sala onde está agora
+      patAlvo = patrulha.sala; patGeo = lerMapa.geo;
+      let de = 0, md = 1e9; mapa.forEach((m, k) => { const c = offDaSala(k), d = Math.hypot(c[0] + 10 - patPos[0], c[1] + 6 - patPos[1]); if (d < md) { md = d; de = k; } });
+      patRota = caminhoNoMapa(de, patrulha.sala).map((k) => { const c = offDaSala(k); return [c[0] + 10, c[1] + 6]; }); patRota.push(destino);
+    }
+    const alvoP = patRota.length ? patRota[0] : destino;
+    const ddx = alvoP[0] - patPos[0], ddy = alvoP[1] - patPos[1], dist = Math.hypot(ddx, ddy), andando = dist > 0.3 || patRota.length > 1;
+    if (dist > 0.01) { const passo = Math.min(dist, 11 * dt * Math.max(1, velocidade)); patPos[0] += ddx / dist * passo; patPos[1] += ddy / dist * passo; }
+    if (dist <= 0.3 && patRota.length) patRota.shift();
     patrulha.especies.forEach((esp, q) => {
       const [px, py] = W(patPos[0] + (q - 1) * 1.3, patPos[1] + (q % 2) * 1.1), m = monstro(esp, false), e = reforco;
       const [img, sx, sy] = quadro(m, andando ? 'andar' : 'parado', andando ? direcao(ddx, ddy) : direcao(-1, 0), tempoSim * (andando ? 1.4 : 0.6) + q);
