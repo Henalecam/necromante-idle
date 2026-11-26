@@ -472,7 +472,7 @@ function cenaDoGrupo(s) {
   return null;
 }
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
-let reordenado = false;
+let reordenado = false, camSalto = false;
 let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 const vizinhas = (a, b) => mapa[a] && mapa[b] && Math.abs(mapa[a][0] - mapa[b][0]) + Math.abs(mapa[a][1] - mapa[b][1]) === 1;
@@ -701,7 +701,7 @@ function pintarObjeto(o, px, py) {
 }
 try { dica = localStorage.getItem(CHAVE + '-dica') === '1'; } catch (e) { /* sem armazenamento */ }
 function desenhar(dt) {
-  if (mapaSujo && mapa.length) { mapaSujo = false; salaSuja = false; assar = -1; so = offDaSala(masm.sala); if (!reordenado) limparArena(true); reconstruirMundo(reordenado); reordenado = false; }
+  if (mapaSujo && mapa.length) { mapaSujo = false; salaSuja = false; assar = -1; so = offDaSala(masm.sala); if (!reordenado) { limparArena(true); camSalto = true; } reconstruirMundo(reordenado); reordenado = false; }
   if (salaSuja) {
     salaSuja = false;
     // o sangue da sala que ficou para trás passa a fazer parte dela; a sala nova ganha o chão em detalhe
@@ -711,7 +711,7 @@ function desenhar(dt) {
   }
   const dvg = deltaDaViagem();
   const larg = tela.width, alt = tela.height, escPerto = alt / VISTA_H;
-  const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt / (lim[3] - lim[1] + 160));
+  const lim = limitesDoMundo(), escTudo = Math.min(escPerto, larg / (lim[2] - lim[0] + 160), alt * 0.7 / (lim[3] - lim[1] + 90));   // sobra espaço para os botões e avisos da base
   if (zoomLivre) zoomLivre = Math.max(escTudo * 0.7, Math.min(escPerto * 1.4, zoomLivre));
   const escAlvo = zoomLivre || (zoomModo === 0 ? escPerto : zoomModo === 2 ? escTudo : Math.max(escTudo, escPerto * 0.5));
   escAtual += (escAlvo - escAtual) * Math.min(1, dt * 4); if (Math.abs(escAlvo - escAtual) < 0.0005) escAtual = escAlvo;
@@ -721,9 +721,10 @@ function desenhar(dt) {
     for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? 3 : 1; sx += px * w; sy += py * w; n += w; }
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
-    if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.06; }
+    if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.13; }
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * 0.56, kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
-    if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
+    if (camSalto && zoomModo === 2 && !zoomLivre) { camSalto = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
+    else if (Math.abs(ax - camX) > visivel * 3) { camX = ax; camY = ay; } else { camX += (ax - camX) * kc; camY += (ay - camY) * kc; }
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#050305'; ctx.fillRect(0, 0, larg, alt);
   const tx = tremor > 0 ? rnd(-1, 1) * tremor * 14 : 0, ty = tremor > 0 ? rnd(-1, 1) * tremor * 9 : 0; tremor = Math.max(0, tremor - dt);
