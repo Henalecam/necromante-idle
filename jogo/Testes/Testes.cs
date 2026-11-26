@@ -1054,11 +1054,29 @@ namespace Necro.Testes
             Teste("masmorra: nível secreto forçado solta a horda e paga o tesouro", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 40f;
-                var sim = new Simulacao(Cfg, p, 5, ModoExpedicao.Avancar, 1) { LimiteDeAndares = 1, ForcarNivelSecreto = true };
+                var cfgS = new ConfigJogo { ForcarSecreto = 1 };
+                var sim = new Simulacao(cfgS, p, 5, ModoExpedicao.Avancar, 1) { LimiteDeAndares = 1, ForcarNivelSecreto = true };
                 int guarda = 0; bool viu = false;
                 while (!sim.Encerrada && guarda++ < 30000) { sim.Tick(); if (sim.EmNivelSecreto) viu = true; }
                 bool pasto = sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] >= 15 && sim.Resultado.Itens.Count >= 2, camara = sim.Resultado.ElitesMortos >= 3 && sim.Resultado.Itens.Count >= 3;
                 Afirmar(viu && sim.Resultado.NiveisSecretos == 1 && (pasto || camara), "secreto " + sim.Resultado.NiveisSecretos + " reses " + sim.Resultado.MortesPorEspecie[(int)EspecieId.ResProfana] + " itens " + sim.Resultado.Itens.Count);
+            });
+            Teste("masmorra: a Cripta dos Espelhos solta um reflexo de cada minion e paga o tesouro", () =>
+            {
+                var cfgE = new ConfigJogo { ForcarSecreto = 3 };
+                var p = Progressao.NovoJogo(cfgE); p.PoderNecromantico = 40f;
+                var sim = new Simulacao(cfgE, p, 5, ModoExpedicao.Avancar, 1) { LimiteDeAndares = 1, ForcarNivelSecreto = true };
+                int guarda = 0; bool viu = false; int reflexos = 0, vivosNaEntrada = -1;
+                while (!sim.Encerrada && guarda++ < 30000)
+                {
+                    bool antes = sim.EmNivelSecreto;
+                    sim.Tick();
+                    if (sim.EmNivelSecreto && !antes) { viu = true; Afirmar(sim.SecretoAtual == NivelSecreto.CriptaDosEspelhos, "deveria ser a Cripta dos Espelhos"); vivosNaEntrada = 0; foreach (var e in sim.Entidades) if (e.Viva && e.Faccao == Faccao.Minion) vivosNaEntrada++; }
+                    if (sim.EmNivelSecreto) foreach (var ev in sim.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu) { foreach (var e in sim.Entidades) if (e.Id == ev.Alvo && e.Faccao == Faccao.Inimigo) reflexos++; }
+                }
+                Afirmar(viu && sim.Resultado.NiveisSecretos == 1, "a cripta não abriu");
+                Afirmar(reflexos == Math.Max(1, vivosNaEntrada), "um reflexo por minion vivo: " + reflexos + " para " + vivosNaEntrada);
+                Afirmar(sim.Resultado.Itens.Count >= 2, "o tesouro da cripta deveria dar ao menos 2 itens: " + sim.Resultado.Itens.Count);
             });
             Teste("masmorra: a sala do chefe tem ambiente e ele fere os dois lados", () =>
             {

@@ -38,7 +38,7 @@ public static partial class Jogo
         _cfg.ForcarCofre = _forcarCofre; _forcarCofre = false;
         _sim = new Simulacao(_cfg, _p, 1003UL + _p.ContadorDeSementes++, ModoExpedicao.Avancar, Progressao.AndarDePartida(_p, _cfg));
         Oferendas.ConsumirRito(_p);
-        if (_forcarSecreto) { _sim.ForcarNivelSecreto = true; _forcarSecreto = false; }
+        if (_forcarSecreto) { _sim.ForcarNivelSecreto = true; _forcarSecreto = false; } else _cfg.ForcarSecreto = 0;
     }
     static bool _forcarSecreto, _forcarCofre;
 
@@ -406,7 +406,7 @@ public static partial class Jogo
                 for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) for (int i = 0; i < 3; i++)
                 { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
                 break;
-            case "secreto": _forcarSecreto = true; break;
+            case "secreto": _forcarSecreto = true; _cfg.ForcarSecreto = v >= 1 && v <= 3 ? (int)v : 0; break;
             case "cofre": _forcarCofre = true; break;
             case "reiniciar": break;
         }

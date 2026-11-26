@@ -14,7 +14,7 @@ namespace Necro.Nucleo
     public enum AmbienteDeChefe { Nenhum = 0, Lava = 1, NevoaPutrida = 2, Geada = 3, Desabamento = 4 }
 
     /// <summary>Qual nível secreto se abriu.</summary>
-    public enum NivelSecreto { Nenhum = 0, PastoProfano = 1, CamaraDoTesouro = 2 }
+    public enum NivelSecreto { Nenhum = 0, PastoProfano = 1, CamaraDoTesouro = 2, CriptaDosEspelhos = 3 }
 
     /// <summary>Bênção de santuário: vale até o fim do andar.</summary>
     public enum Bencao { Nenhuma = 0, Furia = 1, Protecao = 2, Colheita = 3, Fartura = 4, Devocao = 5 }
@@ -378,7 +378,21 @@ namespace Necro.Nucleo
             Resultado.NiveisSecretos++;
             Salas.Add(TipoSala.Secreta); SalaAtual = Salas.Count - 1; ColocarNoMapa(SalaAtual);
             _portaisAntesDoSecreto = PortaisAtivos; PortaisAtivos = 3;
-            SecretoAtual = _rngMasmorra.Chance(0.5f) ? NivelSecreto.PastoProfano : NivelSecreto.CamaraDoTesouro;
+            float qual = _rngMasmorra.Proximo01();
+            SecretoAtual = Cfg.ForcarSecreto != 0 ? (NivelSecreto)Cfg.ForcarSecreto : qual < 0.4f ? NivelSecreto.PastoProfano : qual < 0.75f ? NivelSecreto.CamaraDoTesouro : NivelSecreto.CriptaDosEspelhos;
+            if (SecretoAtual == NivelSecreto.CriptaDosEspelhos)
+            {
+                // Cripta dos Espelhos: um reflexo sombrio de cada minion do exército (mesma espécie), e o maior deles vem como elite
+                int n = 0;
+                for (int i = 0; i < _minions.Count && n < Cfg.EspelhosMaximo; i++)
+                {
+                    if (!_minions[i].Viva || _minions[i].Temporario) continue;
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = _minions[i].Especie, Elite = n == 0, Mods = n == 0 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = n % 3, TickDeSpawn = TickAtual + 10 + n * 6 });
+                    n++;
+                }
+                if (n == 0) _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Aparicao, Elite = true, Mods = SortearModificadores(), Portal = 0, TickDeSpawn = TickAtual + 10 });
+            }
+            else
             if (SecretoAtual == NivelSecreto.PastoProfano)
             {
                 int n = Math.Min(Cfg.SecretoHordaMaxima, Cfg.SecretoHordaBase + Andar / 2);

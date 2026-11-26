@@ -293,6 +293,8 @@ namespace Necro.Nucleo
         public float BencaoForca = 0.10f;                // Fúria: +dano; Proteção: -dano sofrido; Colheita: +ossos (x2,5)
         public float TempoDeEscolhaDaBencao = 4f;        // s para o jogador escolher; depois o necromante pega uma ao acaso
         public float FonteCura = 0.20f;
+        public int EspelhosMaximo = 6;                     // Cripta dos Espelhos: reflexos no máximo
+        public int ForcarSecreto = 0;                      // só para testes: 1..3 escolhe o nível secreto
         public float ForjaEscudo = 0.25f;                 // Forja de Ossos: couraça = fração da vida máxima de cada aliado
         public int NinhoCrias = 4, NinhoCriasMaximo = 8; public float NinhoPremioDaLuta = 0.4f;   // Ninho sem toque: diabretes que chocam (+1 a cada 6 andares)
         public float NinhoOssos = 1.5f;                    // Ninho com toque: Ossos = BauOssos x isto
