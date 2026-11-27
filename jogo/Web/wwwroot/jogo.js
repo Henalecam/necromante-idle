@@ -166,6 +166,12 @@ function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
     if (porta) {   // arco escuro com moldura
       const a0 = em(0.42, 0), a1 = em(0.58, 0), a2 = em(0.58, 104), a3 = em(0.5, 124), a4 = em(0.42, 104);
       poli([a0, a1, a2, a3, a4], '#020102', '#8a744a'); c.lineWidth = 3; c.strokeStyle = porta === 2 ? '#ffd84a' : '#5c4c30'; c.stroke(); c.lineWidth = 1;
+      for (const [t0, t1] of [[0.42, 0.452], [0.58, 0.548]]) {
+        poli([em(t0, 0), em(t1, 0), em(t1, 94), em(t0, 102)], '#3a2416', '#140b07');
+        c.strokeStyle = '#6a6a70'; c.lineWidth = 2;
+        for (const hh of [24, 70]) { const [x0, y0] = em(t0, hh), [x1, y1] = em(t1, hh); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
+        c.lineWidth = 1;
+      }
       if (porta === 2) { c.globalCompositeOperation = 'lighter'; const [gx, gy] = em(0.5, 50), gl = c.createRadialGradient(gx, gy, 0, gx, gy, 110); gl.addColorStop(0, 'rgba(255,216,74,0.35)'); gl.addColorStop(1, 'rgba(255,216,74,0)'); c.fillStyle = gl; c.beginPath(); c.arc(gx, gy, 110, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; }
     }
     for (const t of porta ? [0.3, 0.7] : [0.25, 0.5, 0.75]) {   // tochas
@@ -423,7 +429,7 @@ function evento(v) {
   }
   if (tipo === 'EfeitoAplicado' && (v[14] === '33' || v[14] === '34')) { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: v[14] === '33' ? 'Poção de vida' : 'Poção de mana', cor: v[14] === '33' ? '#ff8a8a' : '#8ab8ff', t: 1, amigo: true }); som('bencao'); if (cintoHud) cintoHud[v[14] === '33' ? 0 : 1] = Math.max(0, cintoHud[v[14] === '33' ? 0 : 1] - 1); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '35') { numeros.push({ x: +v[10], y: +v[11], txt: +v[4] ? '+1 poção de mana' : '+1 poção de vida', cor: '#e8dcb0', t: 1, amigo: true }); return; }
-  if (tipo === 'EfeitoAplicado' && v[14] === '36') { const an = Math.round(+v[4] || 0); aviso(`Portal da Cidade · você volta ao andar ${an}`); anotar(`<b style="color:#7ab0ff">Portal da Cidade aberto no andar ${an}.</b> Todo o saque veio com você; a próxima descida começa lá.`); som('bencao'); clarao = Math.max(clarao, 0.5); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '36') { portalFx = { x: +v[10] + 1.2, y: +v[11], t: performance.now(), so: [so[0], so[1]] }; const an = Math.round(+v[4] || 0); aviso(`Portal da Cidade · você volta ao andar ${an}`); anotar(`<b style="color:#7ab0ff">Portal da Cidade aberto no andar ${an}.</b> Todo o saque veio com você; a próxima descida começa lá.`); som('bencao'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '29') { aviso('O Golem de Ossos se ergue'); som('chefe'); tremor = Math.max(tremor, 0.3); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '28') { aviso('★ Um item Único caiu!'); anotar('<b style="color:#ffcf5a">★ Um item Único caiu.</b> Identifique-o no Ferreiro para ver qual é.'); som('chefe'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '24') { const nf = ['Lança de Ossos', 'Drenar Vida', 'Explosão de Cadáver', 'Reerguer', 'Maldição da Fraqueza', 'Sacrifício', 'Golem de Ossos'][Math.round(+v[4] || 0)] || 'feitiço'; aviso('Livro de feitiço · ' + nf); anotar(`Você achou um <b style="color:#9fd0ff">Livro de ${nf}</b>. Será lido ao voltar (se a Magia permitir).`); som('bencao'); return; }
@@ -650,7 +656,7 @@ const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
-let vistosDeEspecie = null, cintoHud = null;
+let vistosDeEspecie = null, cintoHud = null, portalFx = null;
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -1021,6 +1027,21 @@ function desenhar(dt) {
       ctx.drawImage(tinta, 0, 0, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     ctx.globalAlpha = 1; ctx.filter = 'none';
+  }
+  if (portalFx) {
+    const idade = (performance.now() - portalFx.t) / 1000;
+    if (idade > 3.5) portalFx = null;
+    else {
+      const [px, py] = W(portalFx.x + portalFx.so[0], portalFx.y + portalFx.so[1]), abre = Math.min(1, idade / 0.5), some = idade > 2.8 ? Math.max(0, 1 - (idade - 2.8) / 0.7) : 1, rx = 30 * abre * reforco, ry = 58 * abre * reforco;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = some;
+      const gl = ctx.createRadialGradient(px, py - ry, 2, px, py - ry, ry * 1.9); gl.addColorStop(0, 'rgba(120,190,255,0.55)'); gl.addColorStop(1, 'rgba(40,90,255,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(px, py - ry, ry * 1.9, 0, 7); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(20,60,160,0.85)'; ctx.beginPath(); ctx.ellipse(px, py - ry, rx, ry, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(170,215,255,0.95)'; ctx.lineWidth = 3 * reforco; ctx.stroke();
+      ctx.strokeStyle = 'rgba(120,180,255,0.6)'; ctx.lineWidth = 1.5;
+      for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(px, py - ry, rx * (0.75 - k * 0.2), ry * (0.75 - k * 0.2), idade * (2 + k), 0, 5); ctx.stroke(); }
+      ctx.restore(); ctx.lineWidth = 1;
+    }
   }
   for (const [s, acao, tempo, morto] of lista) {
     const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, cen = !s.inimigo && !morto ? cenaDoGrupo(s) : null, [px, py] = cen ? naTela(cen[0], cen[1]) : naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));

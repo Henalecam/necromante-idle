@@ -239,14 +239,20 @@ namespace Necro.Nucleo
             AtualizarOrbes();
             LimparMortos();
 
-            if (!Necromante.Viva) Encerrar(MotivoFim.NecromanteMorreu);
+            if (_portalPedido)
+            {
+                _portalPedido = false; Resultado.PortalNoAndar = Andar; _portalTempo = Math.Max(DT, Cfg.PortalAnimacao);   // o portal abre e o grupo leva um instante para atravessar
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 36, Valor = Andar, Alvo = Necromante.Id, Origem = Necromante.Id, Pos = Necromante.Pos });
+            }
+            else if (_portalTempo > 0f) { _portalTempo -= DT; if (_portalTempo <= 0f) Encerrar(MotivoFim.Portal); }   // portal já aberto: quem está nele escapa
+            else if (!Necromante.Viva) Encerrar(MotivoFim.NecromanteMorreu);
             else if (_temPergaminho && Fase != FaseExpedicao.Encerrada) TalvezAbrirPortal();
         }
 
         /// <summary>O jogador abandona a expedição (mantém o que já ganhou).</summary>
         public void Recuar() { Encerrar(MotivoFim.Retirada); }
 
-        private bool _temPergaminho, _portalAutomatico;
+        private bool _temPergaminho, _portalAutomatico, _portalPedido; private float _portalTempo;
         /// <summary>Há um Pergaminho de Portal no cinto desta descida.</summary>
         public bool TemPergaminhoDePortal { get { return _temPergaminho; } }
 
@@ -254,9 +260,7 @@ namespace Necro.Nucleo
         public bool ComandoPortal()
         {
             if (!_temPergaminho || Fase == FaseExpedicao.Encerrada || !Necromante.Viva) return false;
-            _temPergaminho = false; Resultado.PortalNoAndar = Andar;
-            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 36, Valor = Andar, Alvo = Necromante.Id, Origem = Necromante.Id, Pos = Necromante.Pos });
-            Encerrar(MotivoFim.Portal);
+            _temPergaminho = false; _portalPedido = true;   // o portal abre no próximo tick (eventos emitidos fora do Tick se perderiam)
             return true;
         }
 

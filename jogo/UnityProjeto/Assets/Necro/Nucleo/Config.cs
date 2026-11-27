@@ -363,6 +363,7 @@ namespace Necro.Nucleo
         // ---- Portal da Cidade ----
         public bool PortalDaCidade = true;
         public int PergaminhosMaximo = 2;
+        public float PortalAnimacao = 1.5f;               // segundos entre abrir o portal e a descida encerrar
         public float PergaminhoPreco = 180f, PergaminhoPrecoPorAndar = 0.08f;
         public float PortalVidaAbaixoDe = 0.2f;           // regra automática: sem minions vivos na luta, ou necromante abaixo disto sem poção de vida
         public int PortalAPartirDoAndar = 3;              // não se gasta pergaminho nos primeiros andares

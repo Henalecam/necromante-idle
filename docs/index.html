@@ -172,7 +172,8 @@
   #mapa-grande .caixa { width:min(560px, 100%); max-height:94vh; overflow-y:auto; background:#150e12; border:1px solid var(--ouro); border-radius:6px; padding:14px; }
   #ajuda .tr { font-size:14px; margin:5px 0; } #ajuda .tr b { color:#e8d8b8; font-weight:normal; }
   #b-ajuda { padding:3px 10px; border-radius:50%; color:var(--ouro); border-color:var(--ouro); }
-  #b-sopro { align-self:center; font-size:12px; color:#8fd89f; text-shadow:0 0 4px #000; margin-right:2px; }
+  #b-sopro { align-self:center; font-size:12px; color:#8fd89f; text-shadow:0 0 4px #000; margin-right:2px; white-space:nowrap; }
+  @media (max-width:520px) { #poderes button { min-width:60px; padding:8px 4px; } #b-sopro { font-size:11px; } }
   .abas button { position:relative; }
   .abas button[data-n]::after { content:attr(data-n); position:absolute; top:4px; right:6%; min-width:16px; height:16px; line-height:16px; font-size:11px; border-radius:8px; background:var(--sangue); color:#fff; padding:0 3px; }
   h3 { margin:12px 0 6px; font-size:14px; font-weight:normal; color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
