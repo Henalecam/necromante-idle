@@ -13,7 +13,7 @@ namespace Necro.Nucleo
         private struct SpawnPendente
         {
             public EspecieId Especie;
-            public bool Fraco; public bool Acougueiro; public bool Rei; public bool Oculto; public bool Senhor;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
+            public bool Fraco; public bool Acougueiro; public bool Rei; public bool Oculto; public bool Senhor; public bool Sermonario;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
             public bool Elite;
             public bool Chefe;
             public ModificadorElite Mods;
@@ -167,6 +167,9 @@ namespace Necro.Nucleo
             _cegos = progresso.MissaoCegos;
             if (_cegos == 0 && Cfg.MissoesDeCenario) { _cegos = (semente * 1103515245UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.CegosSorteio = _cegos; }
             if (Cfg.ForcarCegos && _cegos != 3) _cegos = 1;
+            _relicario = progresso.MissaoRelicario;
+            if (_relicario == 0 && Cfg.MissoesDeCenario) { _relicario = (semente * 668265263UL >> 17) % 3UL != 0UL ? 1 : 2; Resultado.RelicarioSorteio = _relicario; }
+            if (Cfg.ForcarRelicario && _relicario != 3) _relicario = 1;
             _poco = progresso.MissaoPoco;
             if (_poco == 0 && Cfg.MissoesDeCenario) { _poco = (semente * 3266489917UL >> 15) % 3UL != 0UL ? 1 : 2; Resultado.PocoSorteio = _poco; }
             if (Cfg.ForcarPoco && _poco != 3) _poco = 1;
@@ -895,6 +898,7 @@ namespace Necro.Nucleo
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                         if (s.Oculto) { novo.Oculto = true; novo.OcultoAte = TickAtual * DT + Cfg.OcultoDuracao; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 46, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        else if (s.Sermonario) { novo.Unico = true; novo.NomeProprio = "Sermonário Ossyr"; novo.VidaMax *= Cfg.RelicarioMultVida; novo.Vida = novo.VidaMax; novo.TempoHabilidade = 0f; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Senhor) { novo.Unico = true; novo.NomeProprio = "Vargoth, o Estandarte Sangrento"; novo.VidaMax *= Cfg.FortalezaMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.FortalezaMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Rei) { novo.Unico = true; novo.NomeProprio = "Rei Esqueleto"; novo.VidaMax *= Cfg.ReiMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.ReiMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Acougueiro) { novo.Unico = true; novo.NomeProprio = "O Açougueiro"; novo.VidaMax *= Cfg.AcougueiroMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.AcougueiroMultDano; novo.VelMovimento *= Cfg.AcougueiroMultVelocidade; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
@@ -960,6 +964,7 @@ namespace Necro.Nucleo
                 _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn));
             }
             for (int i = 0; i < _minions.Count; i++) _minions[i].Aparou = false;   // cada sala, um aparo novo
+            if (Bonus.Unico[13]) for (int i = 0; i < _minions.Count; i++) if (_minions[i].Viva && _minions[i].Escudo < _minions[i].VidaMax * Cfg.CinzaDoSermao) _minions[i].Escudo = _minions[i].VidaMax * Cfg.CinzaDoSermao;   // Cinza do Primeiro Sermão
             TalvezJuntarPatrulha();
             Fase = FaseExpedicao.EmOnda;
             Emitir(new EventoSim { Tipo = TipoEvento.OndaIniciada, Extra = Onda, Valor = TotalDeOndas, Critico = ondaDeChefe || ondaDeElite, Alvo = -1, Origem = -1 });

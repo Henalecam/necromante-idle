@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26, RelicarioProfanado = 27 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos, _fortaleza, _poco; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos, _lutaDaFortaleza, _lutaDoPoco; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos, _fortaleza, _poco, _relicario; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos, _lutaDaFortaleza, _lutaDoPoco, _lutaDoRelicario; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -112,6 +112,7 @@ namespace Necro.Nucleo
                 if (w == 1 && TotalDeOndas > 1 && (_cegos == 1 || (Cfg.ForcarCegos && _cegos != 3)) && Andar == Cfg.CegosAndar) Salas.Add(TipoSala.SaloesDosCegos);   // missão dos Salões dos Cegos
                 if (w == 1 && TotalDeOndas > 1 && (_fortaleza == 1 || (Cfg.ForcarFortaleza && _fortaleza != 3)) && Andar == Cfg.FortalezaAndar) Salas.Add(TipoSala.FortalezaRubra);   // missão da Fortaleza Rubra
                 if (w == 1 && TotalDeOndas > 1 && (_poco == 1 || (Cfg.ForcarPoco && _poco != 3)) && Andar == Cfg.PocoAndar) Salas.Add(TipoSala.PocoDosLamentos);   // missão do Poço dos Lamentos
+                if (w == 1 && TotalDeOndas > 1 && (_relicario == 1 || (Cfg.ForcarRelicario && _relicario != 3)) && Andar == Cfg.RelicarioAndar) Salas.Add(TipoSala.RelicarioProfanado);   // missão do Relicário Profanado
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -344,6 +345,16 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDoRelicario)
+                {
+                    _lutaDoRelicario = false; _relicario = 3; Resultado.RelicarioVencido = true; Resultado.Ouro += Cfg.RelicarioOuro;
+                    var cinza = Unicos.Gerar(_rngItens, Cfg, Math.Max(Andar, Cfg.RelicarioAndar), Unicos.Obter(13));
+                    Resultado.Itens.Add(cinza);
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)cinza.Raridade, Valor = cinza.Nivel });
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.RelicarioProfanado, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDoPoco)
                 {
                     _lutaDoPoco = false; _poco = 3; Resultado.PocoVencido = true; Resultado.Ouro += Cfg.PocoOuro;
@@ -449,6 +460,7 @@ namespace Necro.Nucleo
             if (t == TipoSala.SaloesDosCegos) { IniciarSaloesDosCegos(); return; }
             if (t == TipoSala.FortalezaRubra) { IniciarFortalezaRubra(); return; }
             if (t == TipoSala.PocoDosLamentos) { IniciarPocoDosLamentos(); return; }
+            if (t == TipoSala.RelicarioProfanado) { IniciarRelicarioProfanado(); return; }
             Fase = FaseExpedicao.Explorando;
             _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
         }
@@ -484,6 +496,17 @@ namespace Necro.Nucleo
             for (int k = 0; k < Cfg.CegosInimigos; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Aparicao, Oculto = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 4 });
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 47, Alvo = -1, Origem = -1, Valor = Cfg.CegosInimigos, Pos = Necromante.Pos });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>O Relicário Profanado (missão original): o Sermonário Ossyr, um Arauto de Cinzas Único, protege a capela com escudos de ossos sem parar, cercado de devotos.</summary>
+        private void IniciarRelicarioProfanado()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDoRelicario = true;
+            _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.ArautoDeCinzas, Elite = true, Sermonario = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
+            for (int k = 0; k < Cfg.RelicarioDevotos; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 2 ? EspecieId.Magistrado : EspecieId.CavaleiroNegro, Portal = (k + 1) % 3, TickDeSpawn = TickAtual + 3 + k * 3 });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 55, Alvo = -1, Origem = -1, Valor = Cfg.RelicarioDevotos, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
         }
 

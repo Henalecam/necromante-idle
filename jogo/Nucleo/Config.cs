@@ -451,6 +451,7 @@ namespace Necro.Nucleo
         public int ReiAbreSozinhoNoRecorde = 7;
         public int ReiNivelDaCoroa = 8;
         public long ReiOuro = 250;
+        public bool ForcarRelicario; public int RelicarioAndar = 25, RelicarioDevotos = 5; public float RelicarioMultVida = 8f, CinzaDoSermao = 0.10f; public long RelicarioOuro = 500;   // missão do Relicário Profanado
         public bool ForcarPoco; public int PocoAndar = 16, PocoLevas = 3, PocoPorLeva = 4, PocoIntervaloTicks = 70; public long PocoOuro = 350;   // missão do Poço dos Lamentos
         public bool ForcarFortaleza;                     // só para testes e capturas
         public int FortalezaAndar = 13, FortalezaSequito = 4; public float FortalezaMultVida = 7f, FortalezaMultDano = 1.5f, EstandarteDanoContraFortes = 0.3f; public long FortalezaOuro = 400;   // missão da Fortaleza Rubra

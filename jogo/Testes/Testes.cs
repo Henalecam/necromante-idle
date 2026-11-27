@@ -2050,6 +2050,18 @@ namespace Necro.Testes
                 Afirmar(longe.Escudo == 0f, "quem está longe não ganha escudo");
             });
 
+            Teste("missão do Relicário Profanado: no andar 25 o Sermonário Ossyr (Único) e os devotos; vencida, dá a Cinza do Primeiro Sermão (escudo nos minions a cada sala)", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarRelicario = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 130; p.PoderNecromantico = 40000f; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.RelicarioAndar) { LimiteDeAndares = 1 }; int g = 0; bool ev55 = false, viu = false;
+                while (!s.Encerrada && g++ < 90000) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 55) ev55 = true; if (!viu) viu = s.Entidades.Exists(e => e.Viva && e.Unico && e.NomeProprio == "Sermonário Ossyr"); }
+                Afirmar(s.Salas.Contains(TipoSala.RelicarioProfanado) && ev55 && viu, "a sala existe e o Sermonário aparece");
+                Afirmar(s.Resultado.RelicarioVencido && s.Resultado.Itens.Exists(it => it.UnicoId == 13), "vencida, larga a Cinza do Primeiro Sermão");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoRelicario == 3 && !new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.RelicarioAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.RelicarioProfanado), "missão cumprida e a sala não volta");
+            });
+
             Teste("missão do Poço dos Lamentos: no andar 16, três levas de Aparições; vencida, dá um livro de feitiço e não volta", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarPoco = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
