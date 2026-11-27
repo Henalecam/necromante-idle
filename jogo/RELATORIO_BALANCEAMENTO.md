@@ -238,3 +238,14 @@ O observado fica um pouco acima do design nas raridades altas porque o chefe gar
 - 2080866 ticks simulados em 6.14 s de CPU (339 mil ticks/s, ou ~33902× o tempo real) neste computador, build Debug, uma thread.
 - Esse número varia por máquina; o restante do relatório não.
 
+
+## Remedição da campanha depois dos itens 190-196 (escala, vida dos chefes finais, resistências a sombra, raio de luz, Pedra Maldita, armadilhas)
+| medida | antes (itens 189-191) | agora (item 197) |
+|---|---|---|
+| Normal, chefe do Ato 3, 1ª vida | 18,42 h (20,68 antes do 191) | 16,27 h |
+| Normal, chefe do Ato 4, vidas 1/2/3 | 36,42 / 21,21 / 21,15 h | 33,17 / 12,80 / 14,01 h |
+| Normal até o chefe do Ato 2 (--dificuldades 5 40) | 7,99 h | 7,68 h |
+| Pesadelo, chefe do Ato 1 / Ato 2 (desde a troca) | 7,94 / 25,00 h | 7,73 / 22,22 h |
+| Inferno | não chegou | não chegou |
+
+A resistência a sombra deixou os Atos 1-2 ~5% mais lentos, mas a Pedra Maldita (livro achado na descida) acelera o fim da campanha: as vidas 2 e 3 chegam ao chefe do Ato 4 em ~13 h (eram ~21 h). Nada fora do esperado; sem ajuste.
