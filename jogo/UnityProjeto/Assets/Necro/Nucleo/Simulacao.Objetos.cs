@@ -78,6 +78,12 @@ namespace Necro.Nucleo
             {
                 case TipoObjeto.Barril:
                     if (toque || _rngMasmorra.Chance(Cfg.BarrilChanceDeOssos)) { long q = Math.Max(1L, (long)(Cfg.BarrilOssos * escala + 0.5f)); Resultado.Ossos += q; valor = q; }
+                    if (Cfg.PocoesNoCinto && _rngItens.Chance(Cfg.ChanceDePocaoNoBarril))
+                    {
+                        bool mana = _rngItens.Chance(0.5f);
+                        if (mana) Resultado.PocoesDeManaAchadas++; else Resultado.PocoesDeVidaAchadas++;
+                        Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 35, Valor = mana ? 1 : 0, Alvo = -1, Origem = -1, Pos = o.Pos });
+                    }
                     break;
                 case TipoObjeto.BarrilExplosivo:
                     // fere quem estiver perto, dos dois lados (como os barris do Diablo), mas dói bem mais no inimigo

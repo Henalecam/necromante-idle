@@ -29,6 +29,7 @@ namespace Necro.Nucleo
             if (n.Recarga > 0f) n.Recarga -= DT;
             if (n.FraquezaTempo > 0f) n.FraquezaTempo -= DT;
             if (_ceifaEspera > 0f) _ceifaEspera -= DT;
+            if (Cfg.PocoesNoCinto) BeberPocoes();
 
             // Sala especial: caminha até o objeto (baú, santuário...) se não houver alma para ceifar.
             if (Fase == FaseExpedicao.Explorando && !CaminhandoAteASala && _ceifaOrbe == null && Orbes.Count == 0)

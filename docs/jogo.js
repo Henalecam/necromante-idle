@@ -421,6 +421,8 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && (v[14] === '33' || v[14] === '34')) { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: v[14] === '33' ? 'Poção de vida' : 'Poção de mana', cor: v[14] === '33' ? '#ff8a8a' : '#8ab8ff', t: 1, amigo: true }); som('bencao'); if (cintoHud) cintoHud[v[14] === '33' ? 0 : 1] = Math.max(0, cintoHud[v[14] === '33' ? 0 : 1] - 1); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '35') { numeros.push({ x: +v[10], y: +v[11], txt: +v[4] ? '+1 poção de mana' : '+1 poção de vida', cor: '#e8dcb0', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '29') { aviso('O Golem de Ossos se ergue'); som('chefe'); tremor = Math.max(tremor, 0.3); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '28') { aviso('★ Um item Único caiu!'); anotar('<b style="color:#ffcf5a">★ Um item Único caiu.</b> Identifique-o no Ferreiro para ver qual é.'); som('chefe'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '24') { const nf = ['Lança de Ossos', 'Drenar Vida', 'Explosão de Cadáver', 'Reerguer', 'Maldição da Fraqueza', 'Sacrifício', 'Golem de Ossos'][Math.round(+v[4] || 0)] || 'feitiço'; aviso('Livro de feitiço · ' + nf); anotar(`Você achou um <b style="color:#9fd0ff">Livro de ${nf}</b>. Será lido ao voltar (se a Magia permitir).`); som('bencao'); return; }
@@ -647,7 +649,7 @@ const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
-let vistosDeEspecie = null;
+let vistosDeEspecie = null, cintoHud = null;
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -1205,7 +1207,7 @@ function desenhar(dt) {
   }
   ctx.globalAlpha = 1; numeros = numeros.filter((n) => n.t > 0);
   if (numeros.length > 60) numeros.splice(0, numeros.length - 60);
-  const sq = `+${fmt(saque[0])} ossos · ${saque[1]} almas · ${saque[2]} itens`; if (sq !== desenhar.sq) { desenhar.sq = sq; $('t-saque').textContent = sq; }
+  const sq = `+${fmt(saque[0])} ossos · ${saque[1]} almas · ${saque[2]} itens` + (cintoHud ? ` · poções ${cintoHud[0]}♥ ${cintoHud[1]}✦` : ''); if (sq !== desenhar.sq) { desenhar.sq = sq; $('t-saque').textContent = sq; }
   // encruzilhada: três pactos, um toque, tempo contado
   const enc = $('encruzilhada'), chave = oferta && pactos.length ? oferta.slice(0, 3).join(',') : '';
   if (chave !== ofertaMostrada) {
@@ -1317,7 +1319,7 @@ const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map(esc).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
-  const d = JSON.parse(J.Painel());
+  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null;
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
   $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
@@ -1405,7 +1407,13 @@ function atualizarPainel(forcar) {
     h += '<p class="nota">Mudanças no exército valem a partir da próxima expedição.</p><div class="rodape"><button data-ac="recomecar">Recomeçar expedição agora</button></div>';
   } else if (aba === 'ferreiro') {
     h += `<p class="nota">O Ferreiro compra o que você traz da masmorra e vende um estoque que muda a cada expedição. Você tem <b style="color:#ffd84a;font-weight:normal">${fmt(d.ouroTotal)} de ouro</b>${d.ouroDaExpedicao ? ` (+${fmt(d.ouroDaExpedicao)} chegam quando esta descida terminar)` : ''}.</p>`;
-    h += '<h3>À venda</h3>';
+    // a Curandeira: poções para o cinto
+    const ct = d.cinto;
+    h += `<h3>Curandeira · poções</h3><p class="nota">O necromante bebe sozinho: <b>vida</b> abaixo de 35% e <b>mana</b> abaixo de 15% durante a luta (uma poção a cada 6 s). O cinto leva ${ct.max} de cada. Barris quebrados às vezes rendem uma.</p>` +
+      `<div class="linha"><div class="corpo"><span style="color:#ff7a7a">Poção de vida</span> <span class="nota">${ct.gv}/${ct.max} no cinto</span><small>devolve 45% da vida do necromante</small></div><button data-ac="pocao" data-i="0" ${ct.gv >= ct.max || ct.pv > d.ouroTotal ? 'disabled' : ''}>${ct.gv >= ct.max ? 'Cinto cheio' : fmt(ct.pv) + ' ouro'}</button></div>` +
+      `<div class="linha"><div class="corpo"><span style="color:#7ab0ff">Poção de mana</span> <span class="nota">${ct.gm}/${ct.max} no cinto</span><small>devolve 40% da mana</small></div><button data-ac="pocao" data-i="1" ${ct.gm >= ct.max || ct.pm > d.ouroTotal ? 'disabled' : ''}>${ct.gm >= ct.max ? 'Cinto cheio' : fmt(ct.pm) + ' ouro'}</button></div>` +
+      `<div class="linha"><div class="corpo">Repor o cinto ao voltar<small>depois de cada descida, compra as poções que faltam com o ouro que houver (depois do reparo)</small></div><button data-ac="repor-pocoes" class="${ct.repor ? 'ativo' : ''}">${ct.repor ? 'Ligado' : 'Desligado'}</button></div>`;
+    h += '<h3>Ferreiro · à venda</h3>';
     if (!d.loja.length) h += '<p class="nota">Estoque vendido. Volta cheio depois da próxima expedição.</p>';
     d.loja.forEach((l, i) => {
       const it = l.item;
@@ -1835,6 +1843,8 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'reparar': if (J.RepararEquipado(i)) { som('golpe'); aviso('Item reparado'); } break;
     case 'auto-reparo': J.AlternarAutoReparo(); break;
     case 'auto-melhoria': J.AlternarAutoMelhoria(); break;
+    case 'repor-pocoes': J.AlternarReporPocoes(); break;
+    case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;
     case 'melhorar-item': if (J.MelhorarEquipado(i)) { som('golpe'); aviso('Item melhorado'); } break;
     case 'imbuir': if (J.ImbuirEquipado(i)) { som('bencao'); aviso('Item imbuído: afixo novo'); } break;
     case 'dificuldade': if (J.DefinirDificuldade(i)) aviso('Dificuldade: ' + DIFICULDADES[i][0] + ' · vale na próxima descida'); break;

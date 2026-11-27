@@ -1503,7 +1503,7 @@ namespace Necro.Testes
                 float VidaDoPrimeiro(EstadoProgresso q) { var s = new Simulacao(c, q, 3, ModoExpedicao.Avancar, 1); int g = 0; while (g++ < 400) { s.Tick(); foreach (var e in s.Entidades) if (e.Faccao == Faccao.Inimigo && !e.Elite) return e.VidaMax; } return 0f; }
                 float vn = VidaDoPrimeiro(pn), vp = VidaDoPrimeiro(pp);
                 Perto(vp / vn, Cfg.DificuldadeVida[1], 0.01f, "vida dos inimigos no Pesadelo");
-                var rr = new ResultadoExpedicao { Ouro = 100, Dificuldade = 1 }; long antes = pp.Ouro; pp.SemAutoReparo = true;
+                var rr = new ResultadoExpedicao { Ouro = 100, Dificuldade = 1 }; long antes = pp.Ouro; pp.SemAutoReparo = true; pp.SemReporPocoes = true;
                 Progressao.AplicarResultado(pp, rr, c);
                 Afirmar(pp.Ouro - antes == (long)(100 * Cfg.DificuldadeOuro[1]), "o ouro do Pesadelo deveria vir multiplicado (" + (pp.Ouro - antes) + ")");
             });

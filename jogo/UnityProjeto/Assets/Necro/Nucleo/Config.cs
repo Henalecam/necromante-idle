@@ -345,6 +345,16 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        // ---- Poções e cinto ----
+        public bool PocoesNoCinto = true;
+        public int CintoPorTipo = 3;                      // poções de vida e de mana que cabem no cinto (cada tipo)
+        public float PocaoVidaPreco = 25f, PocaoManaPreco = 30f, PocaoPrecoPorAndar = 0.08f;   // preço cresce com o recorde
+        public float PocaoVidaAbaixoDe = 0.35f;           // o necromante bebe vida abaixo desta fração
+        public float PocaoManaAbaixoDe = 0.15f;           // e mana abaixo desta
+        public float PocaoVidaCura = 0.45f;               // fração da vida máxima devolvida
+        public float PocaoManaCura = 0.4f;                // fração da mana máxima devolvida
+        public float PocaoRecarga = 6f;                   // segundos entre duas poções
+        public float ChanceDePocaoNoBarril = 0.08f;       // barris e urnas quebrados podem dar uma poção
         // ---- Comportamento por espécie (inimigos), como no Diablo 1 ----
         public bool ComportamentoDeEspecie = true;
         public float FugaRaio = 4f;                       // diabrete: vê um companheiro morrer a esta distância e foge

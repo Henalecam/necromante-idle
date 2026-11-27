@@ -416,7 +416,7 @@ namespace Necro.Testes
             });
             Teste("ouro e Ferreiro: a expedição rende ouro, a loja renova a cada volta, vender e comprar movem ouro e itens", () =>
             {
-                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 20f;
+                var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 20f; p.SemReporPocoes = true;
                 var r = ExecutorSemTela.RodarExpedicao(Cfg, p, 5UL, ModoExpedicao.Avancar, 1, 4);
                 Afirmar(r.Ouro > 0, "a expedição deveria render ouro");
                 long antes = p.Ouro; Progressao.AplicarResultado(p, r, Cfg);
@@ -472,6 +472,30 @@ namespace Necro.Testes
                 var pf = Progressao.NovoJogo(c); pf.PoderNecromantico = 60f; pf.Sorte = 200f; int unicos = 0;
                 for (ulong sem = 1; sem <= 4; sem++) foreach (var it in ExecutorSemTela.RodarExpedicao(c, pf, sem, ModoExpedicao.Avancar, 3, 6).Itens) if (it.UnicoId > 0) unicos++;
                 Afirmar(unicos >= 3, "com chance 100% deveriam cair Únicos (" + unicos + ")");
+            });
+
+            Teste("poções e cinto: compra com ouro até o limite, o necromante bebe sozinho quando ferido ou sem mana, e o cinto é reposto ao voltar", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); p.SemReporPocoes = true;
+                Afirmar(!Pocoes.Comprar(p, false, Cfg), "sem ouro não compra");
+                p.Ouro = 100000; int n = 0; while (Pocoes.Comprar(p, false, Cfg)) n++;
+                Afirmar(n == Cfg.CintoPorTipo && p.PocoesDeVida == Cfg.CintoPorTipo, "o cinto leva " + Cfg.CintoPorTipo + " poções de vida");
+                Afirmar(Pocoes.Repor(p, Cfg) == Cfg.CintoPorTipo && p.PocoesDeMana == Cfg.CintoPorTipo, "Repor enche o que falta (as de mana)");
+                // na descida: fraco e fundo, o necromante apanha e gasta mana -> bebe
+                int vida = 0, mana = 0;
+                for (ulong sem = 1; sem <= 6; sem++)
+                {
+                    var q = Progressao.NovoJogo(Cfg); q.SemReporPocoes = true; q.PocoesDeVida = 4; q.PocoesDeMana = 4;
+                    var r = ExecutorSemTela.RodarExpedicao(new ConfigJogo { MissoesDeCenario = false }, q, sem, ModoExpedicao.Avancar, 4, 4);
+                    vida += r.PocoesDeVidaUsadas; mana += r.PocoesDeManaUsadas;
+                    Afirmar(r.PocoesDeVidaUsadas <= 4 && r.PocoesDeManaUsadas <= 4, "não se bebe mais do que há no cinto");
+                    int antes = q.PocoesDeVida; Progressao.AplicarResultado(q, r, new ConfigJogo { MissoesDeCenario = false });
+                    Afirmar(q.PocoesDeVida == Math.Min(Cfg.CintoPorTipo, antes - r.PocoesDeVidaUsadas + r.PocoesDeVidaAchadas), "ao voltar, o cinto perde o que foi bebido e ganha o que foi achado");
+                }
+                Afirmar(mana >= 1 || vida >= 1, "em seis descidas difíceis alguma poção deveria ser bebida (vida " + vida + ", mana " + mana + ")");
+                var z = Progressao.NovoJogo(Cfg); z.Ouro = 100000;
+                Progressao.AplicarResultado(z, new ResultadoExpedicao(), Cfg);
+                Afirmar(z.PocoesDeVida == Cfg.CintoPorTipo && z.PocoesDeMana == Cfg.CintoPorTipo, "com a reposição ligada (padrão), o cinto volta cheio");
             });
 
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
