@@ -44,12 +44,13 @@
   #salas svg { max-width:100%; height:auto; }
   #licao { position:absolute; left:8px; right:8px; bottom:58px; padding:6px 10px; text-align:center; font-size:13px; color:#fff; background:#2a1216e6; border:1px solid var(--ouro); border-radius:14px; pointer-events:none; animation:pulso 1.2s infinite; }
   #licao[hidden] { display:none; }
-  #ficha { position:absolute; left:8px; right:8px; bottom:58px; padding:5px 10px 6px; text-align:center; font-size:12px; line-height:1.3; color:#cfc4b4; background:#0c0809ee; border:1px solid #6a5a3a; border-radius:4px; pointer-events:none; }
+  #ficha { position:absolute; left:8px; right:104px; top:64px; padding:5px 10px 6px; text-align:center; font-size:12px; line-height:1.3; color:#cfc4b4; background:#0c0809ee; border:1px solid #6a5a3a; border-radius:4px; pointer-events:none; }
   #ficha[hidden] { display:none; }
   #ficha b { display:block; font-weight:normal; font-size:14px; letter-spacing:.5px; color:#fff; }
   #ficha b.unico { color:#d9b25f; } #ficha b.campeao { color:#7ab0ff; } #ficha b.chefe { color:#ff8a6a; }
   #ficha .im { color:#ff8a6a; } #ficha .fr { color:#8fd89f; }
-  #ficha:not([hidden]) ~ #licao { display:none; }
+  #encruzilhada:not([hidden]):not(.min) ~ #ficha, #bencaos:not([hidden]) ~ #ficha { display:none; }
+  #ficha:not([hidden]) ~ #aviso { top:44%; }
   #b-zoom { position:absolute; left:6px; bottom:12px; padding:6px 9px; font-size:12px; background:#1b1317e6; border-color:var(--ouro); z-index:2; }
   #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
   .diario div { font-size:13px; padding:4px 0; border-bottom:1px solid #2a1f22; } .diario small { color:var(--fraco); margin-right:6px; }
@@ -237,7 +238,6 @@
   <div id="t-saque"></div>
   <div id="t-pactos"></div>
   <div id="salas"></div>
-  <div id="ficha" hidden></div>
   <div id="licao" hidden></div>
   <button id="b-zoom" title="Aproximar ou ver o andar inteiro"></button>
   <div id="t-sala"></div>
@@ -245,6 +245,7 @@
   <div id="resumo" hidden></div>
   <div id="encruzilhada" hidden></div>
   <div id="bencaos" hidden></div>
+  <div id="ficha" hidden></div>
   <div id="aviso"></div>
   <div id="ausente" style="display:none"></div>
   <div id="carregando">Despertando os mortos…</div>

@@ -376,7 +376,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -831,6 +831,52 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
+// ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----
+const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1 };
+function adorno(especie, camada, px, py, e, id) {
+  const t = performance.now() / 1000 + id * 0.37;
+  ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (especie === 'Sucubo') {
+    if (camada === 0) {          // asas de morcego abertas atrás dos ombros e a cauda
+      const bate = Math.sin(t * 5) * 5 * e, oy = py - 74 * e;
+      for (const l of [-1, 1]) {
+        ctx.fillStyle = 'rgba(92,10,30,0.92)'; ctx.strokeStyle = '#1c0408'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(px + l * 6 * e, oy); ctx.lineTo(px + l * 30 * e, oy - 30 * e - bate); ctx.lineTo(px + l * 50 * e, oy - 8 * e - bate * 0.6);
+        ctx.quadraticCurveTo(px + l * 40 * e, oy + 2 * e, px + l * 42 * e, oy + 14 * e); ctx.quadraticCurveTo(px + l * 30 * e, oy + 6 * e, px + l * 27 * e, oy + 20 * e); ctx.quadraticCurveTo(px + l * 17 * e, oy + 8 * e, px + l * 10 * e, oy + 18 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(190,50,80,0.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px + l * 30 * e, oy - 30 * e - bate); ctx.lineTo(px + l * 42 * e, oy + 14 * e); ctx.moveTo(px + l * 30 * e, oy - 30 * e - bate); ctx.lineTo(px + l * 27 * e, oy + 20 * e); ctx.stroke();
+      }
+      ctx.strokeStyle = '#5c0a1e'; ctx.lineWidth = 3 * e; ctx.beginPath(); ctx.moveTo(px - 4 * e, py - 22 * e); ctx.quadraticCurveTo(px - 30 * e, py - 6 * e + Math.sin(t * 3) * 3 * e, px - 34 * e, py - 26 * e); ctx.stroke();
+      ctx.fillStyle = '#5c0a1e'; ctx.beginPath(); ctx.moveTo(px - 34 * e, py - 34 * e); ctx.lineTo(px - 39 * e, py - 24 * e); ctx.lineTo(px - 29 * e, py - 24 * e); ctx.fill();
+    } else {                     // chifres curtos
+      ctx.strokeStyle = '#e8d8c8'; ctx.lineWidth = 2.5 * e; const hy = py - 104 * e;
+      for (const l of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + l * 5 * e, hy + 6 * e); ctx.quadraticCurveTo(px + l * 12 * e, hy + 2 * e, px + l * 10 * e, hy - 8 * e); ctx.stroke(); }
+    }
+  } else if (especie === 'Magistrado') {
+    if (camada === 0) {          // halo roxo atrás da cabeça
+      const hy = py - 100 * e, g = ctx.createRadialGradient(px, hy, 4 * e, px, hy, 26 * e); g.addColorStop(0, 'rgba(200,130,255,0.55)'); g.addColorStop(1, 'rgba(120,40,220,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, hy, 26 * e, 0, 7); ctx.fill();
+    } else {                     // capuz alto em ponta, aro do halo e as mãos acesas
+      const hy = py - 102 * e;
+      ctx.fillStyle = '#2a0f4a'; ctx.strokeStyle = '#12061f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px - 10 * e, hy + 12 * e); ctx.quadraticCurveTo(px - 8 * e, hy - 8 * e, px + 2 * e, hy - 26 * e); ctx.quadraticCurveTo(px + 9 * e, hy - 6 * e, px + 10 * e, hy + 12 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(210,150,255,${0.6 + 0.3 * Math.sin(t * 4)})`; ctx.lineWidth = 2 * e; ctx.beginPath(); ctx.ellipse(px, hy - 30 * e, 12 * e, 4 * e, 0, 0, 7); ctx.stroke();
+      for (const l of [-1, 1]) { const mx = px + l * 17 * e, my = py - 56 * e + Math.sin(t * 6 + l) * 2 * e, g2 = ctx.createRadialGradient(mx, my, 0, mx, my, 11 * e); g2.addColorStop(0, 'rgba(240,210,255,0.95)'); g2.addColorStop(0.4, 'rgba(170,80,255,0.6)'); g2.addColorStop(1, 'rgba(120,40,220,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(mx, my, 11 * e, 0, 7); ctx.fill(); }
+    }
+  } else if (especie === 'CavaleiroNegro') {
+    if (camada === 0) {          // espada larga às costas, atravessada
+      ctx.strokeStyle = '#0c0c12'; ctx.lineWidth = 8 * e; ctx.beginPath(); ctx.moveTo(px + 14 * e, py - 46 * e); ctx.lineTo(px + 34 * e, py - 112 * e); ctx.stroke();
+      ctx.strokeStyle = '#9aa0b0'; ctx.lineWidth = 5 * e; ctx.beginPath(); ctx.moveTo(px + 15 * e, py - 50 * e); ctx.lineTo(px + 33 * e, py - 109 * e); ctx.stroke();
+      ctx.strokeStyle = '#5a4a2a'; ctx.lineWidth = 4 * e; ctx.beginPath(); ctx.moveTo(px + 8 * e, py - 50 * e); ctx.lineTo(px + 22 * e, py - 46 * e); ctx.stroke();
+    } else {                     // elmo com chifres e viseira em brasa, ombreiras
+      const hy = py - 100 * e;
+      ctx.fillStyle = '#14141c'; ctx.strokeStyle = '#3a3a4a'; ctx.lineWidth = 1.5;
+      for (const l of [-1, 1]) { ctx.beginPath(); ctx.ellipse(px + l * 15 * e, py - 80 * e, 10 * e, 7 * e, l * 0.3, 0, 7); ctx.fill(); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(px - 9 * e, hy + 12 * e); ctx.lineTo(px - 9 * e, hy - 2 * e); ctx.quadraticCurveTo(px, hy - 12 * e, px + 9 * e, hy - 2 * e); ctx.lineTo(px + 9 * e, hy + 12 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#8a8a9a'; ctx.lineWidth = 2.5 * e; for (const l of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + l * 8 * e, hy - 2 * e); ctx.quadraticCurveTo(px + l * 18 * e, hy - 6 * e, px + l * 17 * e, hy - 20 * e); ctx.stroke(); }
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,70,30,${0.7 + 0.25 * Math.sin(t * 3)})`; ctx.fillRect(px - 6 * e, hy + 2 * e, 12 * e, 2.5 * e);
+    }
+  }
+  ctx.restore(); ctx.lineWidth = 1;
+}
 function desenharObjeto(dt) {
   // perigos anunciados (lava): círculo que se fecha até estourar
   for (const pg of perigos) {
@@ -1215,6 +1261,7 @@ function desenhar(dt) {
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
     const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.55, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.25, '120,230,170', 0.3] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
+    if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
     if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
@@ -1227,6 +1274,7 @@ function desenhar(dt) {
       tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${COR_MORTE[s.cond]},0.45)`; tctx.fillRect(0, 0, m.W, m.H);
       ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
+    if (!morto && ADORNOS[s.especie]) adorno(s.especie, 1, px, py, e, s.id);
     if (!morto && s.flash > 0) {
       // clarão de impacto: o mesmo quadro somado por cima
       s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, s.flash * 9);
