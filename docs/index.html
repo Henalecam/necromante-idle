@@ -50,6 +50,7 @@
   #ficha b.unico { color:#d9b25f; } #ficha b.campeao { color:#7ab0ff; } #ficha b.chefe { color:#ff8a6a; }
   #ficha .im { color:#ff8a6a; } #ficha .fr { color:#8fd89f; }
   #encruzilhada:not([hidden]):not(.min) ~ #ficha, #bencaos:not([hidden]) ~ #ficha { display:none; }
+  #bencaos:not([hidden]) ~ #encruzilhada { display:none !important; }   /* um cartão de cada vez: a escolha da sala passa na frente do pacto */
   #ficha:not([hidden]) ~ #aviso { top:44%; }
   #b-zoom { position:absolute; left:6px; bottom:12px; padding:6px 9px; font-size:12px; background:#1b1317e6; border-color:var(--ouro); z-index:2; }
   #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
@@ -250,8 +251,8 @@
   <div id="t-sala"></div>
   <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-portal" hidden title="Portal da Cidade: sai com todo o saque e volta a este andar na próxima descida">Portal</button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
   <div id="resumo" hidden></div>
-  <div id="encruzilhada" hidden></div>
   <div id="bencaos" hidden></div>
+  <div id="encruzilhada" hidden></div>
   <div id="ficha" hidden></div>
   <div id="aviso"></div>
   <div id="ausente" style="display:none"></div>

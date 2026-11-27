@@ -46,7 +46,7 @@ function monstro(especie, elite) {
   return (elite && monstros[n + '_elite']) || monstros[n] || monstros.esqueleto;
 }
 function direcao(dx, dy) { return Math.round(((Math.atan2(dx + dy, dx - dy) * 180 / Math.PI + 360) % 360) / 45) % 8; }
-function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie === 'CarcereiroDeAlmas' ? 'O Carcereiro de Almas' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
+function nomeDoChefe(especie) { return especie === 'AbadessaCosturada' ? 'A Abadessa Costurada' : especie === 'CarcereiroDeAlmas' ? 'O Carcereiro de Almas' : especie === 'Lazarus' ? 'Arcebispo Lázarus' : especie === 'Diablo' ? 'Diablo, o Senhor do Terror' : especie.replace(/([a-z])([A-Z])/g, '$1 $2'); }
 function escHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function naTela(x, y) { return W(x + so[0], y + so[1]); }
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -840,6 +840,39 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
+// ---- Arcebispo Lázarus: batina longa vermelho-escura, estola dourada, mitra e cajado com globo de sangue; em vetor, origem nos pés ----
+function desenharLazarus(px, py, u, s, alfa) {
+  const t = performance.now() / 1000, anim = String(s.anim || ''), conj = /Conjur/.test(anim), ataca = /Atac/.test(anim), anda = /And/.test(anim);
+  const resp = Math.sin(t * 1.8) * 1.5, balanco = anda ? Math.sin(t * 7) * 3 : 0, lado = necro && necro.x > s.x ? 1 : -1;
+  const P2 = (x, y) => [px + x * u * lado, py + y * u];
+  const forma = (pts, cor, borda) => { ctx.beginPath(); pts.forEach(([x, y], k) => { const [qx, qy] = P2(x, y); if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); }); ctx.closePath(); if (cor) { ctx.fillStyle = cor; ctx.fill(); } if (borda) { ctx.strokeStyle = borda; ctx.stroke(); } };
+  const curva = (a, c, b, cor, larg) => { const [ax, ay] = P2(a[0], a[1]), [cx, cy] = P2(c[0], c[1]), [bx, by] = P2(b[0], b[1]); ctx.strokeStyle = cor; ctx.lineWidth = larg * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cx, cy, bx, by); ctx.stroke(); };
+  ctx.save(); ctx.globalAlpha = alfa; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = 2;
+  if (alfa >= 1) { ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(px, py, 44 * u, 17 * u, 0, 0, 7); ctx.fill(); }
+  const traco = '#140406', ouro = '#d9b25f';
+  const cajX = conj ? 30 : 40, topo = conj ? -196 : -172;                                                         // cajado e o globo de sangue
+  curva([cajX + 2, -2], [cajX, -90], [cajX - 2, topo], '#2a1608', 5);
+  { const [gx, gy] = P2(cajX - 2, topo - 8), rg = (conj ? 26 : 15) * u, g = ctx.createRadialGradient(gx, gy, 0, gx, gy, rg); g.addColorStop(0, `rgba(255,210,190,${(0.9 + 0.1 * Math.sin(t * 5)) * alfa})`); g.addColorStop(0.4, `rgba(225,30,30,${0.7 * alfa})`); g.addColorStop(1, 'rgba(160,0,0,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, rg, 0, 7); ctx.fill(); ctx.globalCompositeOperation = alfa >= 1 ? 'source-over' : 'lighter'; }
+  const gb = ctx.createLinearGradient(px, py - 150 * u, px, py); gb.addColorStop(0, '#8a1218'); gb.addColorStop(1, '#3a060a');
+  forma([[-22, -146 + resp], [22, -146 + resp], [30, -90], [40 + balanco, -4], [14, 0], [-14, 0], [-40 + balanco, -4], [-30, -90]], gb, traco);    // batina
+  ctx.strokeStyle = 'rgba(20,4,6,0.55)'; ctx.lineWidth = 1.5 * u; for (const fx of [-18, -6, 8, 20]) { const [a1, b1] = P2(fx * 0.7, -88), [a2, b2] = P2(fx * 1.5 + balanco, -6); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  forma([[-40 + balanco, -6], [40 + balanco, -6], [40 + balanco, 0], [-40 + balanco, 0]], ouro, null);                                               // barra dourada
+  for (const l of [-1, 1]) forma([[l * 5, -142 + resp], [l * 13, -142 + resp], [l * 15, -40], [l * 7, -40]], ouro, traco);                           // estola
+  forma([[-28, -148 + resp], [28, -148 + resp], [34, -124 + resp], [-34, -124 + resp]], '#5a0a10', traco);                                           // pelerine
+  for (const l of [-1, 1]) {                                                                                                                         // braços de manga larga
+    const om = [l * 26, -138 + resp], mao = conj ? [l * 44, -186 + 3 * Math.sin(t * 16 + l)] : l === 1 ? [cajX - 4, -104] : ataca ? [l * 52, -128] : [l * 30, -84 + resp], cot = [(om[0] + mao[0]) / 2 + l * 12, (om[1] + mao[1]) / 2 + 10];
+    curva(om, cot, mao, '#6a0c12', 15); curva(om, cot, mao, '#8a1218', 7);
+    const [hx, hy] = P2(mao[0], mao[1]); ctx.fillStyle = '#cdb49a'; ctx.beginPath(); ctx.arc(hx, hy, 5 * u, 0, 7); ctx.fill();
+    if (conj || (ataca && l === -1)) { const gm = ctx.createRadialGradient(hx, hy, 0, hx, hy, 20 * u); gm.addColorStop(0, `rgba(210,255,180,${0.9 * alfa})`); gm.addColorStop(0.4, `rgba(60,200,60,${0.55 * alfa})`); gm.addColorStop(1, 'rgba(20,120,20,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gm; ctx.beginPath(); ctx.arc(hx, hy, 20 * u, 0, 7); ctx.fill(); ctx.globalCompositeOperation = alfa >= 1 ? 'source-over' : 'lighter'; }
+  }
+  forma([[-10, -146 + resp], [-11, -164 + resp], [0, -170 + resp], [11, -164 + resp], [10, -146 + resp]], '#cdb49a', traco);                          // rosto
+  forma([[-7, -150 + resp], [7, -150 + resp], [4, -136 + resp], [0, -130 + resp], [-4, -136 + resp]], '#d8d2c8', traco);                              // barba
+  forma([[-12, -164 + resp], [-13, -180 + resp], [0, -204 + resp], [13, -180 + resp], [12, -164 + resp]], '#7a0c12', ouro);                           // mitra
+  ctx.strokeStyle = ouro; ctx.lineWidth = 2 * u; { const [a1, b1] = P2(0, -200 + resp), [a2, b2] = P2(0, -165 + resp), [a3, b3] = P2(-9, -178 + resp), [a4, b4] = P2(9, -178 + resp); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.moveTo(a3, b3); ctx.lineTo(a4, b4); ctx.stroke(); }
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,60,40,${(0.75 + 0.25 * Math.sin(t * 6)) * alfa})`; for (const l of [-1, 1]) { const [ex, ey] = P2(l * 4.5, -158 + resp); ctx.beginPath(); ctx.arc(ex, ey, 1.8 * u, 0, 7); ctx.fill(); }
+  ctx.restore(); ctx.lineWidth = 1;
+}
 // ---- Diablo, o Senhor do Terror: desenhado inteiro em vetor (não há sprite dele). Origem nos pés; u = pixels por unidade do desenho ----
 function desenharDiablo(px, py, u, s, alfa) {
   const t = performance.now() / 1000, anim = String(s.anim || ''), conj = /Conjur/.test(anim), ataca = /Atac/.test(anim), anda = /And/.test(anim);
@@ -878,7 +911,7 @@ function desenharDiablo(px, py, u, s, alfa) {
   ctx.restore(); ctx.lineWidth = 1;
 }
 // ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----
-const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1 };
+const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1 };
 function adorno(especie, camada, px, py, e, id) {
   const t = performance.now() / 1000 + id * 0.37;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -1286,13 +1319,13 @@ function desenhar(dt) {
     const idadeM = tempoSim - muralhaFx.t0;
     {
       const forca = Math.min(1, idadeM / 0.35) * Math.min(1, (muralhaFx.dur - idadeM) / 0.6), N = 16, agora = performance.now() / 1000;
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.save(); ctx.globalCompositeOperation = muralhaFx.ini ? 'source-over' : 'lighter';
       for (let k = 0; k <= N; k++) {
         const f = k / N, [fx, fy] = W(muralhaFx.a[0] + muralhaFx.d[0] * f + muralhaFx.so[0], muralhaFx.a[1] + muralhaFx.d[1] * f + muralhaFx.so[1]);
         const tremula = 0.75 + 0.25 * Math.sin(agora * 9 + k * 1.7), hf = (34 + 14 * Math.sin(agora * 6 + k * 2.3)) * reforco * forca, wf = 13 * reforco;
-        const gl = ctx.createRadialGradient(fx, fy - hf * 0.35, 1, fx, fy - hf * 0.35, hf); gl.addColorStop(0, muralhaFx.ini ? `rgba(200,255,170,${0.75 * forca * tremula})` : `rgba(255,230,140,${0.75 * forca * tremula})`); gl.addColorStop(0.35, muralhaFx.ini ? `rgba(60,200,60,${0.5 * forca * tremula})` : `rgba(255,130,30,${0.5 * forca * tremula})`); gl.addColorStop(1, 'rgba(160,20,0,0)');
+        const gl = ctx.createRadialGradient(fx, fy - hf * 0.35, 1, fx, fy - hf * 0.35, hf); gl.addColorStop(0, muralhaFx.ini ? `rgba(190,255,150,${0.95 * forca * tremula})` : `rgba(255,230,140,${0.75 * forca * tremula})`); gl.addColorStop(0.35, muralhaFx.ini ? `rgba(30,170,40,${0.8 * forca * tremula})` : `rgba(255,130,30,${0.5 * forca * tremula})`); gl.addColorStop(1, 'rgba(160,20,0,0)');
         ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(fx, fy - hf * 0.45, wf, hf, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = `rgba(255,120,20,${0.22 * forca})`; ctx.beginPath(); ctx.ellipse(fx, fy, wf * 1.5, wf * 0.7, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = muralhaFx.ini ? `rgba(40,200,60,${0.3 * forca})` : `rgba(255,120,20,${0.22 * forca})`; ctx.beginPath(); ctx.ellipse(fx, fy, wf * 1.5, wf * 0.7, 0, 0, 7); ctx.fill();
       }
       ctx.restore();
     }
@@ -1348,6 +1381,7 @@ function desenhar(dt) {
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
     if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, reforco, s, 1);
+    else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, reforco, s, 1);
     else if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
@@ -1361,7 +1395,8 @@ function desenhar(dt) {
       ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 1, px, py, e, s.id);
-    if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
+    if (!morto && s.flash > 0 && s.especie === 'Lazarus') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharLazarus(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
+    else if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
     else if (!morto && s.flash > 0) {
       // clarão de impacto: o mesmo quadro somado por cima
       s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, s.flash * 9);
