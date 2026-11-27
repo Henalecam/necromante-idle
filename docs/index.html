@@ -61,7 +61,9 @@
   #bencaos:not([hidden]) ~ #encruzilhada { display:none !important; }   /* um cartão de cada vez: a escolha da sala passa na frente do pacto */
   #ficha:not([hidden]) ~ #aviso { top:44%; }
   #b-zoom { position:absolute; left:6px; bottom:12px; padding:6px 9px; font-size:12px; background:#1b1317e6; border-color:var(--ouro); z-index:2; }
-  #t-sala { position:absolute; left:8px; top:38px; font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
+  #t-canto { position:absolute; left:8px; top:6px; right:96px; display:flex; flex-direction:column; gap:3px; pointer-events:none; line-height:1.25; }
+  #t-pactos:empty { display:none; }
+  #t-sala { font-size:12px; color:var(--ouro); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; letter-spacing:.5px; }
   .diario div { font-size:13px; padding:4px 0; border-bottom:1px solid #2a1f22; } .diario small { color:var(--fraco); margin-right:6px; }
   @media (max-width:1050px) {
     html, body { height:auto; min-height:100%; } body { overflow:visible; }
@@ -115,7 +117,7 @@
   .dobra[open] > summary { margin-bottom:6px; }
   .bdg { display:inline-block; min-width:16px; padding:0 4px; border-radius:8px; background:var(--sangue); color:#fff; font-size:11px; line-height:16px; text-align:center; }
   canvas { display:block; width:100%; touch-action:none; cursor:grab; }
-  #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
+  #t-saque { font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
   #poderes { position:absolute; right:6px; left:6px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap-reverse; justify-content:flex-end; pointer-events:none; }
   #poderes > * { pointer-events:auto; }
   #poderes button[hidden] { display:none; }
@@ -130,7 +132,7 @@
   #encruzilhada button b, #bencaos button b { display:block; color:#fff; font-weight:normal; font-size:13px; margin-bottom:3px; }
   #encruzilhada .g, #bencaos .g { color:#8fd89f; display:block; } #encruzilhada .p, #bencaos .p { color:#e08a8a; display:block; }
   #encruzilhada.min { top:auto; bottom:58px; left:auto; right:6px; padding:5px 9px; } #encruzilhada.min .ops { display:none; } #encruzilhada.min .cab { margin:0; gap:10px; cursor:pointer; font-size:12px; } #encruzilhada .cab { cursor:pointer; }
-  #t-pactos { position:absolute; left:8px; top:22px; font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
+  #t-pactos { font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
   #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:15px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
   #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }
   #aviso.alto { top:15%; }  #ficha:not([hidden]) ~ #aviso.alto { top:70%; }   /* o título grande do andar ocupa o meio da tela */
@@ -266,12 +268,10 @@
 <div id="cena">
   <canvas id="tela" width="900" height="420"></canvas>
   <div id="mana"><div></div></div>
-  <div id="t-saque"></div>
-  <div id="t-pactos"></div>
+  <div id="t-canto"><div id="t-saque"></div><div id="t-pactos"></div><div id="t-sala"></div></div>
   <div id="salas"></div>
   <div id="licao" hidden></div>
   <button id="b-zoom" title="Aproximar ou ver o andar inteiro"></button>
-  <div id="t-sala"></div>
   <div id="poderes"><span id="b-sopro"></span><button id="b-item0" hidden></button><button id="b-item1" hidden></button><button id="b-portal" hidden title="Portal da Cidade: sai com todo o saque e volta a este andar na próxima descida">Portal</button><button id="b-detonar" disabled>Detonar</button><button id="b-frenesi" disabled>Frenesi</button></div>
   <div id="resumo" hidden></div>
   <div id="bencaos" hidden></div>
