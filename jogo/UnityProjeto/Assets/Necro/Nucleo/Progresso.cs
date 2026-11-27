@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public float PocaoVidaLimiar, PocaoManaLimiar;      // regra do jogador: beber abaixo desta fração (0 = padrão do jogo)
         public int PocoesDeVida, PocoesDeMana, PocoesCompradas; public bool SemReporPocoes;   // o cinto (repor ao voltar é ligado por padrão)
         public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
         public int[] NiveisDeFeitico = new int[7], LivrosGuardados = new int[7]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia

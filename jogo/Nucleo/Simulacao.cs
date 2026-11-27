@@ -164,6 +164,7 @@ namespace Necro.Nucleo
                 var b0 = cfg.Feitico((FeiticoId)fi); int nv = cfg.LivrosDeFeitico ? Grimorio.Nivel(progresso, (FeiticoId)fi) : 1;
                 _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
             }
+            _limiarVida = progresso.PocaoVidaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoVidaLimiar) : cfg.PocaoVidaAbaixoDe; _limiarMana = progresso.PocaoManaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoManaLimiar) : cfg.PocaoManaAbaixoDe;
             _pocoesVida = cfg.PocoesNoCinto ? progresso.PocoesDeVida : 0; _pocoesMana = cfg.PocoesNoCinto ? progresso.PocoesDeMana : 0;
             _reiEsqueleto = progresso.MissaoReiEsqueleto;
             if (_reiEsqueleto == 0 && Cfg.MissoesDeCenario) { _reiEsqueleto = (semente * 0x9E3779B97F4A7C15UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.ReiEsqueletoSorteio = _reiEsqueleto; }
@@ -473,7 +474,7 @@ namespace Necro.Nucleo
 
         /// <summary>O Golem do feitiço: um Colosso de Ossos conjurado, forte e passageiro. Só existe um por vez.</summary>
         private bool _golemAprendido;
-        private int _pocoesVida, _pocoesMana; private float _pocaoEspera;
+        private int _pocoesVida, _pocoesMana; private float _pocaoEspera, _limiarVida, _limiarMana;
         /// <summary>Poções que restam no cinto nesta descida.</summary>
         public int PocoesDeVidaNoCinto { get { return _pocoesVida; } }
         public int PocoesDeManaNoCinto { get { return _pocoesMana; } }
@@ -483,13 +484,13 @@ namespace Necro.Nucleo
         {
             if (_pocaoEspera > 0f) { _pocaoEspera -= DT; return; }
             var n = Necromante;
-            if (_pocoesVida > 0 && n.Vida < n.VidaMax * Cfg.PocaoVidaAbaixoDe)
+            if (_pocoesVida > 0 && n.Vida < n.VidaMax * _limiarVida)
             {
                 _pocoesVida--; Resultado.PocoesDeVidaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
                 float cura = n.VidaMax * Cfg.PocaoVidaCura; n.Vida = Math.Min(n.VidaMax, n.Vida + cura);
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 33, Valor = cura, Alvo = n.Id, Origem = n.Id, Pos = n.Pos });
             }
-            else if (_pocoesMana > 0 && InimigosVivos > 0 && n.Mana < n.ManaMax * Cfg.PocaoManaAbaixoDe)
+            else if (_pocoesMana > 0 && InimigosVivos > 0 && n.Mana < n.ManaMax * _limiarMana)
             {
                 _pocoesMana--; Resultado.PocoesDeManaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
                 float m = n.ManaMax * Cfg.PocaoManaCura; n.Mana = Math.Min(n.ManaMax, n.Mana + m);

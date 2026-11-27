@@ -493,6 +493,10 @@ namespace Necro.Testes
                     Afirmar(q.PocoesDeVida == Math.Min(Cfg.CintoPorTipo, antes - r.PocoesDeVidaUsadas + r.PocoesDeVidaAchadas), "ao voltar, o cinto perde o que foi bebido e ganha o que foi achado");
                 }
                 Afirmar(mana >= 1 || vida >= 1, "em seis descidas difíceis alguma poção deveria ser bebida (vida " + vida + ", mana " + mana + ")");
+                // a regra do jogador muda quando ele bebe: limiar de vida de 90% gasta mais poções que o de 5%
+                int Bebidas(float limiar) { int t = 0; for (ulong sem = 1; sem <= 6; sem++) { var q = Progressao.NovoJogo(Cfg); q.SemReporPocoes = true; q.PocoesDeVida = 3; q.PocaoVidaLimiar = limiar; t += ExecutorSemTela.RodarExpedicao(new ConfigJogo { MissoesDeCenario = false }, q, sem, ModoExpedicao.Avancar, 4, 4).PocoesDeVidaUsadas; } return t; }
+                int muitas = Bebidas(0.9f), poucas = Bebidas(0.05f);
+                Afirmar(muitas > poucas, "limiar alto deveria gastar mais poções de vida que limiar baixo (" + muitas + " vs " + poucas + ")");
                 var z = Progressao.NovoJogo(Cfg); z.Ouro = 100000;
                 Progressao.AplicarResultado(z, new ResultadoExpedicao(), Cfg);
                 Afirmar(z.PocoesDeVida == Cfg.CintoPorTipo && z.PocoesDeMana == Cfg.CintoPorTipo, "com a reposição ligada (padrão), o cinto volta cheio");

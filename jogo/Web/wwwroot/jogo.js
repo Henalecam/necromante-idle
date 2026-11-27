@@ -909,7 +909,7 @@ function desenhar(dt) {
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.085; }
-    else if (zoomModo === 1 && !zoomLivre && mapa.length) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); cy = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
+    else if (zoomModo === 1 && !zoomLivre && mapa.length && !dvg) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); cy = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (camForcar || (camSalto && zoomModo === 2 && !zoomLivre)) { camSalto = false; camForcar = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
@@ -1409,9 +1409,9 @@ function atualizarPainel(forcar) {
     h += `<p class="nota">O Ferreiro compra o que você traz da masmorra e vende um estoque que muda a cada expedição. Você tem <b style="color:#ffd84a;font-weight:normal">${fmt(d.ouroTotal)} de ouro</b>${d.ouroDaExpedicao ? ` (+${fmt(d.ouroDaExpedicao)} chegam quando esta descida terminar)` : ''}.</p>`;
     // a Curandeira: poções para o cinto
     const ct = d.cinto;
-    h += `<h3>Curandeira · poções</h3><p class="nota">O necromante bebe sozinho: <b>vida</b> abaixo de 35% e <b>mana</b> abaixo de 15% durante a luta (uma poção a cada 6 s). O cinto leva ${ct.max} de cada. Barris quebrados às vezes rendem uma.</p>` +
-      `<div class="linha"><div class="corpo"><span style="color:#ff7a7a">Poção de vida</span> <span class="nota">${ct.gv}/${ct.max} no cinto</span><small>devolve 45% da vida do necromante</small></div><button data-ac="pocao" data-i="0" ${ct.gv >= ct.max || ct.pv > d.ouroTotal ? 'disabled' : ''}>${ct.gv >= ct.max ? 'Cinto cheio' : fmt(ct.pv) + ' ouro'}</button></div>` +
-      `<div class="linha"><div class="corpo"><span style="color:#7ab0ff">Poção de mana</span> <span class="nota">${ct.gm}/${ct.max} no cinto</span><small>devolve 40% da mana</small></div><button data-ac="pocao" data-i="1" ${ct.gm >= ct.max || ct.pm > d.ouroTotal ? 'disabled' : ''}>${ct.gm >= ct.max ? 'Cinto cheio' : fmt(ct.pm) + ' ouro'}</button></div>` +
+    h += `<h3>Curandeira · poções</h3><p class="nota">O necromante bebe sozinho, pela regra que você escolher abaixo (uma poção a cada 6 s; a regra vale na próxima descida). O cinto leva ${ct.max} de cada. Barris quebrados às vezes rendem uma.</p>` +
+      `<div class="linha"><div class="corpo"><span style="color:#ff7a7a">Poção de vida</span> <span class="nota">${ct.gv}/${ct.max} no cinto</span><small>devolve 45% da vida do necromante</small></div><button data-ac="limiar-pocao" data-i="0" title="Toque para mudar a regra">beber abaixo de ${ct.lv}%</button><button data-ac="pocao" data-i="0" ${ct.gv >= ct.max || ct.pv > d.ouroTotal ? 'disabled' : ''}>${ct.gv >= ct.max ? 'Cinto cheio' : fmt(ct.pv) + ' ouro'}</button></div>` +
+      `<div class="linha"><div class="corpo"><span style="color:#7ab0ff">Poção de mana</span> <span class="nota">${ct.gm}/${ct.max} no cinto</span><small>devolve 40% da mana</small></div><button data-ac="limiar-pocao" data-i="1" title="Toque para mudar a regra">beber abaixo de ${ct.lm}%</button><button data-ac="pocao" data-i="1" ${ct.gm >= ct.max || ct.pm > d.ouroTotal ? 'disabled' : ''}>${ct.gm >= ct.max ? 'Cinto cheio' : fmt(ct.pm) + ' ouro'}</button></div>` +
       `<div class="linha"><div class="corpo">Repor o cinto ao voltar<small>depois de cada descida, compra as poções que faltam com o ouro que houver (depois do reparo)</small></div><button data-ac="repor-pocoes" class="${ct.repor ? 'ativo' : ''}">${ct.repor ? 'Ligado' : 'Desligado'}</button></div>`;
     h += '<h3>Ferreiro · à venda</h3>';
     if (!d.loja.length) h += '<p class="nota">Estoque vendido. Volta cheio depois da próxima expedição.</p>';
@@ -1757,6 +1757,7 @@ window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual 
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
+window.__viajando = () => !!deltaDaViagem();
 window.__nomesUnicos = () => { const r = []; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) r.push(nomesUnicos.get(s.id)); return r.join('|'); };
 window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };
 window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]).length;
@@ -1844,6 +1845,7 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'auto-reparo': J.AlternarAutoReparo(); break;
     case 'auto-melhoria': J.AlternarAutoMelhoria(); break;
     case 'repor-pocoes': J.AlternarReporPocoes(); break;
+    case 'limiar-pocao': { const op = i ? [10, 15, 30, 50] : [20, 35, 50, 65], at = +(b.textContent.match(/(\d+)%/) || [0, 0])[1], nx = op[(op.indexOf(at) + 1) % op.length]; J.DefinirLimiarDePocao(i, nx); break; }
     case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;
     case 'melhorar-item': if (J.MelhorarEquipado(i)) { som('golpe'); aviso('Item melhorado'); } break;
     case 'imbuir': if (J.ImbuirEquipado(i)) { som('bencao'); aviso('Item imbuído: afixo novo'); } break;
