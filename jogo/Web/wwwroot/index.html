@@ -7,7 +7,13 @@
 <style>
   :root { --fundo:#0b080a; --painel:#151014; --borda:#3a2a2c; --texto:#d8c9b4; --fraco:#8d7c6c; --sangue:#a01420; --alma:#6dffa8; --ouro:#d9b25f; }
   * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; background:var(--fundo); color:var(--texto); font-family: Georgia, "Times New Roman", serif; }
+  @font-face { font-family:'Alegreya'; font-style:normal; font-weight:400; font-display:swap; src:url(fontes/alegreya-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family:'Alegreya'; font-style:normal; font-weight:700; font-display:swap; src:url(fontes/alegreya-latin-700-normal.woff2) format('woff2'); }
+  @font-face { font-family:'Alegreya'; font-style:italic; font-weight:400; font-display:swap; src:url(fontes/alegreya-latin-400-italic.woff2) format('woff2'); }
+  @font-face { font-family:'Cinzel'; font-style:normal; font-weight:400; font-display:swap; src:url(fontes/cinzel-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family:'Cinzel'; font-style:normal; font-weight:700; font-display:swap; src:url(fontes/cinzel-latin-700-normal.woff2) format('woff2'); }
+  html, body { margin:0; height:100%; background:var(--fundo); color:var(--texto); font-family: Alegreya, Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; font-size-adjust: 0.49; }
+  h3, #topo .andar, #resumo .t, .arvore .rt, #encruzilhada .cab, #bencaos .cab, #inventario .cab, #aviso, #vitoria h2, #vit-num small { font-family: Cinzel, Georgia, serif; }
   body { display:flex; flex-direction:column; max-width:1800px; margin:0 auto; overflow:hidden; }
   #jogo { flex:1; min-height:0; display:grid; grid-template-columns:340px minmax(0,1fr) 330px; }
   .lado { display:flex; flex-direction:column; min-height:0; background:var(--painel); }
@@ -28,7 +34,7 @@
   .globo.vida i { background:linear-gradient(180deg,#ff5a4a 0,#b0141c 45%,#5a060c 100%); }
   .globo.mana i { background:linear-gradient(180deg,#6ab8ff 0,#1c50c0 45%,#0a1c5a 100%); }
   .globo::after { content:""; position:absolute; left:16%; top:10%; width:36%; height:26%; border-radius:50%; background:radial-gradient(closest-side,rgba(255,255,255,.5),rgba(255,255,255,0)); pointer-events:none; }
-  .globo b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:normal 11px Georgia,serif; color:#fff; text-shadow:0 0 3px #000,0 0 3px #000; opacity:0; transition:opacity .2s; }
+  .globo b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:normal 11px Alegreya,Georgia,serif; color:#fff; text-shadow:0 0 3px #000,0 0 3px #000; opacity:0; transition:opacity .2s; }
   .globo.mostra b { opacity:1; }
   .globo.baixo { animation:pulso 0.9s infinite; border-color:#ff6a6a; }
   #cinto { display:grid; grid-template-columns:repeat(3, 11px); grid-auto-rows:15px; gap:3px 2px; }
@@ -164,7 +170,7 @@
   #inventario .vaga .quebrado { position:absolute; left:0; right:0; top:18%; font-size:18px; line-height:1; text-align:center; color:#ff5a5a; text-shadow:0 0 4px #000; }
   #inventario .vaga:has(.quebrado) img { filter:grayscale(1) brightness(0.5); }
   #bencaos .frase { margin:6px 0 4px; font-style:italic; color:#bfe9ff; font-size:15px; } #bencaos .nota { margin:0 0 8px; }
-  #inventario .item .marca-nid { position:absolute; left:3px; top:1px; font:bold 13px Georgia, serif; color:#ffd84a; text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; }
+  #inventario .item .marca-nid { position:absolute; left:3px; top:1px; font:bold 13px Alegreya, Georgia, serif; color:#ffd84a; text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; }
   .grade .item .marca-req { position:absolute; inset:0; background:rgba(190,20,20,0.34); border:1px solid #ff6a6a; border-radius:3px; pointer-events:none; }
   #inventario .item:has(.marca-nid) img { filter:brightness(0.45) saturate(0.4); }
   #inventario .item .marca-conj { position:absolute; right:2px; top:1px; font-size:10px; line-height:1; color:#d58cf0; text-shadow:0 0 4px #000; pointer-events:none; }

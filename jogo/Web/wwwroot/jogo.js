@@ -251,8 +251,8 @@ function ambiente(dt, larg, alt) {
     else {
       const af = ft < 0.15 ? ft / 0.15 : ft > 0.7 ? (1 - ft) / 0.3 : 1, tam = Math.max(22, Math.min(46, larg / 14));
       ctx.save(); ctx.globalAlpha = af; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `${tam}px Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.a, larg / 2 + 2, alt * 0.5 + 2); ctx.fillStyle = '#d9b25f'; ctx.fillText(tituloAndar.a, larg / 2, alt * 0.5);
-      ctx.font = `${Math.round(tam * 0.48)}px Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.b, larg / 2 + 1, alt * 0.5 + tam * 0.95 + 1); ctx.fillStyle = '#cfc4b4'; ctx.fillText(tituloAndar.b, larg / 2, alt * 0.5 + tam * 0.95);
+      ctx.font = `${tam}px Cinzel, Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.a, larg / 2 + 2, alt * 0.5 + 2); ctx.fillStyle = '#d9b25f'; ctx.fillText(tituloAndar.a, larg / 2, alt * 0.5);
+      ctx.font = `${Math.round(tam * 0.48)}px Cinzel, Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.b, larg / 2 + 1, alt * 0.5 + tam * 0.95 + 1); ctx.fillStyle = '#cfc4b4'; ctx.fillText(tituloAndar.b, larg / 2, alt * 0.5 + tam * 0.95);
       ctx.restore();
     }
   }
@@ -1025,7 +1025,7 @@ function pintarQuebravel(tipo, px, py, quebrado, sem) {
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.quadraticCurveTo(-14, -15, -9, -30); ctx.lineTo(9, -30); ctx.quadraticCurveTo(14, -15, 10, 0); ctx.closePath(); ctx.fill();
     ctx.fillStyle = tipo === 1 ? '#5a2414' : '#5a4026'; ctx.beginPath(); ctx.ellipse(0, -30, 9, 3.5, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = '#1a1410'; ctx.lineWidth = 2; for (const h of [-7, -22]) { ctx.beginPath(); ctx.moveTo(-12, h); ctx.quadraticCurveTo(0, h + 4, 12, h); ctx.stroke(); }
-    if (tipo === 1) { ctx.fillStyle = `rgba(255,${120 + 60 * Math.sin(tempoSim * 5 + sem) | 0},40,0.9)`; ctx.beginPath(); ctx.arc(0, -34, 2.6, 0, 7); ctx.fill(); ctx.fillStyle = '#e8c070'; ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'center'; ctx.fillText('✹', 0, -12); }
+    if (tipo === 1) { ctx.fillStyle = `rgba(255,${120 + 60 * Math.sin(tempoSim * 5 + sem) | 0},40,0.9)`; ctx.beginPath(); ctx.arc(0, -34, 2.6, 0, 7); ctx.fill(); ctx.fillStyle = '#e8c070'; ctx.font = 'bold 11px Alegreya, Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('✹', 0, -12); }
   } else if (tipo === 3) {
     const g = ctx.createLinearGradient(-9, 0, 9, 0); g.addColorStop(0, '#5a4028'); g.addColorStop(0.45, '#b08a5a'); g.addColorStop(1, '#3a2818');
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-5, 0); ctx.quadraticCurveTo(-13, -10, -6, -20); ctx.lineTo(-4, -25); ctx.lineTo(4, -25); ctx.lineTo(6, -20); ctx.quadraticCurveTo(13, -10, 5, 0); ctx.closePath(); ctx.fill();
@@ -1050,7 +1050,7 @@ function pintarObjeto(o, px, py) {
     if (ab) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 60); g.addColorStop(0, 'rgba(255,220,100,0.8)'); g.addColorStop(1, 'rgba(255,220,100,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 60, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
   } else if (o.tipo === 4) {    // santuário
     ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.moveTo(-16, 2); ctx.lineTo(-10, -74); ctx.lineTo(0, -88); ctx.lineTo(10, -74); ctx.lineTo(16, 2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#1a1a22'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(110,200,255,${ab ? 1 : 0.4 + 0.4 * pulso})`; ctx.font = '26px Georgia'; ctx.textAlign = 'center'; ctx.fillText('✦', 0, -38);
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(110,200,255,${ab ? 1 : 0.4 + 0.4 * pulso})`; ctx.font = '26px Alegreya, Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('✦', 0, -38);
     const g = ctx.createRadialGradient(0, -44, 0, 0, -44, ab ? 90 : 46); g.addColorStop(0, 'rgba(110,200,255,0.5)'); g.addColorStop(1, 'rgba(110,200,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -44, 90, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
   } else if (o.tipo === 5) {    // almas presas
     ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, -34, 0, 0, -34, 40); g.addColorStop(0, `rgba(120,255,170,${ab ? 0.2 : 0.7 * pulso})`); g.addColorStop(1, 'rgba(120,255,170,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -34, 40, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
@@ -1239,7 +1239,7 @@ function desenhar(dt) {
       ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     });
     const [tx2, ty2] = W(patPos[0], patPos[1]), kk = 1 / esc;
-    ctx.textAlign = 'center'; ctx.font = `${11 * kk}px Georgia`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('patrulha', tx2, ty2 - 100 * reforco - 6 * kk);
+    ctx.textAlign = 'center'; ctx.font = `${11 * kk}px Alegreya, Georgia, serif`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('patrulha', tx2, ty2 - 100 * reforco - 6 * kk);
   } else if (!patrulha) patPos = null;
   // barris, urnas e sarcófagos de todas as salas (os quebrados viram destroços)
   for (const [sala, tipoQ, qx, qy, quebrado] of quebraveis) {
@@ -1414,7 +1414,7 @@ function desenhar(dt) {
       ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
     if (!morto && s.golpe > 0) {
-      const tg = py - (s.chefe ? 190 : 146); ctx.font = 'bold 30px Georgia'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+      const tg = py - (s.chefe ? 190 : 146); ctx.font = 'bold 30px Alegreya, Georgia, serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
       ctx.fillStyle = Math.sin(tempoSim * 22) > 0 ? '#ffd84a' : '#ff5a30'; ctx.strokeText('!', px, tg); ctx.fillText('!', px, tg);
     }
     if (!morto && nomesUnicos.has(s.id)) {
@@ -1422,7 +1422,7 @@ function desenhar(dt) {
       if (unicoAnunciar === s.id) { unicoAnunciar = -1; aviso(nm); anotar(`<b style="color:#ffcf5a">${nm}</b> e seu séquito guardam esta sala.`); }
       const zc = Math.max(0.3, Math.min(1, ctx.getTransform().a / (window.devicePixelRatio || 1)));   // escala atual da câmera
       if (performance.now() < (aviso.ate || 0)) ctx.globalAlpha = 0.12;   // com o aviso central na tela, o nome some para os dois não se embolarem
-      ctx.font = `bold ${Math.round(14 / zc)}px Georgia`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty); ctx.globalAlpha = 1;   // legível também no mapa inteiro
+      ctx.font = `bold ${Math.round(14 / zc)}px Alegreya, Georgia, serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty); ctx.globalAlpha = 1;   // legível também no mapa inteiro
     }
     if (morto && nomesUnicos.has(s.id)) { const nm = nomesUnicos.get(s.id); nomesUnicos.delete(s.id); aviso(nm + ' caiu!'); anotar(`<b style="color:#ffcf5a">${nm}</b> foi destruído e largou seu tesouro.`); clarao = 0.4; }
     if (!morto && s.id === marcado) {
@@ -1454,14 +1454,14 @@ function desenhar(dt) {
       ctx.globalAlpha = feita ? 0.4 : i === masm.sala ? 0.55 : oculta ? 0.7 : 0.95;
       if (i === masm.sala + 1) { ctx.strokeStyle = `rgba(255,216,74,${0.5 + 0.4 * Math.sin(tempoSim * 5)})`; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, (20 + 3 * Math.sin(tempoSim * 5)) * k, 0, 7); ctx.stroke(); }
       ctx.fillStyle = 'rgba(8,5,7,0.8)'; ctx.beginPath(); ctx.arc(lx, ly - 4 * k, 15 * k, 0, 7); ctx.fill(); ctx.strokeStyle = cor; ctx.lineWidth = 1.5 * k; ctx.stroke();
-      ctx.fillStyle = cor; ctx.font = `${18 * k}px Georgia`; ctx.fillText(feita ? '✓' : oculta ? '?' : SALAS[t][0], lx, ly + 2 * k);
+      ctx.fillStyle = cor; ctx.font = `${18 * k}px Alegreya, Georgia, serif`; ctx.fillText(feita ? '✓' : oculta ? '?' : SALAS[t][0], lx, ly + 2 * k);
       if (!feita && !oculta) {
         // o que a sala guarda: quantos inimigos esperam lá, ou o que o objeto dá — para a rota valer a escolha
         const n = porSala[i] || 0, nome = t === 0 || t === 1 || t === 2 ? (n ? `${n} inimigo${n > 1 ? 's' : ''}${t === 1 ? ' + campeão' : ''}` : '') : t === 11 ? '' : SALAS[t][1];
-        if (nome) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(t === 13 && chaveCofre[1] ? 'Cofre (você tem a chave)' : nome, lx, ly + 24 * k); }
-        if (patrulha && patrulha.sala === i) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('+ patrulha (' + patrulha.especies.length + ')', lx, ly + (i === chaveCofre[0] && !chaveCofre[1] ? 50 : 37) * k); }
-        if (i === chaveCofre[0] && !chaveCofre[1]) { ctx.font = `${11 * k}px Georgia`; ctx.fillStyle = '#ffd84a'; ctx.fillText('guardam a chave do cofre', lx, ly + 37 * k); }
-        if (DICA_SALA[t] && (larg >= 900 * (window.devicePixelRatio || 1) || i === masm.sala + 1)) { ctx.font = `${9.5 * k}px Georgia`; ctx.fillStyle = '#8fd89f'; ctx.fillText(DICA_SALA[t], lx, ly + 36 * k); }
+        if (nome) { ctx.font = `${11 * k}px Alegreya, Georgia, serif`; ctx.fillStyle = '#d8c9b4'; ctx.fillText(t === 13 && chaveCofre[1] ? 'Cofre (você tem a chave)' : nome, lx, ly + 24 * k); }
+        if (patrulha && patrulha.sala === i) { ctx.font = `${11 * k}px Alegreya, Georgia, serif`; ctx.fillStyle = '#ff7a5a'; ctx.fillText('+ patrulha (' + patrulha.especies.length + ')', lx, ly + (i === chaveCofre[0] && !chaveCofre[1] ? 50 : 37) * k); }
+        if (i === chaveCofre[0] && !chaveCofre[1]) { ctx.font = `${11 * k}px Alegreya, Georgia, serif`; ctx.fillStyle = '#ffd84a'; ctx.fillText('guardam a chave do cofre', lx, ly + 37 * k); }
+        if (DICA_SALA[t] && (larg >= 900 * (window.devicePixelRatio || 1) || i === masm.sala + 1)) { ctx.font = `${9.5 * k}px Alegreya, Georgia, serif`; ctx.fillStyle = '#8fd89f'; ctx.fillText(DICA_SALA[t], lx, ly + 36 * k); }
       }
       ctx.globalAlpha = 1;
     });
@@ -1535,14 +1535,14 @@ function desenhar(dt) {
     ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
     ctx.fillStyle = campeao ? '#8a6a14' : '#7a0c14'; ctx.fillRect(bx, by, bw * Math.max(0, chefe.vida), bh);
     ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 1; ctx.strokeRect(bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.fillStyle = '#e8d8b8'; ctx.textAlign = 'center'; ctx.font = `${Math.round(bh * 1.5)}px Georgia`; ctx.fillText(campeao ? campeoes.get(campeao.id).nome : nomeDoChefe(chefe.especie), larg / 2, by - bh * 0.6);
+    ctx.fillStyle = '#e8d8b8'; ctx.textAlign = 'center'; ctx.font = `${Math.round(bh * 1.5)}px Alegreya, Georgia, serif`; ctx.fillText(campeao ? campeoes.get(campeao.id).nome : nomeDoChefe(chefe.especie), larg / 2, by - bh * 0.6);
   }
   ctx.setTransform(esc, 0, 0, esc, (-camX + tx) * esc, (-camY + ty) * esc);
   ctx.textAlign = 'center';
   for (const n of numeros) {
     const [px, py] = naTela(n.x, n.y); n.t -= dt;
-    ctx.globalAlpha = Math.min(1, n.t * 2.5); ctx.font = (n.crit ? 'bold 22px' : '15px') + ' Georgia';
-    ctx.fillStyle = n.cor || (n.amigo ? '#ff6a6a' : (n.crit ? '#ffd84a' : '#f0e8d8')); if (n.txt) ctx.font = 'bold 14px Georgia';
+    ctx.globalAlpha = Math.min(1, n.t * 2.5); ctx.font = (n.crit ? 'bold 22px' : 'bold 15px') + ' Cinzel, Georgia, serif';
+    ctx.fillStyle = n.cor || (n.amigo ? '#ff6a6a' : (n.crit ? '#ffd84a' : '#f0e8d8')); if (n.txt) ctx.font = 'bold 15px Alegreya, Georgia, serif';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
     const yy = py - 95 - (0.8 - n.t) * 45; ctx.textAlign = 'center'; ctx.strokeText(n.txt || n.v, px, yy); ctx.fillText(n.txt || n.v, px, yy);
   }
@@ -2045,7 +2045,7 @@ function animarRetrato(agora) {
   const k = Math.min(c.width / m.W, c.height / m.H) * 1.7;      // o quadro tem margem: amplia e ancora nos pés
   x.imageSmoothingEnabled = true;
   x.drawImage(a.img, fr * m.W, fichaDir * m.H, m.W, m.H, c.width / 2 - m.pivo[0] * k, c.height * 0.80 - (m.H - m.pivo[1]) * k, m.W * k, m.H * k);
-  x.fillStyle = '#8d7c6c'; x.font = '12px Georgia'; x.textAlign = 'center'; x.fillText(a.nome, c.width / 2, c.height - 8);
+  x.fillStyle = '#8d7c6c'; x.font = '12px Alegreya, Georgia, serif'; x.textAlign = 'center'; x.fillText(a.nome, c.width / 2, c.height - 8);
 }
 requestAnimationFrame(animarRetrato);
 $('retrato').addEventListener('click', () => { fichaAcao++; fichaT0 = performance.now(); if (fichaAcao % ACOES_FICHA.length === 0) fichaDir = (fichaDir + 1) % 8; });
@@ -2163,7 +2163,7 @@ window.__fila = () => {   // testes: fila de tamanhos (escala D1) ao lado de um 
     else { const [img, sx, sy] = quadro(m, 'parado', 0, 0), dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
       if (prov) { tinta.width = m.W; tinta.height = m.H; tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H); tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H); ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e); }
       else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e); }
-    ctx.fillStyle = '#ddd'; ctx.font = '10px Georgia'; ctx.textAlign = 'center'; ctx.fillText((rot || esp).slice(0, 11), px, 262 + (k % 2) * 12);
+    ctx.fillStyle = '#ddd'; ctx.font = '10px Alegreya, Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText((rot || esp).slice(0, 11), px, 262 + (k % 2) * 12);
   });
   const c = document.createElement('canvas'); c.width = L; c.height = A; c.getContext('2d').drawImage(tela, 0, 0, L, A, 0, 0, L, A); ctx.restore();
   c.id = 'fila'; c.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;background:#1a1614'; document.body.appendChild(c); return true;
