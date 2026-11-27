@@ -622,7 +622,7 @@ function cenaDoGrupo(s) {
 // ---- o andar como um mundo contínuo: canvases das salas, viagem do grupo pelos corredores, zoom ----
 let reordenado = false, camSalto = false, camForcar = false;
 let unicoAnunciar = -1;
-let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 2, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
+let salasCv = [], mapaSujo = true, assar = -1, viag = null, escAtual = 1, zoomModo = 1, zoomLivre = 0, pan = [0, 0];   // zoomModo: 0 = perto, 1 = médio, 2 = o andar inteiro
 try { const z = localStorage.getItem('necromante-idle-save-v1-zoom'); if (z !== null) zoomModo = +z; } catch (e) { /* padrão */ }
 // Luz e névoa (Diablo 1): o traçado do andar inteiro aparece, mas o que há em cada sala só se revela quando o grupo entra nela ou numa vizinha.
 const vistas = new Set(); let vistasAndar = -1;
@@ -1669,7 +1669,7 @@ function laco(agora) {
 
 function ajustarTela() {
   const larg = $('cena').clientWidth, razao = Math.min(window.devicePixelRatio || 1, 2);
-  const altFinal = larg < 700 ? Math.min(window.innerHeight * 0.5, 430) : Math.max(260, Math.min(larg * 0.62, window.innerHeight * 0.56));
+  const altFinal = larg < 700 ? Math.min(window.innerHeight * 0.58, 540) : Math.max(300, Math.min(larg * 0.75, window.innerHeight * 0.68));   // a arena é o jogo: ocupa a maior parte da tela
   tela.width = Math.round(larg * razao); tela.height = Math.round(Math.max(200, altFinal) * razao);
   tela.style.height = Math.max(200, altFinal) + 'px';
 }
@@ -1677,6 +1677,7 @@ function ajustarTela() {
 function salvar() { try { localStorage.setItem(CHAVE, J.Salvar()); localStorage.setItem(CHAVE + '-hora', String(Date.now())); } catch (e) { /* sem armazenamento: joga-se sem salvar */ } }
 
 // ---- painéis ----
+let subTal = 'talentos'; try { subTal = localStorage.getItem('necromante-idle-save-v1-subtal') || 'talentos'; } catch (e) { /* padrão */ }
 const abasSel = { esq: 'exercito', dir: 'combate', baixo: 'necropole' }, LADO = { exercito: 'esq', equip: 'esq', combate: 'dir', masmorra: 'dir', bestiario: 'dir', necropole: 'baixo', talentos: 'baixo', ferreiro: 'baixo' };
 const ALVO = { esq: 'p-esq', dir: 'p-dir', baixo: 'painel' }, htmlAnterior = { esq: '', dir: '', baixo: '' };
 const botoesDeAba = () => document.querySelectorAll('.abas button[data-aba]');
@@ -1719,7 +1720,8 @@ function atualizarPainel(forcar) {
   };
   const folga = d.poder / Math.max(1, d.poderSugerido), corP = folga >= 1 ? '#8fd89f' : folga >= 0.8 ? '#ffd84a' : '#ff6a6a';
   IC.poder = `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7z" stroke="${corP}"/>`;
-  const fichas = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos'], ['ouro', `<span style="color:#ffd84a">${fmt(d.ouroTotal)}</span>`, d.ouroDaExpedicao ? `Ouro · +${fmt(d.ouroDaExpedicao)} nesta descida` : 'Ouro']];
+  const fichas0 = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos'], ['ouro', `<span style="color:#ffd84a">${fmt(d.ouroTotal)}</span>`, d.ouroDaExpedicao ? `Ouro · +${fmt(d.ouroDaExpedicao)} nesta descida` : 'Ouro']];
+  const fichas = fichas0.filter((f, i) => i < 1 || f[0] === 'cmd' || !/^0$/.test(String(f[1]).replace(/<[^>]*>/g, '')));   // recurso zerado não ocupa espaço
   if (d.ascensao.cinzas || d.ascensao.vezes) fichas.push(['cinzas', fmt(d.ascensao.cinzas), 'Cinzas']);
   if (d.sorte > 0) fichas.push(['frag', fmt(d.sorte), 'Sorte']);
   if (d.cheats) fichas.push(['cmd', 'teste', 'save']);
@@ -1777,10 +1779,8 @@ function atualizarPainel(forcar) {
     lista.forEach(([m, i]) => {
       h += `<div class="linha">${thumb(m.ficha.sprite)}<div class="corpo toque" data-ficha="${i}" title="Ver a ficha"><span class="q${m.q}">${esc(m.nome)}</span> <span class="nota">nv ${m.nivel}/${m.max} · ${QUALIDADES[m.q]} · estágio ${m.estagio} · ${m.comando} de comando · <b style="color:var(--ouro);font-weight:normal">Poder ${fmt(m.ficha.poder)}</b></span>${donsHtml(m.ficha.dons)}${HABILIDADE[m.ficha.sprite] ? `<small><b style="color:#7fd6a0;font-weight:normal">${HABILIDADE[m.ficha.sprite][0]}</b>: ${HABILIDADE[m.ficha.sprite][1]}</small>` : ''}${tracosHtml(m.tracos)}` +
         `<div class="xp"><div style="width:${Math.round(m.xp * 100)}%"></div></div></div>` +
-        (m.imbuir >= 0 ? `<button data-ac="imbuir" data-i="${i}" ${m.imbuir > d.fragmentos ? 'disabled' : ''} title="Sobe a qualidade da alma">Imbuir · ${fmt(m.imbuir)} Frag.</button>` : '') +
-        (m.evoluir >= 0 ? `<button data-ac="evoluir" data-i="${i}" ${m.evoluir > d.essencia ? 'disabled' : ''}>Evoluir · ${fmt(m.evoluir)} Ess.</button>` : '') +
-        `<button data-ac="alternar" data-i="${i}" class="${m.ativo ? 'ativo' : ''}">${m.ativo ? 'Em campo' : 'Na reserva'}</button>` +
-        `<button data-ac="sacrificar" data-i="${i}" title="O minion some e vira Fragmentos de Alma">Sacrificar · +${fmt(m.frag)}</button></div>`;
+        `<div class="bts">` + (m.evoluir >= 0 && m.evoluir <= d.essencia ? `<button data-ac="evoluir" data-i="${i}">Evoluir · ${fmt(m.evoluir)} Ess.</button>` : m.imbuir >= 0 && m.imbuir <= d.fragmentos ? `<button data-ac="imbuir" data-i="${i}" title="Sobe a qualidade da alma">Imbuir · ${fmt(m.imbuir)} Frag.</button>` : '') +
+        `<button data-ac="alternar" data-i="${i}" class="${m.ativo ? 'ativo' : ''}">${m.ativo ? 'Em campo' : 'Na reserva'}</button></div></div>`;   // imbuir, sacrificar e o resto ficam na ficha (toque no nome)
     });
     const opq = (v) => QUALIDADES.map((q, k) => `<option value="${k}" ${k === v ? 'selected' : ''}>${k === 0 ? 'nenhuma' : 'abaixo de ' + q}</option>`).join('');
     h += `<h3>Postura do exército</h3><div class="linha"><div class="corpo">${['Agressiva', 'Defensiva', 'Escolta'][d.postura]}<small>${['Os minions caçam qualquer inimigo na arena', 'Só enfrentam quem chega perto do necromante', 'Ficam colados no necromante e o protegem'][d.postura]} · vale na próxima expedição</small></div><select data-postura="1">${['Agressiva', 'Defensiva', 'Escolta'].map((n, k) => `<option value="${k}" ${k === d.postura ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
@@ -1855,16 +1855,19 @@ function atualizarPainel(forcar) {
     });
   } else if (aba === 'talentos') {
     {
+      const livrosEsperando = d.grimorio.reduce((a, g) => a + (g.guardados || 0), 0), badge = (n) => n > 0 ? ` <span class="bdg">${n}</span>` : '';
+      h += `<div class="sub">${[['feiticos', 'Feitiços', livrosEsperando], ['atributos', 'Atributos', d.atributos.auto ? 0 : d.atributos.livres], ['talentos', 'Talentos', d.pontos]].map(([k, n, c]) => `<button data-ac="sub-tal" data-k="${k}" class="${subTal === k ? 'ativo' : ''}">${n}${badge(c)}</button>`).join('')}</div>`;
       const at = d.atributos, pp = at.porPonto, n = (x) => (Math.round(x * 100) / 100).toLocaleString('pt-BR');
       const linhas = [['Força', `+${n(at.v[0] * pp[0])}% de dano dos minions`, `cada ponto: +${n(pp[0])}% de dano dos minions`], ['Magia', `+${n(at.v[1] * pp[1])}% de dano de feitiços · +${n(at.v[1] * pp[2])} de mana`, `cada ponto: +${n(pp[1])}% de dano de feitiços e +${n(pp[2])} de mana`],
         ['Destreza', `+${n(at.v[2] * pp[3])}% de chance de crítico · +${n(at.v[2] * pp[4])}% de velocidade de ataque dos minions`, `cada ponto: +${n(pp[3])}% de crítico e +${n(pp[4])}% de velocidade`], ['Vitalidade', `+${n(at.v[3] * pp[5])}% de vida dos minions · +${n(at.v[3] * pp[6])}% de vida do necromante`, `cada ponto: +${n(pp[5])}% de vida dos minions e +${n(pp[6])}% do necromante`]];
-      h += `<h3>Livro de feitiços</h3><p class="nota">Como no Diablo: cada livro lido sobe um nível do feitiço (+3% de potência, −2% de mana). Livros caem de chefes, Únicos, elites e das Bibliotecas. Ler exige <b>Magia</b>; o que ainda não dá para ler fica guardado e é lido sozinho quando a Magia chegar. Sua Magia: <b>${d.atributos.v[1]}</b>${d.livrosNaDescida ? ` · ${d.livrosNaDescida} livro${d.livrosNaDescida > 1 ? 's' : ''} nesta descida` : ''}.</p>`;
-      d.grimorio.forEach((g) => { const falta = g.guardados > 0 && g.nivel < g.max; h += `<div class="linha"><div class="corpo">${esc(g.nome)} <span class="nota">${g.nivel ? 'nível ' + g.nivel + '/' + g.max : 'ainda não aprendido: ache o livro'}</span><small>${g.nome.startsWith('Golem') ? 'um só por vez: tanque que segura a linha por 40 s · ' : g.nome.startsWith('Relâmpago') ? 'dano de raio no inimigo mais próximo, saltando para até 4 vizinhos (20% a menos por salto) · ' : g.nome.startsWith('Muralha') ? 'linha de chamas atravessada no caminho de 3 ou mais inimigos; dano de fogo a cada meio segundo por 6 s · ' : ''}${g.pot ? '+' + g.pot + '% de potência · ' : ''}${g.mana} de mana${g.nivel < g.max ? ` · próximo nível pede Magia ${g.magia}` : ' · nível máximo'}</small></div>${falta ? `<span class="nota" style="color:#ffcf5a;white-space:nowrap">${g.guardados} guardado${g.guardados > 1 ? 's' : ''} · falta Magia</span>` : ''}</div>`; });
-      h += `<h3>Atributos do necromante</h3><p class="nota">Cinco pontos a cada nível, como no Diablo. Valem a partir da próxima expedição.</p>`;
-      h += `<div class="linha"><div class="corpo">Pontos livres: <b style="color:var(--ouro);font-weight:normal">${at.livres}</b><small>${at.auto ? 'distribuição automática: os pontos novos vão sozinhos para o atributo mais baixo' : 'distribuição manual: use os botões + de cada atributo'}</small></div><button data-ac="auto-atributos" class="${at.auto ? 'ativo' : ''}">Automático: ${at.auto ? 'ligado' : 'desligado'}</button>${at.redistribuir ? `<button data-ac="redistribuir-atributos" ${at.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(at.redistribuir)} Ess.</button>` : ''}</div>`;
-      linhas.forEach((l, i) => { h += `<div class="linha"><div class="corpo"><b style="font-weight:normal;color:var(--ouro)">${l[0]} ${at.v[i]}</b> <span class="nota">${l[1]}</span><small>${l[2]}</small></div><button data-ac="atributo" data-i="${i}" data-n="1" ${at.livres >= 1 ? '' : 'disabled'}>+1</button><button data-ac="atributo" data-i="${i}" data-n="5" ${at.livres >= 5 ? '' : 'disabled'}>+5</button></div>`; });
-      h += '<h3>Talentos</h3>';
+      if (subTal === 'feiticos') h += `<h3>Livro de feitiços</h3><p class="nota">Como no Diablo: cada livro lido sobe um nível do feitiço (+3% de potência, −2% de mana). Livros caem de chefes, Únicos, elites e das Bibliotecas. Ler exige <b>Magia</b>; o que ainda não dá para ler fica guardado e é lido sozinho quando a Magia chegar. Sua Magia: <b>${d.atributos.v[1]}</b>${d.livrosNaDescida ? ` · ${d.livrosNaDescida} livro${d.livrosNaDescida > 1 ? 's' : ''} nesta descida` : ''}.</p>`;
+      if (subTal === 'feiticos') d.grimorio.forEach((g) => { const falta = g.guardados > 0 && g.nivel < g.max; h += `<div class="linha"><div class="corpo">${esc(g.nome)} <span class="nota">${g.nivel ? 'nível ' + g.nivel + '/' + g.max : 'ainda não aprendido: ache o livro'}</span><small>${g.nome.startsWith('Golem') ? 'um só por vez: tanque que segura a linha por 40 s · ' : g.nome.startsWith('Relâmpago') ? 'dano de raio no inimigo mais próximo, saltando para até 4 vizinhos (20% a menos por salto) · ' : g.nome.startsWith('Muralha') ? 'linha de chamas atravessada no caminho de 3 ou mais inimigos; dano de fogo a cada meio segundo por 6 s · ' : ''}${g.pot ? '+' + g.pot + '% de potência · ' : ''}${g.mana} de mana${g.nivel < g.max ? ` · próximo nível pede Magia ${g.magia}` : ' · nível máximo'}</small></div>${falta ? `<span class="nota" style="color:#ffcf5a;white-space:nowrap">${g.guardados} guardado${g.guardados > 1 ? 's' : ''} · falta Magia</span>` : ''}</div>`; });
+      if (subTal === 'atributos') h += `<h3>Atributos do necromante</h3><p class="nota">Cinco pontos a cada nível, como no Diablo. Valem a partir da próxima expedição.</p>`;
+      if (subTal === 'atributos') h += `<div class="linha"><div class="corpo">Pontos livres: <b style="color:var(--ouro);font-weight:normal">${at.livres}</b><small>${at.auto ? 'distribuição automática: os pontos novos vão sozinhos para o atributo mais baixo' : 'distribuição manual: use os botões + de cada atributo'}</small></div><button data-ac="auto-atributos" class="${at.auto ? 'ativo' : ''}">Automático: ${at.auto ? 'ligado' : 'desligado'}</button>${at.redistribuir ? `<button data-ac="redistribuir-atributos" ${at.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(at.redistribuir)} Ess.</button>` : ''}</div>`;
+      if (subTal === 'atributos') linhas.forEach((l, i) => { h += `<div class="linha"><div class="corpo"><b style="font-weight:normal;color:var(--ouro)">${l[0]} ${at.v[i]}</b> <span class="nota">${l[1]}</span><small>${l[2]}</small></div><button data-ac="atributo" data-i="${i}" data-n="1" ${at.livres >= 1 ? '' : 'disabled'}>+1</button><button data-ac="atributo" data-i="${i}" data-n="5" ${at.livres >= 5 ? '' : 'disabled'}>+5</button></div>`; });
+      if (subTal === 'talentos') h += '<h3>Talentos</h3>';
     }
+    if (subTal === 'talentos') {
     h += `<p class="nota">Um ponto a cada ${d.niveisPorPonto} níveis do necromante. Os talentos mais fundos de um ramo pedem pontos no mesmo ramo. Valem a partir da próxima expedição.</p>`;
     h += `<div class="linha"><div class="corpo">Pontos para gastar: <b style="color:var(--ouro);font-weight:normal">${d.pontos}</b></div>${d.redistribuir ? `<button data-ac="redistribuir" ${d.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(d.redistribuir)} Ess.</button>` : ''}</div>`;
     ['Ossos · o exército', 'Sangue · o necromante', 'Sombras · almas e saque'].forEach((titulo, ramo) => {
@@ -1877,6 +1880,7 @@ function atualizarPainel(forcar) {
           (t.pts < t.max ? `<button data-ac="investir" data-i="${i}" ${t.pode ? '' : 'disabled'}>+1</button>` : '<span class="nota">máx.</span>') + '</div>';
       });
     });
+    }
   } else if (aba === 'masmorra') {
     const t = masm.tipos[masm.sala];
     h += mapaGrandeHtml();
@@ -2235,6 +2239,7 @@ function abrirCheats() {
   $('cheats').hidden = false;
 }
 $('b-cheats').addEventListener('click', () => { if (J) abrirCheats(); });
+if (!/[?&]teste/.test(location.search)) $('b-cheats').style.display = 'none';   // painel de testes só com ?teste no endereço
 $('cheats').addEventListener('click', (ev) => {
   if (ev.target === $('cheats') || ev.target.id === 'b-cheats-fechar') { $('cheats').hidden = true; return; }
   const b = ev.target.closest('button[data-cheat]'); if (!b || !J) return;
@@ -2320,6 +2325,7 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'pergaminho': if (J.ComprarPergaminho()) { som('bencao'); aviso('Pergaminho de Portal comprado'); } break;
     case 'portal-auto': J.AlternarPortalAutomatico(); break;
     case 'livro': if (J.ComprarLivro(i)) { som('bencao'); aviso('Livro de feitiço comprado'); } break;
+    case 'sub-tal': subTal = b.dataset.k; try { localStorage.setItem(CHAVE + '-subtal', subTal); } catch (e) { /* sem armazenamento */ } break;
     case 'limiar-pocao': { const op = i ? [10, 15, 30, 50] : [20, 35, 50, 65], at = +(b.textContent.match(/(\d+)%/) || [0, 0])[1], nx = op[(op.indexOf(at) + 1) % op.length]; J.DefinirLimiarDePocao(i, nx); break; }
     case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;
     case 'melhorar-item': if (J.MelhorarEquipado(i)) { som('golpe'); aviso('Item melhorado'); } break;

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Necromante Idle</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b080a'/%3E%3Cpath d='M16 5c-6 0-10 4-10 9 0 3 1.5 5 3.5 6v4h13v-4c2-1 3.5-3 3.5-6 0-5-4-9-10-9z' fill='%23d8c9b4'/%3E%3Ccircle cx='12' cy='14' r='2.6' fill='%236dffa8'/%3E%3Ccircle cx='20' cy='14' r='2.6' fill='%236dffa8'/%3E%3Cpath d='M13 24v3M16 24v3M19 24v3' stroke='%230b080a' stroke-width='1.5'/%3E%3C/svg%3E">
 <style>
   :root { --fundo:#0b080a; --painel:#151014; --borda:#3a2a2c; --texto:#d8c9b4; --fraco:#8d7c6c; --sangue:#a01420; --alma:#6dffa8; --ouro:#d9b25f; }
   * { box-sizing: border-box; }
@@ -15,7 +16,7 @@
   html, body { margin:0; height:100%; background:var(--fundo); color:var(--texto); font-family: Alegreya, Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; font-size-adjust: 0.49; }
   h3, #topo .andar, #resumo .t, .arvore .rt, #encruzilhada .cab, #bencaos .cab, #inventario .cab, #aviso, #vitoria h2, #vit-num small { font-family: Cinzel, Georgia, serif; }
   body { display:flex; flex-direction:column; max-width:1800px; margin:0 auto; overflow:hidden; }
-  #jogo { flex:1; min-height:0; display:grid; grid-template-columns:340px minmax(0,1fr) 330px; }
+  #jogo { flex:1; min-height:0; display:grid; grid-template-columns:clamp(270px, 22vw, 340px) minmax(0,1fr) clamp(260px, 21vw, 330px); }
   .lado { display:flex; flex-direction:column; min-height:0; background:var(--painel); }
   #esq { border-right:1px solid var(--borda); } #dir { border-left:1px solid var(--borda); }
   .lado .pn { flex:1; overflow-y:auto; padding:10px; }
@@ -48,7 +49,7 @@
   .ret.morto { opacity:.3; filter:grayscale(1); } .ret.cura { box-shadow:0 0 8px #6dffa8; animation:pulso 1.2s infinite; }
   #salas { position:absolute; right:6px; top:6px; padding:4px; background:#0b0709cc; border:1px solid #4a3a3c; border-radius:5px; cursor:pointer; max-width:46%; max-height:40%; overflow:hidden; line-height:0; }
   #salas svg { max-width:100%; height:auto; }
-  #licao { position:absolute; left:8px; right:8px; bottom:58px; padding:6px 10px; text-align:center; font-size:13px; color:#fff; background:#2a1216e6; border:1px solid var(--ouro); border-radius:14px; pointer-events:none; animation:pulso 1.2s infinite; }
+  #licao { position:absolute; left:50%; transform:translateX(-50%); max-width:min(70%, 460px); width:max-content; bottom:54px; padding:4px 12px; text-align:center; font-size:12.5px; color:#fff; background:#2a1216e6; border:1px solid var(--ouro); border-radius:14px; pointer-events:none; animation:pulso 1.2s infinite; }
   #licao[hidden] { display:none; }
   #ficha { position:absolute; left:8px; right:104px; top:64px; padding:5px 10px 6px; text-align:center; font-size:12px; line-height:1.3; color:#cfc4b4; background:#0c0809ee; border:1px solid #6a5a3a; border-radius:4px; pointer-events:none; }
   #ficha[hidden] { display:none; }
@@ -78,7 +79,8 @@
   #topo .nv { display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #topo .xpn { display:inline-block; width:46px; height:5px; background:#0008; border:1px solid #3a2a2c; border-radius:3px; overflow:hidden; }
   #topo .xpn span { display:block; height:100%; width:0; background:#6dffa8; }
-  #recursos { display:flex; gap:5px; margin-top:6px; overflow-x:auto; scrollbar-width:none; }
+  #recursos { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  @media (max-width:520px) { .rec:not([data-rec=poder]) small { display:none; } .rec { padding:2px 7px 2px 4px; } }
   #recursos::-webkit-scrollbar { display:none; }
   .rec { display:flex; align-items:center; gap:5px; padding:3px 8px 3px 5px; background:#1b1317; border:1px solid #2e2225; border-radius:12px; white-space:nowrap; cursor:pointer; flex:none; }
   .rec svg { width:15px; height:15px; flex:none; } .rec b { color:#fff; font-weight:normal; } .rec small { color:var(--fraco); font-size:11px; }
@@ -104,6 +106,10 @@
   .arvore .liga { width:2px; height:7px; background:#3a2a2c; margin:0 auto; }
   @media (max-width:520px) { #topo .l1 { flex-wrap:wrap; row-gap:3px; } #topo .andar { flex:1 0 100%; } #topo .espaco { display:none; } #topo .nv { margin-right:auto; } }
   #cena { position:relative; background:#000; }
+  .sub { display:flex; gap:4px; margin:2px 0 10px; position:sticky; top:-10px; z-index:2; background:var(--painel); padding:6px 0; }
+  .sub button { flex:1; padding:7px 4px; font-size:13px; }
+  .sub button.ativo { border-color:var(--ouro); color:var(--ouro); background:#2a1f10; }
+  .bdg { display:inline-block; min-width:16px; padding:0 4px; border-radius:8px; background:var(--sangue); color:#fff; font-size:11px; line-height:16px; text-align:center; }
   canvas { display:block; width:100%; touch-action:none; cursor:grab; }
   #t-saque { position:absolute; left:8px; top:6px; font-size:12px; color:var(--texto); text-shadow:0 0 4px #000, 0 0 2px #000; pointer-events:none; opacity:.85; }
   #poderes { position:absolute; right:6px; left:6px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap-reverse; justify-content:flex-end; pointer-events:none; }
@@ -121,7 +127,7 @@
   #encruzilhada .g, #bencaos .g { color:#8fd89f; display:block; } #encruzilhada .p, #bencaos .p { color:#e08a8a; display:block; }
   #encruzilhada.min { top:auto; bottom:58px; left:auto; right:6px; padding:5px 9px; } #encruzilhada.min .ops { display:none; } #encruzilhada.min .cab { margin:0; gap:10px; cursor:pointer; font-size:12px; } #encruzilhada .cab { cursor:pointer; }
   #t-pactos { position:absolute; left:8px; top:22px; font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
-  #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:17px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
+  #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:15px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
   #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }
   #aviso.alto { top:15%; }   /* o título grande do andar ocupa o meio da tela */
   #resumo:not([hidden]) ~ #aviso { top:62%; }   /* o cartão de fim de expedição ocupa o alto */   /* com um painel de escolha aberto, o aviso desce para não ficar por cima */
@@ -209,6 +215,9 @@
   #mapa-grande { position:fixed; inset:0; background:#000c; z-index:40; display:flex; align-items:center; justify-content:center; padding:12px; }
   #mapa-grande[hidden] { display:none; }
   #mapa-grande .caixa { width:min(560px, 100%); max-height:94vh; overflow-y:auto; background:#150e12; border:1px solid var(--ouro); border-radius:6px; padding:14px; }
+  #ajuda h2.bv { font-family:Cinzel, Georgia, serif; font-weight:normal; color:var(--ouro); margin:0 0 6px; font-size:20px; letter-spacing:1px; }
+  #ajuda p.bv { margin:0 0 8px; font-size:14px; } #ajuda ul.bv { margin:0 0 10px; padding-left:18px; font-size:14px; } #ajuda ul.bv li { margin:3px 0; } #ajuda ul.bv b { color:#e8d8b8; font-weight:normal; }
+  #ajuda details { border-top:1px solid #2a1f22; padding:6px 0; } #ajuda summary { cursor:pointer; color:var(--ouro); font-family:Cinzel, Georgia, serif; font-size:13px; letter-spacing:1px; text-transform:uppercase; }
   #ajuda .tr { font-size:14px; margin:5px 0; } #ajuda .tr b { color:#e8d8b8; font-weight:normal; }
   #b-ajuda { padding:3px 10px; border-radius:50%; color:var(--ouro); border-color:var(--ouro); }
   #b-sopro { align-self:center; font-size:12px; color:#8fd89f; text-shadow:0 0 4px #000; margin-right:2px; white-space:nowrap; }
@@ -224,6 +233,7 @@
   .linha small { display:block; color:var(--fraco); font-size:12px; margin-top:2px; }
   .xp { height:3px; background:#0008; border-radius:2px; margin-top:5px; } .xp div { height:100%; background:#5a8f6a; border-radius:2px; }
   .linha button { white-space:nowrap; }
+  .linha .bts { display:flex; gap:5px; flex-direction:column; align-items:stretch; flex:none; } .linha .bts button { padding:5px 8px; font-size:12.5px; }
   .nota { color:var(--fraco); font-size:13px; margin:6px 0; }
   .q0,.r0 { color:#9a9a9a; } .q1 { color:#e6e0d0; } .q2,.r1 { color:#6fa8ff; } .q3,.r2 { color:#ffd84a; } .q4,.r4 { color:#ff4d6a; } .r3 { color:#ff9a2e; }
   .rodape { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
@@ -270,7 +280,7 @@
 <div id="autos"></div>
 <div id="missao"></div>
 <div id="doca"><button data-abre="esq">◧ Exército · Inventário</button><button data-abre="dir">Estatísticas · Diário ◨</button></div>
-<div class="abas" data-lado="baixo"><button data-aba="necropole" class="ativo">Necrópole</button><button data-aba="talentos">Talentos</button><button data-aba="ferreiro">Cidade</button></div>
+<div class="abas" data-lado="baixo"><button data-aba="necropole" class="ativo">Necrópole</button><button data-aba="talentos">Necromante</button><button data-aba="ferreiro">Cidade</button></div>
 <div id="painel" class="pn"></div>
 </main>
 <aside id="dir" class="lado">
@@ -291,7 +301,10 @@
 </div></div>
 <div id="vitoria" hidden><div class="caixa"><h2>O Senhor do Terror caiu</h2><p id="vit-texto"></p><div id="vit-num"></div><button id="vit-ok">Continuar a descida</button></div></div>
 <div id="ajuda" hidden><div class="caixa">
-  <h3>Na batalha, toque em…</h3>
+  <h2 class="bv">O Necromante</h2>
+  <p class="bv">A abadia afundou com o seu filactério dentro. Seus mortos descem sozinhos, sala por sala; você assiste e dá os toques que fazem diferença.</p>
+  <ul class="bv"><li><b>Toque num inimigo</b> para os minions focarem nele.</li><li><b>Toque no orbe verde</b> que sobe de um morto para ceifar a alma na hora.</li><li>Entre as descidas, gaste <b>Ossos</b> e <b>Essência</b> no Exército e na Necrópole.</li><li>O jogo continua enquanto você está fora.</li></ul>
+  <details><summary>Na batalha, toque em…</summary>
   <div class="tr"><b>Orbe verde</b>: ceifa a alma na hora, com chance de ela vir melhor.</div>
   <div class="tr"><b>Inimigo</b>: marca o alvo. Os minions vão nele e ele sofre +25% de dano.</div>
   <div class="tr"><b>Inimigo com “!”</b>: interrompe o golpe brutal e o atordoa.</div>
@@ -304,10 +317,12 @@
   <div class="tr"><b>Mercador</b>: troca Ossos da própria expedição por um item (40% de desconto com o seu toque). <b>Altar de sangue</b>: cobra 15% da vida de todos por +80% de chance de alma no andar; se você tocar, não cobra. <b>Patrulha</b>: do andar 6 em diante, às vezes um bando anda de sala em sala. Se estiver na sala quando o grupo entrar, luta junto com os de lá, e carrega um item. Escolhendo a rota você decide onde encontrá-la. <b>Cofre trancado</b>: só abre se o grupo já passou pela sala cujos inimigos guardam a chave (o mapa mostra qual); mude a rota se o cofre vier antes. <b>Armadilha</b>: fere todo o grupo; tocando nela antes, você a desarma e ainda leva Ossos.</div>
   <div class="tr"><b>Masmorra</b>: cada andar é uma masmorra sorteada, inteira à vista. O grupo caminha de sala em sala pelos corredores e explora todas antes de descer. Toque no símbolo de uma sala ainda não visitada para o grupo ir a ela primeiro (a última sala, da escada ou do chefe, fica sempre por último). O botão ⤢ alterna entre perto, médio e o andar inteiro; arraste para mover a vista e use a pinça (ou a roda do mouse) para o zoom.</div>
   <div class="tr"><b>Sala do chefe</b>: cada luta tem um ambiente sorteado (lava, névoa pútrida, geada, desabamento) que vale para os dois lados.</div>
-  <h3>As cores</h3>
+  </details>
+  <details><summary>As cores</summary>
   <div class="tr">Anel dos seus minions: <span class="q0">cinza Fraca</span>, <span class="q1">branco Comum</span>, <span class="q2">azul Vigorosa</span>, <span class="q3">dourado Ancestral</span>, <span class="q4">vermelho Profana</span>.</div>
   <div class="tr">Inimigos: sem anel é comum, <span class="q3">anel dourado é elite</span>, <span class="q4">anel vermelho é chefe</span>.</div>
-  <h3>Os recursos</h3>
+  </details>
+  <details><summary>Os recursos</summary>
   <div class="tr"><b>Ossos</b>: de todo inimigo morto. Pagam as construções da Necrópole.</div>
   <div class="tr"><b>Essência</b>: de vender itens e dissolver almas. Paga erguer, fundir e evoluir minions.</div>
   <div class="tr"><b>Sangue</b>: de elites, chefes e execuções. Paga os Ritos da próxima expedição.</div>
@@ -319,7 +334,9 @@
   <div class="tr"><b>Presságio</b>: do andar 7 em diante, um em cada três andares muda as regras (horda, ossário, almas inquietas…).</div>
   <div class="tr"><b>Comando</b>: quantos minions cabem em campo. Sobe com a Cripta e com talentos.</div>
   <div class="tr"><b>Cinzas</b>: da Ascensão. Compram Legados permanentes.</div>
-  <div class="rodape"><button id="b-ajuda-fechar">Entendi</button></div>
+
+  </details>
+  <div class="rodape"><button id="b-ajuda-fechar">Começar</button></div>
 </div></div>
 
 <div id="mapa-grande" hidden><div class="caixa"><div id="mapa-corpo"></div><div class="rodape"><button id="b-mapa-fechar">Fechar</button></div></div></div>
