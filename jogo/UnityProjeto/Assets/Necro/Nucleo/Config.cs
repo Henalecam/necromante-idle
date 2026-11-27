@@ -345,6 +345,10 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        public bool DespertarPorProximidade = true;       // os inimigos da sala dormem até um aliado chegar perto (a frente marcha até eles)
+        public float RaioDeAlerta = 4.5f;                 // distância a que um adormecido acorda
+        public float RaioDeAlertaDaMatilha = 2.6f;        // quem acorda leva junto os vizinhos de matilha
+        public float DespertarFatorDeTempo = 2.0f;        // o relógio antigo de despertar fica este tanto mais lento (rede de segurança)
         public bool PortasFechadas = true;
         public int PortasAPartirDoAndar = 2;
         public float ChanceDePortaFechada = 0.2f;         // por travessia entre salas

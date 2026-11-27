@@ -429,6 +429,47 @@ namespace Necro.Nucleo
         }
 
         /// <summary>Minion temporário chegou ao fim do tempo: some sem deixar cadáver.</summary>
+        /// <summary>Para onde a linha de frente marcha quando não há inimigo acordado mas ainda há quem durma na sala.</summary>
+        public bool HaAlvoDeMarcha { get; private set; }
+        public Vec2 AlvoDeMarcha { get; private set; }
+
+        /// <summary>
+        /// Despertar por proximidade: um inimigo adormecido acorda quando um aliado chega ao raio de alerta dele, e leva junto
+        /// os companheiros de matilha que estiverem colados. Sem ninguém acordado, aponta a marcha para o adormecido mais próximo.
+        /// </summary>
+        private void DespertarPorProximidade()
+        {
+            HaAlvoDeMarcha = false;
+            if (_filaDeSpawn.Count == 0) return;
+            float r2 = Cfg.RaioDeAlerta * Cfg.RaioDeAlerta, m2 = Cfg.RaioDeAlertaDaMatilha * Cfg.RaioDeAlertaDaMatilha;
+            bool mudou = false;
+            for (int i = 0; i < _filaDeSpawn.Count; i++)
+            {
+                var s = _filaDeSpawn[i];
+                if (s.Planejado == null || s.TickDeSpawn <= TickAtual) continue;
+                bool perto = false;
+                for (int k = 0; k < Entidades.Count && !perto; k++) { var a = Entidades[k]; if (a.Viva && a.Faccao == Faccao.Minion && Vec2.Dist2(a.Pos, s.Planejado.Pos) <= r2) perto = true; }
+                if (!perto) continue;
+                s.TickDeSpawn = TickAtual; _filaDeSpawn[i] = s; mudou = true;
+                for (int j = 0; j < _filaDeSpawn.Count; j++)
+                {
+                    var o = _filaDeSpawn[j];
+                    if (j == i || o.Planejado == null || o.TickDeSpawn <= TickAtual + 2 || Vec2.Dist2(o.Planejado.Pos, s.Planejado.Pos) > m2) continue;
+                    o.TickDeSpawn = TickAtual + 1 + (j % 3); _filaDeSpawn[j] = o;
+                }
+            }
+            if (mudou) { _filaDeSpawn.Sort((a, b) => a.TickDeSpawn.CompareTo(b.TickDeSpawn)); Resultado.DespertaresPorProximidade++; }
+            if (InimigosVivos > 0) return;
+            // ninguém acordado: a frente avança até o adormecido mais próximo do necromante
+            float melhor = float.MaxValue; var np = Necromante.Pos;
+            for (int i = 0; i < _filaDeSpawn.Count; i++)
+            {
+                var s = _filaDeSpawn[i]; if (s.Planejado == null) continue;
+                float d = Vec2.Dist2(np, s.Planejado.Pos);
+                if (d < melhor) { melhor = d; AlvoDeMarcha = s.Planejado.Pos; HaAlvoDeMarcha = true; }
+            }
+        }
+
         /// <summary>O Golem do feitiço: um Colosso de Ossos conjurado, forte e passageiro. Só existe um por vez.</summary>
         private bool _golemAprendido;
         public Entidade GolemVivo { get { for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Golem && Entidades[i].Viva) return Entidades[i]; return null; } }
@@ -611,6 +652,7 @@ namespace Necro.Nucleo
                     break;
                 case FaseExpedicao.EmOnda:
                     if (_lutaDoRei) AtualizarReiEsqueleto();
+                    if (Cfg.DespertarPorProximidade) DespertarPorProximidade();
                     while (_filaDeSpawn.Count > 0 && _filaDeSpawn[0].TickDeSpawn <= TickAtual)
                     {
                         var s = _filaDeSpawn[0];
@@ -663,8 +705,11 @@ namespace Necro.Nucleo
             if (Onda - 1 < PlanoDasOndas.Count)
             {
                 var plano = PlanoDasOndas[Onda - 1];
+                // Diablo 1: os monstros estão espalhados e dormem até o grupo chegar perto. O relógio de cada um fica mais lento (rede de segurança);
+                // quem acorda de verdade é a proximidade (ver DespertarPorProximidade)
+                float lento = Cfg.DespertarPorProximidade && !ondaDeChefe ? Cfg.DespertarFatorDeTempo : 1f;
                 for (int i = 0; i < plano.Count; i++)
-                    _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + plano[i].Atraso, Planejado = plano[i] });
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = plano[i].Especie, Elite = plano[i].Elite, Mods = plano[i].Mods, Chefe = plano[i].Chefe, Portal = 0, TickDeSpawn = TickAtual + 1 + (int)(plano[i].Atraso * lento), Planejado = plano[i] });
                 PortaFechada = false; _portaExtra = 0f;
                 // emboscada de corredor: os inimigos desta sala não esperam — já caem em cima do grupo na entrada
                 if (Cfg.EmboscadaDeCorredor && !ondaDeChefe && !ondaDeElite && Onda != _ondaDoUnico && Onda > 1 && Andar >= Cfg.EmboscadaDeCorredorAPartirDoAndar && plano.Count > 0 && _rngMasmorra.Chance(Cfg.ChanceDeEmboscadaDeCorredor))

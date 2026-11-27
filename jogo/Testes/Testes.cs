@@ -1607,6 +1607,25 @@ namespace Necro.Testes
                 Afirmar(Grimorio.Nivel(antigo, FeiticoId.Golem) == 0 && Grimorio.Nivel(antigo, FeiticoId.Sacrificio) == 4 && Grimorio.Nivel(antigo, FeiticoId.LancaDeOssos) == 3 && Grimorio.Guardados(antigo, FeiticoId.DrenarVida) == 1, "o save antigo mantém os níveis e ganha o Golem ainda por aprender");
             });
 
+            Teste("despertar por proximidade: a frente marcha até os adormecidos, que acordam quando ela chega perto (e não todos de uma vez)", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, SalasLigadas = false, EmboscadaDeCorredor = false, PortasFechadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 12, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 }; int g = 0; bool marchou = false; float xInicial = -1f, xMax = 0f;
+                while (!s.Encerrada && g++ < 30000)
+                {
+                    s.Tick();
+                    if (s.HaAlvoDeMarcha) marchou = true;
+                    foreach (var e in s.Entidades) if (e.Faccao == Faccao.Minion && e.Viva && !e.Temporario) { if (xInicial < 0f) xInicial = e.Pos.X; if (e.Pos.X > xMax) xMax = e.Pos.X; }
+                }
+                Afirmar(s.Encerrada && s.Resultado.MaiorAndarConcluido >= 4, "a descida deveria concluir o andar");
+                Afirmar(marchou && xMax > xInicial + 4f, "a linha de frente deveria marchar sala adentro (" + xInicial + " -> " + xMax + ")");
+                Afirmar(s.Resultado.DespertaresPorProximidade >= 2, "inimigos deveriam acordar por proximidade (" + s.Resultado.DespertaresPorProximidade + ")");
+                var c0 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, SalasLigadas = false, EmboscadaDeCorredor = false, PortasFechadas = false, DespertarPorProximidade = false };
+                var s0 = new Simulacao(c0, p, 12, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 }; g = 0; while (!s0.Encerrada && g++ < 30000) s0.Tick();
+                Afirmar(s0.Resultado.DespertaresPorProximidade == 0 && !s0.HaAlvoDeMarcha, "desligado, vale o despertar antigo por tempo");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

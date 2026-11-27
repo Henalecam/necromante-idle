@@ -99,6 +99,10 @@ namespace Necro.Nucleo
 
         private void Ocioso(Entidade e)
         {
+            // Sala com inimigos ainda adormecidos e ninguém acordado: a linha de frente marcha até eles (atiradores e conjuradores seguram o posto).
+            if (e.Faccao == Faccao.Minion && Cfg.DespertarPorProximidade && Fase == FaseExpedicao.EmOnda && HaAlvoDeMarcha && !e.Temporario
+                && e.Papel != Papel.Atirador && e.Papel != Papel.Conjurador && e.Papel != Papel.Suporte && e.Postura != Postura.Defensiva)
+            { MoverPara(e, AlvoDeMarcha); e.Animacao = EstadoAnimacao.Andando; return; }
             // Minions voltam ao posto na formação; inimigos ficam parados.
             if (e.Faccao == Faccao.Minion && Vec2.Dist2(e.Pos, e.Posto) > 0.04f) MoverPara(e, e.Posto);
             else e.Animacao = EstadoAnimacao.Parado;

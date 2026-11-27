@@ -1000,14 +1000,16 @@ function desenhar(dt) {
     const gx = so[0] + (necro ? necro.rx : 5) - (o[0] + ix), gy = so[1] + (necro ? necro.ry : 6) - (o[1] + iy);
     const [img, sx, sy] = quadro(m, 'parado', Math.abs(gx) + Math.abs(gy) > 0.5 ? direcao(gx, gy) : direcao(-1, 0), tempoSim * 0.6 + ix);
     if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
-    ctx.globalAlpha = sala === masm.sala ? 0.95 : 0.8;
+    // raio de luz (Diablo 1): fora da luz do necromante o adormecido é só um vulto escuro
+    const naLuz = sala === masm.sala && necro && Math.hypot(gx, gy) <= RAIO_DE_LUZ;
+    ctx.globalAlpha = naLuz ? 0.95 : 0.9; ctx.filter = naLuz ? 'none' : 'brightness(0.16) saturate(0.4)';
     if (prov) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
       tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H);
       ctx.drawImage(tinta, 0, 0, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1; ctx.filter = 'none';
   }
   for (const [s, acao, tempo, morto] of lista) {
     const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, cen = !s.inimigo && !morto ? cenaDoGrupo(s) : null, [px, py] = cen ? naTela(cen[0], cen[1]) : naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
@@ -1781,6 +1783,7 @@ $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
 const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'inimigos com 2,4x de vida e 1,6x de dano · 2x ouro, 1,6x ossos, itens 6 níveis acima e mais raros'], ['Inferno', 'inimigos com 5,5x de vida e 2,6x de dano · 4x ouro, 2,5x ossos, itens 14 níveis acima e bem mais raros']];
+const RAIO_DE_LUZ = 7.5;   // em unidades da sala: até onde a luz do necromante mostra os adormecidos
 const NOMES_ZOOM = ['Perto', 'Sala', 'Andar inteiro'];
 const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
 $('b-zoom').addEventListener('click', () => { aprendeu('mapa'); if (zoomLivre || pan[0] || pan[1]) { zoomLivre = 0; pan = [0, 0]; pintarZoom(); return; } zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });
