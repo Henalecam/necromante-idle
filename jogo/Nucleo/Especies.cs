@@ -65,19 +65,19 @@ namespace Necro.Nucleo
             {
                 Id = EspecieId.Esqueleto, Nome = "Esqueleto", Familia = Familia.MortoVivo, Porte = Porte.Pequeno, Papel = Papel.Lutador,
                 Vida = 60f, Dano = 8f, VelAtaque = 1.0f, Armadura = 10f, Alcance = 1.0f, VelMovimento = 2.2f, TipoDano = TipoDano.Fisico,
-                Resistencias = Res(0f, 0f, 0.2f, 0f, 0.3f, 0f), AndarMinimo = 1, PesoOnda = 10f, CustoOnda = 1f
+                Resistencias = Res(0f, 0f, 0.2f, 0f, 0.3f, 0.25f), AndarMinimo = 1, PesoOnda = 10f, CustoOnda = 1f
             };
             t[(int)EspecieId.ArqueiroOssudo] = new DadosEspecie
             {
                 Id = EspecieId.ArqueiroOssudo, Nome = "Arqueiro Ossudo", Familia = Familia.MortoVivo, Porte = Porte.Pequeno, Papel = Papel.Atirador,
                 Vida = 40f, Dano = 7f, VelAtaque = 0.8f, Armadura = 0f, Alcance = 6.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Fisico,
-                Resistencias = Res(0f, 0f, 0.2f, 0f, 0.3f, 0f), AndarMinimo = 3, PesoOnda = 5f, CustoOnda = 1f
+                Resistencias = Res(0f, 0f, 0.2f, 0f, 0.3f, 0.25f), AndarMinimo = 3, PesoOnda = 5f, CustoOnda = 1f
             };
             t[(int)EspecieId.Zumbi] = new DadosEspecie
             {
                 Id = EspecieId.Zumbi, Nome = "Zumbi", Familia = Familia.MortoVivo, Porte = Porte.Pequeno, Papel = Papel.Tanque,
                 Vida = 110f, Dano = 5f, VelAtaque = 0.7f, Armadura = 30f, Alcance = 1.0f, VelMovimento = 1.4f, TipoDano = TipoDano.Veneno,
-                Resistencias = Res(0f, -0.2f, 0f, 0f, 0.5f, 0f), AndarMinimo = 1, PesoOnda = 5f, CustoOnda = 1f
+                Resistencias = Res(0f, -0.2f, 0f, 0f, 0.5f, 0.25f), AndarMinimo = 1, PesoOnda = 5f, CustoOnda = 1f
             };
             t[(int)EspecieId.CaoDeCripta] = new DadosEspecie
             {
@@ -89,7 +89,7 @@ namespace Necro.Nucleo
             {
                 Id = EspecieId.Diabrete, Nome = "Diabrete", Familia = Familia.Demonio, Porte = Porte.Pequeno, Papel = Papel.Enxame,
                 Vida = 24f, Dano = 3.5f, VelAtaque = 1.6f, Armadura = 0f, Alcance = 1.0f, VelMovimento = 3.6f, TipoDano = TipoDano.Fogo,
-                Resistencias = Res(0f, 0.5f, -0.2f, 0f, 0f, 0f), AndarMinimo = 4, PesoOnda = 6f, CustoOnda = 0.5f
+                Resistencias = Res(0f, 0.5f, -0.2f, 0f, 0f, 0.25f), AndarMinimo = 4, PesoOnda = 6f, CustoOnda = 0.5f
             };
             t[(int)EspecieId.AcolitoCaido] = new DadosEspecie
             {
@@ -108,13 +108,13 @@ namespace Necro.Nucleo
             {
                 Id = EspecieId.Carnical, Nome = "Carniçal", Familia = Familia.MortoVivo, Porte = Porte.Pequeno, Papel = Papel.Lutador,
                 Vida = 45f, Dano = 7f, VelAtaque = 1.7f, Armadura = 0f, Alcance = 1.0f, VelMovimento = 3.8f, TipoDano = TipoDano.Veneno,
-                Resistencias = Res(0f, -0.2f, 0f, 0f, 0.4f, 0f), AndarMinimo = 3, PesoOnda = 5f, CustoOnda = 1f
+                Resistencias = Res(0f, -0.2f, 0f, 0f, 0.4f, 0.25f), AndarMinimo = 3, PesoOnda = 5f, CustoOnda = 1f
             };
             t[(int)EspecieId.DiaboDeGuerra] = new DadosEspecie
             {
                 Id = EspecieId.DiaboDeGuerra, Nome = "Diabo de Guerra", Familia = Familia.Demonio, Porte = Porte.Grande, Papel = Papel.Tanque,
                 Vida = 260f, Dano = 14f, VelAtaque = 0.6f, Armadura = 25f, Alcance = 1.3f, VelMovimento = 1.6f, TipoDano = TipoDano.Fogo,
-                Resistencias = Res(0.1f, 0.5f, -0.2f, 0f, 0f, 0f), AndarMinimo = 6, PesoOnda = 2f, CustoOnda = 4f
+                Resistencias = Res(0.1f, 0.5f, -0.2f, 0f, 0f, 0.25f), AndarMinimo = 6, PesoOnda = 2f, CustoOnda = 4f
             };
             t[(int)EspecieId.Aparicao] = new DadosEspecie
             {
@@ -126,7 +126,7 @@ namespace Necro.Nucleo
             {
                 Id = EspecieId.ColossoDeOssos, Nome = "Colosso de Ossos", Familia = Familia.MortoVivo, Porte = Porte.Grande, Papel = Papel.Lutador,
                 Vida = 220f, Dano = 18f, VelAtaque = 0.55f, Armadura = 20f, Alcance = 1.5f, VelMovimento = 1.5f, TipoDano = TipoDano.Fisico,
-                Resistencias = Res(0.1f, 0f, 0.2f, 0f, 0.3f, 0f), AndarMinimo = 8, PesoOnda = 2f, CustoOnda = 4f
+                Resistencias = Res(0.1f, 0f, 0.2f, 0f, 0.3f, 0.25f), AndarMinimo = 8, PesoOnda = 2f, CustoOnda = 4f
             };
             // Só aparece no nível secreto (PesoOnda 0): fraca, numerosa e furiosa.
             t[(int)EspecieId.ResProfana] = new DadosEspecie
@@ -154,7 +154,7 @@ namespace Necro.Nucleo
             {
                 Id = EspecieId.CavaleiroNegro, Nome = "Cavaleiro Negro", Familia = Familia.MortoVivo, Porte = Porte.Medio, Papel = Papel.Lutador,
                 Vida = 170f, Dano = 20f, VelAtaque = 0.5f, Armadura = 80f, Alcance = 1.3f, VelMovimento = 1.5f, TipoDano = TipoDano.Fisico,
-                Resistencias = Res(0.3f, 0f, 0f, -0.2f, 0f, 0.2f), AtoMinimo = 2, AndarMinimo = 5, PesoOnda = 2f, CustoOnda = 4f
+                Resistencias = Res(0.3f, 0f, 0f, -0.2f, 0f, 0.3f), AtoMinimo = 2, AndarMinimo = 5, PesoOnda = 2f, CustoOnda = 4f
             };
             // Magistrado (Diablo 1): feiticeiro que some num clarão quando alguém encosta e reaparece longe.
             t[(int)EspecieId.Magistrado] = new DadosEspecie

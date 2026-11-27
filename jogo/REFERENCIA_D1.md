@@ -32,3 +32,6 @@ Crescimento da vida de um comum, andar N ÷ andar 1 (nosso = EscalaInimigo; D1 =
 Até o andar 12 a curva bate com a do D1 (começa mais suave, para a primeira expedição passar). Depois disso a nossa continua exponencial de propósito: o jogo tem 40 andares e progressão idle, o D1 tem 16.
 
 Chefe ÷ comum do mesmo andar: D1 Açougueiro ~24×, Rei Esqueleto ~16×, Lázarus ~4×, Diablo ~10×. Nosso: Açougueiro 17,5× (elite 3,5 × 5), Rei 21×, chefes dos Atos 1 e 2 ~15-17× (proporcionais). Lázarus estava ~13-19× e o chefe do Ato 4 ~18-31× → vida base 560→300 e 900→520 (agora ~7× e ~11×). Tempo da campanha quase não muda: chefe do Ato 3 20,7 → 18,4 h; chefe do Ato 4 34,6 → 36,4 h na 1ª vida (dentro do ruído; a parede são os andares, não os chefes).
+
+## Resistências por família (item 193)
+No D1 (monstdat.tsv, coluna resistance do Normal): mortos-vivos quase todos IMUNES a magia (16 de 21), alguns resistem a fogo/raio; demônios quase todos resistem ou são imunes a magia (≈85%) e muitos a fogo; animais em geral sem resistência. "Magia" do D1 ≈ nossa Sombra (o dano do necromante). Aqui: mortos-vivos e demônios comuns ganharam 25% contra sombra (Cavaleiro Negro 30%); Pesadelo 45%, Inferno 60%, abaixo do limiar de imunidade (70%) para o necromante não ficar inútil. Fogo dos demônios (50%) já batia; feras seguem quase sem resistência.
