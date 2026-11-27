@@ -424,7 +424,8 @@ function estatHtml(e, titulo) {
   if (ini.length) {
     h += '<p class="nota">Por tipo de inimigo: quanto dano fizeram no seu exército.</p>';
     const mx = Math.max(1, ...ini.map((l) => l.dano));
-    ini.forEach((l) => { h += `<div class="est"><span>${esc(l.nome)}</span><span>${fmt(Math.round(l.dano))}</span><div class="b"><i style="width:${100 * l.dano / mx}%;background:#d9b25f"></i></div><small>${l.mortos} mortos · sofreram ${fmt(Math.round(l.sofrido))} de dano</small></div>`; });
+    ini.forEach((l, k) => { if (k === 5) h += `<details class="dobra" data-dobra="ini" ${dobrasAbertas.has('ini') ? 'open' : ''}><summary>Mais ${ini.length - 5} tipos</summary>`; h += `<div class="est"><span>${esc(l.nome)}</span><span>${fmt(Math.round(l.dano))}</span><div class="b"><i style="width:${100 * l.dano / mx}%;background:#d9b25f"></i></div><small>${l.mortos} mortos · sofreram ${fmt(Math.round(l.sofrido))} de dano</small></div>`; });
+    if (ini.length > 5) h += '</details>';
   }
   return h;
 }
@@ -821,11 +822,14 @@ function mapaSvg(c, rotulos) {
   });
   return h + '</svg>';
 }
+const dobrasAbertas = new Set();   // seções recolhíveis dos painéis: lembra o que o jogador abriu, já que o painel é redesenhado
+function dobra(chave, titulo, corpo) { return `<details class="dobra" data-dobra="${chave}" ${dobrasAbertas.has(chave) ? 'open' : ''}><summary>${titulo}</summary>${corpo}</details>`; }
+document.addEventListener('toggle', (ev) => { const d = ev.target; if (d && d.dataset && d.dataset.dobra) { if (d.open) dobrasAbertas.add(d.dataset.dobra); else dobrasAbertas.delete(d.dataset.dobra); } }, true);
 function mapaGrandeHtml() {
   const feitas = masm.sala, total = masm.tipos.length;
   return `<h3>Mapa do andar ${andar}</h3><div style="overflow:auto;text-align:center;padding:6px 0 14px">${mapaSvg(40, true)}</div>` +
     `<p class="nota">${feitas} de ${total} salas exploradas. O grupo percorre a masmorra inteira antes de descer.</p>` +
-    '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>';
+    dobra('legenda', 'Legenda dos símbolos', '<p class="nota">' + [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 11, 8].map((t) => `<span style="white-space:nowrap;margin-right:10px">${SALAS[t][0]} ${SALAS[t][1]}</span>`).join(' ') + '</p>');
 }
 function eventoDeSala(tipo, v, x, y) {
   const ts = +v[14];
@@ -1912,10 +1916,11 @@ function atualizarPainel(forcar) {
     if (d.fonte === 1 || d.fonte === 3) h += `<div class="linha"><div class="corpo">${d.fonte === 3 ? '<b style="color:#8fd89f">A Fonte Envenenada · cumprida</b>' : '<b style="color:#ffcf5a">A Fonte Envenenada</b>'}<small>${d.fonte === 3 ? 'A água voltou a correr limpa. A Curandeira vende poções ' + d.fonteDesc + '% mais baratas até o fim desta vida.' : 'Andar ' + d.fonteAndar + ': mortos apodrecem a nascente da vila. Limpe a sala e a Curandeira passa a vender poções ' + d.fonteDesc + '% mais baratas.'}</small></div></div>`;
     if (d.rei === 1 || d.rei === 3) h += `<div class="linha"><div class="corpo">${d.rei === 3 ? '<b style="color:#8fd89f">O Rei Esqueleto · cumprida</b>' : '<b style="color:#ffcf5a">O Rei Esqueleto</b>'}<small>${d.rei === 3 ? 'De volta ao pó. A Coroa do Rei Morto é sua.' : 'Andar 3, numa tumba selada. Ergue esqueletos enquanto vive. Recompensa: a Coroa do Rei Morto.'}</small></div></div>`;
     if (d.acougueiro === 1 || d.acougueiro === 3) h += `<div class="linha"><div class="corpo">${d.acougueiro === 3 ? '<b style="color:#8fd89f">O Açougueiro · cumprida</b>' : '<b style="color:#ffcf5a">O Açougueiro</b>'}<small>${d.acougueiro === 3 ? 'Morto. O Cutelo do Açougueiro é seu.' : 'Andar 2, atrás de uma porta trancada. Forte e rápido: volte quando estiver pronto. Recompensa: o Cutelo do Açougueiro.'}</small></div></div>`;
-    h += `<h3>Livro de Únicos</h3><p class="nota">Itens de nome próprio, com afixos fixos, mais fortes que qualquer Raro, e um efeito só deles (vale enquanto o item está vestido). Marcados com ★. Você achou ${d.unicos.filter((u) => u.achado).length} de ${d.unicos.length}.</p>`;
-    d.unicos.forEach((u) => { h += `<div class="linha">${icone(u.tipo)}<div class="corpo">${u.achado ? `<b style="color:#ffcf5a;font-weight:normal">★ ${esc(u.nome)}</b>` : `<span style="color:var(--fraco)">? ? ?</span> <span class="nota">${TIPOS[u.tipo]}</span>`}<small>${u.achado ? '<span style="color:#e8dcb0">' + esc(u.efeito) + '</span><br>' : ''}${esc(u.lenda)}</small></div></div>`; });
-    h += `<h3>Livro dos Santuários</h3><p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}).</p>` +
-      SANTUARIOS.map((x, k) => (x ? `<div class="linha"><div class="corpo"><span style="color:${d.santuarios & (1 << k) ? '#7fd8ff' : '#8d7c6c'}">${x[0]}</span> <span class="nota">“${x[1]}”</span><small>${d.santuarios & (1 << k) ? x[2] : '? ? ?'}</small></div></div>` : '')).join('');
+    { let hu = `<p class="nota">Itens de nome próprio, com afixos fixos, mais fortes que qualquer Raro, e um efeito só deles (vale enquanto o item está vestido). Marcados com ★. Você achou ${d.unicos.filter((u) => u.achado).length} de ${d.unicos.length}.</p>`;
+    d.unicos.forEach((u) => { hu += `<div class="linha">${icone(u.tipo)}<div class="corpo">${u.achado ? `<b style="color:#ffcf5a;font-weight:normal">★ ${esc(u.nome)}</b>` : `<span style="color:var(--fraco)">? ? ?</span> <span class="nota">${TIPOS[u.tipo]}</span>`}<small>${u.achado ? '<span style="color:#e8dcb0">' + esc(u.efeito) + '</span><br>' : ''}${esc(u.lenda)}</small></div></div>`; });
+      h += dobra('unicos', `Livro de Únicos · ${d.unicos.filter((u) => u.achado).length} de ${d.unicos.length}`, hu); }
+    h += dobra('santuarios', `Livro dos Santuários · ${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}`, `<p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}).</p>` +
+      SANTUARIOS.map((x, k) => (x ? `<div class="linha"><div class="corpo"><span style="color:${d.santuarios & (1 << k) ? '#7fd8ff' : '#8d7c6c'}">${x[0]}</span> <span class="nota">“${x[1]}”</span><small>${d.santuarios & (1 << k) ? x[2] : '? ? ?'}</small></div></div>` : '')).join(''));
     if (pressagio) h += `<div class="linha"><div class="corpo">Presságio: ${PRESSAGIOS[pressagio][0]}<small>${PRESSAGIOS[pressagio][1]}</small></div></div>`;
     h += '<h3>Diário da descida</h3><div class="diario">' + (diario.length ? diario.map(([a, tx]) => `<div><small>andar ${a}</small>${tx}</div>`).join('') : '<p class="nota">Nada digno de nota ainda. Baús, santuários, emboscadas e achados raros aparecem aqui.</p>') + '</div>';
     h += '<p class="nota">Entre os combates surgem salas especiais. Do andar 5 em diante, raramente, o fim de um andar abre um nível secreto.</p>';
