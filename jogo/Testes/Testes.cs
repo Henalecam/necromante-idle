@@ -1993,6 +1993,17 @@ namespace Necro.Testes
                 Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
             });
 
+            Teste("presságio Chuva de Cinzas: inimigos com +25% de vida e mais itens no andar", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ChanceDePressagio = 1f };
+                var p = ProgressoCom(EspecieId.Esqueleto); Simulacao achou = null;
+                for (ulong sem = 1; sem < 200 && achou == null; sem++) { var s = new Simulacao(c, p, sem, ModoExpedicao.Avancar, 12); if (s.PressagioAtual == Pressagio.ChuvaDeCinzas) achou = s; }
+                Afirmar(achou != null, "o presságio sai no sorteio");
+                var c0 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ChanceDePressagio = 0f }; var s0 = new Simulacao(c0, p, 1, ModoExpedicao.Avancar, 12);
+                float v1 = achou.CriarInimigo(EspecieId.Zumbi, new Vec2(10f, 6f)).VidaMax, v0 = s0.CriarInimigo(EspecieId.Zumbi, new Vec2(10f, 6f)).VidaMax;
+                Afirmar(Math.Abs(v1 / v0 - c.CinzasVidaInimigo) < 0.01f, "vida ×" + c.CinzasVidaInimigo + " (" + v0 + " → " + v1 + ")");
+            });
+
             Teste("Lacaio Ígneo: só a partir do Ato 4; ao morrer explode em fogo e fere os minions em volta, não os inimigos", () =>
             {
                 var d = TabelaEspecies.Obter(EspecieId.LacaioIgneo);

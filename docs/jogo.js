@@ -264,6 +264,10 @@ function ambiente(dt, larg, alt) {
     ctx.fillStyle = p.brasa ? (ato >= 1 ? `rgba(120,255,190,${a})` : `rgba(255,140,50,${a})`) : `rgba(200,190,170,${a})`; ctx.beginPath(); ctx.arc(p.x * larg, p.y * alt, r, 0, 7); ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
+  if (pressagio === 7) {   // presságio Chuva de Cinzas: flocos cinzentos caindo devagar sobre o andar
+    ctx.fillStyle = 'rgba(175,168,160,0.42)';
+    for (let k = 0; k < 70; k++) { const fx = ((k * 0.6180339 + Math.sin(tempoSim * 0.3 + k) * 0.02) % 1 + 1) % 1, fy = ((tempoSim * (0.03 + (k % 5) * 0.006) + k * 0.1373) % 1), rr = (1.2 + (k % 3) * 0.8) * (larg / 900 + 0.6); ctx.beginPath(); ctx.ellipse(fx * larg, fy * alt, rr * 1.4, rr, Math.sin(tempoSim + k), 0, 7); ctx.fill(); }
+  }
   for (let i = 0; i < 3; i++) {
     const fx = ((tempoSim * (0.012 + i * 0.006) + i * 0.37) % 1.4 - 0.2) * larg, fy = alt * (0.72 + i * 0.09);
     const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, larg * 0.45); g.addColorStop(0, 'rgba(150,160,150,0.07)'); g.addColorStop(1, 'rgba(150,160,150,0)');
@@ -285,7 +289,7 @@ const mortos = new Map();      // id -> entidade caída (cadáver à vista)
 const cadaverDe = new Map();   // id do cadáver -> id da entidade
 let particulas = [], raios = [], numeros = [], orbes = [], projeteis = [], pocas = [];
 let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '', marcado = -1, almasVoando = [], ritoEmCurso = 0, clarao = 0, deFoice = false, dicaGolpe = false, sopro = 0, dicaSopro = false, itens = [[0, 0], [0, 0]], autosAnterior = '', pressagio = 0;
-const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos']];
+const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens']];
 const COR_MORTE = { Queimado: '20,14,12', Congelado: '120,170,210', Putrefato: '60,90,25', Eletrizado: '40,40,60', Oco: '50,30,80' };
 const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 

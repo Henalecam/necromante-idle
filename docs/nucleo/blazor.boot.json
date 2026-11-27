@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Necro.Web.dll",
   "resources": {
-    "hash": "sha256-Bf7w8fyGoYLDJnPv3phRvoHFW5OPoT++iRYWC65TqEc=",
+    "hash": "sha256-DbZSoi976pez1oC1gQ4QUFvyhzSheBNGBzruPUSOtXU=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-jM5CDYGrtS2pA0oytUArKrGJ9S6Ovlw0f8d56LMfReg="
     },
@@ -12,8 +12,8 @@
       "dotnet.native.wasm": "sha256-80IDSkGcq+KyGU/V29056I1pybo3SHprw4xqL1caBLc="
     },
     "assembly": {
-      "Necro.Nucleo.wasm": "sha256-1SLEhOap/h79sWeO3/nrva71HP03tK8WTQ6VlEAPoXc=",
-      "Necro.Web.wasm": "sha256-w7mh1Aw6l1SLi8LeZYTJOhzJNu4aFG9snp+fZz2XZt8=",
+      "Necro.Nucleo.wasm": "sha256-I+pCcg8/nAFHxHGvThZ/hpKFZnUjTGqftWo9x9z49KA=",
+      "Necro.Web.wasm": "sha256-ngTGMq0ld+oRXYyznYusi3hcdWm8tXv5e9VcnTw+LMA=",
       "netstandard.wasm": "sha256-z401rx53YQDwUYBvIlnmjy8WJva6ly9wsOGB2ZGsmZQ=",
       "System.Collections.Concurrent.wasm": "sha256-vOrGmlkTElU7l6FlERYOgusSeB6teFyNv+CWwfMGEeQ=",
       "System.Collections.wasm": "sha256-iYwguHzIBS6ywV00ALR/sU2xBeALL65WFwdeaJ0RcGU=",
