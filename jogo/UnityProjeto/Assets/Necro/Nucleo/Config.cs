@@ -359,6 +359,8 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        public int CinzasPorChefe = 2;                           // Cinzas a mais por chefe de ato vencido na vida
+        public float[] CinzasPorDificuldade = { 1f, 1.5f, 2f };   // multiplicador pela dificuldade em que se ascende
         public bool ArvoreDeAscensao = true;
         // ramo Herança (ritmo da vida seguinte)
         public float HerancaOssos1 = 0.60f, HerancaOssos2 = 0.50f, HerancaXp = 0.60f;

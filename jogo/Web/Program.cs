@@ -180,7 +180,7 @@ public static partial class Jogo
               .Append(",\"restos\":").Append(_p.Restos[i]).Append(",\"custo\":").Append(Oferendas.Custo(_p, i, _cfg)).Append(",\"pode\":").Append(B(Oferendas.Pode(_p, i, _cfg))).Append('}');
         }
         sb.Append(']');
-        sb.Append(",\"ascensao\":{\"pode\":").Append(B(Ascensao.Pode(_p))).Append(",\"renderia\":").Append(Ascensao.CinzasDestaVida(_p)).Append(",\"cinzas\":").Append(_p.Cinzas)
+        sb.Append(",\"ascensao\":{\"pode\":").Append(B(Ascensao.Pode(_p))).Append(",\"renderia\":").Append(Ascensao.CinzasDestaVida(_p, _cfg)).Append(",\"czAndar\":").Append(Ascensao.CinzasDoAndar(_p)).Append(",\"czChefes\":").Append(Ascensao.CinzasDosChefes(_p, _cfg)).Append(",\"nChefes\":").Append(_p.ChefesDerrotados.Count).Append(",\"czPorChefe\":").Append(_cfg.CinzasPorChefe).Append(",\"czFator\":").Append(F(Ascensao.FatorDaDificuldade(_p, _cfg))).Append(",\"cinzas\":").Append(_p.Cinzas)
           .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"maior\":").Append(_p.MaiorAndarConcluido).Append(",\"leva\":[").Append(string.Join(",", Arvore.Resumo(_p, _cfg).ConvertAll(S))).Append("]").Append(",\"selos\":").Append(_p.SelosDoAbismo).Append(",\"arvore\":[");
         for (int ar = 0; ar < Arvore.Ramos; ar++)
         {

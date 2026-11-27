@@ -22,11 +22,17 @@ namespace Necro.Nucleo
 
         public static bool Pode(EstadoProgresso p) { return p.ChefesDerrotados.Contains(1); }
 
-        /// <summary>Cinzas que esta vida rende: (maior andar / 5) ao quadrado. Andar 10 = 4, 15 = 9, 20 = 16, 30 = 36.</summary>
-        public static long CinzasDestaVida(EstadoProgresso p)
+        /// <summary>Parte das Cinzas que vem da profundidade: (maior andar / 5) ao quadrado. Andar 10 = 4, 15 = 9, 20 = 16, 30 = 36.</summary>
+        public static long CinzasDoAndar(EstadoProgresso p) { double a = p.MaiorAndarConcluido / 5.0; return (long)Math.Floor(a * a); }
+        /// <summary>Parte que vem dos chefes de ato vencidos nesta vida.</summary>
+        public static long CinzasDosChefes(EstadoProgresso p, ConfigJogo cfg) { return cfg.CinzasPorChefe * p.ChefesDerrotados.Count; }
+        /// <summary>Multiplicador da dificuldade em que se está ao ascender.</summary>
+        public static float FatorDaDificuldade(EstadoProgresso p, ConfigJogo cfg) { int d = Math.Max(0, Math.Min(cfg.CinzasPorDificuldade.Length - 1, p.Dificuldade)); return cfg.CinzasPorDificuldade[d]; }
+
+        /// <summary>Cinzas que esta vida rende: (profundidade + chefes) x dificuldade.</summary>
+        public static long CinzasDestaVida(EstadoProgresso p, ConfigJogo cfg)
         {
-            double a = p.MaiorAndarConcluido / 5.0;
-            return (long)Math.Floor(a * a);
+            return (long)Math.Floor((CinzasDoAndar(p) + CinzasDosChefes(p, cfg)) * (double)FatorDaDificuldade(p, cfg) + 1e-6);
         }
 
         public static int Nivel(EstadoProgresso p, int legado) { return p.Legados != null && legado < p.Legados.Length ? p.Legados[legado] : 0; }
@@ -60,7 +66,7 @@ namespace Necro.Nucleo
         public static long Ascender(EstadoProgresso p, ConfigJogo cfg)
         {
             if (!Pode(p)) return 0;
-            long cinzas = CinzasDestaVida(p);
+            long cinzas = CinzasDestaVida(p, cfg);
             var novo = Progressao.NovoJogo(cfg);
             // itens travados atravessam: os equipados travados voltam para o inventário
             var guardados = new System.Collections.Generic.List<Item>();
