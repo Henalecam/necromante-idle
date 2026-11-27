@@ -1895,6 +1895,31 @@ namespace Necro.Testes
                 Afirmar(!s0.Salas.Contains(TipoSala.FonteEnvenenada), "sem missões de cenário, nada de fonte");
             });
 
+            Teste("missão da Câmara de Ossos: selo com escolha no andar da missão; rompido, esqueletos com dois de elite; vencida, dá um livro de feitiço que o jogador não tinha", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarCamara = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 40; p.PoderNecromantico = 300f; foreach (var m in p.Minions) m.Nivel = 18;
+                // recusando: a sala fica, nada muda
+                var s1 = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }; int g = 0; bool ofereceu = false;
+                while (!s1.Encerrada && g++ < 60000) { s1.Tick(); if (s1.BencaosOferecidas != null && s1.BencaosOferecidas[0] == 13) { ofereceu = true; s1.ComandoEscolherBencao(1); } }
+                Afirmar(ofereceu && !s1.Resultado.CamaraVencida && s1.Salas.Contains(TipoSala.CamaraDeOssos), "o selo oferece a escolha e, recusado, nada acontece");
+                // sem resposta e sem recorde: não abre sozinho
+                var s2 = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }; g = 0; while (!s2.Encerrada && g++ < 60000) s2.Tick();
+                Afirmar(!s2.Resultado.CamaraVencida, "sem resposta e com recorde baixo, o necromante não rompe o selo");
+                // rompendo
+                var s3 = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }; g = 0; int elites = 0, esqueletos = 0; bool dentro = false;
+                while (!s3.Encerrada && g++ < 60000)
+                {
+                    s3.Tick(); if (s3.BencaosOferecidas != null && s3.BencaosOferecidas[0] == 13) { s3.ComandoEscolherBencao(0); dentro = true; }
+                    if (dentro && !s3.Resultado.CamaraVencida) foreach (var ev in s3.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu && (ev.Especie == EspecieId.Esqueleto || ev.Especie == EspecieId.ArqueiroOssudo)) { esqueletos++; var en = s3.AcharEntidade(ev.Alvo); if (en != null && en.Elite) elites++; }
+                }
+                Afirmar(s3.Resultado.CamaraVencida && esqueletos >= c.CamaraInimigos && elites >= 2, "rompido o selo, a câmara é vencida (" + esqueletos + " esqueletos, " + elites + " de elite)");
+                Afirmar(s3.Resultado.Livros.Count >= 1 && s3.Resultado.Livros.Exists(f => Grimorio.SoPorLivro((FeiticoId)f)), "o prêmio é um livro de feitiço que só existe por livro");
+                Progressao.AplicarResultado(p, s3.Resultado, c);
+                Afirmar(p.MissaoCamara == 3 && (Grimorio.Nivel(p, FeiticoId.Golem) + Grimorio.Nivel(p, FeiticoId.MuralhaDeFogo) + Grimorio.Nivel(p, FeiticoId.RelampagoEmCadeia) >= 1 || p.LivrosGuardados[(int)FeiticoId.Golem] + p.LivrosGuardados[(int)FeiticoId.MuralhaDeFogo] + p.LivrosGuardados[(int)FeiticoId.RelampagoEmCadeia] >= 1), "missão cumprida e o feitiço novo aprendido (ou guardado à espera de Magia)");
+                Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

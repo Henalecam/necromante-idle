@@ -106,6 +106,7 @@ namespace Necro.Nucleo
             Resultado.Livros.Add(qual);
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 24, Valor = qual, Alvo = -1, Origem = -1, Pos = pos });
         }
+        private EstadoProgresso _progressoInicial;   // só leitura: o que o jogador já tinha ao descer (para o prêmio da Câmara de Ossos)
         private int _proximoId = 1;
         private float _temporizadorDeFase;
         private int _tickInicioDoAndar;
@@ -159,6 +160,9 @@ namespace Necro.Nucleo
             _recordeInicial = progresso.MaiorAndarConcluido; _acougueiro = progresso.MissaoAcougueiro;
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
+            _progressoInicial = progresso; _camara = progresso.MissaoCamara;
+            if (_camara == 0 && Cfg.MissoesDeCenario) { _camara = (semente * 69069UL >> 9) % 3UL != 0UL ? 1 : 2; Resultado.CamaraSorteio = _camara; }
+            if (Cfg.ForcarCamara && _camara != 3) _camara = 1;
             _fonte = progresso.MissaoFonte;
             if (_fonte == 0 && Cfg.MissoesDeCenario) { _fonte = (semente * 40503UL >> 5) % 3UL != 0UL ? 1 : 2; Resultado.FonteSorteio = _fonte; }
             if (Cfg.ForcarFonte && _fonte != 3) _fonte = 1;

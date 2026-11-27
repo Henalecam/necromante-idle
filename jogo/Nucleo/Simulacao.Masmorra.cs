@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -108,6 +108,7 @@ namespace Necro.Nucleo
                 if (w == 1 && TotalDeOndas > 1 && (_acougueiro == 1 || (Cfg.ForcarAcougueiro && _acougueiro != 3)) && Andar == Cfg.AcougueiroAndar) Salas.Add(TipoSala.Acougue);   // missão do Açougueiro: a porta trancada do andar 2
                 if (w == 1 && TotalDeOndas > 1 && (_reiEsqueleto == 1 || (Cfg.ForcarReiEsqueleto && _reiEsqueleto != 3)) && Andar == Cfg.ReiAndar) Salas.Add(TipoSala.TumbaDoRei);   // missão do Rei Esqueleto: a tumba do andar 3
                 if (w == 1 && TotalDeOndas > 1 && (_fonte == 1 || (Cfg.ForcarFonte && _fonte != 3)) && Andar == Cfg.FonteAndar) Salas.Add(TipoSala.FonteEnvenenada);   // missão da Fonte Envenenada
+                if (w == 1 && TotalDeOndas > 1 && (_camara == 1 || (Cfg.ForcarCamara && _camara != 3)) && Andar == Cfg.CamaraAndar) Salas.Add(TipoSala.CamaraDeOssos);   // missão da Câmara de Ossos
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -340,6 +341,14 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDaCamara)
+                {
+                    _lutaDaCamara = false; _camara = 3; Resultado.CamaraVencida = true; Resultado.Ouro += Cfg.CamaraOuro;
+                    if (Cfg.LivrosDeFeitico) { int qual = LivroDaCamara(); Resultado.Livros.Add(qual); Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 24, Valor = qual, Alvo = -1, Origem = -1, Pos = PosDoObjeto }); }
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.CamaraDeOssos, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDaFonte)
                 {
                     _lutaDaFonte = false; _fonte = 3; Resultado.FonteLimpa = true; Resultado.Ouro += Cfg.FonteOuro;
@@ -432,6 +441,22 @@ namespace Necro.Nucleo
                 _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 2 ? EspecieId.Carnical : EspecieId.Zumbi, Elite = k == 0, Mods = k == 0 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 3 });
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 44, Alvo = -1, Origem = -1, Valor = Cfg.FonteInimigos, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>A Câmara de Ossos (Diablo 1, "Chamber of Bone"): sala selada cheia de esqueletos que guarda um livro de feitiço.</summary>
+        private void IniciarCamaraDeOssos()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDaCamara = true;
+            for (int k = 0; k < Cfg.CamaraInimigos; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 1 ? EspecieId.ArqueiroOssudo : EspecieId.Esqueleto, Elite = k < 2, Mods = k < 2 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 3 });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>O livro que a Câmara guarda: o primeiro dos feitiços só-por-livro que o jogador ainda não tem; se já tem todos, um qualquer.</summary>
+        private int LivroDaCamara()
+        {
+            for (int f = 0; f < Grimorio.Quantos; f++) if (Grimorio.SoPorLivro((FeiticoId)f) && Grimorio.Nivel(_progressoInicial, (FeiticoId)f) == 0 && !Resultado.Livros.Contains(f)) return f;
+            return _rngItens.Intervalo(0, Grimorio.Quantos);
         }
 
         /// <summary>O Açougueiro (Diablo 1): um Único de nome fixo, forte e rápido, sozinho numa sala de corpos. Vencido, larga o Cutelo.</summary>
@@ -550,6 +575,19 @@ namespace Necro.Nucleo
                 }
                 TempoDaBencao -= DT;
                 if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+            }
+            if (t == TipoSala.CamaraDeOssos)
+            {
+                // a Câmara de Ossos: [13, 0, 0]. Romper o selo (0) ou deixar (1). Sem resposta, só rompe com recorde suficiente.
+                if (BencaosOferecidas == null) { BencaosOferecidas = new[] { 13, 0, 0 }; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1; return; }
+                TempoDaBencao -= DT;
+                if (_escolhaDeBencao < 0 && TempoDaBencao > 0f) return;
+                bool abreC = _escolhaDeBencao == 0 || (_escolhaDeBencao < 0 && _recordeInicial >= Cfg.CamaraAbreSozinhoNoRecorde);
+                BencaosOferecidas = null; _escolhaDeBencao = -1;
+                if (abreC) { IniciarCamaraDeOssos(); return; }
+                Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = -1f, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
+                EntrarNaProximaSala(Cfg.PausaAposSalaEspecial);
+                return;
             }
             if (t == TipoSala.TumbaDoRei)
             {

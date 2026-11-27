@@ -441,6 +441,9 @@ namespace Necro.Nucleo
         public int ReiAbreSozinhoNoRecorde = 7;
         public int ReiNivelDaCoroa = 8;
         public long ReiOuro = 250;
+        public bool ForcarCamara;                        // só para testes e capturas
+        public int CamaraAndar = 7, CamaraInimigos = 9, CamaraAbreSozinhoNoRecorde = 8;   // missão da Câmara de Ossos: sala selada no andar 7, guarda um livro de feitiço
+        public long CamaraOuro = 200;
         public bool ForcarFonte;                         // só para testes e capturas
         public int FonteAndar = 4, FonteInimigos = 7;     // missão da Fonte Envenenada: sala a mais no andar 4
         public float FonteDesconto = 0.2f;                // limpa a fonte, a Curandeira vende poções com este desconto até o fim da vida

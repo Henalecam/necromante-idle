@@ -159,7 +159,7 @@ namespace Necro.Testes
                 if (sim.PortaFechada) sim.ComandoAbrirPorta();   // jogador ativo: abre a porta emperrada na hora
                 if (sim.Fase == FaseExpedicao.Explorando) sim.ComandoInteragir();
                 if (sim.Fase == FaseExpedicao.EmOnda && sim.TickAtual % 25 == 0) for (int qi = 0; qi < sim.Objetos.Count; qi++) if (sim.ComandoQuebrar(qi)) break;   // quebra um barril de vez em quando
-                if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao((sim.BencaosOferecidas[0] == 11 && p.MaiorAndarConcluido < cfg.AcougueiroAbreSozinhoNoRecorde) || (sim.BencaosOferecidas[0] == 12 && p.MaiorAndarConcluido < cfg.ReiAbreSozinhoNoRecorde) ? 1 : 0);   // toca no baú/santuário/fonte
+                if (sim.BencaosOferecidas != null) sim.ComandoEscolherBencao((sim.BencaosOferecidas[0] == 11 && p.MaiorAndarConcluido < cfg.AcougueiroAbreSozinhoNoRecorde) || (sim.BencaosOferecidas[0] == 12 && p.MaiorAndarConcluido < cfg.ReiAbreSozinhoNoRecorde) || (sim.BencaosOferecidas[0] == 13 && p.MaiorAndarConcluido < cfg.CamaraAbreSozinhoNoRecorde) ? 1 : 0);   // toca no baú/santuário/fonte
                 // interrompe o Golpe Brutal: marca quem está armando (com meio segundo de reação)
                 for (int i = 0; i < sim.Entidades.Count; i++)
                 {
