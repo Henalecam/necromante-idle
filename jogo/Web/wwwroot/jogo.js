@@ -1413,6 +1413,10 @@ function atualizarPainel(forcar) {
       `<div class="linha"><div class="corpo"><span style="color:#ff7a7a">Poção de vida</span> <span class="nota">${ct.gv}/${ct.max} no cinto</span><small>devolve 45% da vida do necromante</small></div><button data-ac="limiar-pocao" data-i="0" title="Toque para mudar a regra">beber abaixo de ${ct.lv}%</button><button data-ac="pocao" data-i="0" ${ct.gv >= ct.max || ct.pv > d.ouroTotal ? 'disabled' : ''}>${ct.gv >= ct.max ? 'Cinto cheio' : fmt(ct.pv) + ' ouro'}</button></div>` +
       `<div class="linha"><div class="corpo"><span style="color:#7ab0ff">Poção de mana</span> <span class="nota">${ct.gm}/${ct.max} no cinto</span><small>devolve 40% da mana</small></div><button data-ac="limiar-pocao" data-i="1" title="Toque para mudar a regra">beber abaixo de ${ct.lm}%</button><button data-ac="pocao" data-i="1" ${ct.gm >= ct.max || ct.pm > d.ouroTotal ? 'disabled' : ''}>${ct.gm >= ct.max ? 'Cinto cheio' : fmt(ct.pm) + ' ouro'}</button></div>` +
       `<div class="linha"><div class="corpo">Repor o cinto ao voltar<small>depois de cada descida, compra as poções que faltam com o ouro que houver (depois do reparo)</small></div><button data-ac="repor-pocoes" class="${ct.repor ? 'ativo' : ''}">${ct.repor ? 'Ligado' : 'Desligado'}</button></div>`;
+    // a Bruxa: livros de feitiço
+    h += `<h3>Bruxa · livros de feitiço</h3><p class="nota">Dois livros por descida. Cada livro sobe um nível do feitiço; se faltar Magia para ler, fica guardado. É o jeito certo de aprender o <b>Golem</b>.</p>`;
+    if (!d.bruxa || !d.bruxa.length) h += '<p class="nota">A prateleira enche depois da próxima descida.</p>';
+    (d.bruxa || []).forEach((l, i) => { h += l ? `<div class="linha"><div class="corpo"><span style="color:#9fd0ff">Livro de ${esc(l.nome)}</span> <span class="nota">${l.nivel ? 'você tem nível ' + l.nivel : 'feitiço novo'}</span><small>${l.magia > d.atributos.v[1] ? 'pede Magia ' + l.magia + ' (você tem ' + d.atributos.v[1] + '): ficará guardado' : 'você já pode ler'}</small></div><button data-ac="livro" data-i="${i}" ${l.preco > d.ouroTotal ? 'disabled title="Falta ouro"' : ''}>${fmt(l.preco)} ouro</button></div>` : '<div class="linha"><div class="corpo"><span class="nota">Vendido</span></div></div>'; });
     h += '<h3>Ferreiro · à venda</h3>';
     if (!d.loja.length) h += '<p class="nota">Estoque vendido. Volta cheio depois da próxima expedição.</p>';
     d.loja.forEach((l, i) => {
@@ -1435,10 +1439,17 @@ function atualizarPainel(forcar) {
       h += `<h3>Reparar</h3><div class="linha"><div class="corpo">${gastos.length} ${gastos.length > 1 ? 'itens equipados gastos' : 'item equipado gasto'}${quebrados ? ` · <span style="color:#ff6a6a">${quebrados} quebrado${quebrados > 1 ? 's' : ''}</span>` : ''}<small>Cada descida gasta o que está equipado. Item quebrado não dá bônus nenhum até o reparo.</small></div><button data-ac="reparar-tudo" ${d.ouroTotal > 0 ? '' : 'disabled'}>Reparar tudo · ${fmt(d.reparoTotal)} ouro</button></div>`;
       gastos.forEach(([it, i]) => { h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota" style="color:${it.dur <= 0 ? '#ff6a6a' : ''}">durabilidade ${it.dur}/${it.durMax}${it.dur <= 0 ? ' · quebrado' : ''}</span></div><button data-ac="reparar" data-i="${i}" ${it.reparo > d.ouroTotal ? 'disabled' : ''}>Reparar · ${fmt(it.reparo)} ouro</button></div>`; });
     }
+    // o Ancião: uma dica sobre o que vem pela frente
+    { const prox = (d.recorde || 0) + 1, tm = TEMAS_ANDAR[temaDoAndar(prox)], dicas = [`O andar ${prox} fica em <b>${tm[0]}</b>: ${tm[4]}.`];
+      if (d.acougueiro === 1) dicas.push('O <b>Açougueiro</b> ainda espera atrás da porta do andar 2. Volte forte: ele larga o Cutelo.');
+      if (d.rei === 1) dicas.push('O <b>Rei Esqueleto</b> dorme na tumba do andar 3. Mate o Rei antes dos esqueletos que ele ergue.');
+      const faltam = d.unicos.filter((u) => !u.achado).length; if (faltam) dicas.push(`Ainda há ${faltam} itens Únicos que você não achou. Pesadelo e Inferno guardam os melhores.`);
+      if (d.grimorio[6] && !d.grimorio[6].nivel) dicas.push('Você ainda não conhece o <b>Golem</b>. A Bruxa às vezes tem o livro.');
+      h += `<h3>Ancião</h3><p class="nota" style="font-style:italic">“Fique um pouco e escute.”</p>` + dicas.slice(0, 3).map((t) => `<div class="linha"><div class="corpo"><small style="font-size:13px;color:#d8cfc0">${t}</small></div></div>`).join(''); }
     const fechados = d.inventario.map((it, i) => [it, i]).filter(([it]) => it && it.nid);
     if (fechados.length) {
       const total = fechados.reduce((t, [it]) => t + it.custoId, 0);
-      h += `<h3>Identificar</h3><div class="linha"><div class="corpo">${fechados.length} ${fechados.length > 1 ? 'itens não identificados' : 'item não identificado'} no inventário<small>Raros para cima caem fechados: não equipam nem mostram o que fazem até serem identificados.</small></div><button data-ac="identificar-tudo">Identificar tudo · ${fmt(total)} ouro</button><button data-ac="vender-fechados" title="Vende todos sem identificar, por 40% do valor">Vender fechados · +${fmt(fechados.reduce((t, [it]) => t + (it.trava ? 0 : it.ouro), 0))} ouro</button></div>`;
+      h += `<h3>Ancião · identificar</h3><div class="linha"><div class="corpo">${fechados.length} ${fechados.length > 1 ? 'itens não identificados' : 'item não identificado'} no inventário<small>Raros para cima caem fechados: não equipam nem mostram o que fazem até serem identificados.</small></div><button data-ac="identificar-tudo">Identificar tudo · ${fmt(total)} ouro</button><button data-ac="vender-fechados" title="Vende todos sem identificar, por 40% do valor">Vender fechados · +${fmt(fechados.reduce((t, [it]) => t + (it.trava ? 0 : it.ouro), 0))} ouro</button></div>`;
       fechados.forEach(([it, i]) => { h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${TIPOS[it.tipo]} não identificado</span> <span class="nota">${RARIDADES[it.r]} · nível ${it.nivel}</span></div><button data-ac="identificar" data-i="${i}" ${it.custoId > d.ouroTotal ? 'disabled' : ''}>Identificar · ${fmt(it.custoId)} ouro</button></div>`; });
     }
     h += '<h3>Vender do inventário</h3>';
@@ -1845,6 +1856,7 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'auto-reparo': J.AlternarAutoReparo(); break;
     case 'auto-melhoria': J.AlternarAutoMelhoria(); break;
     case 'repor-pocoes': J.AlternarReporPocoes(); break;
+    case 'livro': if (J.ComprarLivro(i)) { som('bencao'); aviso('Livro de feitiço comprado'); } break;
     case 'limiar-pocao': { const op = i ? [10, 15, 30, 50] : [20, 35, 50, 65], at = +(b.textContent.match(/(\d+)%/) || [0, 0])[1], nx = op[(op.indexOf(at) + 1) % op.length]; J.DefinirLimiarDePocao(i, nx); break; }
     case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;
     case 'melhorar-item': if (J.MelhorarEquipado(i)) { som('golpe'); aviso('Item melhorado'); } break;

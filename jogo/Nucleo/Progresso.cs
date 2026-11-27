@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public int[] LivrosDaBruxa; public int LivrosComprados;   // prateleira da Bruxa (FeiticoId; -1 = vendido)
         public float PocaoVidaLimiar, PocaoManaLimiar;      // regra do jogador: beber abaixo desta fração (0 = padrão do jogo)
         public int PocoesDeVida, PocoesDeMana, PocoesCompradas; public bool SemReporPocoes;   // o cinto (repor ao voltar é ligado por padrão)
         public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
@@ -393,7 +394,7 @@ namespace Necro.Nucleo
             if (p.MissaoReiEsqueleto == 0 && r.ReiEsqueletoSorteio != 0) p.MissaoReiEsqueleto = r.ReiEsqueletoSorteio;
             if (r.ReiEsqueletoMorto) p.MissaoReiEsqueleto = 3;
             if (!r.SemDesgaste) Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento (salvo pelo Santuário Oculto)
-            p.Ouro += (long)Math.Round(r.Ouro * (double)cfg.DificuldadeOuro[r.Dificuldade]); Ferreiro.Renovar(p, cfg);
+            p.Ouro += (long)Math.Round(r.Ouro * (double)cfg.DificuldadeOuro[r.Dificuldade]); Ferreiro.Renovar(p, cfg); Bruxa.Renovar(p, cfg);
             if (!p.SemAutoReparo) Ferreiro.RepararTudo(p, cfg);
             if (cfg.PocoesNoCinto) Pocoes.AoVoltar(p, r, cfg);
             if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);

@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.19f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.20f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
@@ -357,6 +357,9 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        // ---- Bruxa: livros de feitiço à venda ----
+        public int BruxaLivros = 2;
+        public float BruxaPrecoBase = 400f, BruxaPrecoPorNivel = 0.7f, BruxaPrecoPorAndar = 0.06f;
         // ---- Poções e cinto ----
         public bool PocoesNoCinto = true;
         public int CintoPorTipo = 3;                      // poções de vida e de mana que cabem no cinto (cada tipo)

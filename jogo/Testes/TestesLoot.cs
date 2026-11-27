@@ -523,6 +523,23 @@ namespace Necro.Testes
                 foreach (var d in Unicos.Todos) Afirmar(!string.IsNullOrEmpty(d.Efeito), "todo Único tem um efeito descrito (" + d.Nome + ")");
             });
 
+            Teste("Bruxa: prateleira de 2 livros diferentes que muda a cada descida; comprar custa ouro, sobe o nível (ou guarda) e esvazia a vaga", () =>
+            {
+                var p = Progressao.NovoJogo(Cfg); p.SemReporPocoes = true; p.SemAutoReparo = true; p.SemAutoAtributos = true;
+                Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg);
+                Afirmar(p.LivrosDaBruxa != null && p.LivrosDaBruxa.Length == Cfg.BruxaLivros && p.LivrosDaBruxa[0] != p.LivrosDaBruxa[1], "dois livros diferentes na prateleira");
+                Afirmar(!Bruxa.Comprar(p, 0, Cfg), "sem ouro não compra");
+                var id = (FeiticoId)p.LivrosDaBruxa[0]; int antes = Grimorio.Nivel(p, id) + Grimorio.Guardados(p, id); long preco = Bruxa.Preco(p, 0, Cfg);
+                p.Ouro = preco;
+                Afirmar(Bruxa.Comprar(p, 0, Cfg) && p.Ouro == 0, "com o ouro exato, compra");
+                Afirmar(Grimorio.Nivel(p, id) + Grimorio.Guardados(p, id) == antes + 1, "o livro entra no grimório (lido ou guardado)");
+                Afirmar(Bruxa.Preco(p, 0, Cfg) == 0 && !Bruxa.Comprar(p, 0, Cfg), "a vaga fica vazia");
+                int a0 = p.LivrosDaBruxa[1]; bool mudou = false;
+                for (int k = 0; k < 6; k++) { Progressao.AplicarResultado(p, new ResultadoExpedicao(), Cfg); if (p.LivrosDaBruxa[0] >= 0 && (p.LivrosDaBruxa[1] != a0 || p.LivrosDaBruxa[0] != (int)id)) mudou = true; }
+                Afirmar(mudou, "a prateleira deveria mudar entre descidas");
+                p.Ouro = 10000000; Afirmar(Bruxa.ComprarTudo(p, Cfg) == Cfg.BruxaLivros, "ComprarTudo leva a prateleira inteira");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

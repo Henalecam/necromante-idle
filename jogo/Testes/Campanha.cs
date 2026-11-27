@@ -109,6 +109,7 @@ namespace Necro.Testes
             Ferreiro.IdentificarTudo(p, cfg);   // primeiro revela o que caiu sem identificar
             if (p.Loja != null) for (int li = p.Loja.Count - 1; li >= 0; li--) Ferreiro.Comprar(p, li, cfg);
             Equipamento.AutoEquipar(p, cfg);
+            Bruxa.ComprarTudo(p, cfg);          // livros de feitiço da Bruxa, se o ouro der
             Ferreiro.MelhorarTudo(p, cfg);      // o ouro que sobra vira +N no que está vestido
             p.DesmancharAbaixoDe = RaridadeItem.Magico;
         }
