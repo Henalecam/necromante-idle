@@ -315,6 +315,12 @@ namespace Necro.Nucleo
                     Resultado.ChefesDerrotados.Add(ato);
                 }
 
+                if (alvo.Especie == EspecieId.LacaioIgneo && Cfg.HabilidadesDeEspecie)
+                {
+                    _explosoes.Add(new ExplosaoPendente { Pos = alvo.Pos, Dano = alvo.Dano * Cfg.LacaioExplosaoMult, Raio = Cfg.LacaioExplosaoRaio, AtingeInimigos = false, OrigemId = alvo.Id, Tipo = TipoDano.Fogo });
+                    Resultado.LacaiosExplodidos++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 53, Alvo = -1, Origem = alvo.Id, Pos = alvo.Pos, Valor = Cfg.LacaioExplosaoRaio });
+                }
                 if ((alvo.Modificadores & ModificadorElite.Explosivo) != 0)
                     _explosoes.Add(new ExplosaoPendente { Pos = alvo.Pos, Dano = alvo.Dano * Cfg.ExplosaoAoMorrerMult, Raio = Cfg.ExplosaoAoMorrerRaio, AtingeInimigos = false, OrigemId = alvo.Id, Tipo = TipoDano.Fogo });
 

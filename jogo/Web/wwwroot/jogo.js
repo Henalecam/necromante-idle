@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { arautodecinzas: ['acolitocaido', 1.08, '255,110,35', 0.5], diablo: ['diabrete', 1.4, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.35, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.07, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { lacaioigneo: ['diabrete', 1.25, '255,140,30', 0.55], arautodecinzas: ['acolitocaido', 1.08, '255,110,35', 0.5], diablo: ['diabrete', 1.4, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.35, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.07, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // escala como no Diablo 1: o maior monstro tem no máximo ~1,25-1,4× a altura de um esqueleto comum (sprites próprios desenhados grandes demais)
 const ESCALA_D1 = { colossodeossos: 0.73, diabodeguerra: 0.8, abadessacosturada: 0.92, carcereirodealmas: 0.97 };
 const VETOR_D1 = { Diablo: 0.6, Lazarus: 0.62 };
@@ -381,7 +381,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus', Diablo: 'Diablo', ArautoDeCinzas: 'Arauto de Cinzas' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus', Diablo: 'Diablo', ArautoDeCinzas: 'Arauto de Cinzas', LacaioIgneo: 'Lacaio Ígneo' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -511,6 +511,7 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '53') { if (!evento.avisouLacaio) { evento.avisouLacaio = true; aviso('Lacaio Ígneo · explode ao morrer'); anotar('<b>Lacaios Ígneos</b> explodem em fogo quando morrem e queimam os minions em volta. A Lança de Ossos e os feitiços os matam de longe.'); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '52') {   // Arauto de Cinzas: escudo de ossos num aliado dele
     const g = estado.get(+v[3]); if (g) for (let i = 0; i < 12; i++) particulas.push([g.rx + rnd(-0.4, 0.4), g.ry + rnd(-0.3, 0.3), 0.3, rnd(-0.6, 0.6), rnd(-0.4, 0.4), rnd(2, 4.5), i % 3 ? '#e8dcc0' : '#ff8a3a', rnd(0.5, 1)]);
     if (!evento.avisouArauto) { evento.avisouArauto = true; aviso('Arauto de Cinzas · protege os aliados com ossos'); anotar('Um <b>Arauto de Cinzas</b> apareceu: a cada poucos segundos ele ergue um escudo de ossos nos inimigos em volta. Marque-o primeiro.'); }

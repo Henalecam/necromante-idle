@@ -1993,6 +1993,22 @@ namespace Necro.Testes
                 Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
             });
 
+            Teste("Lacaio Ígneo: só a partir do Ato 4; ao morrer explode em fogo e fere os minions em volta, não os inimigos", () =>
+            {
+                var d = TabelaEspecies.Obter(EspecieId.LacaioIgneo);
+                Afirmar(d != null && d.AtoMinimo == 4 && d.Nome == "Lacaio Ígneo", "a espécie existe e é do Ato 4");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.Esqueleto); var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2);
+                foreach (var e0 in s.Entidades) if (e0.Faccao == Faccao.Inimigo) e0.Viva = false;
+                var mi = s.Entidades.Find(e => e.Faccao == Faccao.Minion); var la = s.CriarInimigo(EspecieId.LacaioIgneo, mi.Pos + new Vec2(0.8f, 0f)); var vizinho = s.CriarInimigo(EspecieId.Zumbi, mi.Pos + new Vec2(1.2f, 0.3f));
+                float v0 = mi.Vida; mi.Escudo = 0f; int ev53 = 0; bool fogoNoZumbi = false;
+                s.CausarDano(null, la, la.Vida * 5f, TipoDano.Fisico, false);
+                for (int k = 0; k < 3; k++) { s.Tick(); foreach (var ev in s.Eventos) { if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 53) ev53++; if (ev.Tipo == TipoEvento.Dano && ev.Alvo == vizinho.Id && ev.TipoDano == TipoDano.Fogo) fogoNoZumbi = true; } }
+                Afirmar(!la.Viva && s.Resultado.LacaiosExplodidos == 1, "morreu e explodiu");
+                Afirmar(mi.Vida < v0 || !mi.Viva, "a explosão feriu o minion ao lado (" + v0 + " → " + mi.Vida + ")");
+                Afirmar(!fogoNoZumbi, "e não feriu com fogo o zumbi vizinho");
+            });
+
             Teste("Arauto de Cinzas: só a partir do Ato 3; ergue escudo de ossos nos aliados próximos, a cada tantos segundos", () =>
             {
                 var d = TabelaEspecies.Obter(EspecieId.ArautoDeCinzas);

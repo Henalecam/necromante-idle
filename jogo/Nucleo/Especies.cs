@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[20];
+            var t = new DadosEspecie[21];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -169,6 +169,13 @@ namespace Necro.Nucleo
                 Id = EspecieId.ArautoDeCinzas, Nome = "Arauto de Cinzas", Familia = Familia.Aberracao, Porte = Porte.Medio, Papel = Papel.Suporte,
                 Vida = 80f, Dano = 8f, VelAtaque = 0.6f, Armadura = 10f, Alcance = 6.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Fogo,
                 Resistencias = Res(0f, 0.4f, -0.2f, 0f, 0.2f, 0.25f), AtoMinimo = 3, AndarMinimo = 1, PesoOnda = 2f, CustoOnda = 3f
+            };
+            // Lacaio Ígneo (original): diabo pequeno feito de brasa que corre para cima dos minions e, ao morrer, explode em fogo à volta. Melhor matar de longe.
+            t[(int)EspecieId.LacaioIgneo] = new DadosEspecie
+            {
+                Id = EspecieId.LacaioIgneo, Nome = "Lacaio Ígneo", Familia = Familia.Demonio, Porte = Porte.Pequeno, Papel = Papel.Lutador,
+                Vida = 90f, Dano = 16f, VelAtaque = 1.1f, Armadura = 5f, Alcance = 1.0f, VelMovimento = 3.3f, TipoDano = TipoDano.Fogo,
+                Resistencias = Res(0f, 0.6f, -0.25f, 0f, 0f, 0.25f), AtoMinimo = 4, AndarMinimo = 1, PesoOnda = 1.5f, CustoOnda = 1.5f
             };
             // Chefe do Ato 3 (Diablo 1): o Arcebispo Lázarus. Acende muralhas de fogo sob o grupo, some quando o cercam e chama Súcubos.
             t[(int)EspecieId.Lazarus] = new DadosEspecie
