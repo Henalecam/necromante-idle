@@ -236,6 +236,50 @@ namespace Necro.Testes
         /// Mede a dificuldade seguinte: joga o Normal até abrir o Pesadelo, troca, e marca as horas (contadas desde a troca) até
         /// vencer o chefe do Ato 1 e do Ato 2 no Pesadelo; se abrir o Inferno, troca de novo e mede o chefe do Ato 1 do Inferno.
         /// </summary>
+        /// <summary>
+        /// Mede a Ascensão: joga até vencer o chefe do Ato 1, ascende, gasta as Cinzas (árvore e/ou legados, em rodízio) e joga de novo.
+        /// Devolve as horas de cada vida até o chefe do Ato 1 (mediana das campanhas).
+        /// </summary>
+        public static string MedirAscensao(int campanhas, int vidas, ConfigJogo cfg, bool usarArvore, bool usarLegados, int ato = 1)
+        {
+            var horas = new List<double>[vidas]; var cinzas = new List<double>[vidas];
+            for (int v = 0; v < vidas; v++) { horas[v] = new List<double>(); cinzas[v] = new List<double>(); }
+            double tps = cfg.TicksPorSegundo;
+            for (ulong semente = 1; semente <= (ulong)campanhas; semente++)
+            {
+                var p = Progressao.NovoJogo(cfg); int exp = 0;
+                for (int v = 0; v < vidas; v++)
+                {
+                    long ticks = 0; double h = 999;
+                    while (ticks / tps / 3600.0 < 12.0 * ato)
+                    {
+                        var res = ExecutorSemTela.RodarExpedicao(cfg, p, semente * 7919UL + (ulong)exp++, ModoExpedicao.Avancar, Progressao.AndarDePartida(p, cfg));
+                        ticks += res.Ticks + (long)(20 * tps);
+                        Progressao.AplicarResultado(p, res, cfg);
+                        TurnoDoJogador(p, cfg);
+                        if (p.ChefesDerrotados.Contains(ato)) { h = ticks / tps / 3600.0; break; }
+                    }
+                    horas[v].Add(h);
+                    long ganho = Ascensao.Ascender(p, cfg); cinzas[v].Add(ganho);
+                    bool comprou = true; int rod = 0;
+                    while (comprou)
+                    {
+                        comprou = false;
+                        for (int k = 0; k < 7 && !comprou; k++)
+                        {
+                            int q = (rod + k) % 7;
+                            if (q < 4) { if (usarArvore && Arvore.Comprar(p, q)) comprou = true; }
+                            else if (usarLegados && Ascensao.Comprar(p, q - 4, cfg)) comprou = true;
+                        }
+                        rod++;
+                    }
+                }
+            }
+            var sb = new StringBuilder();
+            for (int v = 0; v < vidas; v++) sb.Append("vida ").Append(v + 1).Append(": chefe do Ato ").Append(ato).Append(" em ").Append(Mediana(horas[v]).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)).Append(" h (rendeu ").Append(Mediana(cinzas[v]).ToString("0")).Append(" Cinzas)\n");
+            return sb.ToString();
+        }
+
         public static bool Rastro;
         public static string MedirDificuldades(int campanhas, double horasMax, ConfigJogo cfg)
         {

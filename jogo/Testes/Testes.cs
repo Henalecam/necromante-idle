@@ -1653,6 +1653,23 @@ namespace Necro.Testes
                 Afirmar(s0.Resultado.Fugas == 0 && s0.Resultado.Banquetes == 0, "desligado, ninguém foge nem come");
             });
 
+            Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
+            {
+                var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };
+                var p = ProgressoCom(EspecieId.Esqueleto, EspecieId.Esqueleto); bool quebrou = false, viu = false;
+                for (ulong sm = 1; sm <= 6 && !viu; sm++)
+                {
+                    var s = new Simulacao(c, p, sm, ModoExpedicao.Avancar, 3) { ReapresentarEventosDeComandos = true }; int g = 0;
+                    while (!s.Encerrada && g++ < 3000 && !viu)
+                    {
+                        s.Tick();
+                        if (quebrou) { foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 21) viu = true; quebrou = false; }
+                        if (!viu && s.Fase == FaseExpedicao.EmOnda) for (int i = 0; i < s.Objetos.Count; i++) if (s.ComandoQuebrar(i)) { quebrou = true; break; }
+                    }
+                }
+                Afirmar(viu, "o evento de objeto quebrado por toque deveria chegar no tick seguinte");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

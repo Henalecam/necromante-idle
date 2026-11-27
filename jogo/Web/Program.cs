@@ -36,7 +36,7 @@ public static partial class Jogo
     static void NovaExpedicao()
     {
         _cfg.ForcarCofre = _forcarCofre; _forcarCofre = false;
-        _sim = new Simulacao(_cfg, _p, 1003UL + _p.ContadorDeSementes++, ModoExpedicao.Avancar, Progressao.AndarDePartida(_p, _cfg));
+        _sim = new Simulacao(_cfg, _p, 1003UL + _p.ContadorDeSementes++, ModoExpedicao.Avancar, Progressao.AndarDePartida(_p, _cfg)) { ReapresentarEventosDeComandos = true };
         Oferendas.ConsumirRito(_p);
         if (_forcarSecreto) { _sim.ForcarNivelSecreto = true; _forcarSecreto = false; } else _cfg.ForcarSecreto = 0;
     }

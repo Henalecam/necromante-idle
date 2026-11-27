@@ -208,9 +208,21 @@ namespace Necro.Nucleo
         // =====================================================================
 
         /// <summary>Avança a simulação em um passo fixo (1 / TicksPorSegundo).</summary>
+        /// <summary>Ligado pela ponte da tela: eventos emitidos por comandos entre dois ticks reaparecem no tick seguinte, em vez de se perderem.</summary>
+        public bool ReapresentarEventosDeComandos;
+        private bool _emTick; private readonly List<EventoSim> _eventosDeComandos = new List<EventoSim>(8);
+
         public void Tick()
         {
+            // eventos nascidos de comandos do jogador entre dois ticks (quebrar um barril, abrir uma porta) não podem se perder: entram neste tick
             Eventos.Clear();
+            if (_eventosDeComandos.Count > 0) { Eventos.AddRange(_eventosDeComandos); _eventosDeComandos.Clear(); }
+            _emTick = true;
+            try { TickInterno(); } finally { _emTick = false; }
+        }
+
+        private void TickInterno()
+        {
             if (Fase == FaseExpedicao.Encerrada) return;
             TickAtual++;
             Resultado.Ticks = TickAtual;
@@ -290,6 +302,7 @@ namespace Necro.Nucleo
             if (!EmitirEventos) return;
             ev.Tick = TickAtual;
             Eventos.Add(ev);
+            if (!_emTick && ReapresentarEventosDeComandos) _eventosDeComandos.Add(ev);   // quem lê os eventos só depois do Tick (a tela) recebe-os no tick seguinte
         }
 
         // =====================================================================

@@ -580,8 +580,8 @@ namespace Necro.Testes
                 var c = new ConfigJogo { MissoesDeCenario = false };
                 var p = Progressao.NovoJogo(c);
                 Afirmar(!Arvore.Comprar(p, 0), "sem Cinzas não compra");
-                p.Cinzas = 4; var b0 = Equipamento.CalcularBonus(p, c);
-                Afirmar(Arvore.Comprar(p, 0) && p.Cinzas == 0 && Arvore.Comprados(p, 0) == 1, "o primeiro nó custa 4 Cinzas");
+                p.Cinzas = Arvore.CustoEmCinzas(0); var b0 = Equipamento.CalcularBonus(p, c);
+                Afirmar(Arvore.Comprar(p, 0) && p.Cinzas == 0 && Arvore.Comprados(p, 0) == 1, "o primeiro nó custa " + Arvore.CustoEmCinzas(0) + " Cinzas");
                 Afirmar(Equipamento.CalcularBonus(p, c).VidaDosMinions > b0.VidaDosMinions, "o nó comprado entra nos bônus (vida dos minions)");
                 p.Cinzas = 1000;
                 for (int k = 1; k < 5; k++) Afirmar(Arvore.Comprar(p, 0), "nós 2 a 5 custam só Cinzas");
