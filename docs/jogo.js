@@ -1259,6 +1259,7 @@ function desenhar(dt) {
     if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
     // raio de luz (Diablo 1): fora da luz do necromante o adormecido é só um vulto escuro
     const naLuz = sala === masm.sala && necro && Math.hypot(gx, gy) <= RAIO_DE_LUZ;
+    if (!naLuz && sala === masm.sala && zoomModo !== 2 && !masm.secreto) { olhosNoEscuro(px, py, 1, ix * 7 + iy * 13); continue; }   // na sala do grupo, fora da luz: só os olhos
     ctx.globalAlpha = naLuz ? 0.95 : 0.9; ctx.filter = naLuz ? 'none' : 'brightness(0.16) saturate(0.4)';
     if (prov) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
@@ -1358,6 +1359,11 @@ function desenhar(dt) {
     const m = s.necro && deFoice && monstros.necromante_foice ? monstros.necromante_foice : monstro(s.especie, s.elite), dvE = dvg && !s.inimigo && !morto ? (deltaDaViagem(s.necro ? 0.02 : 0.05 + 0.3 * ((s.id * 7) % 10) / 10, s.rx - 5, s.ry - 6) || [0, 0, 1, 0]) : null, cen = !s.inimigo && !morto ? cenaDoGrupo(s) : null, [px, py] = cen ? naTela(cen[0], cen[1]) : naTela(s.rx + (dvE ? dvE[0] : 0), s.ry + (dvE ? dvE[1] : 0));
     if (cen && !cen[2]) continue;      // já desceu a escada (ou ainda não entrou)
     if (reforco > 1.01) { ctx.save(); ctx.translate(px, py); ctx.scale(reforco, reforco); ctx.translate(-px, -py); }
+    // raio de luz (Diablo 1): inimigo fora da luz do grupo some no escuro; só dois olhos brilham, e ele surge aos poucos ao entrar na luz
+    const luzA = !morto && s.inimigo ? luzDoInimigo(s, dt) : 1;
+    if (luzA < 1) olhosNoEscuro(px, py, 1 - luzA, s.id);
+    if (luzA < 0.03) { if (reforco > 1.01) ctx.restore(); continue; }
+    ctx.globalAlpha = luzA;
     if (!morto) {
       // cor conta a força: aliados pela qualidade da alma; inimigos pelo perigo (comum sem anel, elite dourado, chefe vermelho)
       const corQ = ['160,160,160', '235,228,210', '110,168,255', '255,216,74', '255,77,106'];
@@ -1435,6 +1441,7 @@ function desenhar(dt) {
       ctx.fillStyle = s.inimigo ? (s.chefe ? '#ff3040' : s.elite ? '#ffb030' : s.campeao ? '#5a9cff' : '#be1414') : (s.necro ? '#6dffa8' : ['#9a9a9a', '#3cc878', '#6ea8ff', '#ffd84a', '#ff4d6a'][Math.max(0, s.qual)] || '#3cc878'); ctx.fillRect(px - w / 2, topo, w * Math.max(0, s.vida), 4);
       if (s.escudo > 0.01) { ctx.fillStyle = '#e8e0c8'; ctx.fillRect(px - w / 2, topo - 3, w * Math.min(1, s.escudo), 2); }   // couraça de ossos / escudo: faixa clara por cima da vida
     }
+    ctx.globalAlpha = 1;
     if (reforco > 1.01) ctx.restore();
   }
   // rótulos das salas: o que há em cada uma, sempre do mesmo tamanho na tela
@@ -2101,7 +2108,7 @@ function toqueNaArena(ev) {
   // sem orbe por perto: o toque marca o inimigo mais próximo do dedo
   let alvoM = null; md = 80 * 80;
   for (const s of estado.values()) {
-    if (!s.viva || !s.inimigo) continue;
+    if (!s.viva || !s.inimigo || (s.luzA !== undefined && s.luzA < 0.5)) continue;   // no escuro não se mira
     const [px, py] = naTela(s.rx, s.ry), d = (px - ax) ** 2 + (py - 45 - ay) ** 2;
     if (d < (s.golpe > 0 ? md * 4 : md) && !(alvoM && alvoM.golpe > 0 && !(s.golpe > 0))) { md = s.golpe > 0 ? d / 4 : d; alvoM = s; }
   }
@@ -2153,6 +2160,7 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__luz = () => JSON.stringify([...estado.values()].filter((e) => e.viva && e.inimigo).map((e) => [e.especie, e.luzA === undefined ? -1 : +e.luzA.toFixed(2), necro ? +Math.hypot(e.rx - necro.rx, e.ry - necro.ry).toFixed(1) : -1]));
 window.__fila = () => {   // testes: fila de tamanhos (escala D1) ao lado de um esqueleto comum, numa tela por cima
   const fila = [['Esqueleto', null], ['Zumbi', null], ['Zumbi', [null, 1.25, '170,20,24', 0.36], 'Açougueiro'], ['Esqueleto', [null, 1.3, '230,200,90', 0.22], 'Rei Esq.'], ['CavaleiroNegro'], ['Magistrado'], ['ColossoDeOssos'], ['DiaboDeGuerra'], ['AbadessaCosturada'], ['CarcereiroDeAlmas'], ['Lazarus'], ['Diablo']];
   const L = 1500, A = 300; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#1a1614'; ctx.fillRect(0, 0, L, A);
@@ -2218,7 +2226,24 @@ $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
 const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'uma descida nova, do andar 1, mas continuando de onde o Normal parou: o andar 1 tem a força do andar 21 · itens 20 níveis acima e mais raros, 30% mais ouro'], ['Inferno', 'outra descida nova: o andar 1 tem a força do andar 41 · itens 40 níveis acima, bem mais raros, 60% mais ouro · é o fim de jogo, longo']];
-const RAIO_DE_LUZ = 7.5;   // em unidades da sala: até onde a luz do necromante mostra os adormecidos
+const RAIO_DE_LUZ = 7.5;
+const LUZ_DO_MINION = 3;   // os minions carregam uma brasa fraca: o inimigo colado neles aparece
+function luzDoInimigo(s, dt) {
+  let alvo = 1;
+  if (zoomModo !== 2 && !zoomLivre && !masm.secreto && !s.chefe && !nomesUnicos.has(s.id) && necro) {
+    alvo = Math.hypot(s.rx - necro.rx, s.ry - necro.ry) <= RAIO_DE_LUZ ? 1 : 0;
+    if (!alvo) for (const a of estado.values()) if (a.viva && !a.inimigo && !a.necro && Math.hypot(s.rx - a.rx, s.ry - a.ry) <= LUZ_DO_MINION) { alvo = 1; break; }
+  }
+  if (s.luzA === undefined) s.luzA = alvo;
+  s.luzA += (alvo - s.luzA) * Math.min(1, (dt || 0.016) * 3.5);
+  return s.luzA;
+}
+function olhosNoEscuro(px, py, forca, id) {
+  const t = performance.now() / 1000, pis = Math.sin(t * 0.7 + id * 1.3) > 0.93 ? 0.15 : 1, a = forca * pis * (0.45 + 0.2 * Math.sin(t * 2 + id));
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,70,40,${a})`;
+  for (const dx of [-5, 5]) { const ox = px + dx + Math.sin(id) * 2, g = ctx.createRadialGradient(ox, py - 70, 0, ox, py - 70, 7); g.addColorStop(0, `rgba(255,90,50,${a})`); g.addColorStop(1, 'rgba(255,30,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ox, py - 70, 7, 0, 7); ctx.fill(); ctx.fillStyle = `rgba(255,200,150,${a})`; ctx.beginPath(); ctx.ellipse(ox, py - 70, 2.6, 1.6, 0, 0, 7); ctx.fill(); }
+  ctx.restore();
+}   // em unidades da sala: até onde a luz do necromante mostra os adormecidos
 const NOMES_ZOOM = ['Perto', 'Sala', 'Andar inteiro'];
 const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };
 $('b-zoom').addEventListener('click', () => { aprendeu('mapa'); if (zoomLivre || pan[0] || pan[1]) { zoomLivre = 0; pan = [0, 0]; pintarZoom(); return; } zoomModo = (zoomModo + 1) % 3; try { localStorage.setItem('necromante-idle-save-v1-zoom', String(zoomModo)); } catch (e) { /* tudo bem */ } pintarZoom(); });

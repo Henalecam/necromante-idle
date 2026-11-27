@@ -18,7 +18,7 @@ battle.net clássico (pacotes de campeões/únicos).
 1. [feito] Hordas maiores em matilhas + pacotes de Campeões (azuis).
 2. [feito] Únicos com nome próprio e séquito (nome dourado sobre a barra; 1-2 por andar a partir do andar 4), com prêmio garantido.
 3. [feito] Objetos quebráveis dentro das salas: barris (ossos/explosivos), sarcófagos (esqueleto sai ou tesouro), urnas — os minions quebram ao passar.
-4. [feito, parte 1: névoa por sala e raio de luz no cliente; falta inimigos invisíveis fora da luz dentro da própria sala] Luz e névoa: raio de luz ao redor do grupo; salas não visitadas escuras no mapa (silhueta), reveladas ao entrar; inimigos fora da luz invisíveis.
+4. [feito: névoa por sala, raio de luz e (item 194) inimigos invisíveis fora da luz, só olhos] Luz e névoa: raio de luz ao redor do grupo; salas não visitadas escuras no mapa (silhueta), reveladas ao entrar; inimigos fora da luz invisíveis.
 5. [feito: ouro + Ferreiro compra e vende; reparo vai com a fatia 6] Ouro como moeda própria (cai dos monstros/objetos) + Mercador da cidade: comprar, vender, reparar.
 6. [feito: 6a não identificados + 6b durabilidade e reparo] Itens não identificados (identificar custa ouro ou pergaminho) e durabilidade com reparo.
 7. [já existia: o inventário é uma grade limitada (Cfg.LarguraDoInventario x AlturaDoInventario) com itens de tamanhos diferentes] Inventário em grade de espaço limitado.
