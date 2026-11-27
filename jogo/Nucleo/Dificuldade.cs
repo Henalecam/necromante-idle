@@ -32,5 +32,22 @@ namespace Necro.Nucleo
         {
             if (r.Dificuldade == p.DificuldadeLiberada && p.DificuldadeLiberada < Maxima && (r.ChefesVencidosNaDescida.Contains(cfg.DificuldadeAbreNoAto) || r.ChefesDerrotados.Contains(cfg.DificuldadeAbreNoAto))) p.DificuldadeLiberada++;
         }
+    
+        /// <summary>
+        /// Resistências de um inimigo nesta dificuldade: o que ele já resistia sobe; a partir do limiar vira imunidade.
+        /// Dano físico nunca tem imunidade (o exército sempre consegue matar). Devolve os bits de imunidade por TipoDano.
+        /// </summary>
+        public static int AplicarResistencias(float[] res, int dif, ConfigJogo cfg)
+        {
+            if (!cfg.ImunidadesDeInimigos || dif <= 0 || dif >= cfg.DificuldadeResistencia.Length) return 0;
+            int bits = 0;
+            for (int i = 1; i < res.Length; i++)
+            {
+                if (res[i] <= 0f) continue;
+                res[i] += cfg.DificuldadeResistencia[dif];
+                if (res[i] >= cfg.ImunidadeAPartirDe - 1e-4f) { res[i] = 1f; bits |= 1 << i; }
+            }
+            return bits;
+        }
     }
 }

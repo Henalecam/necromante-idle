@@ -629,6 +629,7 @@ namespace Necro.Nucleo
             float escala = Formulas.EscalaInimigo(AndarEfetivo, Cfg);
             e.VidaMax = d.Vida * Cfg.FatorVidaInimigo * escala * _pVidaInimigo * Cfg.DificuldadeVida[_dif];
             e.Dano = d.Dano * Cfg.FatorDanoInimigo * escala * Cfg.DificuldadeDano[_dif];
+            e.Imune = Dificuldades.AplicarResistencias(e.Resistencias, _dif, Cfg);
             if (chefe)
             {
                 e.Chefe = true;

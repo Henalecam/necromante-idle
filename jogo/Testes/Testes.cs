@@ -1683,6 +1683,30 @@ namespace Necro.Testes
                 Afirmar(s0.Resultado.Flancos == 0, "desligado, ninguém flanqueia");
             });
 
+            Teste("imunidades como no Diablo 1: no Pesadelo a resistência sobe, a partir do limiar vira imunidade (nunca a físico), e o golpe imune não fere", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.Esqueleto);
+                var sn = new Simulacao(c, p, 1, ModoExpedicao.Avancar, 3);
+                var zn = sn.CriarInimigo(EspecieId.Zumbi, new Vec2(5, 5));
+                Afirmar(zn.Imune == 0 && Math.Abs(zn.Resistencias[(int)TipoDano.Veneno] - 0.5f) < 1e-4f, "no Normal nada muda");
+                p.DificuldadeLiberada = 2; p.Dificuldade = 1;
+                var sp = new Simulacao(c, p, 1, ModoExpedicao.Avancar, 3);
+                var z = sp.CriarInimigo(EspecieId.Zumbi, new Vec2(5, 5)); z.Vida = z.VidaMax;
+                Afirmar((z.Imune & (1 << (int)TipoDano.Veneno)) != 0, "Zumbi (50% a veneno) fica imune a veneno no Pesadelo");
+                Afirmar((z.Imune & 1) == 0 && z.Resistencias[(int)TipoDano.Fogo] < 0f, "físico nunca é imune e a fraqueza a fogo continua");
+                var esq = sp.CriarInimigo(EspecieId.Esqueleto, new Vec2(6, 5));
+                Afirmar(esq.Imune == 0 && Math.Abs(esq.Resistencias[(int)TipoDano.Veneno] - 0.5f) < 1e-4f, "Esqueleto (30% a veneno) no Pesadelo só resiste mais: " + esq.Resistencias[(int)TipoDano.Veneno]);
+                float v0 = z.Vida;
+                Afirmar(sp.CausarDano(null, z, 50f, TipoDano.Veneno, false) == 0f && z.Vida == v0 && sp.Resultado.GolpesEmImunes == 1, "veneno não fere o imune");
+                Afirmar(sp.CausarDano(null, z, 50f, TipoDano.Fogo, false) > 0f && z.Vida < v0, "fogo fere (e mais, pela fraqueza)");
+                p.Dificuldade = 2;
+                var si = new Simulacao(c, p, 1, ModoExpedicao.Avancar, 3);
+                Afirmar((si.CriarInimigo(EspecieId.Esqueleto, new Vec2(5, 5)).Imune & (1 << (int)TipoDano.Veneno)) == 0 && (si.CriarInimigo(EspecieId.Aparicao, new Vec2(5, 6)).Imune & (1 << (int)TipoDano.Sombra)) != 0, "no Inferno mais espécies ficam imunes (Aparição a sombra)");
+                var c0 = new ConfigJogo { ImunidadesDeInimigos = false };
+                Afirmar(new Simulacao(c0, p, 1, ModoExpedicao.Avancar, 3).CriarInimigo(EspecieId.Zumbi, new Vec2(5, 5)).Imune == 0, "desligado, ninguém é imune");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

@@ -235,7 +235,18 @@ public static partial class Jogo
             sb.Append("{\"nome\":").Append(S(TabelaEspecies.Obter(id).Nome)).Append(",\"mortes\":").Append(Bestiario.Mortes(_p, id) + (e < _sim.Resultado.MortesPorEspecie.Length ? _sim.Resultado.MortesPorEspecie[e] : 0))
               .Append(",\"dominio\":").Append(Bestiario.Dominio(_p, id, _cfg)).Append(",\"max\":").Append(_cfg.MarcosDoBestiario.Length)
               .Append(",\"prox\":").Append(Bestiario.ProximoMarco(_p, id, _cfg)).Append(",\"bonus\":").Append((int)Math.Round(100 * _cfg.BonusPorDominio * Bestiario.Dominio(_p, id, _cfg)))
-              .Append(",\"porNivel\":").Append((int)Math.Round(100 * _cfg.BonusPorDominio)).Append(",\"conhecida\":").Append(B(_p.EspeciesConhecidas.Contains(id))).Append('}');
+              .Append(",\"porNivel\":").Append((int)Math.Round(100 * _cfg.BonusPorDominio)).Append(",\"conhecida\":").Append(B(_p.EspeciesConhecidas.Contains(id)));
+            {   // resistências da espécie em cada dificuldade: porcentagem por tipo de dano; 100 = imune
+                sb.Append(",\"res\":[");
+                for (int df = 0; df < 3; df++)
+                {
+                    var rr = (float[])TabelaEspecies.Obter(id).Resistencias.Clone(); Dificuldades.AplicarResistencias(rr, df, _cfg);
+                    if (df > 0) sb.Append(','); sb.Append('[');
+                    for (int t = 0; t < 6; t++) { if (t > 0) sb.Append(','); sb.Append((int)Math.Round(100 * rr[t])); }
+                    sb.Append(']');
+                }
+                sb.Append("]}");
+            }
         }
         sb.Append("],\"minions\":[");
         for (int i = 0; i < _p.Minions.Count; i++)

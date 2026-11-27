@@ -413,6 +413,10 @@ namespace Necro.Nucleo
         public int DificuldadeAbreNoAto = 2;                                  // vencer o chefe deste Ato abre a dificuldade seguinte
         public int[] DificuldadeAndaresExtras = { 0, 20, 40 };                // o Pesadelo continua de onde o Normal parou: andar 1 do Pesadelo tem a força do andar 21
         public float[] DificuldadeVida = { 1f, 1.15f, 1.3f };                 // vida dos inimigos, por cima disso
+        // Como no Diablo 1: no Pesadelo e no Inferno o que o inimigo já resistia vira resistência maior, e acima do limiar vira IMUNIDADE (nunca a dano físico).
+        public bool ImunidadesDeInimigos = true;
+        public float[] DificuldadeResistencia = { 0f, 0.2f, 0.35f };
+        public float ImunidadeAPartirDe = 0.7f;
         public float[] DificuldadeDano = { 1f, 1.1f, 1.2f };                  // dano dos inimigos
         public float[] DificuldadeOssos = { 1f, 1.15f, 1.3f };
         public float[] DificuldadeOuro = { 1f, 1.3f, 1.6f };

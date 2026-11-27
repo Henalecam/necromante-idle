@@ -444,6 +444,11 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && v[14] === '38') {
+    const g = estado.get(+v[3]), TDI = { Fisico: 'físico', Fogo: 'fogo', Gelo: 'gelo', Raio: 'raio', Veneno: 'veneno', Sombra: 'sombra' }; numeros.push({ x: g ? g.x : +v[10], y: g ? g.y : +v[11], txt: 'Imune', cor: '#b0b8c8', t: 1, amigo: false });
+    vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['38']) { vistosDeEspecie['38'] = 1; aviso('Imune a ' + (TDI[v[5]] || 'esse dano') + ' · veja as imunidades no Bestiário'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '37') {
     const g = estado.get(+v[3]); numeros.push({ x: g ? g.x : +v[10], y: g ? g.y : +v[11], txt: 'Cercam!', cor: '#ffd27a', t: 1, amigo: false });
     vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['37']) { vistosDeEspecie['37'] = 1; aviso('Bestas não vêm de frente · a matilha cerca pelos flancos'); }
@@ -1552,11 +1557,14 @@ function atualizarPainel(forcar) {
       if (!b.mortes && !b.conhecida) { h += '<div class="linha"><div class="corpo"><span class="nota">??? · espécie ainda não encontrada</span></div></div>'; return; }
       const pct = b.prox ? Math.min(100, Math.round(100 * b.mortes / b.prox)) : 100;
       const kb = b.nome.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase(), hb = HABILIDADE[kb];
+      const TD = ['físico', 'fogo', 'gelo', 'raio', 'veneno', 'sombra'], rs = (b.res && b.res[d.dif]) || [], imu = [], rst = [], frc = [];
+      rs.forEach((v, t) => { if (v >= 100) imu.push(TD[t]); else if (v > 0) rst.push(TD[t] + ' ' + v + '%'); else if (v < 0) frc.push(TD[t] + ' +' + (-v) + '%'); });
+      const linhaRes = (imu.length ? `<b style="color:#ff8a6a;font-weight:normal">Imune a ${imu.join(', ')}</b> · ` : '') + (rst.length ? 'resiste a ' + rst.join(', ') : '') + (frc.length ? (rst.length ? ' · ' : '') + `<span style="color:#8fd89f">fraco a ${frc.join(', ')}</span>` : '');
       h += `<div class="linha">${monstros[kb] ? thumb(kb) : ''}<div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
-        `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
+        `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${linhaRes ? `<small>Como inimigo (${DIFICULDADES[d.dif][0]}): ${linhaRes}</small>` : ''}${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
   } else if (aba === 'necropole') {
-    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
+    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, e nas mais altas os inimigos resistem mais e alguns ficam <b>imunes</b> a um tipo de dano (o Bestiário mostra quais); com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
     DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
     h += '<h3>Construções</h3>';
     d.construcoes.forEach((c, i) => {

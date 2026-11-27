@@ -17,6 +17,12 @@ namespace Necro.Nucleo
         public float CausarDano(Entidade atacante, Entidade alvo, float danoBase, TipoDano tipo, bool golpe)
         {
             if (alvo == null || !alvo.Viva || danoBase <= 0f) return 0f;
+            if (alvo.Imune != 0 && (alvo.Imune & (1 << (int)tipo)) != 0)
+            {
+                Resultado.GolpesEmImunes++;
+                if (alvo.ImuneAviso == 0f || TickAtual * DT - alvo.ImuneAviso >= 1.5f) { alvo.ImuneAviso = TickAtual * DT + 0.001f; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 38, Alvo = alvo.Id, Origem = atacante != null ? atacante.Id : -1, TipoDano = tipo, Pos = alvo.Pos }); }
+                return 0f;
+            }
             // Habilidade da espécie — Esqueleto erguido: apara o primeiro golpe que recebe em cada sala
             if (golpe && atacante != null && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.Esqueleto && !alvo.Aparou && Cfg.HabilidadesDeEspecie)
             {
