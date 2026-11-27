@@ -1626,6 +1626,26 @@ namespace Necro.Testes
                 Afirmar(s0.Resultado.DespertaresPorProximidade == 0 && !s0.HaAlvoDeMarcha, "desligado, vale o despertar antigo por tempo");
             });
 
+            Teste("comportamento por espécie: diabretes fogem ao ver um companheiro morrer, carniçais feridos devoram cadáveres, e a descida não trava", () =>
+            {
+                int fugas = 0, banquetes = 0, concluiu = 0;
+                for (ulong sm = 1; sm <= 8; sm++)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                    var s = new Simulacao(c, p, sm, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 3 }; int g = 0;
+                    while (!s.Encerrada && g++ < 60000) s.Tick();
+                    fugas += s.Resultado.Fugas; banquetes += s.Resultado.Banquetes; if (s.Encerrada) concluiu++;
+                }
+                Console.WriteLine("        (fugas: " + fugas + ", banquetes: " + banquetes + ")");
+                Afirmar(concluiu == 8, "nenhuma descida deveria travar (" + concluiu + "/8)");
+                Afirmar(fugas >= 3, "diabretes deveriam fugir ao ver companheiros morrerem (" + fugas + ")");
+                var c0 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ComportamentoDeEspecie = false };
+                var p0 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p0.NivelNecromante = 30;
+                var s0 = new Simulacao(c0, p0, 1, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g0 = 0; while (!s0.Encerrada && g0++ < 60000) s0.Tick();
+                Afirmar(s0.Resultado.Fugas == 0 && s0.Resultado.Banquetes == 0, "desligado, ninguém foge nem come");
+            });
+
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>
             {
                 Simulacao AteOSantuario(ConfigJogo c, EstadoProgresso p)

@@ -199,6 +199,7 @@ namespace Necro.Nucleo
                 Overkill = overkill, Execucao = execucao, Dir = dir, Pos = alvo.Pos, Especie = alvo.Especie, TipoDano = tipo, Valor = danoFinal
             });
 
+            if (Cfg.ComportamentoDeEspecie && alvo.Faccao == Faccao.Inimigo) AoMorrerInimigoPerto(alvo);
             if (Cfg.HabilidadesDeEspecie)
             {
                 // Zumbi erguido: ao cair, solta um miasma que envenena os inimigos em volta

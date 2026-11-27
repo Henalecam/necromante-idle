@@ -97,6 +97,73 @@ namespace Necro.Nucleo
             e.Animacao = EstadoAnimacao.Andando;
         }
 
+        /// <summary>
+        /// Comportamentos próprios de espécie dos inimigos (Diablo 1). Devolve true se a unidade já agiu neste tick.
+        /// Diabrete: foge por uns segundos quando vê um companheiro morrer (ver AoMorrerInimigoPerto) e depois volta.
+        /// Carniçal: ferido, vai até um cadáver e o devora para se curar. Atirador: recua enquanto recarrega se chegam perto.
+        /// </summary>
+        private bool ComportamentoDeEspecie(Entidade e)
+        {
+            if (e.Chefe || e.Unico) return false;
+            if (e.FugaTempo > 0f)
+            {
+                e.FugaTempo -= DT;
+                var h = HostilMaisProximo(e, e.Pos, float.MaxValue);
+                if (h == null) { e.FugaTempo = 0f; return false; }
+                Vec2 fuga = (e.Pos - h.Pos).Normalizado;
+                MoverPara(e, Limitar(e.Pos + fuga * 2f)); e.Animacao = EstadoAnimacao.Andando;
+                return true;
+            }
+            if (e.Especie == EspecieId.Carnical && !e.Elite)
+            {
+                if (e.ComendoTempo > 0f)
+                {
+                    e.ComendoTempo -= DT; e.Animacao = EstadoAnimacao.Conjurando;
+                    if (e.ComendoTempo <= 0f)
+                    {
+                        float cura = e.VidaMax * Cfg.BanqueteInimigoCura; e.Vida = Math.Min(e.VidaMax, e.Vida + cura); e.JaComeu = true;
+                        Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 31, Alvo = e.Id, Origem = -1, Valor = cura, Pos = e.Pos });
+                    }
+                    return true;
+                }
+                if (!e.JaComeu && e.Vida < e.VidaMax * Cfg.BanqueteInimigoVida)
+                {
+                    int melhor = -1; float md = Cfg.BanqueteInimigoRaio * Cfg.BanqueteInimigoRaio;
+                    for (int i = 0; i < Cadaveres.Count; i++) { float d2 = Vec2.Dist2(Cadaveres[i].Pos, e.Pos); if (d2 < md) { md = d2; melhor = i; } }
+                    if (melhor >= 0)
+                    {
+                        if (md <= 0.6f * 0.6f) { Cadaveres.RemoveAt(melhor); e.ComendoTempo = Cfg.BanqueteInimigoTempo; Resultado.Banquetes++; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 32, Alvo = e.Id, Origem = -1, Pos = e.Pos }); }
+                        else { MoverPara(e, Cadaveres[melhor].Pos); e.Animacao = EstadoAnimacao.Andando; }
+                        return true;
+                    }
+                }
+            }
+            if (e.Papel == Papel.Atirador && e.Recarga > 0f && !e.Elite)
+            {
+                var perto = HostilMaisProximo(e, e.Pos, float.MaxValue);
+                if (perto != null && Vec2.Dist2(perto.Pos, e.Pos) < Cfg.AtiradorInimigoRecuaDist * Cfg.AtiradorInimigoRecuaDist)
+                {
+                    Vec2 fuga = (e.Pos - perto.Pos).Normalizado; var destino = Limitar(e.Pos + fuga * 1.0f);
+                    if (Vec2.Dist2(destino, e.Pos) > 0.25f) { MoverPara(e, destino); return true; }   // encurralado na parede: fica e atira
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Um inimigo morreu: os diabretes por perto perdem a coragem e fogem (como os Caídos do Diablo 1).</summary>
+        private void AoMorrerInimigoPerto(Entidade morto)
+        {
+            float r2 = Cfg.FugaRaio * Cfg.FugaRaio; int n = 0;
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var o = Entidades[i];
+                if (!o.Viva || o == morto || o.Faccao != Faccao.Inimigo || o.Especie != EspecieId.Diabrete || o.Elite || o.Unico || o.Campeao || o.FugasFeitas >= Cfg.FugaMaximo || o.FugaTempo > 0f) continue;
+                if (Vec2.Dist2(o.Pos, morto.Pos) > r2) continue;
+                o.FugaTempo = Cfg.FugaDuracao; o.FugasFeitas++; n++;
+            }
+            if (n > 0) { Resultado.Fugas += n; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 30, Valor = n, Alvo = -1, Origem = -1, Pos = morto.Pos }); }
+        }
+
         private void Ocioso(Entidade e)
         {
             // Sala com inimigos ainda adormecidos e ninguém acordado: a linha de frente marcha até eles (atiradores e conjuradores seguram o posto).
@@ -207,6 +274,7 @@ namespace Necro.Nucleo
             if (e.TempoAcao > 0f) { e.TempoAcao -= DT; return; } // presa na animação de ataque/conjuração
 
             bool inimigo = e.Faccao == Faccao.Inimigo;
+            if (inimigo && Cfg.ComportamentoDeEspecie && ComportamentoDeEspecie(e)) return;
             if (inimigo && (e.Elite || e.Chefe) && GolpeBrutal(e)) return;
             if (inimigo && e.Chefe && HabilidadeDoChefe(e)) return;
 

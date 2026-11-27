@@ -414,6 +414,13 @@ function evento(v) {
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '26') { const bp = $('b-porta'); if (bp) bp.hidden = true; return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '27') { const n = Math.round(+v[4] || 0); aviso(`Emboscada no corredor! ${n} inimigos em cima do grupo`); anotar(`<b style="color:#ff8a6a">Emboscada no corredor:</b> ${n} inimigos caíram sobre o grupo antes de ele formar.`); som('chefe'); tremor = Math.max(tremor, 0.35); return; }
+  if (tipo === 'EfeitoAplicado' && (v[14] === '30' || v[14] === '31' || v[14] === '32')) {   // comportamento de espécie: avisa só na primeira vez de cada um por descida
+    const k = v[14]; vistosDeEspecie = vistosDeEspecie || {};
+    const g = estado.get(+v[3]), qx = g ? g.x : +v[10], qy = g ? g.y : +v[11];
+    numeros.push({ x: qx, y: qy, txt: k === '30' ? 'Fogem!' : k === '32' ? 'Devora o cadáver' : '+' + Math.round(+v[4] || 0), cor: k === '30' ? '#ffd27a' : '#c8ff9a', t: 1, amigo: false });
+    if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '29') { aviso('O Golem de Ossos se ergue'); som('chefe'); tremor = Math.max(tremor, 0.3); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '28') { aviso('★ Um item Único caiu!'); anotar('<b style="color:#ffcf5a">★ Um item Único caiu.</b> Identifique-o no Ferreiro para ver qual é.'); som('chefe'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '24') { const nf = ['Lança de Ossos', 'Drenar Vida', 'Explosão de Cadáver', 'Reerguer', 'Maldição da Fraqueza', 'Sacrifício', 'Golem de Ossos'][Math.round(+v[4] || 0)] || 'feitiço'; aviso('Livro de feitiço · ' + nf); anotar(`Você achou um <b style="color:#9fd0ff">Livro de ${nf}</b>. Será lido ao voltar (se a Magia permitir).`); som('bencao'); return; }
@@ -640,6 +647,7 @@ const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
+let vistosDeEspecie = null;
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
