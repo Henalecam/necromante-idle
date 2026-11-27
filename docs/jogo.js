@@ -1195,8 +1195,18 @@ function desenhar(dt) {
     for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? (zoomModo === 1 ? (visivel < CW * 0.7 ? 0.6 : 1.5) : 3) : !s.inimigo && visivel < CW * 0.7 ? 1.5 : 1; sx += px * w; sy += py * w; n += w; }
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
+    if (zoomModo === 1 && !zoomLivre && !dvg && visivel < CW * 0.7) {
+      // tela estreita: enquadra a luta — meio do caminho entre os minions e os inimigos visíveis mais perto deles (o necromante fica de fora)
+      let mx = 0, my = 0, mn = 0; const ini = [];
+      for (const s of estado.values()) { if (!s.viva || s.necro) continue; const [px, py] = naTela(s.rx, s.ry); if (!s.inimigo) { mx += px; my += py; mn++; } else if (s.luzA === undefined || s.luzA > 0.5) ini.push([px, py]); }
+      if (mn && ini.length) {
+        mx /= mn; my /= mn; ini.sort((a, b) => (a[0] - mx) ** 2 + (a[1] - my) ** 2 - (b[0] - mx) ** 2 - (b[1] - my) ** 2);
+        let ex = 0, ey = 0; const k = Math.min(3, ini.length); for (let q = 0; q < k; q++) { ex += ini[q][0]; ey += ini[q][1]; }
+        cx = (mx + ex / k) / 2; cy = (my + ey / k) / 2;
+      }
+    }
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.085; }
-    else if (zoomModo === 1 && !zoomLivre && mapa.length && !dvg) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); cy = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
+    else if (zoomModo === 1 && !zoomLivre && mapa.length && !dvg) { const o = offDaSala(masm.sala), mA = W(o[0], o[1] + 6), mB = W(o[0] + 20, o[1] + 6), meio = (mA[0] + mB[0]) / 2, folga = Math.max(0, (CW * 0.96 - visivel) / 2); cx = Math.max(meio - folga, Math.min(meio + folga, cx)); const cyS = W(o[0] + 10, o[1] + 6)[1] - visAlt * 0.04; cy = visivel < CW * 0.7 ? cyS * 0.4 + cy * 0.6 : cyS; }   // modo Sala: a câmera fica presa à sala e só desliza de lado atrás da luta
     const eEl = $('encruzilhada'), painelEscolha = zoomModo !== 2 && ((!eEl.hidden && !eEl.classList.contains('min')) || !$('bencaos').hidden);   // com um painel de escolha aberto, a ação desce para continuar à vista
     const ax = cx + pan[0] - visivel / 2, ay = cy + pan[1] - visAlt * (painelEscolha ? 0.67 : 0.56), kc = Math.min(1, dt * (arrasto && arrasto.moveu ? 30 : 3));
     if (camForcar || (camSalto && zoomModo === 2 && !zoomLivre)) { camSalto = false; camForcar = false; camX = ax; camY = ay; escAtual = escAlvo; }   // andar novo: o mapa inteiro já aparece enquadrado
