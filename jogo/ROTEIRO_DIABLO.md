@@ -57,3 +57,6 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - C3. [feito: aba "Cidade" com Curandeira, Bruxa (livros), Ferreiro e Ancião (dicas e identificar)] Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
 - C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos; falta o jogador escolher os limiares] Poções e cinto: vida e mana, uso automático com regra do jogador.
 - C5. [feito: 5 ramos de 8 nós (o quinto, Herança, acelera a vida seguinte: medido -13% na vida 2 e -22% na vida 3), Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
+
+- D1. [feito no item 179] Ato 3 (andares 21-30) com chefe próprio: Arcebispo Lázarus (muralha de fogo inimiga, teleporte, Súcubos). Medido: 20,68 h na primeira vida.
+- D2. [a fazer] Ato 4 (andares 31-40) com o chefe final, Diablo, e um desfecho de campanha.

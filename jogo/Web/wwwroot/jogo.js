@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { lazarus: ['acolitocaido', 1.9, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -376,7 +376,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -460,11 +460,11 @@ function evento(v) {
     return;
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '39') {
-    muralhaFx = { a: [+v[10], +v[11]], d: [+v[12], +v[13]], t0: tempoSim, dur: +v[4] || 6, so: [so[0], so[1]] }; som('bencao'); clarao = Math.max(clarao, 0.25);
-    vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['39']) { vistosDeEspecie['39'] = 1; aviso('Muralha de Fogo · queima quem atravessa'); }
+    const inimigaM = v[6] === '1' || v[6] === 'True' || v[6] === 'true'; muralhasFx.push({ a: [+v[10], +v[11]], d: [+v[12], +v[13]], t0: tempoSim, dur: +v[4] || 6, so: [so[0], so[1]], ini: inimigaM }); if (muralhasFx.length > 6) muralhasFx.shift(); som(inimigaM ? 'perigo' : 'bencao'); clarao = Math.max(clarao, 0.25);
+    vistosDeEspecie = vistosDeEspecie || {}; const kM = inimigaM ? '39i' : '39'; if (!vistosDeEspecie[kM]) { vistosDeEspecie[kM] = 1; aviso(inimigaM ? 'Lázarus acende uma muralha de fogo sob o grupo!' : 'Muralha de Fogo · queima quem atravessa'); }
     return;
   }
-  if (tipo === 'EfeitoAplicado' && v[14] === '40') { muralhaFx = null; return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '40') { muralhasFx = []; return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '38') {
     const g = estado.get(+v[3]), TDI = { Fisico: 'físico', Fogo: 'fogo', Gelo: 'gelo', Raio: 'raio', Veneno: 'veneno', Sombra: 'sombra' }; numeros.push({ x: g ? g.x : +v[10], y: g ? g.y : +v[11], txt: 'Imune', cor: '#b0b8c8', t: 1, amigo: false });
     vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['38']) { vistosDeEspecie['38'] = 1; aviso('Imune a ' + (TDI[v[5]] || 'esse dano') + ' · veja as imunidades no Bestiário'); }
@@ -707,6 +707,7 @@ function atualizarFicha() {
         ((imu.length ? `<span class="im">Imune a ${imu.join(', ')}</span>` : '') + (rst.length ? (imu.length ? ' · ' : '') + 'resiste a ' + rst.join(', ') : '') + (frc.length ? (imu.length || rst.length ? ' · ' : '') + `<span class="fr">fraco a ${frc.join(', ')}</span>` : '') || 'sem resistências');
     }
   }
+  if (h) { let chefeVivo = false; for (const eC of estado.values()) if (eC.viva && eC.chefe && eC.inimigo) { chefeVivo = true; break; } c.style.top = chefeVivo ? '104px' : ''; }
   if (h !== fichaTxt) { fichaTxt = h; c.innerHTML = h; c.hidden = !h; }
 }
 function atualizarLicao() {
@@ -739,7 +740,7 @@ let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null, raiosFx = [], teleFx = [];
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -832,7 +833,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
 // ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----
-const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1 };
+const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1 };
 function adorno(especie, camada, px, py, e, id) {
   const t = performance.now() / 1000 + id * 0.37;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -860,6 +861,18 @@ function adorno(especie, camada, px, py, e, id) {
       ctx.fillStyle = '#2a0f4a'; ctx.strokeStyle = '#12061f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px - 10 * e, hy + 12 * e); ctx.quadraticCurveTo(px - 8 * e, hy - 8 * e, px + 2 * e, hy - 26 * e); ctx.quadraticCurveTo(px + 9 * e, hy - 6 * e, px + 10 * e, hy + 12 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(210,150,255,${0.6 + 0.3 * Math.sin(t * 4)})`; ctx.lineWidth = 2 * e; ctx.beginPath(); ctx.ellipse(px, hy - 30 * e, 12 * e, 4 * e, 0, 0, 7); ctx.stroke();
       for (const l of [-1, 1]) { const mx = px + l * 17 * e, my = py - 56 * e + Math.sin(t * 6 + l) * 2 * e, g2 = ctx.createRadialGradient(mx, my, 0, mx, my, 11 * e); g2.addColorStop(0, 'rgba(240,210,255,0.95)'); g2.addColorStop(0.4, 'rgba(170,80,255,0.6)'); g2.addColorStop(1, 'rgba(120,40,220,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(mx, my, 11 * e, 0, 7); ctx.fill(); }
+    }
+  } else if (especie === 'Lazarus') {
+    if (camada === 0) {          // cajado alto com um globo de sangue aceso na ponta
+      ctx.strokeStyle = '#2a1608'; ctx.lineWidth = 4 * e; ctx.beginPath(); ctx.moveTo(px + 20 * e, py - 4 * e); ctx.lineTo(px + 24 * e, py - 128 * e); ctx.stroke();
+      const gx = px + 24 * e, gy = py - 134 * e, g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 16 * e); g.addColorStop(0, `rgba(255,200,180,${0.9 + 0.1 * Math.sin(t * 5)})`); g.addColorStop(0.4, 'rgba(220,30,30,0.7)'); g.addColorStop(1, 'rgba(160,0,0,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, 16 * e, 0, 7); ctx.fill();
+    } else {                     // mitra de arcebispo, vermelha com friso dourado, e estola
+      const hy = py - 104 * e;
+      ctx.fillStyle = '#7a0c12'; ctx.strokeStyle = '#d9b25f'; ctx.lineWidth = 1.5 * e;
+      ctx.beginPath(); ctx.moveTo(px - 9 * e, hy + 10 * e); ctx.lineTo(px - 10 * e, hy - 8 * e); ctx.lineTo(px, hy - 30 * e); ctx.lineTo(px + 10 * e, hy - 8 * e); ctx.lineTo(px + 9 * e, hy + 10 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, hy - 28 * e); ctx.lineTo(px, hy + 9 * e); ctx.moveTo(px - 9 * e, hy + 3 * e); ctx.lineTo(px + 9 * e, hy + 3 * e); ctx.stroke();
+      ctx.strokeStyle = 'rgba(217,178,95,0.85)'; ctx.lineWidth = 3 * e; for (const l of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + l * 6 * e, py - 84 * e); ctx.lineTo(px + l * 8 * e, py - 38 * e); ctx.stroke(); }
     }
   } else if (especie === 'CavaleiroNegro') {
     if (camada === 0) {          // espada larga às costas, atravessada
@@ -1196,16 +1209,16 @@ function desenhar(dt) {
     }
     ctx.restore(); ctx.lineWidth = 1;
   }
-  if (muralhaFx) {
+  muralhasFx = muralhasFx.filter((mF) => tempoSim - mF.t0 >= 0 && tempoSim - mF.t0 <= mF.dur);
+  for (const muralhaFx of muralhasFx) {
     const idadeM = tempoSim - muralhaFx.t0;
-    if (idadeM > muralhaFx.dur || idadeM < 0) muralhaFx = null;
-    else {
+    {
       const forca = Math.min(1, idadeM / 0.35) * Math.min(1, (muralhaFx.dur - idadeM) / 0.6), N = 16, agora = performance.now() / 1000;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       for (let k = 0; k <= N; k++) {
         const f = k / N, [fx, fy] = W(muralhaFx.a[0] + muralhaFx.d[0] * f + muralhaFx.so[0], muralhaFx.a[1] + muralhaFx.d[1] * f + muralhaFx.so[1]);
         const tremula = 0.75 + 0.25 * Math.sin(agora * 9 + k * 1.7), hf = (34 + 14 * Math.sin(agora * 6 + k * 2.3)) * reforco * forca, wf = 13 * reforco;
-        const gl = ctx.createRadialGradient(fx, fy - hf * 0.35, 1, fx, fy - hf * 0.35, hf); gl.addColorStop(0, `rgba(255,230,140,${0.75 * forca * tremula})`); gl.addColorStop(0.35, `rgba(255,130,30,${0.5 * forca * tremula})`); gl.addColorStop(1, 'rgba(160,20,0,0)');
+        const gl = ctx.createRadialGradient(fx, fy - hf * 0.35, 1, fx, fy - hf * 0.35, hf); gl.addColorStop(0, muralhaFx.ini ? `rgba(200,255,170,${0.75 * forca * tremula})` : `rgba(255,230,140,${0.75 * forca * tremula})`); gl.addColorStop(0.35, muralhaFx.ini ? `rgba(60,200,60,${0.5 * forca * tremula})` : `rgba(255,130,30,${0.5 * forca * tremula})`); gl.addColorStop(1, 'rgba(160,20,0,0)');
         ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(fx, fy - hf * 0.45, wf, hf, 0, 0, 7); ctx.fill();
         ctx.fillStyle = `rgba(255,120,20,${0.22 * forca})`; ctx.beginPath(); ctx.ellipse(fx, fy, wf * 1.5, wf * 0.7, 0, 0, 7); ctx.fill();
       }
@@ -2015,7 +2028,8 @@ window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva
 window.__teles = () => teleFx.length;
 window.__raios = () => raiosFx.length;
 for (const idG of ['g-vida', 'g-mana']) $(idG).addEventListener('click', () => { const g = $(idG); g.classList.add('mostra'); clearTimeout(g.tm); g.tm = setTimeout(() => g.classList.remove('mostra'), 2500); });
-window.__muralha = () => muralhaFx ? 1 : 0;
+window.__muralha = () => muralhasFx.length ? 1 : 0;
+window.__muralhaInimiga = () => muralhasFx.some((m) => m.ini) ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
 let encAberta = false;

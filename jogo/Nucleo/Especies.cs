@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[17];
+            var t = new DadosEspecie[18];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -163,10 +163,18 @@ namespace Necro.Nucleo
                 Vida = 60f, Dano = 12f, VelAtaque = 0.6f, Armadura = 0f, Alcance = 7.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0f, -0.2f, 0f, 0f, 0f, 0.4f), AtoMinimo = 2, AndarMinimo = 3, PesoOnda = 2.5f, CustoOnda = 2f
             };
+            // Chefe do Ato 3 (Diablo 1): o Arcebispo Lázarus. Acende muralhas de fogo sob o grupo, some quando o cercam e chama Súcubos.
+            t[(int)EspecieId.Lazarus] = new DadosEspecie
+            {
+                Id = EspecieId.Lazarus, Nome = "Arcebispo Lázarus", Familia = Familia.Aberracao, Porte = Porte.Colossal, Papel = Papel.Atirador,
+                Vida = 560f, Dano = 22f, VelAtaque = 0.7f, Armadura = 20f, Alcance = 8.0f, VelMovimento = 1.8f, TipoDano = TipoDano.Sombra,
+                Resistencias = Res(0.1f, 0.5f, 0f, -0.1f, 0.2f, 0.4f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
+            };
             return t;
         }
 
         /// <summary>Chefe de um Ato. Por enquanto só existe o conteúdo do Ato 1; os demais reutilizam a Abadessa.</summary>
-        public static EspecieId ChefeDoAto(int ato) { return ato % 2 == 0 ? EspecieId.CarcereiroDeAlmas : EspecieId.AbadessaCosturada; }
+        /// <summary>Abadessa no Ato 1, Carcereiro no 2, Lázarus no 3; daí em diante o ciclo se repete.</summary>
+        public static EspecieId ChefeDoAto(int ato) { int k = ((ato < 1 ? 1 : ato) - 1) % 3; return k == 0 ? EspecieId.AbadessaCosturada : k == 1 ? EspecieId.CarcereiroDeAlmas : EspecieId.Lazarus; }
     }
 }

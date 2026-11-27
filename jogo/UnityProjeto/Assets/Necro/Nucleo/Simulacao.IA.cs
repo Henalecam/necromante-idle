@@ -296,6 +296,18 @@ namespace Necro.Nucleo
             bool inimigo = e.Faccao == Faccao.Inimigo;
             if (inimigo && Cfg.ComportamentoDeEspecie && ComportamentoDeEspecie(e)) return;
             if (inimigo && (e.Elite || e.Chefe) && GolpeBrutal(e)) return;
+            if (inimigo && e.Chefe && e.Especie == EspecieId.Lazarus && TickAtual * DT >= e.TeleporteAte)
+            {
+                var colado = HostilMaisProximo(e, e.Pos, Cfg.LazarusTeleporteDist * Cfg.LazarusTeleporteDist);
+                if (colado != null)
+                {
+                    Vec2 fuga = (e.Pos - colado.Pos).Normalizado; if (fuga.X == 0f && fuga.Y == 0f) fuga = new Vec2(1f, 0f);
+                    var destino = Limitar(e.Pos + fuga * Cfg.TeleporteSalto);
+                    if (Vec2.Dist2(destino, e.Pos) < 9f) destino = Limitar(e.Pos + new Vec2(-fuga.Y, fuga.X) * Cfg.TeleporteSalto);
+                    if (Vec2.Dist2(destino, e.Pos) < 9f) destino = Limitar(e.Pos - new Vec2(-fuga.Y, fuga.X) * Cfg.TeleporteSalto);
+                    if (Vec2.Dist2(destino, e.Pos) >= 9f) { Teleportar(e, destino); return; }
+                }
+            }
             if (inimigo && e.Chefe && HabilidadeDoChefe(e)) return;
 
             // Posturas (só minions): limitam quais inimigos contam como alvo.
@@ -482,6 +494,24 @@ namespace Necro.Nucleo
             Ocioso(e);
         }
 
+        /// <summary>Lázarus: acende uma muralha de fogo atravessada sobre a linha de frente e chama uma Súcubo (até o limite em campo).</summary>
+        private void RitoDeLazarus(Entidade e)
+        {
+            e.TempoHabilidade = Cfg.LazarusIntervalo; e.TempoAcao = 1.0f; e.Animacao = EstadoAnimacao.Conjurando;
+            var alvo = HostilMaisProximo(e, e.Pos, float.MaxValue);   // a linha de frente do exército, não o necromante lá atrás
+            if (alvo != null)
+            {
+                Vec2 dir = (alvo.Pos - e.Pos).Normalizado; if (dir.X == 0f && dir.Y == 0f) dir = new Vec2(-1f, 0f);
+                Vec2 perp = new Vec2(-dir.Y, dir.X) * (Cfg.LazarusMuralhaComprimento * 0.5f);
+                var m = new MuralhaDeFogo { Id = _proximoId++, A = Limitar(alvo.Pos - perp), B = Limitar(alvo.Pos + perp), Tempo = Cfg.LazarusMuralhaDuracao, Raio = 0.9f, Dano = e.Dano * Cfg.LazarusMuralhaDano, Inimiga = true, DonoId = e.Id };
+                Muralhas.Add(m); Resultado.MuralhasDeLazarus++;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 39, Alvo = m.Id, Origem = e.Id, Pos = m.A, Dir = m.B - m.A, Valor = m.Tempo, TipoDano = TipoDano.Fogo, Critico = true });
+            }
+            int servas = 0;
+            for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Viva && Entidades[i].Faccao == Faccao.Inimigo && Entidades[i].Especie == EspecieId.Sucubo) servas++;
+            if (servas < Cfg.LazarusMaximoDeSucubos) CriarInimigo(EspecieId.Sucubo, Limitar(new Vec2(e.Pos.X + Rng.Intervalo(-2f, 2f), e.Pos.Y + Rng.Intervalo(-2f, 2f))));
+        }
+
         /// <summary>O Carcereiro de Almas: acorrenta os minions de mais vida e chama uma Aparição (até o limite em campo).</summary>
         private void Grilhoes(Entidade e)
         {
@@ -512,6 +542,7 @@ namespace Necro.Nucleo
             e.TempoHabilidade -= DT;
             if (e.TempoHabilidade > 0f) return false;
             if (e.Especie == EspecieId.CarcereiroDeAlmas) { Grilhoes(e); return true; }
+            if (e.Especie == EspecieId.Lazarus) { RitoDeLazarus(e); return true; }
             e.TempoHabilidade = Cfg.PocaIntervalo;
             e.TempoAcao = 1.0f;
             e.Animacao = EstadoAnimacao.Conjurando;

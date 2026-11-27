@@ -1794,7 +1794,7 @@ namespace Necro.Testes
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
                 var cav = TabelaEspecies.Obter(EspecieId.CavaleiroNegro); var mag = TabelaEspecies.Obter(EspecieId.Magistrado);
-                Afirmar(TabelaEspecies.Total == 17 && cav.AtoMinimo == 2 && mag.AtoMinimo == 2 && cav.Armadura >= 60f && cav.Resistencias[0] > 0f, "na tabela, do Ato 2 em diante, com armadura alta");
+                Afirmar(TabelaEspecies.Total >= 17 && cav.AtoMinimo == 2 && mag.AtoMinimo == 2 && cav.Armadura >= 60f && cav.Resistencias[0] > 0f, "na tabela, do Ato 2 em diante, com armadura alta");
                 int cedoC = 0, fundoC = 0, cedoM = 0, fundoM = 0, teles = 0, concluiu = 0;
                 for (ulong sm = 1; sm <= 6; sm++)
                 {
@@ -1816,6 +1816,34 @@ namespace Necro.Testes
                 mm.Pos = new Vec2(12f, 6f); mm.Vida = mm.VidaMax * 0.55f; int antes = s.Resultado.Teleportes;
                 s.CausarDano(null, mm, mm.VidaMax * 0.2f, TipoDano.Fogo, false);
                 Afirmar(s.Resultado.Teleportes == antes + 1 && Vec2.Dist(mm.Pos, s.Necromante.Pos) < 2.5f, "Passo Sombrio: ferido, reaparece junto do necromante (" + Vec2.Dist(mm.Pos, s.Necromante.Pos) + ")");
+            });
+
+            Teste("Ato 3: o chefe do andar 30 é o Arcebispo Lázarus, que acende muralhas de fogo sob o grupo, se teleporta e chama Súcubos; a luta termina", () =>
+            {
+                Afirmar(TabelaEspecies.ChefeDoAto(1) == EspecieId.AbadessaCosturada && TabelaEspecies.ChefeDoAto(2) == EspecieId.CarcereiroDeAlmas && TabelaEspecies.ChefeDoAto(3) == EspecieId.Lazarus && TabelaEspecies.ChefeDoAto(4) == EspecieId.AbadessaCosturada, "chefes em ciclo de três atos");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                int viu = 0, muralhas = 0, teles = 0, sucubos = 0, venceu = 0, acabou = 0; float fogoSofrido = 0f;
+                for (ulong sm = 1; sm <= 4; sm++)
+                {
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 90; p.PoderNecromantico = 6000f; foreach (var m in p.Minions) m.Nivel = 20;
+                    var s = new Simulacao(c, p, sm, ModoExpedicao.Avancar, 30) { LimiteDeAndares = 1 }; int g = 0; int telesAntes = 0; bool chefeVivo = false;
+                    while (!s.Encerrada && g++ < 80000)
+                    {
+                        s.Tick();
+                        foreach (var ev in s.Eventos)
+                        {
+                            if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Lazarus) { viu++; chefeVivo = true; telesAntes = s.Resultado.Teleportes; }
+                            if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Sucubo && chefeVivo) sucubos++;
+                            if (ev.Tipo == TipoEvento.Dano && ev.TipoDano == TipoDano.Fogo && ev.Alvo == s.Necromante.Id) fogoSofrido += ev.Valor;
+                        }
+                    }
+                    muralhas += s.Resultado.MuralhasDeLazarus; if (chefeVivo) teles += s.Resultado.Teleportes - telesAntes;
+                    if (s.Encerrada) acabou++; if (s.Resultado.ChefesDerrotados.Contains(3) || s.Resultado.MaiorAndarConcluido >= 30) venceu++;
+                }
+                Console.WriteLine("        (Lázarus: visto " + viu + "/4, venceu " + venceu + "/4, muralhas " + muralhas + ", teleportes " + teles + ", súcubos " + sucubos + ", fogo no necromante " + fogoSofrido.ToString("0") + ")");
+                Afirmar(viu == 4 && acabou == 4, "o chefe do andar 30 é Lázarus e a luta termina (" + viu + ", " + acabou + ")");
+                Afirmar(muralhas >= 4 && sucubos >= 2, "acende muralhas e chama Súcubos (" + muralhas + ", " + sucubos + ")");
+                Afirmar(venceu >= 1, "um exército forte consegue vencê-lo (" + venceu + "/4)");
             });
 
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>

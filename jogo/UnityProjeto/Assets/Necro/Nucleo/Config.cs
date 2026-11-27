@@ -508,6 +508,9 @@ namespace Necro.Nucleo
         public float DesabamentoIntervalo = 4f, DesabamentoAviso = 1.3f, DesabamentoRaio = 1.1f, DesabamentoFator = 0.7f;   // pedras: menores e mais frequentes que a lava
         public float TesouroChanceDeLendario = 0.15f;
         // chefe do Ato 2 (Carcereiro de Almas)
+        // Lázarus (chefe do Ato 3): muralha de fogo sob o grupo, teleporte quando encostam, Súcubos
+        public float LazarusIntervalo = 7f, LazarusMuralhaDano = 0.2f, LazarusMuralhaDuracao = 4f, LazarusMuralhaComprimento = 7f, LazarusTeleporteDist = 2.6f;
+        public int LazarusMaximoDeSucubos = 3;
         public float GrilhoesIntervalo = 9f, GrilhoesDuracao = 2.0f;
         public int GrilhoesAlvos = 2, GrilhoesMaximoDeAparicoes = 3;
 

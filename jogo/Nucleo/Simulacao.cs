@@ -551,7 +551,7 @@ namespace Necro.Nucleo
         public Entidade GolemVivo { get { for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Golem && Entidades[i].Viva) return Entidades[i]; return null; } }
 
         /// <summary>Uma Muralha de Fogo acesa: o segmento A-B queima os inimigos que estiverem a até Raio dele, um pulso de cada vez.</summary>
-        public sealed class MuralhaDeFogo { public int Id; public Vec2 A, B; public float Tempo, Pulso, Raio, Dano; }
+        public sealed class MuralhaDeFogo { public int Id; public Vec2 A, B; public float Tempo, Pulso, Raio, Dano; public bool Inimiga; public int DonoId = -1; }
         public readonly List<MuralhaDeFogo> Muralhas = new List<MuralhaDeFogo>(2);
         private bool _muralhaAprendida;
 
@@ -565,7 +565,7 @@ namespace Necro.Nucleo
         /// <summary>Muralha de Fogo: atravessada na frente do inimigo mais próximo, de lado para quem vem. Uma por vez; só depois do primeiro livro.</summary>
         private bool LancarMuralha()
         {
-            if (!Cfg.MuralhaAtiva || !_muralhaAprendida || Muralhas.Count > 0 || InimigosVivos < Cfg.MuralhaMinimoDeInimigos || !PodeLancar(FeiticoId.MuralhaDeFogo)) return false;
+            if (!Cfg.MuralhaAtiva || !_muralhaAprendida || Muralhas.Exists(x => !x.Inimiga) || InimigosVivos < Cfg.MuralhaMinimoDeInimigos || !PodeLancar(FeiticoId.MuralhaDeFogo)) return false;
             var f = Fei(FeiticoId.MuralhaDeFogo); var n = Necromante;
             var alvo = HostilMaisProximo(n, n.Pos, f.Alcance * f.Alcance);
             if (alvo == null) return false;
@@ -614,7 +614,8 @@ namespace Necro.Nucleo
                 if (m.Pulso <= 0f)
                 {
                     m.Pulso += Cfg.MuralhaPulso; float r2 = m.Raio * m.Raio; int total = Entidades.Count;
-                    for (int k = 0; k < total; k++) { var e = Entidades[k]; if (e.Viva && e.Faccao == Faccao.Inimigo && Dist2AoSegmento(e.Pos, m.A, m.B) <= r2) CausarDano(Necromante, e, m.Dano, TipoDano.Fogo, false); }
+                    if (!m.Inimiga) { for (int k = 0; k < total; k++) { var e = Entidades[k]; if (e.Viva && e.Faccao == Faccao.Inimigo && Dist2AoSegmento(e.Pos, m.A, m.B) <= r2) CausarDano(Necromante, e, m.Dano, TipoDano.Fogo, false); } }
+                    else { var dono = AcharEntidade(m.DonoId); for (int k = 0; k < total; k++) { var e = Entidades[k]; if (e.Viva && e.Faccao != Faccao.Inimigo && Dist2AoSegmento(e.Pos, m.A, m.B) <= r2) CausarDano(dono != null && dono.Viva ? dono : null, e, m.Dano, TipoDano.Fogo, false); } }
                 }
                 if (m.Tempo <= 0f) Muralhas.RemoveAt(i);
             }
