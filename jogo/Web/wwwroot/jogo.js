@@ -1791,7 +1791,7 @@ let painelAnterior = '', missaoAnterior = '', recursosAnterior = '', exFiltro = 
 try { exFiltro = localStorage.getItem(CHAVE + '-filtro') || 'todos'; exOrdem = localStorage.getItem(CHAVE + '-ordem') || 'campo'; } catch (e) { /* padrão */ }
 const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : String(n);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const ESPACOS = ['Arma', 'Mão secundária', 'Elmo', 'Peitoral', 'Luvas', 'Botas', 'Amuleto', 'Anel', 'Anel'];
+const ESPACOS = ['Arma', 'Mão 2', 'Elmo', 'Peitoral', 'Luvas', 'Botas', 'Amuleto', 'Anel', 'Anel'];
 const TRACOS = { 0: ['Faminto', 'rouba vida a cada golpe'], 1: ['Frenético', 'ataca mais rápido'], 2: ['Pétreo', 'mais armadura'], 3: ['Rancoroso', 'explode ao morrer'],
   4: ['Leal', 'sofre menos dano perto do necromante'], 5: ['Incandescente', 'parte do dano vira fogo'], 11: ['Colosso', 'muito mais vida'], 12: ['Carniceiro', 'muito mais dano'], 13: ['Agourento', 'mais acertos críticos'] };
 const donsHtml = (dn) => dn && dn.some((x) => x) ? '<small>Dons: ' + ['Vida', 'Dano', 'Velocidade'].map((n, k) => dn[k] ? `<span style="color:${dn[k] > 0 ? '#8fd89f' : '#e08a8a'}">${n} ${dn[k] > 0 ? '+' : ''}${dn[k]}%</span>` : '').filter(Boolean).join(' · ') + '</small>' : '';
