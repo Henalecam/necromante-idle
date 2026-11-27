@@ -116,7 +116,9 @@
   #encruzilhada.min { top:auto; bottom:58px; left:auto; right:6px; padding:5px 9px; } #encruzilhada.min .ops { display:none; } #encruzilhada.min .cab { margin:0; gap:10px; cursor:pointer; font-size:12px; } #encruzilhada .cab { cursor:pointer; }
   #t-pactos { position:absolute; left:8px; top:22px; font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
   #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:17px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
-  #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }   /* com um painel de escolha aberto, o aviso desce para não ficar por cima */
+  #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }
+  #aviso.alto { top:15%; }   /* o título grande do andar ocupa o meio da tela */
+  #resumo:not([hidden]) ~ #aviso { top:62%; }   /* o cartão de fim de expedição ocupa o alto */   /* com um painel de escolha aberto, o aviso desce para não ficar por cima */
   #ausente { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--ouro); background:#000a; }
   #carregando { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--fraco); background:#000c; }
   #mana { height:5px; background:#0c1420; } #mana div { height:100%; width:0; background:linear-gradient(90deg,#2b6fd0,#7fd8ff); }

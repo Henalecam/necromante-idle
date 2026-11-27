@@ -239,6 +239,7 @@ function ambiente(dt, larg, alt) {
   if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
   if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${transicao * transicao})`; ctx.fillRect(0, 0, larg, alt); }
   if (descida) { const fd = Math.max(0, Math.min(1, ((tempoSim - descida.t0) / descida.T - 0.6) / 0.4)); if (fd > 0) { ctx.fillStyle = `rgba(0,0,0,${fd * fd})`; ctx.fillRect(0, 0, larg, alt); } }
+  { const avE = $('aviso'); if (avE.classList.contains('alto') !== !!tituloAndar) avE.classList.toggle('alto', !!tituloAndar); }
   if (tituloAndar) {
     const ft = (performance.now() - tituloAndar.t) / 2600;
     const bpT = $('b-porta'), eT = $('encruzilhada'), bT = $('bencaos');
@@ -2154,6 +2155,7 @@ window.__ficha = () => fichaTxt;
 window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
+window.__ocultos = () => ocultos.size;
 window.__apoc = () => apocFx.length;
 window.__teles = () => teleFx.length;
 window.__raios = () => raiosFx.length;
