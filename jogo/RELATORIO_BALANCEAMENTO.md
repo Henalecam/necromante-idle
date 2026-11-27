@@ -249,3 +249,12 @@ O observado fica um pouco acima do design nas raridades altas porque o chefe gar
 | Inferno | não chegou | não chegou |
 
 A resistência a sombra deixou os Atos 1-2 ~5% mais lentos, mas a Pedra Maldita (livro achado na descida) acelera o fim da campanha: as vidas 2 e 3 chegam ao chefe do Ato 4 em ~13 h (eram ~21 h). Nada fora do esperado; sem ajuste.
+
+## Verificação do item 210 (depois dos itens 199-209)
+| medida | item 197 | item 210 |
+|---|---|---|
+| Normal até o chefe do Ato 2 (--dificuldades 5 40) | 7,68 h | 8,64 h |
+| Pesadelo, chefe do Ato 1 / Ato 2 (desde a troca) | 7,73 / 22,22 h | 13,41 / 28,17 h |
+| o mesmo, sem o bônus de vida da Chuva de Cinzas (--cfg CinzasVidaInimigo=1) | — | 10,80 / 27,99 h |
+
+A medição é determinística (duas corridas iguais deram o mesmo número). O Pesadelo ficou ~6 h mais longo; a Chuva de Cinzas explica parte do Ato 1, o resto vem do conjunto de mudanças (11 feitiços por livro dividindo os livros, conjunto novo dividindo as peças, Fortaleza Rubra no andar 13).
