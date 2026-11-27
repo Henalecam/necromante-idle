@@ -64,7 +64,8 @@ namespace Necro.Nucleo
             }
             if (n.TempoAcao > 0f) { n.TempoAcao -= DT; return; }
             if (LancarGolem()) return;
-            if (LancarMuralha()) return;   // o Golem vem antes das ordens: é o escudo do exército
+            if (LancarMuralha()) return;
+            if (LancarRelampago()) return;   // o Golem vem antes das ordens: é o escudo do exército
 
             // Ordens "SE condição ENTÃO ação", de cima para baixo; a primeira que puder agir encerra o tick.
             bool agiu = false;
@@ -261,7 +262,7 @@ namespace Necro.Nucleo
             n.Mana -= f.CustoMana;
             _recargaFeitico[(int)id] = f.Recarga * _fatorRecarga;
             // Único 7, Grimório de Pele Humana: às vezes o feitiço não entra em recarga (o Golem não conta)
-            if (Bonus.Unico[7] && id != FeiticoId.Golem && id != FeiticoId.MuralhaDeFogo && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
+            if (Bonus.Unico[7] && id != FeiticoId.Golem && id != FeiticoId.MuralhaDeFogo && id != FeiticoId.RelampagoEmCadeia && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
             n.TempoAcao = Cfg.TempoDeConjuracao;
             n.Animacao = EstadoAnimacao.Conjurando;
             Olhar(n, ponto);

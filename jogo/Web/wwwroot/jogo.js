@@ -446,6 +446,12 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && v[14] === '41') {
+    const semente = Math.random() * 1000; raiosFx.push({ a: [+v[10] + so[0], +v[11] + so[1]], b: [+v[10] + +v[12] + so[0], +v[11] + +v[13] + so[1]], t: performance.now() + (+v[4] || 0) * 55, s: semente });
+    if (raiosFx.length > 24) raiosFx.shift();
+    if (+v[4] === 0) { som('critico'); clarao = Math.max(clarao, 0.3); vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['41']) { vistosDeEspecie['41'] = 1; aviso('Relâmpago em Cadeia · salta de um inimigo para o outro'); } }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '39') {
     muralhaFx = { a: [+v[10], +v[11]], d: [+v[12], +v[13]], t0: tempoSim, dur: +v[4] || 6, so: [so[0], so[1]] }; som('bencao'); clarao = Math.max(clarao, 0.25);
     vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['39']) { vistosDeEspecie['39'] = 1; aviso('Muralha de Fogo · queima quem atravessa'); }
@@ -725,7 +731,7 @@ const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null;
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null, raiosFx = [];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -1115,6 +1121,18 @@ function desenhar(dt) {
       }
       ctx.restore(); ctx.lineWidth = 1;
     }
+  }
+  if (raiosFx.length) {     // relâmpago em cadeia: cada salto é um ziguezague branco-azulado que dura um instante
+    const agoraR = performance.now(); raiosFx = raiosFx.filter((r) => agoraR - r.t < 340);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const r of raiosFx) {
+      const idR = agoraR - r.t; if (idR < 0) continue;
+      const fR = 1 - idR / 340, [x0, y0] = W(r.a[0], r.a[1]), [x1, y1] = W(r.b[0], r.b[1]), alto = 26 * reforco, nR = 7, dxR = x1 - x0, dyR = y1 - y0, lR = Math.hypot(dxR, dyR) || 1;
+      const pts = []; for (let k = 0; k <= nR; k++) { const f = k / nR, des = k === 0 || k === nR ? 0 : Math.sin(r.s + k * 12.9898 + Math.floor(idR / 60) * 7.1) * 11 * reforco; pts.push([x0 + dxR * f - dyR / lR * des, y0 - alto + dyR * f + dxR / lR * des]); }
+      for (const [larg2, cor] of [[7 * reforco, `rgba(90,140,255,${0.35 * fR})`], [2.2 * reforco, `rgba(235,245,255,${0.95 * fR})`]]) { ctx.strokeStyle = cor; ctx.lineWidth = larg2; ctx.beginPath(); pts.forEach(([px, py], k) => { if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py); }); ctx.stroke(); }
+      const gR = ctx.createRadialGradient(x1, y1 - alto, 0, x1, y1 - alto, 26 * reforco); gR.addColorStop(0, `rgba(200,225,255,${0.6 * fR})`); gR.addColorStop(1, 'rgba(60,110,255,0)'); ctx.fillStyle = gR; ctx.beginPath(); ctx.arc(x1, y1 - alto, 26 * reforco, 0, 7); ctx.fill();
+    }
+    ctx.restore(); ctx.lineWidth = 1;
   }
   if (muralhaFx) {
     const idadeM = tempoSim - muralhaFx.t0;
@@ -1572,6 +1590,7 @@ function atualizarPainel(forcar) {
       if (d.acougueiro === 1) dicas.push('O <b>Açougueiro</b> ainda espera atrás da porta do andar 2. Volte forte: ele larga o Cutelo.');
       if (d.rei === 1) dicas.push('O <b>Rei Esqueleto</b> dorme na tumba do andar 3. Mate o Rei antes dos esqueletos que ele ergue.');
       const faltam = d.unicos.filter((u) => !u.achado).length; if (faltam) dicas.push(`Ainda há ${faltam} itens Únicos que você não achou. Pesadelo e Inferno guardam os melhores.`);
+      if (d.grimorio[8] && !d.grimorio[8].nivel) dicas.push('Você ainda não conhece o <b>Relâmpago em Cadeia</b>. É dano de raio: bom contra Súcubos e contra o que é imune a sombra.');
       if (d.grimorio[7] && !d.grimorio[7].nivel) dicas.push('Você ainda não conhece a <b>Muralha de Fogo</b>. O livro cai de chefes e elites, e a Bruxa às vezes o vende; fogo fere o que é imune a sombra e veneno.');
       if (d.grimorio[6] && !d.grimorio[6].nivel) dicas.push('Você ainda não conhece o <b>Golem</b>. A Bruxa às vezes tem o livro.');
       h += `<h3>Ancião</h3><p class="nota" style="font-style:italic">“Fique um pouco e escute.”</p>` + dicas.slice(0, 3).map((t) => `<div class="linha"><div class="corpo"><small style="font-size:13px;color:#d8cfc0">${t}</small></div></div>`).join(''); }
@@ -1593,7 +1612,7 @@ function atualizarPainel(forcar) {
       const linhas = [['Força', `+${n(at.v[0] * pp[0])}% de dano dos minions`, `cada ponto: +${n(pp[0])}% de dano dos minions`], ['Magia', `+${n(at.v[1] * pp[1])}% de dano de feitiços · +${n(at.v[1] * pp[2])} de mana`, `cada ponto: +${n(pp[1])}% de dano de feitiços e +${n(pp[2])} de mana`],
         ['Destreza', `+${n(at.v[2] * pp[3])}% de chance de crítico · +${n(at.v[2] * pp[4])}% de velocidade de ataque dos minions`, `cada ponto: +${n(pp[3])}% de crítico e +${n(pp[4])}% de velocidade`], ['Vitalidade', `+${n(at.v[3] * pp[5])}% de vida dos minions · +${n(at.v[3] * pp[6])}% de vida do necromante`, `cada ponto: +${n(pp[5])}% de vida dos minions e +${n(pp[6])}% do necromante`]];
       h += `<h3>Livro de feitiços</h3><p class="nota">Como no Diablo: cada livro lido sobe um nível do feitiço (+3% de potência, −2% de mana). Livros caem de chefes, Únicos, elites e das Bibliotecas. Ler exige <b>Magia</b>; o que ainda não dá para ler fica guardado e é lido sozinho quando a Magia chegar. Sua Magia: <b>${d.atributos.v[1]}</b>${d.livrosNaDescida ? ` · ${d.livrosNaDescida} livro${d.livrosNaDescida > 1 ? 's' : ''} nesta descida` : ''}.</p>`;
-      d.grimorio.forEach((g) => { const falta = g.guardados > 0 && g.nivel < g.max; h += `<div class="linha"><div class="corpo">${esc(g.nome)} <span class="nota">${g.nivel ? 'nível ' + g.nivel + '/' + g.max : 'ainda não aprendido: ache o livro'}</span><small>${g.nome.startsWith('Golem') ? 'um só por vez: tanque que segura a linha por 40 s · ' : g.nome.startsWith('Muralha') ? 'linha de chamas atravessada no caminho de 3 ou mais inimigos; dano de fogo a cada meio segundo por 6 s · ' : ''}${g.pot ? '+' + g.pot + '% de potência · ' : ''}${g.mana} de mana${g.nivel < g.max ? ` · próximo nível pede Magia ${g.magia}` : ' · nível máximo'}</small></div>${falta ? `<span class="nota" style="color:#ffcf5a;white-space:nowrap">${g.guardados} guardado${g.guardados > 1 ? 's' : ''} · falta Magia</span>` : ''}</div>`; });
+      d.grimorio.forEach((g) => { const falta = g.guardados > 0 && g.nivel < g.max; h += `<div class="linha"><div class="corpo">${esc(g.nome)} <span class="nota">${g.nivel ? 'nível ' + g.nivel + '/' + g.max : 'ainda não aprendido: ache o livro'}</span><small>${g.nome.startsWith('Golem') ? 'um só por vez: tanque que segura a linha por 40 s · ' : g.nome.startsWith('Relâmpago') ? 'dano de raio no inimigo mais próximo, saltando para até 4 vizinhos (20% a menos por salto) · ' : g.nome.startsWith('Muralha') ? 'linha de chamas atravessada no caminho de 3 ou mais inimigos; dano de fogo a cada meio segundo por 6 s · ' : ''}${g.pot ? '+' + g.pot + '% de potência · ' : ''}${g.mana} de mana${g.nivel < g.max ? ` · próximo nível pede Magia ${g.magia}` : ' · nível máximo'}</small></div>${falta ? `<span class="nota" style="color:#ffcf5a;white-space:nowrap">${g.guardados} guardado${g.guardados > 1 ? 's' : ''} · falta Magia</span>` : ''}</div>`; });
       h += `<h3>Atributos do necromante</h3><p class="nota">Cinco pontos a cada nível, como no Diablo. Valem a partir da próxima expedição.</p>`;
       h += `<div class="linha"><div class="corpo">Pontos livres: <b style="color:var(--ouro);font-weight:normal">${at.livres}</b><small>${at.auto ? 'distribuição automática: os pontos novos vão sozinhos para o atributo mais baixo' : 'distribuição manual: use os botões + de cada atributo'}</small></div><button data-ac="auto-atributos" class="${at.auto ? 'ativo' : ''}">Automático: ${at.auto ? 'ligado' : 'desligado'}</button>${at.redistribuir ? `<button data-ac="redistribuir-atributos" ${at.redistribuir > d.essencia ? 'disabled' : ''}>Redistribuir · ${fmt(at.redistribuir)} Ess.</button>` : ''}</div>`;
       linhas.forEach((l, i) => { h += `<div class="linha"><div class="corpo"><b style="font-weight:normal;color:var(--ouro)">${l[0]} ${at.v[i]}</b> <span class="nota">${l[1]}</span><small>${l[2]}</small></div><button data-ac="atributo" data-i="${i}" data-n="1" ${at.livres >= 1 ? '' : 'disabled'}>+1</button><button data-ac="atributo" data-i="${i}" data-n="5" ${at.livres >= 5 ? '' : 'disabled'}>+5</button></div>`; });
@@ -1922,6 +1941,7 @@ window.__ficha = () => fichaTxt;
 window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
+window.__raios = () => raiosFx.length;
 window.__muralha = () => muralhaFx ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });

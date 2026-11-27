@@ -1767,6 +1767,29 @@ namespace Necro.Testes
                 Afirmar(dano > 0f && Math.Abs(s.Necromante.Vida - v0 - dano * c.BeijoDeSangue) < 0.01f, "o acerto da Súcubo cura o necromante em " + c.BeijoDeSangue * 100 + "% do dano (" + (s.Necromante.Vida - v0) + " de " + dano + ")");
             });
 
+            Teste("Relâmpago em Cadeia: só depois do livro, dano de raio que salta entre inimigos vizinhos perdendo força, sem acertar o mesmo duas vezes", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                var s0 = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!s0.Encerrada && g++ < 60000) s0.Tick();
+                Afirmar(Grimorio.Nivel(p, FeiticoId.RelampagoEmCadeia) == 0 && s0.Resultado.Relampagos == 0, "sem livro, ninguém conjura");
+                p.NiveisDeFeitico[(int)FeiticoId.RelampagoEmCadeia] = 1;
+                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; g = 0; int ev41 = 0, maiorCadeia = 0, cadeia = 0; float danoDeRaio = 0f, primeiro = 0f, segundo = 0f; bool repetiu = false; var vistos = new System.Collections.Generic.HashSet<int>();
+                while (!s.Encerrada && g++ < 60000)
+                {
+                    s.Tick();
+                    foreach (var ev in s.Eventos)
+                    {
+                        if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 41) { ev41++; if (ev.Valor == 0f) { cadeia = 0; vistos.Clear(); } cadeia++; if (!vistos.Add(ev.Alvo)) repetiu = true; if (cadeia > maiorCadeia) maiorCadeia = cadeia; }
+                        if (ev.Tipo == TipoEvento.Dano && ev.TipoDano == TipoDano.Raio && ev.Origem == s.Necromante.Id) { danoDeRaio += ev.Valor; if (!ev.Critico) { if (cadeia == 1 && primeiro == 0f) primeiro = ev.Valor; else if (cadeia == 2 && segundo == 0f && primeiro > 0f) segundo = ev.Valor; } }
+                    }
+                }
+                Console.WriteLine("        (relâmpagos: " + s.Resultado.Relampagos + ", saltos: " + s.Resultado.SaltosDeRelampago + ", maior cadeia: " + maiorCadeia + ", dano de raio: " + danoDeRaio.ToString("0") + ")");
+                Afirmar(s.Encerrada && s.Resultado.Relampagos >= 3 && ev41 == s.Resultado.Relampagos + s.Resultado.SaltosDeRelampago, "com o livro, o necromante lança o raio (" + s.Resultado.Relampagos + ")");
+                Afirmar(s.Resultado.SaltosDeRelampago >= 2 && maiorCadeia >= 2 && maiorCadeia <= c.RelampagoSaltos + 1, "o raio salta, até " + (c.RelampagoSaltos + 1) + " alvos: " + maiorCadeia);
+                Afirmar(danoDeRaio > 0f && !repetiu, "fere com raio e não repete alvo na mesma cadeia");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

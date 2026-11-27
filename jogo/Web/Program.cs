@@ -501,6 +501,7 @@ public static partial class Jogo
             case "ouro": _p.Ouro += (long)Math.Max(0, v); break;
             case "golem": Grimorio.Receber(_p, FeiticoId.Golem, _cfg); break;
             case "muralha": Grimorio.Receber(_p, FeiticoId.MuralhaDeFogo, _cfg); break;
+            case "relampago": Grimorio.Receber(_p, FeiticoId.RelampagoEmCadeia, _cfg); break;
             case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % Grimorio.Quantos), _cfg); break;
             case "rei": _cfg.ForcarReiEsqueleto = true; _p.MissaoReiEsqueleto = 1; break;
             case "acougueiro": _cfg.ForcarAcougueiro = true; _p.MissaoAcougueiro = 1; break;

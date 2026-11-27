@@ -160,6 +160,7 @@ namespace Necro.Nucleo
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
+            _relampagoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.RelampagoEmCadeia) >= 1;
             _muralhaAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.MuralhaDeFogo) >= 1;
             _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
@@ -574,6 +575,34 @@ namespace Necro.Nucleo
             PagarFeitico(FeiticoId.MuralhaDeFogo, alvo, alvo.Pos, 0f);
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 39, Alvo = m.Id, Origem = n.Id, Pos = m.A, Dir = m.B - m.A, Valor = m.Tempo, TipoDano = TipoDano.Fogo });
             Resultado.MuralhasDeFogo++;
+            return true;
+        }
+
+        private bool _relampagoAprendido;
+        private readonly List<Entidade> _atingidosPeloRaio = new List<Entidade>(8);
+
+        /// <summary>Relâmpago em Cadeia: acerta o inimigo mais próximo e salta para o vizinho mais perto ainda não atingido, perdendo força a cada salto.</summary>
+        private bool LancarRelampago()
+        {
+            if (!Cfg.RelampagoAtivo || !_relampagoAprendido || InimigosVivos < Cfg.RelampagoMinimoDeInimigos || !PodeLancar(FeiticoId.RelampagoEmCadeia)) return false;
+            var f = Fei(FeiticoId.RelampagoEmCadeia); var n = Necromante;
+            var alvo = HostilMaisProximo(n, n.Pos, f.Alcance * f.Alcance);
+            if (alvo == null) return false;
+            PagarFeitico(FeiticoId.RelampagoEmCadeia, alvo, alvo.Pos, 0f);
+            _atingidosPeloRaio.Clear(); Vec2 de = n.Pos; float dano = n.Dano * f.Potencia, r2 = f.Raio * f.Raio; int salto = 0;
+            while (alvo != null)
+            {
+                Vec2 ponto = alvo.Pos; _atingidosPeloRaio.Add(alvo);
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 41, Alvo = alvo.Id, Origem = n.Id, Pos = de, Dir = ponto - de, Valor = salto, TipoDano = TipoDano.Raio });
+                CausarDano(n, alvo, dano, TipoDano.Raio, true);
+                if (salto > 0) Resultado.SaltosDeRelampago++;
+                if (++salto > Cfg.RelampagoSaltos) break;
+                dano *= 1f - Cfg.RelampagoPerdaPorSalto; de = ponto;
+                Entidade prox = null; float md = r2; int total = Entidades.Count;
+                for (int i = 0; i < total; i++) { var o = Entidades[i]; if (!o.Viva || o.Faccao != Faccao.Inimigo || _atingidosPeloRaio.Contains(o)) continue; float d2 = Vec2.Dist2(o.Pos, ponto); if (d2 <= md) { md = d2; prox = o; } }
+                alvo = prox;
+            }
+            Resultado.Relampagos++;
             return true;
         }
 
