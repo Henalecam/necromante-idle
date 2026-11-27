@@ -20,6 +20,7 @@ namespace Necro.Nucleo
             if (alvo.Oculto) Revelar(alvo);
             if (Bonus.Unico[14] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && alvo.Familia == Familia.Demonio) danoBase *= 1f + Cfg.MaosDeEscoria;   // Mãos de Escória
             if (Bonus.Unico[12] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && (alvo.Elite || alvo.Campeao || alvo.Unico || alvo.Chefe)) danoBase *= 1f + Cfg.EstandarteDanoContraFortes;   // Estandarte Sangrento
+            if (Bonus.Unico[15] && tipo == TipoDano.Fogo && alvo.Faccao == Faccao.Minion) danoBase *= 1f - Cfg.BrasaCativa;   // Anel da Brasa Cativa
             // Cavaleiro Negro erguido — Couraça: sente menos o golpe físico
             if (tipo == TipoDano.Fisico && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.CavaleiroNegro && Cfg.HabilidadesDeEspecie) danoBase *= 1f - Cfg.CouracaDoCavaleiro;
             if (alvo.Imune != 0 && (alvo.Imune & (1 << (int)tipo)) != 0)

@@ -2109,6 +2109,17 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Anel da Brasa Cativa: só cai do andar 25; com ele, os minions sentem 30% menos o Fogo e nada muda nos outros tipos", () =>
+            {
+                var d = Unicos.Obter(15); Afirmar(d != null && !d.SoDeMissao && d.AndarMinimo == 25, "Único de queda, do andar 25");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var t = new Simulacao(c, ProgressoCom(EspecieId.Zumbi), 3, ModoExpedicao.Avancar, 2);
+                var mi = t.Entidades.Find(e => e.Faccao == Faccao.Minion); mi.VidaMax = mi.Vida = 1e6f; mi.Armadura = 0f; for (int k = 0; k < 6; k++) mi.Resistencias[k] = 0f;
+                float f0 = t.CausarDano(null, mi, 100f, TipoDano.Fogo, false), g0 = t.CausarDano(null, mi, 100f, TipoDano.Gelo, false); t.Bonus.Unico[15] = true;
+                float f1 = t.CausarDano(null, mi, 100f, TipoDano.Fogo, false), g1 = t.CausarDano(null, mi, 100f, TipoDano.Gelo, false);
+                Afirmar(Math.Abs(f1 - f0 * 0.7f) < 0.5f && Math.Abs(g1 - g0) < 0.5f, "Fogo " + f0 + " → " + f1 + ", Gelo " + g0 + " → " + g1);
+            });
+
             Teste("missão dos Salões dos Cegos: Ocultos invisíveis de longe, golpe de emboscada, todos acabam revelados; vencida, dá o Olho Óptico, que tira a emboscada", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarCegos = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
