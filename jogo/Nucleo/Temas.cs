@@ -5,7 +5,7 @@ namespace Necro.Nucleo
 
     public static class Temas
     {
-        public static readonly string[] Nomes = { "Catedral", "Catacumbas", "Cavernas", "Inferno" };
+        public static readonly string[] Nomes = { "Catedral", "Catacumbas", "Cavernas", "Fornalha" };
 
         public static TemaDeAndar Do(int andar)
         {

@@ -308,7 +308,7 @@ public static partial class Jogo
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
         if (it.UnicoId > 0) { if (!primeiro) sb.Append(','); sb.Append(S("★ " + (Unicos.Obter(it.UnicoId) != null ? Unicos.Obter(it.UnicoId).Efeito : "Item Único"))); primeiro = false; }
         if (it.Melhoria > 0) { if (!primeiro) sb.Append(','); sb.Append(S("Melhoria +" + it.Melhoria + ": tudo acima vale " + (int)Math.Round((Ferreiro.FatorDeMelhoria(it, _cfg) - 1f) * 100f) + "% a mais")); primeiro = false; }
-        if (it.Efeito != EfeitoLendario.Nenhum) { if (!primeiro) sb.Append(','); sb.Append(S("Lendário: " + it.Efeito)); }
+        if (it.Efeito != EfeitoLendario.Nenhum) { if (!primeiro) sb.Append(','); { var dl = TabelaItens.Lendario(it.Efeito); sb.Append(S("Lendário: " + (dl != null && !string.IsNullOrEmpty(dl.Descricao) ? dl.Descricao : it.Efeito.ToString()))); } }
         sb.Append(']');
         if (it.Conjunto != ConjuntoId.Nenhum)
         {

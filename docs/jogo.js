@@ -56,7 +56,7 @@ function naTela(x, y) { return W(x + so[0], y + so[1]); }
 const rnd = (a, b) => a + Math.random() * (b - a);
 // ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
 // tema do andar, como no Diablo 1: muda a cada 4 andares [nome, multiplicador da pedra, fogo, fogo forte, frase]
-const TEMAS_ANDAR = [['Catedral', [1, 1, 1], '255,150,60', '255,170,70', 'pedra lavrada e mortos-vivos'], ['Catacumbas', [0.7, 0.8, 1.08], '130,165,255', '170,200,255', 'frio de túmulo: espíritos e aberrações'], ['Cavernas', [1.2, 0.92, 0.6], '255,120,30', '255,160,50', 'terra crua e brasas: território das bestas'], ['Inferno', [1.3, 0.52, 0.48], '255,50,30', '255,90,50', 'pedra em sangue: os demônios mandam aqui']];
+const TEMAS_ANDAR = [['Catedral', [1, 1, 1], '255,150,60', '255,170,70', 'pedra lavrada e mortos-vivos'], ['Catacumbas', [0.7, 0.8, 1.08], '130,165,255', '170,200,255', 'frio de túmulo: espíritos e aberrações'], ['Cavernas', [1.2, 0.92, 0.6], '255,120,30', '255,160,50', 'terra crua e brasas: território das bestas'], ['Fornalha', [1.3, 0.52, 0.48], '255,50,30', '255,90,50', 'pedra em sangue: os demônios mandam aqui']];
 const temaDoAndar = (a) => { const z = Math.max(1, a) - 1; return z % 40 >= 36 ? 3 : Math.floor(z / 4) % 4; };
 const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
 // grade levadiça na porta de saída (paredes do fundo): fechada enquanto houver inimigo na sala, sobe quando ela é limpa
@@ -1708,6 +1708,19 @@ function ajustarTela() {
 function salvar() { try { localStorage.setItem(CHAVE, J.Salvar()); localStorage.setItem(CHAVE + '-hora', String(Date.now())); } catch (e) { /* sem armazenamento: joga-se sem salvar */ } }
 
 // ---- painéis ----
+const subSel = {}; try { Object.assign(subSel, JSON.parse(localStorage.getItem('necromante-idle-save-v1-subsel') || '{}')); } catch (e) { /* padrão */ }
+const SUB_JUNTA = /^(Árvore|Melhorar|Reparar|Vender)/, SUB_PADRAO = ['Construções', 'Ferreiro'];
+// painéis longos viram sub-abas: cada <h3> abre uma seção; seções com o mesmo nome (ou de apoio) se juntam
+function emSubAbas(h, chave) {
+  const partes = h.split(/(?=<h3[ >])/), cab = partes[0].startsWith('<h3') ? '' : partes.shift(), secs = [];
+  for (const p of partes) {
+    const t = p.replace(/^<h3[^>]*>/, '').split(/<span|<\/h3>/)[0].split(' · ')[0].trim(), ja = secs.find((x) => x[0] === t);
+    if (ja) ja[1] += p; else if (secs.length && SUB_JUNTA.test(t)) secs[secs.length - 1][1] += p; else secs.push([t, p]);
+  }
+  if (secs.length < 2) return h;
+  let sel = subSel[chave]; if (!secs.some((x) => x[0] === sel)) sel = (secs.find((x) => SUB_PADRAO.includes(x[0])) || secs[0])[0];
+  return cab + `<div class="sub sub-n">${secs.map(([t]) => `<button data-ac="sub-sel" data-c="${chave}" data-k="${escHtml(t)}" class="${t === sel ? 'ativo' : ''}">${t}</button>`).join('')}</div>` + secs.find((x) => x[0] === sel)[1];
+}
 let subTal = 'talentos'; try { subTal = localStorage.getItem('necromante-idle-save-v1-subtal') || 'talentos'; } catch (e) { /* padrão */ }
 const abasSel = { esq: 'exercito', dir: 'combate', baixo: 'necropole' }, LADO = { exercito: 'esq', equip: 'esq', combate: 'dir', masmorra: 'dir', bestiario: 'dir', necropole: 'baixo', talentos: 'baixo', ferreiro: 'baixo' };
 const ALVO = { esq: 'p-esq', dir: 'p-dir', baixo: 'painel' }, htmlAnterior = { esq: '', dir: '', baixo: '' };
@@ -1987,7 +2000,7 @@ function atualizarPainel(forcar) {
   desenharFicha(d);
   for (const lado of ['esq', 'dir', 'baixo']) {
     if (lado === 'esq' && invAberto) continue;
-    const h = render(abasSel[lado]);
+    const h0 = render(abasSel[lado]), h = abasSel[lado] === 'necropole' || abasSel[lado] === 'ferreiro' ? emSubAbas(h0, abasSel[lado]) : h0;
     if (forcar || h !== htmlAnterior[lado]) { htmlAnterior[lado] = h; $(ALVO[lado]).innerHTML = h; }
   }
 }
@@ -2360,6 +2373,7 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'pergaminho': if (J.ComprarPergaminho()) { som('bencao'); aviso('Pergaminho de Portal comprado'); } break;
     case 'portal-auto': J.AlternarPortalAutomatico(); break;
     case 'livro': if (J.ComprarLivro(i)) { som('bencao'); aviso('Livro de feitiço comprado'); } break;
+    case 'sub-sel': subSel[b.dataset.c] = b.dataset.k; try { localStorage.setItem(CHAVE + '-subsel', JSON.stringify(subSel)); } catch (e) { /* sem armazenamento */ } break;
     case 'sub-tal': subTal = b.dataset.k; try { localStorage.setItem(CHAVE + '-subtal', subTal); } catch (e) { /* sem armazenamento */ } break;
     case 'limiar-pocao': { const op = i ? [10, 15, 30, 50] : [20, 35, 50, 65], at = +(b.textContent.match(/(\d+)%/) || [0, 0])[1], nx = op[(op.indexOf(at) + 1) % op.length]; J.DefinirLimiarDePocao(i, nx); break; }
     case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;
