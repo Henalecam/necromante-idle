@@ -241,7 +241,8 @@ function ambiente(dt, larg, alt) {
   if (descida) { const fd = Math.max(0, Math.min(1, ((tempoSim - descida.t0) / descida.T - 0.6) / 0.4)); if (fd > 0) { ctx.fillStyle = `rgba(0,0,0,${fd * fd})`; ctx.fillRect(0, 0, larg, alt); } }
   if (tituloAndar) {
     const ft = (performance.now() - tituloAndar.t) / 2600;
-    if (ft >= 1) tituloAndar = null;
+    const bpT = $('b-porta'), eT = $('encruzilhada'), bT = $('bencaos');
+    if (ft >= 1 || (bpT && !bpT.hidden) || (eT && !eT.hidden && !eT.classList.contains('min')) || (bT && !bT.hidden)) tituloAndar = null;
     else {
       const af = ft < 0.15 ? ft / 0.15 : ft > 0.7 ? (1 - ft) / 0.3 : 1, tam = Math.max(22, Math.min(46, larg / 14));
       ctx.save(); ctx.globalAlpha = af; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1883,6 +1884,8 @@ window.__cena = () => [!!descida, !!chegada];
 window.__titulo = () => tituloAndar ? tituloAndar.a + "|" + tituloAndar.b : "";
 window.__marcarPrimeiro = () => { const al = [...estado.values()].filter((e) => e.viva && e.inimigo); if (al.length < 3 || !J) return false; const u = al.find((e) => e.campeao) || al[0]; J.Marcar(u.id); return true; };
 window.__ficha = () => fichaTxt;
+window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
+window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__muralha = () => muralhaFx ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });

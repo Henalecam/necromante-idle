@@ -1729,6 +1729,19 @@ namespace Necro.Testes
                 Afirmar(Grimorio.SoPorLivro(FeiticoId.Golem) && Grimorio.SoPorLivro(FeiticoId.MuralhaDeFogo) && !Grimorio.SoPorLivro(FeiticoId.LancaDeOssos), "Golem e Muralha só por livro");
             });
 
+            Teste("estresse no Pesadelo: descidas com poder alto, Muralha e Golem aprendidos não lançam exceção", () =>
+            {
+                var c = new ConfigJogo();
+                for (ulong sm = 1; sm <= 40; sm++)
+                {
+                    var p = ProgressoCom(EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 40; p.PoderNecromantico = 9000f;
+                    p.DificuldadeLiberada = 1; p.Dificuldade = 1; p.NiveisDeFeitico[(int)FeiticoId.MuralhaDeFogo] = (int)(sm % 2); p.NiveisDeFeitico[(int)FeiticoId.Golem] = (int)(sm % 3 == 0 ? 1 : 0);
+                    var s = new Simulacao(c, p, sm * 31UL, ModoExpedicao.Avancar, 1 + (int)(sm % 9)) { LimiteDeAndares = 4, ReapresentarEventosDeComandos = true }; int g = 0;
+                    try { while (!s.Encerrada && g++ < 40000) { s.Tick(); if (g % 50 == 0) { foreach (var e in s.Entidades) if (e.Viva && e.Faccao == Faccao.Inimigo) { s.ComandoMarcar(e.Id); break; } } } }
+                    catch (Exception ex) { Afirmar(false, "semente " + sm + ", tick " + g + ": " + ex); }
+                }
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };
