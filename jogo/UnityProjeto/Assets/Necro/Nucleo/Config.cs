@@ -511,6 +511,9 @@ namespace Necro.Nucleo
         // Lázarus (chefe do Ato 3): muralha de fogo sob o grupo, teleporte quando encostam, Súcubos
         public float LazarusIntervalo = 7f, LazarusMuralhaDano = 0.2f, LazarusMuralhaDuracao = 4f, LazarusMuralhaComprimento = 7f, LazarusTeleporteDist = 2.6f;
         public int LazarusMaximoDeSucubos = 3;
+        // Diablo (chefe do Ato 4): Apocalipse, anel de fogo em volta dele
+        public float ApocalipseIntervalo = 6f, ApocalipseRaio = 4.5f, ApocalipseDano = 0.8f;
+        public int AtoFinal = 4;                           // vencer o chefe deste ato fecha a campanha da dificuldade
         public float GrilhoesIntervalo = 9f, GrilhoesDuracao = 2.0f;
         public int GrilhoesAlvos = 2, GrilhoesMaximoDeAparicoes = 3;
 

@@ -1820,7 +1820,7 @@ namespace Necro.Testes
 
             Teste("Ato 3: o chefe do andar 30 é o Arcebispo Lázarus, que acende muralhas de fogo sob o grupo, se teleporta e chama Súcubos; a luta termina", () =>
             {
-                Afirmar(TabelaEspecies.ChefeDoAto(1) == EspecieId.AbadessaCosturada && TabelaEspecies.ChefeDoAto(2) == EspecieId.CarcereiroDeAlmas && TabelaEspecies.ChefeDoAto(3) == EspecieId.Lazarus && TabelaEspecies.ChefeDoAto(4) == EspecieId.AbadessaCosturada, "chefes em ciclo de três atos");
+                Afirmar(TabelaEspecies.ChefeDoAto(1) == EspecieId.AbadessaCosturada && TabelaEspecies.ChefeDoAto(2) == EspecieId.CarcereiroDeAlmas && TabelaEspecies.ChefeDoAto(3) == EspecieId.Lazarus && TabelaEspecies.ChefeDoAto(4) == EspecieId.Diablo && TabelaEspecies.ChefeDoAto(5) == EspecieId.AbadessaCosturada, "chefes em ciclo de quatro atos");
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
                 int viu = 0, muralhas = 0, teles = 0, sucubos = 0, venceu = 0, acabou = 0; float fogoSofrido = 0f;
                 for (ulong sm = 1; sm <= 4; sm++)
@@ -1844,6 +1844,32 @@ namespace Necro.Testes
                 Afirmar(viu == 4 && acabou == 4, "o chefe do andar 30 é Lázarus e a luta termina (" + viu + ", " + acabou + ")");
                 Afirmar(muralhas >= 4 && sucubos >= 2, "acende muralhas e chama Súcubos (" + muralhas + ", " + sucubos + ")");
                 Afirmar(venceu >= 1, "um exército forte consegue vencê-lo (" + venceu + "/4)");
+            });
+
+            Teste("Ato 4 e fim da campanha: Diablo no andar 40 solta o Apocalipse; vencê-lo marca a campanha na dificuldade, dá um Único travado e pede o desfecho uma única vez", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                int viu = 0, venceu = 0, apocalipses = 0, acabou = 0; ResultadoExpedicao vitoria = null;
+                for (ulong sm = 1; sm <= 4; sm++)
+                {
+                    var p0 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto); p0.NivelNecromante = 120; p0.PoderNecromantico = 60000f; foreach (var m in p0.Minions) m.Nivel = 20;
+                    var s = new Simulacao(c, p0, sm, ModoExpedicao.Avancar, 40) { LimiteDeAndares = 1 }; int g = 0;
+                    while (!s.Encerrada && g++ < 80000) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Diablo) viu++; }
+                    apocalipses += s.Resultado.Apocalipses; if (s.Encerrada) acabou++;
+                    if (s.Resultado.ChefesVencidosNaDescida.Contains(4)) { venceu++; if (vitoria == null) vitoria = s.Resultado; }
+                }
+                Console.WriteLine("        (Diablo: visto " + viu + "/4, venceu " + venceu + "/4, apocalipses " + apocalipses + ")");
+                Afirmar(viu == 4 && acabou == 4 && apocalipses >= 3, "o chefe do andar 40 é Diablo, solta o Apocalipse e a luta termina (" + viu + ", " + acabou + ", " + apocalipses + ")");
+                Afirmar(venceu >= 1 && vitoria != null, "um exército forte o vence (" + venceu + "/4)");
+                var p = Progressao.NovoJogo(c); int itens0 = p.Inventario.Count;
+                Progressao.AplicarResultado(p, vitoria, c);
+                Afirmar(p.CampanhaVencida == 1 && p.VitoriaPendente && p.VitoriaNaDificuldade == 0, "a campanha fica marcada no Normal e o desfecho fica pendente");
+                Afirmar(p.Inventario.Exists(it => it.UnicoId > 0 && it.Bloqueado), "um item Único travado vem de prêmio");
+                p.VitoriaPendente = false; int unicos = p.Inventario.FindAll(it => it.UnicoId > 0 && it.Bloqueado).Count;
+                Progressao.AplicarResultado(p, vitoria, c);
+                Afirmar(!p.VitoriaPendente && p.Inventario.FindAll(it => it.UnicoId > 0 && it.Bloqueado).Count == unicos, "vencer de novo na mesma dificuldade não repete o desfecho nem o prêmio");
+                p.ChefesDerrotados.Add(1); Ascensao.Ascender(p, c);
+                Afirmar(p.CampanhaVencida == 1, "o marco atravessa a Ascensão");
             });
 
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>

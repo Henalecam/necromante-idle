@@ -7,7 +7,12 @@ namespace Necro.Nucleo
     {
         public static readonly string[] Nomes = { "Catedral", "Catacumbas", "Cavernas", "Inferno" };
 
-        public static TemaDeAndar Do(int andar) { return (TemaDeAndar)(((andar < 1 ? 1 : andar) - 1) / 4 % 4); }
+        public static TemaDeAndar Do(int andar)
+        {
+            int a = (andar < 1 ? 1 : andar) - 1;
+            if (a % 40 >= 36) return TemaDeAndar.Inferno;   // os quatro últimos andares de cada ciclo de quatro atos (37 a 40): o covil de Diablo é sempre o Inferno
+            return (TemaDeAndar)(a / 4 % 4);
+        }
 
         /// <summary>A família da casa em cada tema: mortos-vivos na Catedral, espíritos e aberrações nas Catacumbas, bestas nas Cavernas, demônios no Inferno.</summary>
         public static bool DaCasa(TemaDeAndar t, Familia f)

@@ -180,6 +180,8 @@ public static partial class Jogo
               .Append(",\"restos\":").Append(_p.Restos[i]).Append(",\"custo\":").Append(Oferendas.Custo(_p, i, _cfg)).Append(",\"pode\":").Append(B(Oferendas.Pode(_p, i, _cfg))).Append('}');
         }
         sb.Append(']');
+        { long mortesTotais = 0; if (_p.MortesPorEspecie != null) for (int kv = 0; kv < _p.MortesPorEspecie.Length; kv++) mortesTotais += _p.MortesPorEspecie[kv];
+          sb.Append(",\"vitoria\":{\"pendente\":").Append(B(_p.VitoriaPendente)).Append(",\"dif\":").Append(_p.VitoriaNaDificuldade).Append(",\"feitas\":").Append(_p.CampanhaVencida).Append(",\"mortes\":").Append(mortesTotais).Append(",\"vidas\":").Append(_p.Ascensoes + 1).Append(",\"nivel\":").Append(_p.NivelNecromante).Append('}'); }
         sb.Append(",\"ascensao\":{\"pode\":").Append(B(Ascensao.Pode(_p))).Append(",\"renderia\":").Append(Ascensao.CinzasDestaVida(_p, _cfg)).Append(",\"czAndar\":").Append(Ascensao.CinzasDoAndar(_p)).Append(",\"czChefes\":").Append(Ascensao.CinzasDosChefes(_p, _cfg)).Append(",\"nChefes\":").Append(_p.ChefesDerrotados.Count).Append(",\"czPorChefe\":").Append(_cfg.CinzasPorChefe).Append(",\"czFator\":").Append(F(Ascensao.FatorDaDificuldade(_p, _cfg))).Append(",\"cinzas\":").Append(_p.Cinzas)
           .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"maior\":").Append(_p.MaiorAndarConcluido).Append(",\"leva\":[").Append(string.Join(",", Arvore.Resumo(_p, _cfg).ConvertAll(S))).Append("]").Append(",\"selos\":").Append(_p.SelosDoAbismo).Append(",\"arvore\":[");
         for (int ar = 0; ar < Arvore.Ramos; ar++)
@@ -374,6 +376,7 @@ public static partial class Jogo
     [JSExport] public static void Ceifar(int orbeId) { _sim.ComandoCeifar(orbeId); }
     [JSExport] public static void Pacto(int opcao) { _sim.ComandoPacto(opcao); }
     [JSExport] public static void Marcar(int entidadeId) { _sim.ComandoMarcar(entidadeId); }
+    [JSExport] public static void ReconhecerVitoria() { _p.VitoriaPendente = false; }
 
     /// <summary>Ficha do inimigo marcado (a barra de descrição do Diablo 1): nome, vida, tipo, modificadores, resistências. "" se não há marcado vivo.</summary>
     [JSExport] public static string FichaDoMarcado()
@@ -500,6 +503,7 @@ public static partial class Jogo
             case "selos": _p.SelosDoAbismo += (int)Math.Max(0, v); _p.Ascensoes = Math.Max(1, _p.Ascensoes); break;
             case "ouro": _p.Ouro += (long)Math.Max(0, v); break;
             case "golem": Grimorio.Receber(_p, FeiticoId.Golem, _cfg); break;
+            case "vitoria": _p.CampanhaVencida |= 1; _p.VitoriaPendente = true; _p.VitoriaNaDificuldade = 0; break;
             case "muralha": Grimorio.Receber(_p, FeiticoId.MuralhaDeFogo, _cfg); break;
             case "relampago": Grimorio.Receber(_p, FeiticoId.RelampagoEmCadeia, _cfg); break;
             case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % Grimorio.Quantos), _cfg); break;

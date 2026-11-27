@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { lazarus: ['acolitocaido', 1.9, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { diablo: ['diabrete', 3.1, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.9, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -53,7 +53,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 // ---- a sala: chão de lajes, duas paredes ao fundo, portas conforme o mapa ----
 // tema do andar, como no Diablo 1: muda a cada 4 andares [nome, multiplicador da pedra, fogo, fogo forte, frase]
 const TEMAS_ANDAR = [['Catedral', [1, 1, 1], '255,150,60', '255,170,70', 'pedra lavrada e mortos-vivos'], ['Catacumbas', [0.7, 0.8, 1.08], '130,165,255', '170,200,255', 'frio de túmulo: espíritos e aberrações'], ['Cavernas', [1.2, 0.92, 0.6], '255,120,30', '255,160,50', 'terra crua e brasas: território das bestas'], ['Inferno', [1.3, 0.52, 0.48], '255,50,30', '255,90,50', 'pedra em sangue: os demônios mandam aqui']];
-const temaDoAndar = (a) => Math.floor((Math.max(1, a) - 1) / 4) % 4;
+const temaDoAndar = (a) => { const z = Math.max(1, a) - 1; return z % 40 >= 36 ? 3 : Math.floor(z / 4) % 4; };
 const TEMA = { 2: [70, 42, 42], 3: [70, 60, 44], 4: [48, 56, 70], 5: [46, 62, 54], 7: [66, 44, 48], 8: [76, 50, 66], 9: [64, 58, 46], 10: [70, 38, 40], 11: [50, 48, 50] };
 // grade levadiça na porta de saída (paredes do fundo): fechada enquanto houver inimigo na sala, sobe quando ela é limpa
 let gradeAberta = 1, gradeSala = -1;
@@ -376,7 +376,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus', Diablo: 'Diablo' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -444,6 +444,11 @@ function evento(v) {
     const g = estado.get(+v[3]), qx = g ? g.x : +v[10], qy = g ? g.y : +v[11];
     numeros.push({ x: qx, y: qy, txt: k === '30' ? 'Fogem!' : k === '32' ? 'Devora o cadáver' : '+' + Math.round(+v[4] || 0), cor: k === '30' ? '#ffd27a' : '#c8ff9a', t: 1, amigo: false });
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
+    return;
+  }
+  if (tipo === 'EfeitoAplicado' && v[14] === '43') {
+    tremor = Math.max(tremor, 0.6); clarao = Math.max(clarao, 0.45); som('chefe');
+    vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['43']) { vistosDeEspecie['43'] = 1; aviso('Apocalipse! · o fogo de Diablo fere todos em volta dele'); }
     return;
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '42') {
@@ -833,7 +838,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
 // ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----
-const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1 };
+const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1, Diablo: 1 };
 function adorno(especie, camada, px, py, e, id) {
   const t = performance.now() / 1000 + id * 0.37;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -861,6 +866,20 @@ function adorno(especie, camada, px, py, e, id) {
       ctx.fillStyle = '#2a0f4a'; ctx.strokeStyle = '#12061f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px - 10 * e, hy + 12 * e); ctx.quadraticCurveTo(px - 8 * e, hy - 8 * e, px + 2 * e, hy - 26 * e); ctx.quadraticCurveTo(px + 9 * e, hy - 6 * e, px + 10 * e, hy + 12 * e); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(210,150,255,${0.6 + 0.3 * Math.sin(t * 4)})`; ctx.lineWidth = 2 * e; ctx.beginPath(); ctx.ellipse(px, hy - 30 * e, 12 * e, 4 * e, 0, 0, 7); ctx.stroke();
       for (const l of [-1, 1]) { const mx = px + l * 17 * e, my = py - 56 * e + Math.sin(t * 6 + l) * 2 * e, g2 = ctx.createRadialGradient(mx, my, 0, mx, my, 11 * e); g2.addColorStop(0, 'rgba(240,210,255,0.95)'); g2.addColorStop(0.4, 'rgba(170,80,255,0.6)'); g2.addColorStop(1, 'rgba(120,40,220,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(mx, my, 11 * e, 0, 7); ctx.fill(); }
+    }
+  } else if (especie === 'Diablo') {
+    const k = e / 3.1;          // o sprite emprestado é pequeno e vem ampliado: as medidas abaixo são em pixels do chefe
+    if (camada === 0) {          // crista de espinhos nas costas e brasa no chão
+      const g = ctx.createRadialGradient(px, py, 4, px, py, 120 * k); g.addColorStop(0, `rgba(255,90,20,${0.35 + 0.1 * Math.sin(t * 3)})`); g.addColorStop(1, 'rgba(160,20,0,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(px, py, 120 * k, 56 * k, 0, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#3a0606'; ctx.strokeStyle = '#120202'; ctx.lineWidth = 2;
+      for (let q = 0; q < 5; q++) { const bx = px - 46 * k + q * 6 * k, by = py - (150 - q * 22) * k; ctx.beginPath(); ctx.moveTo(bx + 16 * k, by + 14 * k); ctx.lineTo(bx - 22 * k, by - 12 * k); ctx.lineTo(bx + 18 * k, by - 8 * k); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    } else {                     // dois chifres grandes curvos e os olhos acesos
+      const hy = py - 196 * k;
+      ctx.strokeStyle = '#e8dcc8'; ctx.lineWidth = 9 * k;
+      for (const l of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + l * 16 * k, hy + 16 * k); ctx.quadraticCurveTo(px + l * 58 * k, hy + 8 * k, px + l * 50 * k, hy - 44 * k); ctx.stroke(); }
+      ctx.strokeStyle = '#6a5a48'; ctx.lineWidth = 3 * k; for (const l of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + l * 20 * k, hy + 12 * k); ctx.quadraticCurveTo(px + l * 52 * k, hy + 6 * k, px + l * 48 * k, hy - 36 * k); ctx.stroke(); }
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,220,90,${0.8 + 0.2 * Math.sin(t * 7)})`; for (const l of [-1, 1]) { ctx.beginPath(); ctx.ellipse(px + l * 8 * k, hy + 26 * k, 5 * k, 2.5 * k, 0, 0, 7); ctx.fill(); }
     }
   } else if (especie === 'Lazarus') {
     if (camada === 0) {          // cajado alto com um globo de sangue aceso na ponta
@@ -1547,7 +1566,14 @@ const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map(esc).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
-  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; cintoMax = d.cinto ? d.cinto.max : 3; $('b-portal').hidden = !(d.portal && d.portal.agora);
+  const d = JSON.parse(J.Painel());
+  if (d.vitoria && d.vitoria.pendente && $('vitoria').hidden) {
+    const dfV = DIFICULDADES[d.vitoria.dif][0], prox = d.vitoria.dif < 2 ? DIFICULDADES[d.vitoria.dif + 1][0] : null;
+    $('vit-texto').innerHTML = `Diablo foi destruído no andar 40 e a campanha <b>${dfV}</b> está vencida. Um item <b style="color:#ffcf5a">Único travado</b> foi para o seu inventário.` + (prox ? ` A masmorra não acaba aqui: o <b>${prox}</b> espera, com inimigos imunes e tesouros melhores, e ascender agora rende muitas Cinzas.` : ' Não há dificuldade acima desta: resta descer mais fundo e ascender.');
+    $('vit-num').innerHTML = `<div>${fmt(d.vitoria.mortes)}<small>inimigos mortos</small></div><div>${d.vitoria.vidas}<small>${d.vitoria.vidas > 1 ? 'vidas' : 'vida'}</small></div><div>${d.vitoria.nivel}<small>nível</small></div>`;
+    $('vitoria').hidden = false; som('bencao');
+  }
+  cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; cintoMax = d.cinto ? d.cinto.max : 3; $('b-portal').hidden = !(d.portal && d.portal.agora);
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
   $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
@@ -1746,7 +1772,7 @@ function atualizarPainel(forcar) {
     });
   } else if (aba === 'necropole') {
     h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, e nas mais altas os inimigos resistem mais e alguns ficam <b>imunes</b> a um tipo de dano (o Bestiário mostra quais); com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
-    DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
+    DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}${d.vitoria && (d.vitoria.feitas >> k) & 1 ? ' <span style="color:#ffcf5a">· Diablo vencido</span>' : ''}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
     h += '<h3>Construções</h3>';
     d.construcoes.forEach((c, i) => {
       const custo = c.nivel >= c.max ? 'Máximo' : !c.aberta ? `Abre no andar ${c.andar}` : `${fmt(c.ossos)} Ossos` + (c.essencia ? ` · ${fmt(c.essencia)} Ess.` : '');
@@ -2028,6 +2054,7 @@ window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva
 window.__teles = () => teleFx.length;
 window.__raios = () => raiosFx.length;
 for (const idG of ['g-vida', 'g-mana']) $(idG).addEventListener('click', () => { const g = $(idG); g.classList.add('mostra'); clearTimeout(g.tm); g.tm = setTimeout(() => g.classList.remove('mostra'), 2500); });
+$('vit-ok').addEventListener('click', () => { if (J) J.ReconhecerVitoria(); $('vitoria').hidden = true; });
 window.__muralha = () => muralhasFx.length ? 1 : 0;
 window.__muralhaInimiga = () => muralhasFx.some((m) => m.ini) ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];

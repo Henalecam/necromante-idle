@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[18];
+            var t = new DadosEspecie[19];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -170,11 +170,18 @@ namespace Necro.Nucleo
                 Vida = 560f, Dano = 22f, VelAtaque = 0.7f, Armadura = 20f, Alcance = 8.0f, VelMovimento = 1.8f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0.1f, 0.5f, 0f, -0.1f, 0.2f, 0.4f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
             };
+            // Chefe do Ato 4 e fim da campanha (Diablo 1): o Senhor do Terror. Corpo a corpo brutal e o Apocalipse, um anel de fogo que fere todos em volta.
+            t[(int)EspecieId.Diablo] = new DadosEspecie
+            {
+                Id = EspecieId.Diablo, Nome = "Diablo, o Senhor do Terror", Familia = Familia.Demonio, Porte = Porte.Colossal, Papel = Papel.Lutador,
+                Vida = 900f, Dano = 30f, VelAtaque = 0.8f, Armadura = 50f, Alcance = 2.2f, VelMovimento = 1.9f, TipoDano = TipoDano.Fisico,
+                Resistencias = Res(0.2f, 0.6f, -0.1f, 0.2f, 0.2f, 0.3f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
+            };
             return t;
         }
 
         /// <summary>Chefe de um Ato. Por enquanto só existe o conteúdo do Ato 1; os demais reutilizam a Abadessa.</summary>
-        /// <summary>Abadessa no Ato 1, Carcereiro no 2, Lázarus no 3; daí em diante o ciclo se repete.</summary>
-        public static EspecieId ChefeDoAto(int ato) { int k = ((ato < 1 ? 1 : ato) - 1) % 3; return k == 0 ? EspecieId.AbadessaCosturada : k == 1 ? EspecieId.CarcereiroDeAlmas : EspecieId.Lazarus; }
+        /// <summary>Abadessa no Ato 1, Carcereiro no 2, Lázarus no 3, Diablo no 4; daí em diante o ciclo se repete.</summary>
+        public static EspecieId ChefeDoAto(int ato) { int k = ((ato < 1 ? 1 : ato) - 1) % 4; return k == 0 ? EspecieId.AbadessaCosturada : k == 1 ? EspecieId.CarcereiroDeAlmas : k == 2 ? EspecieId.Lazarus : EspecieId.Diablo; }
     }
 }

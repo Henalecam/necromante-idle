@@ -123,6 +123,9 @@ namespace Necro.Nucleo
         public bool OferendasAutomaticas = true;
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
+        public int CampanhaVencida;          // bits por dificuldade: o chefe do ato final (Diablo) já caiu nela
+        public bool VitoriaPendente;         // a tela ainda não mostrou o desfecho da última vitória
+        public int VitoriaNaDificuldade;     // qual dificuldade a vitória pendente fechou
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
         public int PergaminhosDePortal, PortalNoAndar, PortaisUsados; public bool PortalAutomatico;   // Portal da Cidade: pergaminhos, e o andar onde ficou um portal aberto (0 = nenhum)
         public int[] LivrosDaBruxa; public int LivrosComprados;   // prateleira da Bruxa (FeiticoId; -1 = vendido)
@@ -192,7 +195,7 @@ namespace Necro.Nucleo
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
         public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;
-        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago, Teleportes, MuralhasDeLazarus;
+        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago, Teleportes, MuralhasDeLazarus, Apocalipses;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;
@@ -419,6 +422,14 @@ namespace Necro.Nucleo
             if (r.AncoragemAlcancada > p.AndarDeAncoragem) p.AndarDeAncoragem = r.AncoragemAlcancada;
             for (int i = 0; i < r.ChefesDerrotados.Count; i++)
                 if (!p.ChefesDerrotados.Contains(r.ChefesDerrotados[i])) p.ChefesDerrotados.Add(r.ChefesDerrotados[i]);
+            // fim da campanha: o chefe do ato final caiu nesta dificuldade pela primeira vez (o jogo continua: dificuldades e ascensão)
+            if (r.ChefesVencidosNaDescida != null && r.ChefesVencidosNaDescida.Contains(cfg.AtoFinal) && (p.CampanhaVencida & (1 << r.Dificuldade)) == 0)
+            {
+                p.CampanhaVencida |= 1 << r.Dificuldade; p.VitoriaPendente = true; p.VitoriaNaDificuldade = r.Dificuldade;
+                var rngV = new Rng(977UL + (ulong)r.Dificuldade * 31UL + (ulong)p.Ascensoes);
+                var du = Unicos.Sortear(rngV, cfg.AtoFinal * cfg.AndaresPorAto + cfg.DificuldadeNivelDeItem[r.Dificuldade], r.Dificuldade);
+                if (du != null) { var premio = Unicos.Gerar(rngV, cfg, cfg.AtoFinal * cfg.AndaresPorAto + cfg.DificuldadeNivelDeItem[r.Dificuldade], du); premio.Bloqueado = true; p.Inventario.Add(premio); p.UnicosAchados |= 1 << du.Id; }
+            }
             for (int i = 0; i < r.Almas.Count; i++) GuardarAlma(p, r.Almas[i], cfg);
             // Itens vão para o inventário (com o descarte automático); só passam a valer quando o jogador equipa.
             for (int i = 0; i < r.Itens.Count; i++) Equipamento.GuardarItem(p, r.Itens[i], cfg);

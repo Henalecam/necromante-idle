@@ -59,4 +59,5 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - C5. [feito: 5 ramos de 8 nós (o quinto, Herança, acelera a vida seguinte: medido -13% na vida 2 e -22% na vida 3), Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
 
 - D1. [feito no item 179] Ato 3 (andares 21-30) com chefe próprio: Arcebispo Lázarus (muralha de fogo inimiga, teleporte, Súcubos). Medido: 20,68 h na primeira vida.
-- D2. [a fazer] Ato 4 (andares 31-40) com o chefe final, Diablo, e um desfecho de campanha.
+- D2. [feito no item 180] Ato 4 com Diablo no andar 40 (Apocalipse) e desfecho de campanha por dificuldade. Medido: 43,07 h a campanha do Normal na primeira vida.
+- D3. [a fazer] Arte própria de Diablo (a provisória é ilegível) e conferir o Apocalipse na tela.

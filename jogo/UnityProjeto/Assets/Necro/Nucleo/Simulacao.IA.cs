@@ -543,6 +543,13 @@ namespace Necro.Nucleo
             if (e.TempoHabilidade > 0f) return false;
             if (e.Especie == EspecieId.CarcereiroDeAlmas) { Grilhoes(e); return true; }
             if (e.Especie == EspecieId.Lazarus) { RitoDeLazarus(e); return true; }
+            if (e.Especie == EspecieId.Diablo)
+            {   // Apocalipse: um anel de fogo estoura em volta dele e fere todo aliado dentro do raio
+                e.TempoHabilidade = Cfg.ApocalipseIntervalo; e.TempoAcao = 0.8f; e.Animacao = EstadoAnimacao.Conjurando; Resultado.Apocalipses++;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 43, Alvo = e.Id, Origem = e.Id, Pos = e.Pos, Valor = Cfg.ApocalipseRaio, TipoDano = TipoDano.Fogo });
+                _explosoes.Add(new ExplosaoPendente { Pos = e.Pos, Dano = e.Dano * Cfg.ApocalipseDano, Raio = Cfg.ApocalipseRaio, AtingeInimigos = false, OrigemId = e.Id, Tipo = TipoDano.Fogo });
+                return true;
+            }
             e.TempoHabilidade = Cfg.PocaIntervalo;
             e.TempoAcao = 1.0f;
             e.Animacao = EstadoAnimacao.Conjurando;
