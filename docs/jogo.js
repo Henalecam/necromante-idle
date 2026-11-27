@@ -423,6 +423,7 @@ function evento(v) {
   }
   if (tipo === 'EfeitoAplicado' && (v[14] === '33' || v[14] === '34')) { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: v[14] === '33' ? 'Poção de vida' : 'Poção de mana', cor: v[14] === '33' ? '#ff8a8a' : '#8ab8ff', t: 1, amigo: true }); som('bencao'); if (cintoHud) cintoHud[v[14] === '33' ? 0 : 1] = Math.max(0, cintoHud[v[14] === '33' ? 0 : 1] - 1); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '35') { numeros.push({ x: +v[10], y: +v[11], txt: +v[4] ? '+1 poção de mana' : '+1 poção de vida', cor: '#e8dcb0', t: 1, amigo: true }); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '36') { const an = Math.round(+v[4] || 0); aviso(`Portal da Cidade · você volta ao andar ${an}`); anotar(`<b style="color:#7ab0ff">Portal da Cidade aberto no andar ${an}.</b> Todo o saque veio com você; a próxima descida começa lá.`); som('bencao'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '29') { aviso('O Golem de Ossos se ergue'); som('chefe'); tremor = Math.max(tremor, 0.3); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '28') { aviso('★ Um item Único caiu!'); anotar('<b style="color:#ffcf5a">★ Um item Único caiu.</b> Identifique-o no Ferreiro para ver qual é.'); som('chefe'); clarao = Math.max(clarao, 0.5); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '24') { const nf = ['Lança de Ossos', 'Drenar Vida', 'Explosão de Cadáver', 'Reerguer', 'Maldição da Fraqueza', 'Sacrifício', 'Golem de Ossos'][Math.round(+v[4] || 0)] || 'feitiço'; aviso('Livro de feitiço · ' + nf); anotar(`Você achou um <b style="color:#9fd0ff">Livro de ${nf}</b>. Será lido ao voltar (se a Magia permitir).`); som('bencao'); return; }
@@ -1319,7 +1320,7 @@ const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map(esc).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
-  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null;
+  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; $('b-portal').hidden = !(d.portal && d.portal.agora);
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
   $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
@@ -1415,6 +1416,8 @@ function atualizarPainel(forcar) {
       `<div class="linha"><div class="corpo">Repor o cinto ao voltar<small>depois de cada descida, compra as poções que faltam com o ouro que houver (depois do reparo)</small></div><button data-ac="repor-pocoes" class="${ct.repor ? 'ativo' : ''}">${ct.repor ? 'Ligado' : 'Desligado'}</button></div>`;
     // a Bruxa: livros de feitiço
     h += `<h3>Bruxa · livros de feitiço</h3><p class="nota">Dois livros por descida. Cada livro sobe um nível do feitiço; se faltar Magia para ler, fica guardado. É o jeito certo de aprender o <b>Golem</b>.</p>`;
+    { const pt = d.portal; h += `<div class="linha"><div class="corpo"><span style="color:#7ab0ff">Pergaminho de Portal da Cidade</span> <span class="nota">${pt.n}/${pt.max}</span><small>sai da descida com todo o saque e a próxima começa no mesmo andar${pt.andar ? ` · <b style="color:#7ab0ff">portal aberto no andar ${pt.andar}</b>` : ''}</small></div><button data-ac="pergaminho" ${pt.n >= pt.max || pt.preco > d.ouroTotal ? 'disabled' : ''}>${pt.n >= pt.max ? 'Cheio' : fmt(pt.preco) + ' ouro'}</button></div>` +
+      `<div class="linha"><div class="corpo">Abrir o portal sozinho<small>desligado por padrão: voltar sempre ao andar mais difícil rende menos do que recuar e juntar forças. Ligado, abre quando a derrota é certa: luta sem nenhum minion de pé, ou necromante abaixo de 20% sem poção de vida (do andar 3 em diante)</small></div><button data-ac="portal-auto" class="${pt.auto ? 'ativo' : ''}">${pt.auto ? 'Ligado' : 'Desligado'}</button></div>`; }
     if (!d.bruxa || !d.bruxa.length) h += '<p class="nota">A prateleira enche depois da próxima descida.</p>';
     (d.bruxa || []).forEach((l, i) => { h += l ? `<div class="linha"><div class="corpo"><span style="color:#9fd0ff">Livro de ${esc(l.nome)}</span> <span class="nota">${l.nivel ? 'você tem nível ' + l.nivel : 'feitiço novo'}</span><small>${l.magia > d.atributos.v[1] ? 'pede Magia ' + l.magia + ' (você tem ' + d.atributos.v[1] + '): ficará guardado' : 'você já pode ler'}</small></div><button data-ac="livro" data-i="${i}" ${l.preco > d.ouroTotal ? 'disabled title="Falta ouro"' : ''}>${fmt(l.preco)} ouro</button></div>` : '<div class="linha"><div class="corpo"><span class="nota">Vendido</span></div></div>'; });
     h += '<h3>Ferreiro · à venda</h3>';
@@ -1820,6 +1823,7 @@ $('salas').addEventListener('click', () => { aprendeu('mapa'); $('mapa-corpo').i
 $('mapa-grande').addEventListener('click', (ev) => { if (ev.target === $('mapa-grande') || ev.target.id === 'b-mapa-fechar') $('mapa-grande').hidden = true; });
 $('grupo').addEventListener('click', (ev) => { const r = ev.target.closest('[data-ret]'); if (!r || !J) return; const s = estado.get(+r.dataset.ret); if (s && s.viva && s.vida < 0.85 && sopro <= 0) { J.Curar(s.id); aprendeu('cura'); aviso('Sopro Profano'); for (let i = 0; i < 18; i++) particulas.push([s.rx, s.ry, 0.3, rnd(-1, 1), rnd(-0.6, 0.6), rnd(2, 5), '#78ffaa', rnd(0.5, 1)]); } else if (s && sopro > 0) aviso(`Sopro em recarga: ${Math.ceil(sopro)} s`); });
 $('b-frenesi').addEventListener('click', () => { if (J) J.Frenesi(); });
+$('b-portal').addEventListener('click', () => { if (J && J.Portal()) $('b-portal').hidden = true; });
 $('missao').addEventListener('click', (ev) => {
   const b = ev.target.closest('button[data-ac="resgatar"]'); if (!b || !J) return;
   if (J.Resgatar()) { aviso('Missão cumprida'); salvar(); atualizarPainel(true); }
@@ -1856,6 +1860,8 @@ for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click',
     case 'auto-reparo': J.AlternarAutoReparo(); break;
     case 'auto-melhoria': J.AlternarAutoMelhoria(); break;
     case 'repor-pocoes': J.AlternarReporPocoes(); break;
+    case 'pergaminho': if (J.ComprarPergaminho()) { som('bencao'); aviso('Pergaminho de Portal comprado'); } break;
+    case 'portal-auto': J.AlternarPortalAutomatico(); break;
     case 'livro': if (J.ComprarLivro(i)) { som('bencao'); aviso('Livro de feitiço comprado'); } break;
     case 'limiar-pocao': { const op = i ? [10, 15, 30, 50] : [20, 35, 50, 65], at = +(b.textContent.match(/(\d+)%/) || [0, 0])[1], nx = op[(op.indexOf(at) + 1) % op.length]; J.DefinirLimiarDePocao(i, nx); break; }
     case 'pocao': if (J.ComprarPocao(i)) { som('bencao'); aviso(i ? 'Poção de mana no cinto' : 'Poção de vida no cinto'); } break;

@@ -540,6 +540,29 @@ namespace Necro.Testes
                 p.Ouro = 10000000; Afirmar(Bruxa.ComprarTudo(p, Cfg) == Cfg.BruxaLivros, "ComprarTudo leva a prateleira inteira");
             });
 
+            Teste("Portal da Cidade: com pergaminho, a derrota certa vira saída com o saque, e a próxima descida começa no andar do portal (uma vez)", () =>
+            {
+                var c = new ConfigJogo { MissoesDeCenario = false };
+                var p = Progressao.NovoJogo(c); p.SemReporPocoes = true; p.MaiorAndarConcluido = 12; p.AndarDeAncoragem = 10;
+                Afirmar(!Bruxa.ComprarPergaminho(p, c), "sem ouro não compra pergaminho");
+                p.Ouro = 100000; while (Bruxa.ComprarPergaminho(p, c)) { }
+                p.PortalAutomatico = true;
+                Afirmar(p.PergaminhosDePortal == c.PergaminhosMaximo, "carrega até " + c.PergaminhosMaximo + " pergaminhos");
+                int partida = Progressao.AndarDePartida(p, c);
+                var r = ExecutorSemTela.RodarExpedicao(c, p, 3, ModoExpedicao.Avancar, 12, 5);   // fraco demais para o andar 12: vai perder
+                Afirmar(r.Motivo == MotivoFim.Portal && r.PortalNoAndar >= 12, "a derrota certa deveria virar portal (motivo " + r.Motivo + ")");
+                Progressao.AplicarResultado(p, r, c);
+                Afirmar(p.PergaminhosDePortal == c.PergaminhosMaximo - 1 && p.PortalNoAndar == r.PortalNoAndar, "gasta um pergaminho e marca o andar");
+                Afirmar(Progressao.AndarDePartida(p, c) == r.PortalNoAndar && r.PortalNoAndar > partida, "a próxima descida começa no andar do portal, não no recuo da ancoragem");
+                p.PortalAutomatico = false;
+                var r2 = ExecutorSemTela.RodarExpedicao(c, p, 4, ModoExpedicao.Avancar, Progressao.AndarDePartida(p, c), 5);
+                Afirmar(r2.Motivo != MotivoFim.Portal && r2.PortalNoAndar == 0, "com o portal automático desligado, não abre sozinho");
+                Progressao.AplicarResultado(p, r2, c);
+                Afirmar(p.PortalNoAndar == 0 && Progressao.AndarDePartida(p, c) == partida, "o portal vale uma vez: depois volta a regra da ancoragem");
+                var semP = Progressao.NovoJogo(c); semP.MaiorAndarConcluido = 12;
+                Afirmar(ExecutorSemTela.RodarExpedicao(c, semP, 3, ModoExpedicao.Avancar, 12, 5).Motivo == MotivoFim.NecromanteMorreu, "sem pergaminho, a derrota é derrota");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

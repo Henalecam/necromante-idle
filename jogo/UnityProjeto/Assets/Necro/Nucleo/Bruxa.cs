@@ -38,6 +38,17 @@ namespace Necro.Nucleo
             return true;
         }
 
+        public static long PrecoDoPergaminho(EstadoProgresso p, ConfigJogo cfg) { return Math.Max(1, (long)Math.Round(cfg.PergaminhoPreco * (1.0 + cfg.PergaminhoPrecoPorAndar * p.MaiorAndarConcluido))); }
+
+        /// <summary>Pergaminho de Portal da Cidade: até o máximo que se pode carregar.</summary>
+        public static bool ComprarPergaminho(EstadoProgresso p, ConfigJogo cfg)
+        {
+            long c = PrecoDoPergaminho(p, cfg);
+            if (!cfg.PortalDaCidade || p.PergaminhosDePortal >= cfg.PergaminhosMaximo || p.Ouro < c) return false;
+            p.Ouro -= c; p.PergaminhosDePortal++;
+            return true;
+        }
+
         /// <summary>Compra o que der, do mais barato ao mais caro. Devolve quantos.</summary>
         public static int ComprarTudo(EstadoProgresso p, ConfigJogo cfg)
         {

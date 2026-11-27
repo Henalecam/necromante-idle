@@ -166,6 +166,7 @@ namespace Necro.Nucleo
             }
             _limiarVida = progresso.PocaoVidaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoVidaLimiar) : cfg.PocaoVidaAbaixoDe; _limiarMana = progresso.PocaoManaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoManaLimiar) : cfg.PocaoManaAbaixoDe;
             _pocoesVida = cfg.PocoesNoCinto ? progresso.PocoesDeVida : 0; _pocoesMana = cfg.PocoesNoCinto ? progresso.PocoesDeMana : 0;
+            _temPergaminho = cfg.PortalDaCidade && progresso.PergaminhosDePortal > 0; _portalAutomatico = progresso.PortalAutomatico;
             _reiEsqueleto = progresso.MissaoReiEsqueleto;
             if (_reiEsqueleto == 0 && Cfg.MissoesDeCenario) { _reiEsqueleto = (semente * 0x9E3779B97F4A7C15UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.ReiEsqueletoSorteio = _reiEsqueleto; }
             // Rito de Sangue preparado na Necrópole (quem cria a simulação chama Oferendas.ConsumirRito em seguida)
@@ -237,10 +238,34 @@ namespace Necro.Nucleo
             LimparMortos();
 
             if (!Necromante.Viva) Encerrar(MotivoFim.NecromanteMorreu);
+            else if (_temPergaminho && Fase != FaseExpedicao.Encerrada) TalvezAbrirPortal();
         }
 
         /// <summary>O jogador abandona a expedição (mantém o que já ganhou).</summary>
         public void Recuar() { Encerrar(MotivoFim.Retirada); }
+
+        private bool _temPergaminho, _portalAutomatico;
+        /// <summary>Há um Pergaminho de Portal no cinto desta descida.</summary>
+        public bool TemPergaminhoDePortal { get { return _temPergaminho; } }
+
+        /// <summary>Portal da Cidade (Diablo 1): sai da descida com todo o saque e marca este andar para a próxima começar aqui.</summary>
+        public bool ComandoPortal()
+        {
+            if (!_temPergaminho || Fase == FaseExpedicao.Encerrada || !Necromante.Viva) return false;
+            _temPergaminho = false; Resultado.PortalNoAndar = Andar;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 36, Valor = Andar, Alvo = Necromante.Id, Origem = Necromante.Id, Pos = Necromante.Pos });
+            Encerrar(MotivoFim.Portal);
+            return true;
+        }
+
+        /// <summary>Regra automática: abre o portal quando a derrota é certa — luta em curso sem nenhum minion de pé, ou necromante quase morto sem poção de vida.</summary>
+        private void TalvezAbrirPortal()
+        {
+            if (!_temPergaminho || !_portalAutomatico || Andar < Cfg.PortalAPartirDoAndar || InimigosVivos == 0) return;
+            var n = Necromante; bool minionDePe = false;
+            for (int i = 0; i < _minions.Count && !minionDePe; i++) if (_minions[i].Viva) minionDePe = true;
+            if (!minionDePe || (n.Vida < n.VidaMax * Cfg.PortalVidaAbaixoDe && _pocoesVida == 0)) ComandoPortal();
+        }
 
         /// <summary>Encerra por limite externo (ex.: orçamento de tempo do progresso offline).</summary>
         public void EncerrarPorTempo() { Encerrar(MotivoFim.LimiteDeTempo); }

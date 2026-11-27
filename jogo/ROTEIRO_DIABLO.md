@@ -42,7 +42,7 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - A2. [feito: portas emperradas e emboscada de corredor; falta desenhar a porta no mapa e armadilhas de corredor] Corredores com vida: inimigos e armadilhas nos corredores entre salas; portas fechadas que o grupo abre; emboscada ao abrir.
 - A3. [etapa 1 feita: despertar por proximidade, a frente marcha sala adentro] Andar em grade única: o grupo anda pelo andar inteiro (sem troca de arena), monstros espalhados despertam por raio de luz e linha de visão. É a reescrita espacial do núcleo; fazer em etapas com o modo antigo atrás de uma chave de config até o portão passar.
 - A4. [feito no cliente: adormecidos fora da luz são vultos escuros] Raio de luz de verdade: o que está fora da luz não aparece nem ataca à distância (fecha a parte 2 da fatia 4).
-- A5. Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.
+- A5. [Portal da Cidade feito, opcional; faltam escadas] Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.
 
 ### B. Combate e feitiços
 - B1. [feito] Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.

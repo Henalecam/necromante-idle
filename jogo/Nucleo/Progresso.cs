@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         /// <summary>Recurso do sacrifício de minions; gasta-se para Imbuir (subir a qualidade de um minion).</summary>
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
+        public int PergaminhosDePortal, PortalNoAndar, PortaisUsados; public bool PortalAutomatico;   // Portal da Cidade: pergaminhos, e o andar onde ficou um portal aberto (0 = nenhum)
         public int[] LivrosDaBruxa; public int LivrosComprados;   // prateleira da Bruxa (FeiticoId; -1 = vendido)
         public float PocaoVidaLimiar, PocaoManaLimiar;      // regra do jogador: beber abaixo desta fração (0 = padrão do jogo)
         public int PocoesDeVida, PocoesDeMana, PocoesCompradas; public bool SemReporPocoes;   // o cinto (repor ao voltar é ligado por padrão)
@@ -185,6 +186,7 @@ namespace Necro.Nucleo
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
+        public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;
         public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
@@ -259,6 +261,8 @@ namespace Necro.Nucleo
         /// <summary>Andar de onde o modo Avançar parte: o Ponto de Ancoragem menos o recuo configurado.</summary>
         public static int AndarDePartida(EstadoProgresso p, ConfigJogo cfg)
         {
+            // Portal da Cidade aberto: a próxima descida volta ao andar do portal (vale uma vez)
+            if (cfg.PortalDaCidade && p.PortalNoAndar > 0) return Math.Max(1, Math.Min(p.PortalNoAndar, p.MaiorAndarConcluido + 1));
             // Rito da Pressa: parte direto do Ponto de Ancoragem, sem o recuo
             return Math.Max(1, p.AndarDeAncoragem - (p.RitoPreparado == Rito.Pressa ? 0 : cfg.AndaresDeRecuo));
         }
@@ -400,6 +404,9 @@ namespace Necro.Nucleo
             if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);
             if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);
             Unicos.Registrar(p, r.Itens);
+            // Portal da Cidade: o usado some do estoque e o andar fica marcado para a próxima descida; qualquer outra descida apaga a marca
+            if (r.PortalNoAndar > 0) { p.PergaminhosDePortal = Math.Max(0, p.PergaminhosDePortal - 1); p.PortaisUsados++; }
+            p.PortalNoAndar = r.PortalNoAndar;
             if (r.Livros != null) for (int li = 0; li < r.Livros.Count; li++) Grimorio.Receber(p, (FeiticoId)r.Livros[li], cfg);
             Grimorio.LerGuardados(p, cfg);   // jogo idle: quem está longe não volta para um exército de itens quebrados   // cada volta da masmorra, o Ferreiro tem estoque novo
             for (int i = 0; i < p.Restos.Length && i < r.Restos.Length; i++) p.Restos[i] += r.Restos[i];

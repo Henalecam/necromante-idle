@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
     public enum FaseExpedicao { Preparando, EntreOndas, EmOnda, EntreAndares, Encerrada, Explorando }
 
-    public enum MotivoFim { EmAndamento, NecromanteMorreu, LimiteDeAndares, LimiteDeTempo, Retirada }
+    public enum MotivoFim { EmAndamento, NecromanteMorreu, LimiteDeAndares, LimiteDeTempo, Retirada, Portal }
 
     /// <summary>Vetor 2D mínimo (sem dependência da Unity).</summary>
     [Serializable]

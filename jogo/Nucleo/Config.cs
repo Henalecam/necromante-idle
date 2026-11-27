@@ -357,6 +357,12 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        // ---- Portal da Cidade ----
+        public bool PortalDaCidade = true;
+        public int PergaminhosMaximo = 2;
+        public float PergaminhoPreco = 180f, PergaminhoPrecoPorAndar = 0.08f;
+        public float PortalVidaAbaixoDe = 0.2f;           // regra automática: sem minions vivos na luta, ou necromante abaixo disto sem poção de vida
+        public int PortalAPartirDoAndar = 3;              // não se gasta pergaminho nos primeiros andares
         // ---- Bruxa: livros de feitiço à venda ----
         public int BruxaLivros = 2;
         public float BruxaPrecoBase = 400f, BruxaPrecoPorNivel = 0.7f, BruxaPrecoPorAndar = 0.06f;
