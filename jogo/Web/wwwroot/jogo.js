@@ -304,7 +304,7 @@ function limparArena(tudo) {
 let actx = null, somLigado = true, ultimoSom = {}; try { somLigado = localStorage.getItem('necromante-idle-save-v1-som') !== '0'; } catch (e) { /* padrão: ligado */ }
 function som(tipo) {
   if (!actx || !somLigado || silencio || actx.state !== 'running') return;
-  const agora = actx.currentTime, min = { golpe: 0.05, morte: 0.07, osso: 0.1 }[tipo] || 0.12;
+  const agora = actx.currentTime, min = { golpe: 0.05, morte: 0.07, osso: 0.1, escudo: 0.6, cinzas: 5, armadilha: 0.4 }[tipo] || 0.12;
   if (agora - (ultimoSom[tipo] || 0) < min) return; ultimoSom[tipo] = agora;
   const tom = (f0, f1, dur, vol, forma = 'sine', atraso = 0) => { const o = actx.createOscillator(), g = actx.createGain(), t0 = agora + atraso; o.type = forma; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02); };
   const chiado = (dur, vol, freq, atraso = 0) => { const n = Math.floor(actx.sampleRate * dur), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); src.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol; src.connect(f).connect(g).connect(actx.destination); src.start(agora + atraso); };
@@ -323,6 +323,11 @@ function som(tipo) {
     case 'fim': tom(196, 98, 0.9, 0.14, 'triangle'); tom(147, 73, 1.1, 0.10, 'triangle', 0.15); break;
     case 'feitico': tom(300, 900, 0.18, 0.06, 'sawtooth'); chiado(0.15, 0.06, 3000); break;
     case 'toque': tom(660, 880, 0.08, 0.05, 'triangle'); break;
+    case 'pedra': chiado(0.35, 0.14, 160); tom(110, 55, 0.4, 0.10, 'square'); tom(165, 82, 0.3, 0.05, 'triangle', 0.08); break;
+    case 'armadilha': chiado(0.05, 0.12, 4200); tom(1200, 300, 0.14, 0.05, 'sawtooth'); break;
+    case 'espirito': tom(380, 1300, 0.45, 0.05, 'sine'); tom(395, 1340, 0.45, 0.03, 'triangle', 0.02); chiado(0.3, 0.03, 5000, 0.1); break;
+    case 'escudo': [1400, 1100, 1700].forEach((f, i) => tom(f, f * 0.8, 0.05, 0.03, 'square', i * 0.04)); break;
+    case 'cinzas': chiado(1.4, 0.05, 700); tom(98, 92, 1.4, 0.03, 'sine'); break;
   }
 }
 function ligarSom() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
@@ -345,7 +350,7 @@ function ler(texto) {
         if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); manaAbs = [+p[2] || 0, +p[3] || 0]; saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
-        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
+        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
         break;
       }
       case 'E': {
@@ -517,25 +522,25 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '53') { if (!evento.avisouLacaio) { evento.avisouLacaio = true; aviso('Lacaio Ígneo · explode ao morrer'); anotar('<b>Lacaios Ígneos</b> explodem em fogo quando morrem e queimam os minions em volta. A Lança de Ossos e os feitiços os matam de longe.'); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '52') {   // Arauto de Cinzas: escudo de ossos num aliado dele
-    const g = estado.get(+v[3]); if (g) for (let i = 0; i < 12; i++) particulas.push([g.rx + rnd(-0.4, 0.4), g.ry + rnd(-0.3, 0.3), 0.3, rnd(-0.6, 0.6), rnd(-0.4, 0.4), rnd(2, 4.5), i % 3 ? '#e8dcc0' : '#ff8a3a', rnd(0.5, 1)]);
+    som('escudo'); const g = estado.get(+v[3]); if (g) for (let i = 0; i < 12; i++) particulas.push([g.rx + rnd(-0.4, 0.4), g.ry + rnd(-0.3, 0.3), 0.3, rnd(-0.6, 0.6), rnd(-0.4, 0.4), rnd(2, 4.5), i % 3 ? '#e8dcc0' : '#ff8a3a', rnd(0.5, 1)]);
     if (!evento.avisouArauto) { evento.avisouArauto = true; aviso('Arauto de Cinzas · protege os aliados com ossos'); anotar('Um <b>Arauto de Cinzas</b> apareceu: a cada poucos segundos ele ergue um escudo de ossos nos inimigos em volta. Marque-o primeiro.'); }
     return;
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '51') { aviso('A Fortaleza Rubra · Vargoth ergue o estandarte'); anotar('Você invadiu a <b>Fortaleza Rubra</b>: Vargoth, o Estandarte Sangrento, e o séquito dele defendem a sala.'); som('chefe'); tremor = Math.max(tremor, 0.4); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '50') {   // Espírito de Ossos: caveira fantasma do necromante até o alvo
     espFx.push({ de: [+v[10] + so[0], +v[11] + so[1]], alvo: +v[3], t: performance.now() }); if (espFx.length > 6) espFx.shift();
-    som('critico'); if (!evento.avisouEspirito) { evento.avisouEspirito = true; aviso('Espírito de Ossos · arranca um terço da vida'); anotar('O necromante soltou um <b>Espírito de Ossos</b>: ele persegue o inimigo mais vivo e arranca um terço da vida dele (chefes resistem mais).'); }
+    som('espirito'); if (!evento.avisouEspirito) { evento.avisouEspirito = true; aviso('Espírito de Ossos · arranca um terço da vida'); anotar('O necromante soltou um <b>Espírito de Ossos</b>: ele persegue o inimigo mais vivo e arranca um terço da vida dele (chefes resistem mais).'); }
     return;
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '49') {   // armadilha de sarcófago/urna (Diablo 1): 0 seta, 1 fogo, 2 raio, 3 desarmada pela Destreza
     const q = Math.round(+v[4] || 0), pA = [+v[10] + so[0], +v[11] + so[1]];
     if (q === 3) { aviso('Armadilha desarmada · Destreza'); if (!evento.avisouDesarme) { evento.avisouDesarme = true; anotar('Uma <b>armadilha</b> foi desarmada: cada ponto de <b>Destreza</b> aumenta a chance.'); } return; }
     armaFx.push({ p: pA, q, alvo: +v[3], t: performance.now() }); if (armaFx.length > 8) armaFx.shift();
-    som(q === 2 ? 'critico' : 'perigo'); tremor = Math.max(tremor, 0.15);
+    som('armadilha'); tremor = Math.max(tremor, 0.15);
     if (!evento.avisouArmadilha) { evento.avisouArmadilha = true; aviso(['Armadilha! Uma seta sai da parede', 'Armadilha! O sarcófago cospe fogo', 'Armadilha! Uma faísca salta da urna'][q] || 'Armadilha!'); anotar('Sarcófagos e urnas podem estar <b>armados</b> a partir do andar 3, como no Diablo. A <b>Destreza</b> do necromante desarma parte delas.'); }
     return;
   }
-  if (tipo === 'EfeitoAplicado' && v[14] === '48') { const g = estado.get(+v[3]); if (g) g.pedra = tempoSim + (+v[4] || 3.5); som('critico'); if (!evento.avisouPedra) { evento.avisouPedra = true; aviso('Pedra Maldita · o inimigo mais forte vira pedra'); anotar('O necromante lançou a <b>Pedra Maldita</b>: o inimigo mais forte por perto fica petrificado alguns segundos (chefes resistem).'); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '48') { const g = estado.get(+v[3]); if (g) g.pedra = tempoSim + (+v[4] || 3.5); som('pedra'); if (!evento.avisouPedra) { evento.avisouPedra = true; aviso('Pedra Maldita · o inimigo mais forte vira pedra'); anotar('O necromante lançou a <b>Pedra Maldita</b>: o inimigo mais forte por perto fica petrificado alguns segundos (chefes resistem).'); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '14') { aviso('A patrulha entrou na luta!'); som('chefe'); tremor = 0.25; anotar('A <b style="color:#ff7a5a">patrulha errante</b> cruzou com o grupo e entrou na luta.'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '15') { aviso('Patrulha vencida: ela carregava um item'); som('bau'); anotar('Patrulha vencida: o que ela saqueou agora é seu.'); return; }
@@ -1705,7 +1710,7 @@ function resumoDaAusencia() {   // cartão do que aconteceu enquanto o jogador e
   const extra = [b.n > a.n ? `+${b.n - a.n} ${b.n - a.n > 1 ? 'níveis' : 'nível'} (agora ${b.n})` : '', b.r > a.r ? `recorde: andar ${b.r}` : '', b.e > a.e ? `+${fmt(b.e - a.e)} Essência` : '', b.g > a.g ? `+${fmt(b.g - a.g)} de ouro` : ''].filter(Boolean).join(' · ');
   const r = $('resumo');
   r.innerHTML = `<div class="t">Enquanto você esteve fora · ${tempo}</div><div class="g">${cel(fmt(Math.max(0, b.o - a.o)), 'Ossos')}${cel(Math.max(0, b.a - a.a), 'almas')}${cel(Math.max(0, b.i - a.i), 'itens')}${cel(fmt(Math.max(0, b.m - a.m)), 'mortes')}</div>` + (extra ? `<div class="nota" style="color:var(--texto)">${extra}</div>` : '') + '<div class="nota">Toque para fechar.</div>';
-  r.hidden = false; clearTimeout(fimDeExpedicao.t);   // fica até o jogador tocar
+  r.hidden = false; clearTimeout(fimDeExpedicao.t); som('bencao');   // fica até o jogador tocar
 }
 function laco(agora) {
   const dt = Math.min(0.1, (agora - ultimo) / 1000 || 0); ultimo = agora;
