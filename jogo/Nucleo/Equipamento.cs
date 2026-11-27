@@ -36,6 +36,7 @@ namespace Necro.Nucleo
         // ---- Lendários e conjuntos ----
         public bool CeifeiroFaminto;
         public bool MaeCarnica;
+        public readonly bool[] ArvoreFinal = new bool[4];   // nós finais da Árvore de Ascensão (Invocador, Ossos, Sangue, Pragas)
         public readonly bool[] Unico = new bool[16];   // efeitos próprios dos itens Únicos vestidos (índice = UnicoId)
         public bool ReiSolitario;
         public bool LegiaoMuda;
@@ -322,6 +323,7 @@ namespace Necro.Nucleo
             Talentos.Aplicar(p, cfg, b);     // talentos somam no mesmo agregado
             Oferendas.Aplicar(p, cfg, b);    // oferendas também
             Ascensao.Aplicar(p, cfg, b);     // e os Legados da Ascensão
+            Arvore.Aplicar(p, cfg, b);       // e a Árvore de Ascensão
             Atributos.Aplicar(p, cfg, b);    // e os atributos do necromante
             return b;
         }

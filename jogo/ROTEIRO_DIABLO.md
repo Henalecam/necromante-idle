@@ -28,7 +28,7 @@ battle.net clássico (pacotes de campeões/únicos).
 11. [feito: tema a cada 4 andares com paleta, fogo, família da casa e decoração própria; Cavernas e Inferno com andares maiores e irregulares] Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
 12. [feito: Açougueiro (andar 2) e Rei Esqueleto (andar 3), cada um sorteado por save (2 em 3), opcionais, com sala e recompensa próprias] Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
 13. [feito e medido: Normal, Pesadelo e Inferno; cada dificuldade é uma descida própria que continua a escala da anterior (+20 e +40 andares de força)] Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
-14. Árvore de ascensão muito maior.
+14. [feito na Fase 2, C5] Árvore de ascensão muito maior.
 15. [feito: melhorar +1 a +5 e imbuir afixo com ouro no Ferreiro] Imbuir/melhorar armaduras com ouro.
 Andares maiores (mais salas, formas irregulares) entram junto com 4 e 11: o dono agora pediu "mais profundidade nos mapas".
 
@@ -56,4 +56,4 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - C2. [feito: 10 Únicos de nome e afixos fixos, tabela por dificuldade, Livro de Únicos e um efeito próprio para cada um] Itens únicos com nome e efeito próprio, por tabela de dificuldade.
 - C3. [feito: aba "Cidade" com Curandeira, Bruxa (livros), Ferreiro e Ancião (dicas e identificar)] Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
 - C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos; falta o jogador escolher os limiares] Poções e cinto: vida e mana, uso automático com regra do jogador.
-- C5. Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
+- C5. [feito: 4 ramos de 8 nós, Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.

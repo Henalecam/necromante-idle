@@ -5,6 +5,9 @@ namespace Necro.Nucleo
     /// <summary>Poções e cinto (Diablo 1): compradas na Curandeira com ouro, levadas no cinto e bebidas sozinhas pela regra do jogador.</summary>
     public static class Pocoes
     {
+        /// <summary>Poções de cada tipo que cabem no cinto (o ramo Sangue da Árvore aumenta).</summary>
+        public static int Capacidade(EstadoProgresso p, ConfigJogo cfg) { return cfg.CintoPorTipo + (cfg.ArvoreDeAscensao && Arvore.Final(p, 2) ? cfg.CintoDoCarniceiro : 0); }
+
         public static long Preco(EstadoProgresso p, bool mana, ConfigJogo cfg)
         {
             double b = mana ? cfg.PocaoManaPreco : cfg.PocaoVidaPreco;
@@ -15,8 +18,8 @@ namespace Necro.Nucleo
         {
             long c = Preco(p, mana, cfg);
             if (p.Ouro < c) return false;
-            if (mana) { if (p.PocoesDeMana >= cfg.CintoPorTipo) return false; p.PocoesDeMana++; }
-            else { if (p.PocoesDeVida >= cfg.CintoPorTipo) return false; p.PocoesDeVida++; }
+            if (mana) { if (p.PocoesDeMana >= Capacidade(p, cfg)) return false; p.PocoesDeMana++; }
+            else { if (p.PocoesDeVida >= Capacidade(p, cfg)) return false; p.PocoesDeVida++; }
             p.Ouro -= c; p.PocoesCompradas++;
             return true;
         }
@@ -32,8 +35,8 @@ namespace Necro.Nucleo
         /// <summary>Fim da descida: tira do cinto o que foi bebido, guarda o que foi achado e repõe se a reposição automática estiver ligada.</summary>
         public static void AoVoltar(EstadoProgresso p, ResultadoExpedicao r, ConfigJogo cfg)
         {
-            p.PocoesDeVida = Math.Max(0, Math.Min(cfg.CintoPorTipo, p.PocoesDeVida - r.PocoesDeVidaUsadas + r.PocoesDeVidaAchadas));
-            p.PocoesDeMana = Math.Max(0, Math.Min(cfg.CintoPorTipo, p.PocoesDeMana - r.PocoesDeManaUsadas + r.PocoesDeManaAchadas));
+            p.PocoesDeVida = Math.Max(0, Math.Min(Capacidade(p, cfg), p.PocoesDeVida - r.PocoesDeVidaUsadas + r.PocoesDeVidaAchadas));
+            p.PocoesDeMana = Math.Max(0, Math.Min(Capacidade(p, cfg), p.PocoesDeMana - r.PocoesDeManaUsadas + r.PocoesDeManaAchadas));
             if (!p.SemReporPocoes) Repor(p, cfg);
         }
     }

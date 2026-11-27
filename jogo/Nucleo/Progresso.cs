@@ -110,6 +110,8 @@ namespace Necro.Nucleo
         // ---- Ascensão ----
         public int Ascensoes;
         public long Cinzas;
+        public int[] ArvoreDeAscensao = new int[4];   // nós comprados em cada ramo da Árvore (Invocador, Ossos, Sangue, Pragas)
+        public int SelosDoAbismo, SelosGanhos;       // segundo recurso da Ascensão: chefes vencidos no Pesadelo e no Inferno
         public long CinzasGanhas;
         /// <summary>Nível de cada Legado (0 Ossos, 1 Sangue, 2 Sombras).</summary>
         public int[] Legados = new int[3];
@@ -406,6 +408,7 @@ namespace Necro.Nucleo
             if (p.AutoMelhoria) Ferreiro.MelhorarTudo(p, cfg);
             if (!p.SemAutoAtributos) Atributos.AutoDistribuir(p, cfg);
             Unicos.Registrar(p, r.Itens);
+            Arvore.Registrar(p, r);
             // Portal da Cidade: o usado some do estoque e o andar fica marcado para a próxima descida; qualquer outra descida apaga a marca
             if (r.PortalNoAndar > 0) { p.PergaminhosDePortal = Math.Max(0, p.PergaminhosDePortal - 1); p.PortaisUsados++; }
             p.PortalNoAndar = r.PortalNoAndar;

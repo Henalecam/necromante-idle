@@ -77,6 +77,11 @@ namespace Necro.Nucleo
             Atributos.Zerar(p);
             p.Oferendas = new int[Oferendas.Tipos];
             p.RitoPreparado = Rito.Nenhum;
+            // o que mais pertence à vida que acaba: livros lidos, cinto, portal, prateleira da Bruxa, missões (sorteadas de novo) e a descida de cada dificuldade
+            p.NiveisDeFeitico = new int[Grimorio.Quantos]; p.LivrosGuardados = new int[Grimorio.Quantos];
+            p.PocoesDeVida = 0; p.PocoesDeMana = 0; p.PergaminhosDePortal = 0; p.PortalNoAndar = 0; p.LivrosDaBruxa = null;
+            p.MissaoAcougueiro = 0; p.MissaoReiEsqueleto = 0;
+            p.Dificuldade = 0; p.AncoragemPorDificuldade = null;
             p.Minions.Clear(); p.Minions.AddRange(novo.Minions);
             p.Inventario.Clear(); p.Equipados = new Item[9];
             for (int i = 0; i < guardados.Count; i++) if (Equipamento.Cabe(p, guardados[i], cfg)) p.Inventario.Add(guardados[i]);

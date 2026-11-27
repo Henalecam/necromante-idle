@@ -575,6 +575,37 @@ namespace Necro.Testes
                 Afirmar(ExecutorSemTela.RodarExpedicao(c, semP, 3, ModoExpedicao.Avancar, 12, 5).Motivo == MotivoFim.NecromanteMorreu, "sem pergaminho, a derrota é derrota");
             });
 
+            Teste("Árvore de Ascensão: 4 ramos de 8 nós em ordem, Cinzas e depois Selos, nós dão bônus, o final muda mecânica, e tudo atravessa a Ascensão", () =>
+            {
+                var c = new ConfigJogo { MissoesDeCenario = false };
+                var p = Progressao.NovoJogo(c);
+                Afirmar(!Arvore.Comprar(p, 0), "sem Cinzas não compra");
+                p.Cinzas = 4; var b0 = Equipamento.CalcularBonus(p, c);
+                Afirmar(Arvore.Comprar(p, 0) && p.Cinzas == 0 && Arvore.Comprados(p, 0) == 1, "o primeiro nó custa 4 Cinzas");
+                Afirmar(Equipamento.CalcularBonus(p, c).VidaDosMinions > b0.VidaDosMinions, "o nó comprado entra nos bônus (vida dos minions)");
+                p.Cinzas = 1000;
+                for (int k = 1; k < 5; k++) Afirmar(Arvore.Comprar(p, 0), "nós 2 a 5 custam só Cinzas");
+                Afirmar(!Arvore.Comprar(p, 0) && Arvore.CustoEmSelos(5) == 1, "o sexto nó pede um Selo do Abismo");
+                var r = new ResultadoExpedicao { Dificuldade = 1 }; r.ChefesVencidosNaDescida.Add(1); r.ChefesVencidosNaDescida.Add(2); Arvore.Registrar(p, r);
+                var rn = new ResultadoExpedicao { Dificuldade = 0 }; rn.ChefesVencidosNaDescida.Add(1); Arvore.Registrar(p, rn);
+                Afirmar(p.SelosDoAbismo == 2, "chefes do Pesadelo dão Selos (os do Normal, não): " + p.SelosDoAbismo);
+                p.SelosDoAbismo = 50;
+                while (Arvore.Comprar(p, 0)) { }
+                Afirmar(Arvore.Comprados(p, 0) == Arvore.Nos && Arvore.Final(p, 0) && Equipamento.CalcularBonus(p, c).ArvoreFinal[0], "ramo completo: o nó final vale");
+                Afirmar(!Equipamento.CalcularBonus(p, c).ArvoreFinal[2] && Pocoes.Capacidade(p, c) == c.CintoPorTipo, "os outros ramos ainda não");
+                while (Arvore.Comprar(p, 2)) { }
+                Afirmar(Pocoes.Capacidade(p, c) == c.CintoPorTipo + c.CintoDoCarniceiro, "Sangue completo: cinto maior");
+                // Senhor do Golem: conjura o Golem sem ter lido o livro
+                var s = new Simulacao(c, p, 6, ModoExpedicao.Avancar, 3); int g = 0; while (!s.Encerrada && g++ < 6000) s.Tick();
+                Afirmar(s.Resultado.GolensConjurados >= 1, "Invocador completo: o Golem vem de nascença");
+                // atravessa a Ascensão; o que é da vida (livros, cinto) não
+                p.ChefesDerrotados.Add(1); p.MaiorAndarConcluido = 12; p.NiveisDeFeitico[0] = 3; p.PocoesDeVida = 2; p.Dificuldade = 1;
+                Ascensao.Ascender(p, c);
+                Afirmar(Arvore.Final(p, 0) && Arvore.Final(p, 2) && p.SelosDoAbismo > 0, "a Árvore e os Selos atravessam a Ascensão");
+                Afirmar(Grimorio.Nivel(p, FeiticoId.LancaDeOssos) == 1 && p.PocoesDeVida == 0 && p.Dificuldade == 0, "livros lidos, cinto e dificuldade recomeçam");
+                Afirmar(Arvore.Tabela.Length == Arvore.Ramos, "quatro ramos"); foreach (var ramo in Arvore.Tabela) Afirmar(ramo.Length == Arvore.Nos && ramo[Arvore.Nos - 1].Final, "oito nós, o último é o final");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

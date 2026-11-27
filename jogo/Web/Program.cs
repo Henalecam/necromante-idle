@@ -181,7 +181,17 @@ public static partial class Jogo
         }
         sb.Append(']');
         sb.Append(",\"ascensao\":{\"pode\":").Append(B(Ascensao.Pode(_p))).Append(",\"renderia\":").Append(Ascensao.CinzasDestaVida(_p)).Append(",\"cinzas\":").Append(_p.Cinzas)
-          .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"legados\":[");
+          .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"selos\":").Append(_p.SelosDoAbismo).Append(",\"arvore\":[");
+        for (int ar = 0; ar < Arvore.Ramos; ar++)
+        {
+            int an = Arvore.Comprados(_p, ar);
+            if (ar > 0) sb.Append(',');
+            sb.Append("{\"nome\":").Append(S(Arvore.NomesDosRamos[ar])).Append(",\"lema\":").Append(S(Arvore.LemasDosRamos[ar])).Append(",\"n\":").Append(an)
+              .Append(",\"custoC\":").Append(an < Arvore.Nos ? Arvore.CustoEmCinzas(an) : 0).Append(",\"custoS\":").Append(an < Arvore.Nos ? Arvore.CustoEmSelos(an) : 0).Append(",\"pode\":").Append(B(Arvore.PodeComprar(_p, ar))).Append(",\"nos\":[");
+            for (int k = 0; k < Arvore.Nos; k++) { if (k > 0) sb.Append(','); sb.Append("{\"nome\":").Append(S(Arvore.Tabela[ar][k].Nome)).Append(",\"texto\":").Append(S(Arvore.Tabela[ar][k].Texto)).Append(",\"final\":").Append(B(Arvore.Tabela[ar][k].Final)).Append('}'); }
+            sb.Append("]}");
+        }
+        sb.Append("],\"legados\":[");
         for (int i = 0; i < Ascensao.Legados; i++)
         {
             var lg = _cfg.Legados[i]; int nv = Ascensao.Nivel(_p, i); if (i > 0) sb.Append(',');
@@ -397,6 +407,7 @@ public static partial class Jogo
         valor = Math.Max(0, Math.Min(2, valor));
         for (int i = 0; i < _p.PosturasDosGrupos.Length; i++) _p.PosturasDosGrupos[i] = (Postura)valor;
     }
+    [JSExport] public static bool ComprarNoDaArvore(int ramo) { return Arvore.Comprar(_p, ramo); }
     [JSExport] public static bool ComprarLegado(int i) { return Ascensao.Comprar(_p, i, _cfg); }
     /// <summary>Ascende: zera a vida atual, soma as Cinzas e começa uma expedição nova. Devolve as Cinzas ganhas.</summary>
     [JSExport]
@@ -458,6 +469,7 @@ public static partial class Jogo
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
             case "unico": { var ud = Unicos.Obter((int)v); if (ud != null) { var ui2 = Unicos.Gerar(rng, _cfg, Math.Max(5, _p.MaiorAndarConcluido), ud); _p.Inventario.Add(ui2); _p.UnicosAchados |= 1 << ud.Id; } break; }
+            case "selos": _p.SelosDoAbismo += (int)Math.Max(0, v); _p.Ascensoes = Math.Max(1, _p.Ascensoes); break;
             case "ouro": _p.Ouro += (long)Math.Max(0, v); break;
             case "golem": Grimorio.Receber(_p, FeiticoId.Golem, _cfg); break;
             case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % Grimorio.Quantos), _cfg); break;

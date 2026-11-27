@@ -65,6 +65,14 @@
   #topo b { color:#fff; font-weight:normal; }
   #topo .andar { color:var(--ouro); letter-spacing:1px; text-transform:uppercase; }
   #topo .espaco { flex:1; }
+  .arvore { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin:8px 0 10px; }
+  .arvore .ramo { display:flex; flex-direction:column; align-items:stretch; }
+  .arvore .rt { text-align:center; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--ouro); padding-bottom:4px; }
+  .arvore .no { border:1px solid #3a2a2c; border-radius:5px; padding:5px 3px; font-size:11px; line-height:1.15; text-align:center; color:#7a6f68; background:#120c0d; min-height:34px; display:flex; align-items:center; justify-content:center; }
+  .arvore .no.tem { color:#ffe9b0; border-color:#8a6a2a; background:#2a1f10; }
+  .arvore .no.prox { color:#fff; border-color:var(--ouro); box-shadow:0 0 8px #c9a04a55; }
+  .arvore .no.fim { border-style:double; border-width:3px; }
+  .arvore .liga { width:2px; height:7px; background:#3a2a2c; margin:0 auto; }
   @media (max-width:520px) { #topo .l1 { flex-wrap:wrap; row-gap:3px; } #topo .andar { flex:1 0 100%; } #topo .espaco { display:none; } #topo .nv { margin-right:auto; } }
   #cena { position:relative; background:#000; }
   canvas { display:block; width:100%; touch-action:none; cursor:grab; }

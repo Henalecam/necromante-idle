@@ -160,11 +160,11 @@ namespace Necro.Nucleo
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
-            _golemAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1;
+            _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
             {
                 var b0 = cfg.Feitico((FeiticoId)fi); int nv = cfg.LivrosDeFeitico ? Grimorio.Nivel(progresso, (FeiticoId)fi) : 1;
-                _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg) * (fi == (int)FeiticoId.LancaDeOssos && Bonus.Unico[3] ? cfg.CajadoMana : 1f), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
+                _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg) * (fi == (int)FeiticoId.LancaDeOssos && Bonus.Unico[3] ? cfg.CajadoMana : 1f), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg) * (fi == (int)FeiticoId.MaldicaoDaFraqueza && Bonus.ArvoreFinal[3] ? cfg.PragaMaior : 1f), Raio = b0.Raio, Duracao = b0.Duracao };
             }
             _limiarVida = progresso.PocaoVidaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoVidaLimiar) : cfg.PocaoVidaAbaixoDe; _limiarMana = progresso.PocaoManaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoManaLimiar) : cfg.PocaoManaAbaixoDe;
             _pocoesVida = cfg.PocoesNoCinto ? progresso.PocoesDeVida : 0; _pocoesMana = cfg.PocoesNoCinto ? progresso.PocoesDeMana : 0;
@@ -543,7 +543,7 @@ namespace Necro.Nucleo
             e.Armadura = Formulas.AtributoMinion(d.Armadura, Qualidade.Comum, nivel, _poderTotal, Cfg);
             AplicarEquipamentoAoMinion(e);
             if (Bonus.Unico[9]) { e.VidaMax *= Cfg.AmuletoGolem; Resultado.EfeitosDeUnicos++; }   // Único 9, Amuleto do Senhor do Terror
-            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao * (Bonus.Unico[9] ? 2f : 1f); e.Golem = true; e.NomeProprio = "Golem de Ossos";
+            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao * (Bonus.Unico[9] ? 2f : 1f) * (Bonus.ArvoreFinal[0] ? 2f : 1f); e.Golem = true; e.NomeProprio = "Golem de Ossos";
             Adicionar(e);
             PagarFeitico(FeiticoId.Golem, e, e.Pos, 0f);
             Emitir(new EventoSim { Tipo = TipoEvento.EntidadeSurgiu, Alvo = e.Id, Origem = n.Id, Pos = e.Pos, Especie = e.Especie });

@@ -357,6 +357,9 @@ namespace Necro.Nucleo
         public float ImbuirCustoBase = 80f;               // x (1 + 0,25 x nível) x (1 + 2 x afixos que já tem)
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
+        public bool ArvoreDeAscensao = true;
+        public int CintoDoCarniceiro = 2;                 // nó final do ramo Sangue: poções a mais de cada tipo
+        public float PragaMaior = 1.5f;                   // nó final do ramo Pragas: potência da Maldição da Fraqueza
         // ---- Portal da Cidade ----
         public bool PortalDaCidade = true;
         public int PergaminhosMaximo = 2;
