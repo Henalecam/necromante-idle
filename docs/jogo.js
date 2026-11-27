@@ -136,6 +136,11 @@ function construirSala(idx = masm.sala, alvo = chao, escala = 1) {
   else if (tipo === 5) { anel(10, 6, 2.4, 'rgba(120,255,170,0.35)', 3); }
   else if (tipo === 11) { entulho(14); for (let q = 0; q < 3; q++) { const [px, py] = P(1 + r01() * 2, 9 + r01() * 3); c.strokeStyle = 'rgba(220,220,220,0.18)'; for (let z = 0; z < 6; z++) { c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(z) * 46, py + Math.sin(z) * 24); c.stroke(); } } }
   else { entulho(4); if (r01() < 0.5) tapete(3, 4.5, 17, 7.5, 'rgba(60,20,24,0.5)', 'rgba(120,90,50,0.4)'); if (r01() < 0.6) for (let q = 0; q < 2; q++) { const gx = 4 + r01() * 12, gy = 2 + r01() * 8; poli([P(gx, gy), P(gx + 1.4, gy), P(gx + 1.4, gy + 1.4), P(gx, gy + 1.4)], '#0a0809', '#3a3436'); c.strokeStyle = '#3a3436'; for (let z = 1; z < 5; z++) { const a = P(gx + z * 0.28, gy), b2 = P(gx + z * 0.28, gy + 1.4); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b2[0], b2[1]); c.stroke(); } } }
+  // escada por onde o grupo chegou, na entrada da primeira sala: degraus que sobem para fora
+  if (idx === 0) {
+    for (let q = 0; q < 5; q++) { const v = 52 + q * 14; poli([P(1.6 - q * 0.5, 4.7), P(2.1 - q * 0.5, 4.7), P(2.1 - q * 0.5, 7.3), P(1.6 - q * 0.5, 7.3)], `rgb(${v},${v - 4},${v - 6})`, '#000'); }
+    poli([P(-0.4, 4.7), P(2.1, 4.7), P(2.1, 7.3), P(-0.4, 7.3)], null, 'rgba(217,178,95,0.55)');
+  }
   // escada para o próximo andar, no canto do fundo da última sala
   if (ultima) {
     for (let q = 0; q < 6; q++) { const v = 60 - q * 9; poli([P(17 + q * 0.45, 9.2), P(17.45 + q * 0.45, 9.2), P(17.45 + q * 0.45, 12), P(17 + q * 0.45, 12)], `rgb(${v},${v - 4},${v - 6})`, '#000'); }
@@ -233,6 +238,18 @@ function ambiente(dt, larg, alt) {
   else if (masm.amb === 4) tom = 'rgba(90,80,70,0.14)';
   if (tom) { ctx.fillStyle = tom; ctx.fillRect(0, 0, larg, alt); }
   if (transicao > 0) { ctx.fillStyle = `rgba(0,0,0,${transicao * transicao})`; ctx.fillRect(0, 0, larg, alt); }
+  if (descida) { const fd = Math.max(0, Math.min(1, ((tempoSim - descida.t0) / descida.T - 0.6) / 0.4)); if (fd > 0) { ctx.fillStyle = `rgba(0,0,0,${fd * fd})`; ctx.fillRect(0, 0, larg, alt); } }
+  if (tituloAndar) {
+    const ft = (performance.now() - tituloAndar.t) / 2600;
+    if (ft >= 1) tituloAndar = null;
+    else {
+      const af = ft < 0.15 ? ft / 0.15 : ft > 0.7 ? (1 - ft) / 0.3 : 1, tam = Math.max(22, Math.min(46, larg / 14));
+      ctx.save(); ctx.globalAlpha = af; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `${tam}px Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.a, larg / 2 + 2, alt * 0.5 + 2); ctx.fillStyle = '#d9b25f'; ctx.fillText(tituloAndar.a, larg / 2, alt * 0.5);
+      ctx.font = `${Math.round(tam * 0.48)}px Georgia, serif`; ctx.fillStyle = '#000'; ctx.fillText(tituloAndar.b, larg / 2 + 1, alt * 0.5 + tam * 0.95 + 1); ctx.fillStyle = '#cfc4b4'; ctx.fillText(tituloAndar.b, larg / 2, alt * 0.5 + tam * 0.95);
+      ctx.restore();
+    }
+  }
   ctx.globalCompositeOperation = 'lighter';
   for (const p of poeira) {
     p.y -= dt * 0.02 * p.v * (p.brasa ? 2.2 : 1); p.x += dt * 0.008 * Math.sin(tempoSim * 0.7 + p.z * 9);
@@ -315,7 +332,7 @@ function ler(texto) {
     switch (p[0]) {
       case 'T': {
         const a = +p[1];
-        if (a !== andar) { if (andar) limparArena(); andar = a; aviso('Andar ' + a); if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
+        if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
         { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
@@ -540,7 +557,7 @@ function quadro(m, acao, dir, tempo) {
 
 let saidaAtual = '', viagem = [1, 0];
 // ---- descer e chegar: o grupo anda até a escada e some por ela; no andar novo, entra pela porta ----
-const ESCADA = [18.3, 10.6]; let descida = null, chegada = null;
+const ESCADA = [18.3, 10.6]; let descida = null, chegada = null, tituloAndar = null;
 function cenaDoGrupo(s) {
   if (descida) {
     const f = Math.max(0, Math.min(1, (tempoSim - descida.t0) / descida.T * 1.25 - 0.25 * ((s.id * 7) % 10) / 10)), k = f * f * (3 - 2 * f);
@@ -671,7 +688,7 @@ function lerMasmorra(p) {
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
   if (masm.sala !== antes) {
     objeto = null;
-    if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; descida = null; chegada = silencio ? null : { t0: tempoSim, T: 1.1 }; if (!silencio) transicao = 1; }     // andar novo: tudo de novo, com um escurecer só aqui
+    if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; descida = null; chegada = silencio ? null : { t0: tempoSim, T: 1.1 }; if (!silencio) { transicao = 1; tituloAndar = { t: performance.now(), a: 'Andar ' + andar, b: TEMAS_ANDAR[temaDoAndar(andar)][0] }; } }     // andar novo: tudo de novo, com um escurecer só aqui
     else { assar = antes; salaSuja = true; if (!silencio) { som('porta'); iniciarViagem(antes, masm.sala); } }
   }
   if (masm.fase === 'Explorando' && faseAntes !== 'Explorando' && masm.tipos[masm.sala] !== 11) { objeto = { tipo: masm.tipos[masm.sala], x: masm.ox, y: masm.oy, t: 0, aberto: 0, tocado: false }; if (!dicaSala && !silencio) { dicaSala = true; aviso('Toque no objeto da sala para render mais'); } }
@@ -1812,6 +1829,7 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__titulo = () => tituloAndar ? tituloAndar.a + "|" + tituloAndar.b : "";
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
 let encAberta = false;
