@@ -845,74 +845,69 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
-// ---- Arcebispo Lázarus: batina longa vermelho-escura, estola dourada, mitra e cajado com globo de sangue; em vetor, origem nos pés ----
+// ---- chefe do Ato 3: o Profeta Velado, design próprio — vestes cinza-azuladas, capuz fundo, máscara de bronze lisa e um livro aberto flutuando ----
 function desenharLazarus(px, py, u, s, alfa) {
   const t = performance.now() / 1000, anim = String(s.anim || ''), conj = /Conjur/.test(anim), ataca = /Atac/.test(anim), anda = /And/.test(anim);
-  const resp = Math.sin(t * 1.8) * 1.5, balanco = anda ? Math.sin(t * 7) * 3 : 0, lado = necro && necro.x > s.x ? 1 : -1;
+  const flut = Math.sin(t * 1.6) * 3, balanco = anda ? Math.sin(t * 6) * 3 : 0, lado = necro && necro.x > s.x ? 1 : -1;
   const P2 = (x, y) => [px + x * u * lado, py + y * u];
   const forma = (pts, cor, borda) => { ctx.beginPath(); pts.forEach(([x, y], k) => { const [qx, qy] = P2(x, y); if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); }); ctx.closePath(); if (cor) { ctx.fillStyle = cor; ctx.fill(); } if (borda) { ctx.strokeStyle = borda; ctx.stroke(); } };
   const curva = (a, c, b, cor, larg) => { const [ax, ay] = P2(a[0], a[1]), [cx, cy] = P2(c[0], c[1]), [bx, by] = P2(b[0], b[1]); ctx.strokeStyle = cor; ctx.lineWidth = larg * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cx, cy, bx, by); ctx.stroke(); };
+  const brilho = (x, y, r, c0, c1) => { const [gx, gy] = P2(x, y), g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r * u); g.addColorStop(0, c0); g.addColorStop(1, c1); const ant = ctx.globalCompositeOperation; ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, r * u, 0, 7); ctx.fill(); ctx.globalCompositeOperation = ant; };
   ctx.save(); ctx.globalAlpha = alfa; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = 2;
-  if (alfa >= 1) { ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(px, py, 44 * u, 17 * u, 0, 0, 7); ctx.fill(); }
-  const traco = '#140406', ouro = '#d9b25f';
-  const cajX = conj ? 30 : 40, topo = conj ? -196 : -172;                                                         // cajado e o globo de sangue
-  curva([cajX + 2, -2], [cajX, -90], [cajX - 2, topo], '#2a1608', 5);
-  { const [gx, gy] = P2(cajX - 2, topo - 8), rg = (conj ? 26 : 15) * u, g = ctx.createRadialGradient(gx, gy, 0, gx, gy, rg); g.addColorStop(0, `rgba(255,210,190,${(0.9 + 0.1 * Math.sin(t * 5)) * alfa})`); g.addColorStop(0.4, `rgba(225,30,30,${0.7 * alfa})`); g.addColorStop(1, 'rgba(160,0,0,0)');
-    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, rg, 0, 7); ctx.fill(); ctx.globalCompositeOperation = alfa >= 1 ? 'source-over' : 'lighter'; }
-  const gb = ctx.createLinearGradient(px, py - 150 * u, px, py); gb.addColorStop(0, '#8a1218'); gb.addColorStop(1, '#3a060a');
-  forma([[-22, -146 + resp], [22, -146 + resp], [30, -90], [40 + balanco, -4], [14, 0], [-14, 0], [-40 + balanco, -4], [-30, -90]], gb, traco);    // batina
-  ctx.strokeStyle = 'rgba(20,4,6,0.55)'; ctx.lineWidth = 1.5 * u; for (const fx of [-18, -6, 8, 20]) { const [a1, b1] = P2(fx * 0.7, -88), [a2, b2] = P2(fx * 1.5 + balanco, -6); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
-  forma([[-40 + balanco, -6], [40 + balanco, -6], [40 + balanco, 0], [-40 + balanco, 0]], ouro, null);                                               // barra dourada
-  for (const l of [-1, 1]) forma([[l * 5, -142 + resp], [l * 13, -142 + resp], [l * 15, -40], [l * 7, -40]], ouro, traco);                           // estola
-  forma([[-28, -148 + resp], [28, -148 + resp], [34, -124 + resp], [-34, -124 + resp]], '#5a0a10', traco);                                           // pelerine
-  for (const l of [-1, 1]) {                                                                                                                         // braços de manga larga
-    const om = [l * 26, -138 + resp], mao = conj ? [l * 44, -186 + 3 * Math.sin(t * 16 + l)] : l === 1 ? [cajX - 4, -104] : ataca ? [l * 52, -128] : [l * 30, -84 + resp], cot = [(om[0] + mao[0]) / 2 + l * 12, (om[1] + mao[1]) / 2 + 10];
-    curva(om, cot, mao, '#6a0c12', 15); curva(om, cot, mao, '#8a1218', 7);
-    const [hx, hy] = P2(mao[0], mao[1]); ctx.fillStyle = '#cdb49a'; ctx.beginPath(); ctx.arc(hx, hy, 5 * u, 0, 7); ctx.fill();
-    if (conj || (ataca && l === -1)) { const gm = ctx.createRadialGradient(hx, hy, 0, hx, hy, 20 * u); gm.addColorStop(0, `rgba(210,255,180,${0.9 * alfa})`); gm.addColorStop(0.4, `rgba(60,200,60,${0.55 * alfa})`); gm.addColorStop(1, 'rgba(20,120,20,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gm; ctx.beginPath(); ctx.arc(hx, hy, 20 * u, 0, 7); ctx.fill(); ctx.globalCompositeOperation = alfa >= 1 ? 'source-over' : 'lighter'; }
+  if (alfa >= 1) { ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(px, py, 40 * u, 15 * u, 0, 0, 7); ctx.fill(); }
+  const traco = '#0c1016';
+  const gv = ctx.createLinearGradient(px, py - 160 * u, px, py); gv.addColorStop(0, '#5a6a7a'); gv.addColorStop(1, '#1e2630');
+  // vestes em faixas rasgadas que não tocam o chão: ele flutua
+  forma([[-20, -146 + flut], [20, -146 + flut], [34, -70 + flut], [44 + balanco, -14 + flut], [30, -22 + flut], [22, -8 + flut], [10, -20 + flut], [0, -6 + flut], [-12, -20 + flut], [-24, -8 + flut], [-32, -22 + flut], [-44 + balanco, -14 + flut], [-34, -70 + flut]], gv, traco);
+  ctx.strokeStyle = 'rgba(10,14,20,0.6)'; ctx.lineWidth = 1.5 * u; for (const fx of [-16, 0, 16]) { const [a1, b1] = P2(fx * 0.6, -130 + flut), [a2, b2] = P2(fx * 1.6 + balanco, -18 + flut); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  for (let k = 0; k < 6; k++) { const [cx, cy] = P2(-8 + k * 3.5, -124 + k * 9 + flut); ctx.fillStyle = '#3a4048'; ctx.beginPath(); ctx.arc(cx, cy, 2.2 * u, 0, 7); ctx.fill(); }   // corrente de contas de ferro
+  for (const l of [-1, 1]) {                                                                                                                         // braços magros em mangas longas
+    const om = [l * 18, -140 + flut], mao = conj ? [l * 30, -196 + flut] : ataca ? [l * 46, -120 + flut] : [l * 24, -100 + flut], cot = [(om[0] + mao[0]) / 2 + l * 10, (om[1] + mao[1]) / 2 + 8];
+    curva(om, cot, mao, '#2c3440', 12); curva(om, cot, mao, '#4a5868', 5);
+    const [hx, hy] = P2(mao[0], mao[1]); ctx.fillStyle = '#8a8478'; ctx.beginPath(); ctx.arc(hx, hy, 4 * u, 0, 7); ctx.fill();
   }
-  forma([[-10, -146 + resp], [-11, -164 + resp], [0, -170 + resp], [11, -164 + resp], [10, -146 + resp]], '#cdb49a', traco);                          // rosto
-  forma([[-7, -150 + resp], [7, -150 + resp], [4, -136 + resp], [0, -130 + resp], [-4, -136 + resp]], '#d8d2c8', traco);                              // barba
-  forma([[-12, -164 + resp], [-13, -180 + resp], [0, -204 + resp], [13, -180 + resp], [12, -164 + resp]], '#7a0c12', ouro);                           // mitra
-  ctx.strokeStyle = ouro; ctx.lineWidth = 2 * u; { const [a1, b1] = P2(0, -200 + resp), [a2, b2] = P2(0, -165 + resp), [a3, b3] = P2(-9, -178 + resp), [a4, b4] = P2(9, -178 + resp); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.moveTo(a3, b3); ctx.lineTo(a4, b4); ctx.stroke(); }
-  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,60,40,${(0.75 + 0.25 * Math.sin(t * 6)) * alfa})`; for (const l of [-1, 1]) { const [ex, ey] = P2(l * 4.5, -158 + resp); ctx.beginPath(); ctx.arc(ex, ey, 1.8 * u, 0, 7); ctx.fill(); }
+  forma([[-17, -142 + flut], [-20, -170 + flut], [-12, -192 + flut], [4, -198 + flut], [16, -186 + flut], [20, -164 + flut], [17, -142 + flut]], '#3a4654', traco);   // capuz fundo
+  forma([[-11, -150 + flut], [-12, -170 + flut], [-6, -182 + flut], [6, -182 + flut], [12, -170 + flut], [11, -150 + flut], [0, -144 + flut]], '#0a0c10', null); // sombra do capuz
+  const gm = ctx.createLinearGradient(px - 9 * u, py - 178 * u, px + 9 * u, py - 150 * u); gm.addColorStop(0, '#d8a860'); gm.addColorStop(1, '#7a5420');
+  forma([[-8, -152 + flut], [-9, -168 + flut], [-4, -176 + flut], [4, -176 + flut], [9, -168 + flut], [8, -152 + flut], [0, -147 + flut]], gm, '#3a2408');   // máscara de bronze lisa, sem rosto
+  ctx.strokeStyle = 'rgba(40,24,8,0.8)'; ctx.lineWidth = 1.2 * u; for (const yy of [-168, -160]) { const [a1, b1] = P2(-6, yy + flut), [a2, b2] = P2(6, yy + flut); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  // o livro aberto que flutua diante dele e acende ao conjurar
+  const lx = 30, ly = (conj ? -214 : -150) + Math.sin(t * 2.3) * 4;
+  forma([[lx - 16, ly + 2], [lx, ly + 6], [lx, ly - 6], [lx - 15, ly - 10]], '#e8dcc0', '#3a2a18'); forma([[lx + 16, ly + 2], [lx, ly + 6], [lx, ly - 6], [lx + 15, ly - 10]], '#ddd0b0', '#3a2a18');
+  ctx.strokeStyle = 'rgba(60,40,20,0.6)'; ctx.lineWidth = 1 * u; for (const k of [-1, 1]) for (const d of [3, 7, 11]) { const [a1, b1] = P2(lx + k * d, ly - 6 + d * 0.3), [a2, b2] = P2(lx + k * (d + 3), ly - 4 + d * 0.3); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  brilho(lx, ly - 4, conj ? 40 : 16, `rgba(170,255,170,${(conj ? 0.85 : 0.35) * alfa})`, 'rgba(40,160,60,0)');
+  for (let k = 0; k < 3; k++) { const an = t * 1.3 + k * 2.1; brilho(lx + Math.cos(an) * 22, ly - 6 + Math.sin(an) * 10, 4, `rgba(200,255,190,${0.7 * alfa})`, 'rgba(60,200,80,0)'); }   // letras soltas que orbitam o livro
   ctx.restore(); ctx.lineWidth = 1;
 }
-// ---- Diablo, o Senhor do Terror: desenhado inteiro em vetor (não há sprite dele). Origem nos pés; u = pixels por unidade do desenho ----
+// ---- chefe do Ato 4: o Colosso de Cinzas, design próprio — esqueleto gigante de ossos negros com brasas entre as costelas, coroa de chamas e um anel de crânios em órbita ----
 function desenharDiablo(px, py, u, s, alfa) {
   const t = performance.now() / 1000, anim = String(s.anim || ''), conj = /Conjur/.test(anim), ataca = /Atac/.test(anim), anda = /And/.test(anim);
-  const resp = Math.sin(t * 2.2) * 2, passo = anda ? Math.sin(t * 9) : 0, lado = necro && necro.x > s.x ? 1 : -1, inclina = ataca ? 0.12 * Math.sin((tempoSim - (s.t || 0)) * 14) : 0;
+  const resp = Math.sin(t * 2) * 2, passo = anda ? Math.sin(t * 7) : 0, lado = necro && necro.x > s.x ? 1 : -1;
   const P2 = (x, y) => [px + x * u * lado, py + y * u];
-  const forma = (pts, cor, borda) => { ctx.beginPath(); pts.forEach(([x, y], k) => { const [qx, qy] = P2(x, y); if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); }); ctx.closePath(); if (cor) { ctx.fillStyle = cor; ctx.fill(); } if (borda) { ctx.strokeStyle = borda; ctx.stroke(); } };
-  const curva = (a, c, b, cor, larg) => { const [ax, ay] = P2(a[0], a[1]), [cx, cy] = P2(c[0], c[1]), [bx, by] = P2(b[0], b[1]); ctx.strokeStyle = cor; ctx.lineWidth = larg * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cx, cy, bx, by); ctx.stroke(); };
-  ctx.save(); ctx.globalAlpha = alfa; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = 2;
-  if (alfa >= 1) {             // sombra e brasa no chão
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(px, py, 62 * u, 24 * u, 0, 0, 7); ctx.fill();
-    const g = ctx.createRadialGradient(px, py, 4, px, py, 110 * u); g.addColorStop(0, `rgba(255,90,20,${0.30 + 0.08 * Math.sin(t * 3)})`); g.addColorStop(1, 'rgba(160,20,0,0)');
-    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(px, py, 110 * u, 50 * u, 0, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  const osso = (a, b, larg, cor) => { const [ax, ay] = P2(a[0], a[1]), [bx, by] = P2(b[0], b[1]); ctx.strokeStyle = cor || '#2a2420'; ctx.lineWidth = larg * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.strokeStyle = '#6a5a4a'; ctx.lineWidth = Math.max(1, larg * 0.3) * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); };
+  const brasa = (x, y, r, a) => { const [gx, gy] = P2(x, y), g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r * u); g.addColorStop(0, `rgba(255,220,120,${a})`); g.addColorStop(0.45, `rgba(255,110,20,${a * 0.6})`); g.addColorStop(1, 'rgba(160,30,0,0)'); const ant = ctx.globalCompositeOperation; ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, r * u, 0, 7); ctx.fill(); ctx.globalCompositeOperation = ant; };
+  ctx.save(); ctx.globalAlpha = alfa; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (alfa >= 1) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(px, py, 58 * u, 22 * u, 0, 0, 7); ctx.fill(); brasa(0, -4, 70, 0.25 + 0.08 * Math.sin(t * 3)); }
+  // pernas e pés de ossos, juntas acesas
+  for (const l of [-1, 1]) { const jx = l * 18 + l * passo * 4, jy = -48; osso([l * 12, -92], [jx, jy], 11); osso([jx, jy], [l * 20 - l * passo * 3, -4], 9); osso([l * 20 - l * passo * 3, -4], [l * 36, -2], 8); brasa(jx, jy, 9, 0.6); }
+  osso([-24, -92], [24, -92], 12);                                                                                                                    // bacia
+  osso([0, -92], [0, -170 + resp], 9);                                                                                                                // coluna
+  for (let k = 0; k < 5; k++) { const y = -158 + resp + k * 12, w = 30 - k * 3; for (const l of [-1, 1]) { const [a1, b1] = P2(0, y), [c1, d1] = P2(l * w * 1.1, y - 4), [a2, b2] = P2(l * w, y + 10); ctx.strokeStyle = '#2a2420'; ctx.lineWidth = 6 * u; ctx.beginPath(); ctx.moveTo(a1, b1); ctx.quadraticCurveTo(c1, d1, a2, b2); ctx.stroke(); ctx.strokeStyle = '#6a5a4a'; ctx.lineWidth = 2 * u; ctx.stroke(); } }   // costelas
+  brasa(0, -128 + resp, conj ? 46 : 30, 0.85 + 0.15 * Math.sin(t * 4));                                                                            // o fogo que mora dentro do peito
+  osso([-40, -166 + resp], [40, -166 + resp], 10);                                                                                                    // clavículas
+  for (const l of [-1, 1]) {                                                                                                                          // braços longos demais, até os joelhos
+    const om = [l * 40, -166 + resp], cot = conj ? [l * 66, -206] : ataca && l === 1 ? [l * 78, -150] : [l * 58, -124], mao = conj ? [l * 52, -244 + 4 * Math.sin(t * 14)] : ataca && l === 1 ? [l * 108, -134] : [l * 54, -60 + resp];
+    osso(om, cot, 10); osso(cot, mao, 8); brasa(cot[0], cot[1], 8, 0.55);
+    for (const dq of [-6, 0, 6]) osso(mao, [mao[0] + l * 3 + dq, mao[1] + (conj ? -16 : 16)], 3, '#3a322a');
   }
-  const escuro = '#3a0707', medio = '#7a1410', claro = '#b02a1c', traco = '#160303';
-  curva([-14, -70], [-70, -20 + 6 * Math.sin(t * 2)], [-92, -66 + 8 * Math.sin(t * 2)], escuro, 9); forma([[-92, -82 + 8 * Math.sin(t * 2)], [-102, -62 + 8 * Math.sin(t * 2)], [-84, -62 + 8 * Math.sin(t * 2)]], escuro, traco);
-  for (let q = 0; q < 5; q++) forma([[-30 - q * 3, -150 + q * 20], [-64 - q * 2, -168 + q * 21], [-30 - q * 3, -132 + q * 20]], escuro, traco);    // crista
-  forma([[-24, -84], [-40, -44 + passo * 4], [-30, -40 + passo * 4], [-34, -4], [-12, -4], [-16, -40], [-4, -84]], medio, traco);                 // perna de trás
-  forma([[4, -84], [22, -44 - passo * 4], [14, -40 - passo * 4], [14, -4], [36, -4], [30, -40], [28, -84]], medio, traco);
-  forma([[-36, 0], [-34, -8], [-10, -8], [-8, 0]], '#1a1010', traco); forma([[12, 0], [14, -8], [38, -8], [40, 0]], '#1a1010', traco);                // cascos
-  const gt = ctx.createLinearGradient(px, py - 156 * u, px, py - 76 * u); gt.addColorStop(0, claro); gt.addColorStop(1, escuro);
-  forma([[-46, -152 + resp], [46, -152 + resp], [30, -112], [24, -78], [-24, -78], [-30, -112]], gt, traco);                                           // tronco
-  ctx.strokeStyle = 'rgba(20,3,3,0.7)'; ctx.lineWidth = 1.5 * u; for (const yy of [-128, -112, -96]) { ctx.beginPath(); const [a1, b1] = P2(-16, yy), [a2, b2] = P2(16, yy); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
-  { const [a1, b1] = P2(0, -146), [a2, b2] = P2(0, -84); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
-  for (const l of [-1, 1]) {                                                                                                                           // braços e garras
-    const om = [l * 46, -146 + resp], cot = conj ? [l * 72, -176] : ataca && l === 1 ? [l * 78, -128] : [l * 68, -106], mao = conj ? [l * 62, -214 + 4 * Math.sin(t * 18)] : ataca && l === 1 ? [l * 104, -118 + inclina * 80] : [l * 60, -68 + resp];
-    curva(om, cot, mao, medio, 15); curva(om, cot, mao, claro, 6);
-    for (const dq of [-7, 0, 7]) curva(mao, [mao[0] + l * 4 + dq, mao[1] + (conj ? -10 : 10)], [mao[0] + l * 6 + dq * 1.4, mao[1] + (conj ? -20 : 20)], '#e8dcc8', 2.5);
-    forma([[l * 34, -156 + resp], [l * 58, -160 + resp], [l * 52, -138 + resp]], escuro, traco);                                                       // ombreira de osso
-  }
-  forma([[-17, -150 + resp], [-19, -176 + resp], [-9, -190 + resp], [9, -190 + resp], [19, -176 + resp], [17, -150 + resp], [8, -142 + resp], [-8, -142 + resp]], medio, traco);   // cabeça
-  forma([[-10, -150 + resp], [10, -150 + resp], [5, -140 + resp], [-5, -140 + resp]], '#12060a', null);                                                 // boca
-  for (const l of [-1, 1]) { curva([l * 12, -182 + resp], [l * 58, -184 + resp], [l * 48, -232 + resp], '#e8dcc8', 9); curva([l * 12, -182 + resp], [l * 54, -186 + resp], [l * 47, -228 + resp], '#8a7a66', 3); }   // chifres
-  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,220,90,${(0.8 + 0.2 * Math.sin(t * 7)) * alfa})`;
-  for (const l of [-1, 1]) { const [ex, ey] = P2(l * 8, -170 + resp); ctx.beginPath(); ctx.ellipse(ex, ey, 4.5 * u, 2.5 * u, 0, 0, 7); ctx.fill(); }
-  if (conj) { const [cx2, cy2] = P2(0, -214); const gc = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, 60 * u); gc.addColorStop(0, 'rgba(255,230,150,0.8)'); gc.addColorStop(0.4, 'rgba(255,110,20,0.5)'); gc.addColorStop(1, 'rgba(160,20,0,0)'); ctx.fillStyle = gc; ctx.beginPath(); ctx.arc(cx2, cy2, 60 * u, 0, 7); ctx.fill(); }
+  // crânio alongado, sem chifres, órbitas em brasa
+  const [cx, cy] = P2(0, -190 + resp); ctx.fillStyle = '#3a322a'; ctx.strokeStyle = '#120e0a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, cy, 17 * u, 22 * u, 0, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#2a2420'; ctx.beginPath(); ctx.ellipse(cx, cy + 18 * u, 11 * u, 7 * u, 0, 0, 7); ctx.fill();
+  for (const l of [-1, 1]) brasa(l * 7, -192 + resp, 7, 0.95);
+  // coroa de chamas
+  for (let k = -2; k <= 2; k++) { const hx = k * 7, hh = 18 + 8 * Math.abs(Math.sin(t * 6 + k)); const [bx, by] = P2(hx, -208 + resp), [tx, ty] = P2(hx, -208 - hh + resp); const g = ctx.createLinearGradient(bx, by, tx, ty); g.addColorStop(0, 'rgba(255,140,30,0.95)'); g.addColorStop(1, 'rgba(255,230,150,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(bx - 4 * u, by); ctx.quadraticCurveTo(bx, by - hh * 0.6 * u, tx, ty); ctx.quadraticCurveTo(bx, by - hh * 0.4 * u, bx + 4 * u, by); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  // anel de crânios em órbita (os da frente desenhados por cima)
+  for (let k = 0; k < 6; k++) { const an = t * (conj ? 2.4 : 0.9) + k * Math.PI / 3, ox = Math.cos(an) * 62, oy = -130 + Math.sin(an) * 14 + resp; const [sx, sy] = P2(ox, oy), r = (5 + 2 * (Math.sin(an) + 1)) * u; ctx.globalAlpha = alfa * (0.55 + 0.45 * (Math.sin(an) + 1) / 2); ctx.fillStyle = '#d8ccb4'; ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fill(); ctx.fillStyle = '#ff7a20'; ctx.beginPath(); ctx.arc(sx - r * 0.35, sy - r * 0.1, r * 0.25, 0, 7); ctx.arc(sx + r * 0.35, sy - r * 0.1, r * 0.25, 0, 7); ctx.fill(); }
   ctx.restore(); ctx.lineWidth = 1;
 }
 // ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----

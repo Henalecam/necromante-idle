@@ -50,7 +50,7 @@ namespace Necro.Nucleo
 
         // ---- Estrutura dos andares ----
         public int AndaresPorAto = 10;
-        public float InclinacaoFimDeAto = 0.20f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
+        public float InclinacaoFimDeAto = 0.19f;       // crescimento extra por andar depois de AndarDaInclinacao, dentro de cada Ato
         public int AndarDaInclinacao = 6;
         public int OndasPorAndar = 3;
         public float ChanceOndaElite = 0.30f;
