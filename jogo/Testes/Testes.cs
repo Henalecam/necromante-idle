@@ -1767,6 +1767,31 @@ namespace Necro.Testes
                 Afirmar(dano > 0f && Math.Abs(s.Necromante.Vida - v0 - dano * c.BeijoDeSangue) < 0.01f, "o acerto da Súcubo cura o necromante em " + c.BeijoDeSangue * 100 + "% do dano (" + (s.Necromante.Vida - v0) + " de " + dano + ")");
             });
 
+            Teste("Espírito de Ossos: só depois do livro, arranca uma fração da vida atual do alvo mais vivo, com teto para não derreter chefe, e não mata sozinho", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                var s0 = new Simulacao(c, p, 9, ModoExpedicao.Avancar, 9) { LimiteDeAndares = 2 }; int g = 0; while (!s0.Encerrada && g++ < 80000) s0.Tick();
+                Afirmar(Grimorio.Nivel(p, FeiticoId.EspiritoDeOssos) == 0 && s0.Resultado.Espiritos == 0, "sem livro, nada de espírito");
+                p.NiveisDeFeitico[(int)FeiticoId.EspiritoDeOssos] = 1;
+                var s = new Simulacao(c, p, 9, ModoExpedicao.Avancar, 9) { LimiteDeAndares = 2 }; g = 0; int ev50 = 0; bool passouDoTeto = false, matou = false, fracaoOk = true;
+                while (!s.Encerrada && g++ < 80000)
+                {
+                    var antes = new System.Collections.Generic.Dictionary<int, float>(); foreach (var e in s.Entidades) if (e.Viva && e.Faccao == Faccao.Inimigo) antes[e.Id] = e.Vida;
+                    s.Tick();
+                    foreach (var ev in s.Eventos)
+                        if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 50)
+                        {
+                            ev50++; if (ev.Valor > s.Necromante.Dano * 12.5f) passouDoTeto = true;
+                            if (antes.TryGetValue(ev.Alvo, out float v0) && ev.Valor > v0 * 0.36f) fracaoOk = false;
+                            var a2 = s.Entidades.Find(x => x.Id == ev.Alvo); if (a2 != null && a2.Vida <= 0f && ev.Valor >= v0 - 0.5f) matou = true;
+                        }
+                }
+                Console.WriteLine("        (espíritos: " + s.Resultado.Espiritos + ")");
+                Afirmar(s.Encerrada && s.Resultado.Espiritos >= 2 && ev50 == s.Resultado.Espiritos, "com o livro, o necromante lança o espírito (" + s.Resultado.Espiritos + ")");
+                Afirmar(fracaoOk && !passouDoTeto && !matou, "no máximo ~1/3 da vida atual, com teto, sem matar sozinho");
+            });
+
             Teste("Armadilhas: sarcófagos e urnas armados disparam em quem abre a partir do andar 3, sem matar de uma vez; a Destreza desarma parte", () =>
             {
                 var c = new ConfigJogo { ArmadilhaChance = 1f, ObjetosPorSala = 6, MissoesDeCenario = false };

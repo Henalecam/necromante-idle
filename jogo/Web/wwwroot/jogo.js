@@ -510,6 +510,11 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '50') {   // Espírito de Ossos: caveira fantasma do necromante até o alvo
+    espFx.push({ de: [+v[10] + so[0], +v[11] + so[1]], alvo: +v[3], t: performance.now() }); if (espFx.length > 6) espFx.shift();
+    som('critico'); if (!evento.avisouEspirito) { evento.avisouEspirito = true; aviso('Espírito de Ossos · arranca um terço da vida'); anotar('O necromante soltou um <b>Espírito de Ossos</b>: ele persegue o inimigo mais vivo e arranca um terço da vida dele (chefes resistem mais).'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '49') {   // armadilha de sarcófago/urna (Diablo 1): 0 seta, 1 fogo, 2 raio, 3 desarmada pela Destreza
     const q = Math.round(+v[4] || 0), pA = [+v[10] + so[0], +v[11] + so[1]];
     if (q === 3) { aviso('Armadilha desarmada · Destreza'); if (!evento.avisouDesarme) { evento.avisouDesarme = true; anotar('Uma <b>armadilha</b> foi desarmada: cada ponto de <b>Destreza</b> aumenta a chance.'); } return; }
@@ -763,7 +768,7 @@ let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [], armaFx = [];
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [], armaFx = [], espFx = [];
 const ocultos = new Set();
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
@@ -1312,6 +1317,20 @@ function desenhar(dt) {
       for (let k = 0; k < 14; k++) { const an = k / 14 * Math.PI * 2 + fA * 2, [qx, qy] = W(a.p[0] + Math.cos(an) * rA, a.p[1] + Math.sin(an) * rA), hf = (26 + 12 * Math.sin(agoraA / 90 + k)) * reforco * forcaA, gl = ctx.createRadialGradient(qx, qy - hf * 0.4, 1, qx, qy - hf * 0.4, hf); gl.addColorStop(0, `rgba(255,230,140,${0.8 * forcaA})`); gl.addColorStop(0.4, `rgba(255,120,20,${0.5 * forcaA})`); gl.addColorStop(1, 'rgba(160,20,0,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(qx, qy - hf * 0.45, 11 * reforco, hf, 0, 0, 7); ctx.fill(); }
     }
     ctx.restore(); ctx.lineWidth = 1;
+  }
+  if (espFx.length) {      // Espírito de Ossos: caveira pálida que voa em curva até o alvo e se desfaz num clarão verde
+    const agoraE = performance.now(); espFx = espFx.filter((a) => agoraE - a.t < 750);
+    for (const a of espFx) {
+      const fE = Math.min(1, (agoraE - a.t) / 500), [ox, oy] = W(a.de[0], a.de[1]), vt = estado.get(a.alvo), [vx, vy] = vt ? naTela(vt.rx, vt.ry) : [ox, oy], cx = (ox + vx) / 2, cy = Math.min(oy, vy) - 90 * reforco;
+      const x = (1 - fE) * (1 - fE) * ox + 2 * (1 - fE) * fE * cx + fE * fE * vx, y = (1 - fE) * (1 - fE) * (oy - 50 * reforco) + 2 * (1 - fE) * fE * cy + fE * fE * (vy - 50 * reforco), some = agoraE - a.t > 500 ? 1 - (agoraE - a.t - 500) / 250 : 1;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let k = 1; k <= 5; k++) { const fk = Math.max(0, fE - k * 0.05), tx = (1 - fk) * (1 - fk) * ox + 2 * (1 - fk) * fk * cx + fk * fk * vx, ty = (1 - fk) * (1 - fk) * (oy - 50 * reforco) + 2 * (1 - fk) * fk * cy + fk * fk * (vy - 50 * reforco); ctx.fillStyle = `rgba(120,255,170,${0.18 * some * (1 - k / 6)})`; ctx.beginPath(); ctx.arc(tx, ty, (9 - k) * reforco, 0, 7); ctx.fill(); }
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 22 * reforco); g.addColorStop(0, `rgba(160,255,200,${0.55 * some})`); g.addColorStop(1, 'rgba(40,200,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 22 * reforco, 0, 7); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = some; ctx.fillStyle = '#e8f0e0'; ctx.beginPath(); ctx.ellipse(x, y - 2 * reforco, 7 * reforco, 6.5 * reforco, 0, 0, 7); ctx.fill(); ctx.fillRect(x - 4 * reforco, y + 2 * reforco, 8 * reforco, 4 * reforco);
+      ctx.fillStyle = '#0b2a18'; ctx.beginPath(); ctx.arc(x - 2.6 * reforco, y - 2 * reforco, 1.8 * reforco, 0, 7); ctx.arc(x + 2.6 * reforco, y - 2 * reforco, 1.8 * reforco, 0, 7); ctx.fill();
+      if (fE >= 1) { ctx.globalCompositeOperation = 'lighter'; const r = (16 + 30 * (1 - some)) * reforco; ctx.strokeStyle = `rgba(120,255,170,${some})`; ctx.lineWidth = 3 * reforco; ctx.beginPath(); ctx.ellipse(vx, vy - 40 * reforco, r, r * 0.6, 0, 0, 7); ctx.stroke(); }
+      ctx.restore();
+    }
   }
   if (armaFx.length) {      // armadilhas: seta vinda da parede, jato de fogo ou faísca saindo do objeto até a vítima
     const agoraR = performance.now(); armaFx = armaFx.filter((a) => agoraR - a.t < 900);
@@ -2189,6 +2208,7 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__esp = () => espFx.length > 0 && performance.now() - espFx[espFx.length - 1].t < 300;
 window.__arma = () => armaFx.length > 0 && performance.now() - armaFx[armaFx.length - 1].t < 250;
 window.__pedra = () => { const p = [...estado.values()].find((e) => e.viva && e.pedra > tempoSim && (e.luzA === undefined || e.luzA > 0.9)); if (p) window.__c = [p.especie, p.elite, p.campeao, nomesUnicos.get(p.id) || '']; return !!p; };
 window.__luz = () => JSON.stringify([...estado.values()].filter((e) => e.viva && e.inimigo).map((e) => [e.especie, e.luzA === undefined ? -1 : +e.luzA.toFixed(2), necro ? +Math.hypot(e.rx - necro.rx, e.ry - necro.ry).toFixed(1) : -1]));

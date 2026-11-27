@@ -44,7 +44,7 @@ namespace Necro.Nucleo
         ResProfana = 12, CarcereiroDeAlmas = 13, Sucubo = 14, CavaleiroNegro = 15, Magistrado = 16, Lazarus = 17, Diablo = 18
     }
 
-    public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5, Golem = 6, MuralhaDeFogo = 7, RelampagoEmCadeia = 8, PedraMaldita = 9 }
+    public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5, Golem = 6, MuralhaDeFogo = 7, RelampagoEmCadeia = 8, PedraMaldita = 9, EspiritoDeOssos = 10 }
 
     public enum ModoExpedicao { Avancar, Cacar }
 

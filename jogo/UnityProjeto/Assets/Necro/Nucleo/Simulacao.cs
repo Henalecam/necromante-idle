@@ -173,6 +173,7 @@ namespace Necro.Nucleo
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
             _relampagoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.RelampagoEmCadeia) >= 1;
             _pedraAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.PedraMaldita) >= 1;
+            _espiritoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.EspiritoDeOssos) >= 1;
             _muralhaAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.MuralhaDeFogo) >= 1;
             _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
@@ -590,7 +591,29 @@ namespace Necro.Nucleo
             return true;
         }
 
-        private bool _relampagoAprendido, _pedraAprendida;
+        private bool _relampagoAprendido, _pedraAprendida, _espiritoAprendido;
+
+        /// <summary>Espírito de Ossos: no inimigo de mais vida atual ao alcance (que valha a pena), arranca uma fração da vida atual dele, com teto em múltiplos do dano do necromante (chefe não derrete).</summary>
+        private bool LancarEspirito()
+        {
+            if (!Cfg.EspiritoAtivo || !_espiritoAprendido || !PodeLancar(FeiticoId.EspiritoDeOssos)) return false;
+            var f = Fei(FeiticoId.EspiritoDeOssos); var n = Necromante; float a2 = f.Alcance * f.Alcance, minimo = n.Dano * Cfg.EspiritoVidaMinima;
+            Entidade alvo = null; int total = Entidades.Count;
+            for (int i = 0; i < total; i++)
+            {
+                var o = Entidades[i];
+                if (!o.Viva || o.Faccao != Faccao.Inimigo || o.Oculto || o.Vida < minimo || Vec2.Dist2(o.Pos, n.Pos) > a2) continue;
+                if (alvo == null || o.Vida > alvo.Vida) alvo = o;
+            }
+            if (alvo == null) return false;
+            PagarFeitico(FeiticoId.EspiritoDeOssos, alvo, alvo.Pos, 0f);
+            float dano = Math.Min(alvo.Vida * f.Potencia, n.Dano * f.Raio);
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 50, Alvo = alvo.Id, Origem = n.Id, Valor = dano, Pos = n.Pos, Dir = alvo.Pos - n.Pos });
+            alvo.Vida -= Math.Min(dano, alvo.Vida - 1f > 0f ? alvo.Vida - 1f : 0f);   // arranca vida direto (como no D1, ignora resistência), mas não mata sozinho
+            Emitir(new EventoSim { Tipo = TipoEvento.Dano, Alvo = alvo.Id, Origem = n.Id, Valor = dano, Pos = alvo.Pos, TipoDano = TipoDano.Sombra });
+            Resultado.Espiritos++;
+            return true;
+        }
 
         /// <summary>Pedra Maldita: o inimigo mais forte ao alcance (que não seja chefe) vira pedra e fica parado por alguns segundos.</summary>
         private bool LancarPedra()

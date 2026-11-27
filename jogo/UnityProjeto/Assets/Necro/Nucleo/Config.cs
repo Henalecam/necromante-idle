@@ -327,6 +327,7 @@ namespace Necro.Nucleo
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
         public bool PedraAtiva = true; public int PedraMinimoDeInimigos = 3;
+        public bool EspiritoAtivo = true; public float EspiritoVidaMinima = 6f;   // só vale a pena em alvo com vida atual acima de N× o dano do necromante
         public bool RelampagoAtivo = true; public int RelampagoSaltos = 4, RelampagoMinimoDeInimigos = 2; public float RelampagoPerdaPorSalto = 0.2f;
         public bool MuralhaAtiva = true;                   // o necromante ergue a Muralha sozinho quando há um grupo vindo
         public float MuralhaComprimento = 6f, MuralhaPulso = 0.5f; public int MuralhaMinimoDeInimigos = 3;
@@ -635,6 +636,8 @@ namespace Necro.Nucleo
             new DadosFeitico { Id = FeiticoId.RelampagoEmCadeia, Nome = "Relâmpago em Cadeia", CustoMana = 28f, Recarga = 9f, Alcance = 8f, Potencia = 1.6f, Raio = 3.5f },
             // Pedra Maldita (Diablo 1, Stone Curse): transforma em pedra o inimigo mais forte por perto (não chefes). Potência = segundos petrificado
             new DadosFeitico { Id = FeiticoId.PedraMaldita, Nome = "Pedra Maldita", CustoMana = 24f, Recarga = 11f, Alcance = 8f, Potencia = 3.5f },
+            // Espírito de Ossos (Diablo 1, Bone Spirit): um espírito persegue o alvo e arranca uma fração da vida ATUAL dele. Potência = fração; Raio = teto em múltiplos do dano do necromante
+            new DadosFeitico { Id = FeiticoId.EspiritoDeOssos, Nome = "Espírito de Ossos", CustoMana = 30f, Recarga = 14f, Alcance = 9f, Potencia = 0.33f, Raio = 12f },
         };
 
         public float ExplosaoCadaverFracaoVida = 0.10f; // + fração da vida máxima de cada cadáver consumido

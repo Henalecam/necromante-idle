@@ -46,7 +46,7 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 
 ### B. Combate e feitiços
 - B1. [feito] Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.
-- B2. [6 feitiços de base + por livro: Golem, Muralha de Fogo, Relâmpago em Cadeia e (item 195) Pedra Maldita; falta Muralha de Ossos e Praga] Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
+- B2. [6 feitiços de base + por livro: Golem, Muralha de Fogo, Relâmpago em Cadeia e (item 195) Pedra Maldita e (item 199) Espírito de Ossos; falta Muralha de Ossos e Praga] Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
 - B3. [feito: diabrete foge, carniçal devora cadáver, atirador recua, bestas cercam pelos flancos] Comportamento por espécie: quem foge com pouca vida, quem cerca, quem atira e recua, quem carrega em linha.
 - B4. [Golem feito] Mais minions: Golem (um só, forte), Magos esqueletos por elemento, Espectros.
 - B5. [feito: imunidades por dificuldade e resistências por família como no D1 (item 193)] Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).
