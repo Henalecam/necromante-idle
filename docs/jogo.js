@@ -1831,12 +1831,12 @@ function atualizarPainel(forcar) {
   };
   const folga = d.poder / Math.max(1, d.poderSugerido), corP = folga >= 1 ? '#8fd89f' : folga >= 0.8 ? '#ffd84a' : '#ff6a6a';
   IC.poder = `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7z" stroke="${corP}"/>`;
-  const fichas0 = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · andar pede ${fmt(d.poderSugerido)}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos'], ['ouro', `<span style="color:#ffd84a">${fmt(d.ouroTotal)}</span>`, d.ouroDaExpedicao ? `Ouro · +${fmt(d.ouroDaExpedicao)} nesta descida` : 'Ouro']];
+  const fichas0 = [['poder', `<span style="color:${corP}">${fmt(d.poder)}</span>`, `Poder · recomendado ${fmt(d.poderSugerido)}`, `Seu Poder (necromante + minions + itens) contra o recomendado para o andar atual. ${folga >= 1 ? 'Verde: você está forte o bastante.' : folga >= 0.8 ? 'Amarelo: luta justa.' : 'Vermelho: o andar está pesado — melhore o exército ou recue.'}`], ['ossos', fmt(d.ossos), 'Ossos'], ['ess', fmt(d.essencia), 'Essência'], ['cmd', `${d.comando}/${d.comandoMax}`, 'Comando'], ['sangue', fmt(d.sangue), 'Sangue'], ['frag', fmt(d.fragmentos), 'Fragmentos'], ['ouro', `<span style="color:#ffd84a">${fmt(d.ouroTotal)}</span>`, d.ouroDaExpedicao ? `Ouro · +${fmt(d.ouroDaExpedicao)} nesta descida` : 'Ouro']];
   const fichas = fichas0.filter((f, i) => i < 1 || f[0] === 'cmd' || !/^0$/.test(String(f[1]).replace(/<[^>]*>/g, '')));   // recurso zerado não ocupa espaço
   if (d.ascensao.cinzas || d.ascensao.vezes) fichas.push(['cinzas', fmt(d.ascensao.cinzas), 'Cinzas']);
   if (d.sorte > 0) fichas.push(['frag', fmt(d.sorte), 'Sorte']);
   if (d.cheats) fichas.push(['cmd', 'teste', 'save']);
-  const hr = fichas.map(([k, v, n]) => `<span class="rec" data-rec="${k}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg><b>${v}</b><small>${n}</small></span>`).join('');
+  const hr = fichas.map(([k, v, n, t]) => `<span class="rec" data-rec="${k}"${t ? ` title="${t}"` : ''}><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg><b>${v}</b><small>${n}</small></span>`).join('');
   if (hr !== recursosAnterior) { recursosAnterior = hr; $('recursos').innerHTML = hr; }
   // missão atual: objetivo sempre à vista
   const m = d.missao; let hm = '';
