@@ -27,7 +27,7 @@ battle.net clássico (pacotes de campeões/únicos).
 10. [feito] Santuários de efeito incerto: 10 tipos de nome críptico (Misterioso, Sombrio, Estranho, Reluzente, Oculto, Religioso, Mágico, Ornado, Tétrico, Profano), usar ou seguir adiante, efeito só revelado depois de usado e anotado no Livro dos Santuários. Fontes: diablo2.diablowiki.net/D1_Shrines, strategywiki, gamebanshee, valarguild.
 11. [feito: tema a cada 4 andares com paleta, fogo, família da casa e decoração própria; Cavernas e Inferno com andares maiores e irregulares] Temas a cada 4 andares (Catedral, Catacumbas, Cavernas, Inferno) com formas de sala diferentes e bestiário por tema sorteado por jogo.
 12. [feito: Açougueiro (andar 2) e Rei Esqueleto (andar 3), cada um sorteado por save (2 em 3), opcionais, com sala e recompensa próprias] Missões sorteadas por jogo com peça fixa (Açougueiro no andar 2, Rei Esqueleto no 3...).
-13. [feito: Normal, Pesadelo e Inferno; abre ao vencer o chefe do Ato 2; multiplicadores de inimigo e tabela de saque própria; falta medir o ritmo de Pesadelo/Inferno com o robô] Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
+13. [feito e medido: Normal, Pesadelo e Inferno; cada dificuldade é uma descida própria que continua a escala da anterior (+20 e +40 andares de força)] Dificuldades (Normal/Pesadelo/Inferno) com tabelas de drop próprias.
 14. Árvore de ascensão muito maior.
 15. [feito: melhorar +1 a +5 e imbuir afixo com ouro no Ferreiro] Imbuir/melhorar armaduras com ouro.
 Andares maiores (mais salas, formas irregulares) entram junto com 4 e 11: o dono agora pediu "mais profundidade nos mapas".

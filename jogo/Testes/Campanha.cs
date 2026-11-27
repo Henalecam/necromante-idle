@@ -232,6 +232,39 @@ namespace Necro.Testes
             return r;
         }
 
+        /// <summary>
+        /// Mede a dificuldade seguinte: joga o Normal até abrir o Pesadelo, troca, e marca as horas (contadas desde a troca) até
+        /// vencer o chefe do Ato 1 e do Ato 2 no Pesadelo; se abrir o Inferno, troca de novo e mede o chefe do Ato 1 do Inferno.
+        /// </summary>
+        public static bool Rastro;
+        public static string MedirDificuldades(int campanhas, double horasMax, ConfigJogo cfg)
+        {
+            var hN = new List<double>(); var hP1 = new List<double>(); var hP2 = new List<double>(); var hI1 = new List<double>();
+            double tps = cfg.TicksPorSegundo;
+            for (ulong semente = 1; semente <= (ulong)campanhas; semente++)
+            {
+                int maxP = 0; var p = Progressao.NovoJogo(cfg); long ticks = 0; int exp = 0; double trocaP = double.NaN, trocaI = double.NaN, p1 = double.NaN, p2 = double.NaN, i1 = double.NaN, normal = double.NaN;
+                while (ticks / tps / 3600.0 < horasMax)
+                {
+                    int inicio = Progressao.AndarDePartida(p, cfg);
+                    var res = ExecutorSemTela.RodarExpedicao(cfg, p, semente * 7919UL + (ulong)exp++, ModoExpedicao.Avancar, inicio);
+                    ticks += res.Ticks + (long)(20 * tps);
+                    Progressao.AplicarResultado(p, res, cfg);
+                    TurnoDoJogador(p, cfg);
+                    double agora = ticks / tps / 3600.0;
+                    if (Rastro && res.Dificuldade >= 1 && (res.AndarFinal > maxP || exp % 40 == 0)) { maxP = Math.Max(maxP, res.AndarFinal); Console.WriteLine("   [" + semente + "] dif " + res.Dificuldade + " andar " + res.AndarFinal + " (partida " + inicio + ") em " + (agora - trocaP).ToString("0.00") + " h, motivo " + res.Motivo + ", chefes " + res.ChefesVencidosNaDescida.Count); }
+                    if (res.Dificuldade == 1 && res.ChefesVencidosNaDescida.Contains(1) && double.IsNaN(p1)) p1 = agora - trocaP;
+                    if (res.Dificuldade == 1 && res.ChefesVencidosNaDescida.Contains(2) && double.IsNaN(p2)) p2 = agora - trocaP;
+                    if (res.Dificuldade == 2 && res.ChefesVencidosNaDescida.Contains(1) && double.IsNaN(i1)) { i1 = agora - trocaI; break; }
+                    if (p.Dificuldade == 0 && p.DificuldadeLiberada >= 1) { normal = agora; trocaP = agora; Dificuldades.Definir(p, 1); }
+                    else if (p.Dificuldade == 1 && p.DificuldadeLiberada >= 2) { trocaI = agora; Dificuldades.Definir(p, 2); }
+                }
+                hN.Add(double.IsNaN(normal) ? 999 : normal); hP1.Add(double.IsNaN(p1) ? 999 : p1); hP2.Add(double.IsNaN(p2) ? 999 : p2); hI1.Add(double.IsNaN(i1) ? 999 : i1);
+            }
+            Func<double, string> f = v => v >= 999 ? "não chegou" : v.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " h";
+            return "Normal até o chefe do Ato 2: " + f(Mediana(hN)) + "\nPesadelo (desde a troca) chefe do Ato 1: " + f(Mediana(hP1)) + " · chefe do Ato 2: " + f(Mediana(hP2)) + "\nInferno (desde a troca) chefe do Ato 1: " + f(Mediana(hI1));
+        }
+
         static double Mediana(List<double> v) { if (v.Count == 0) return double.NaN; v.Sort(); return v[v.Count / 2]; }
 
         public sealed class Medidas

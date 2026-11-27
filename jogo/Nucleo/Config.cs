@@ -402,11 +402,12 @@ namespace Necro.Nucleo
         public float AtrairAtraso = 3.5f;                 // segundos até os primeiros chegarem
         // ---- Dificuldades (Normal, Pesadelo, Inferno) ----
         public int DificuldadeAbreNoAto = 2;                                  // vencer o chefe deste Ato abre a dificuldade seguinte
-        public float[] DificuldadeVida = { 1f, 2.4f, 5.5f };                  // vida dos inimigos
-        public float[] DificuldadeDano = { 1f, 1.6f, 2.6f };                  // dano dos inimigos
-        public float[] DificuldadeOssos = { 1f, 1.6f, 2.5f };
-        public float[] DificuldadeOuro = { 1f, 2f, 4f };
-        public int[] DificuldadeNivelDeItem = { 0, 6, 14 };                   // somado ao nível de todo item que cai
+        public int[] DificuldadeAndaresExtras = { 0, 20, 40 };                // o Pesadelo continua de onde o Normal parou: andar 1 do Pesadelo tem a força do andar 21
+        public float[] DificuldadeVida = { 1f, 1.15f, 1.3f };                 // vida dos inimigos, por cima disso
+        public float[] DificuldadeDano = { 1f, 1.1f, 1.2f };                  // dano dos inimigos
+        public float[] DificuldadeOssos = { 1f, 1.15f, 1.3f };
+        public float[] DificuldadeOuro = { 1f, 1.3f, 1.6f };
+        public int[] DificuldadeNivelDeItem = { 0, 20, 40 };                   // somado ao nível de todo item que cai
         public float[] DificuldadeChanceDeSubirRaridade = { 0f, 0.15f, 0.35f }; // chance de o item cair um degrau acima (até Raro)
         public bool ForcarReiEsqueleto;                  // só para testes e capturas
         public int ReiAndar = 3;

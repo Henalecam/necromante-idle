@@ -1513,7 +1513,7 @@ function atualizarPainel(forcar) {
         `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
   } else if (aba === 'necropole') {
-    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: inimigos mais fortes, saque melhor. Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
+    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
     DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
     h += '<h3>Construções</h3>';
     d.construcoes.forEach((c, i) => {
@@ -1813,7 +1813,7 @@ $('b-item0').addEventListener('click', () => { if (J) J.FeiticoDeItem(0); });
 $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
-const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'inimigos com 2,4x de vida e 1,6x de dano · 2x ouro, 1,6x ossos, itens 6 níveis acima e mais raros'], ['Inferno', 'inimigos com 5,5x de vida e 2,6x de dano · 4x ouro, 2,5x ossos, itens 14 níveis acima e bem mais raros']];
+const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'uma descida nova, do andar 1, mas continuando de onde o Normal parou: o andar 1 tem a força do andar 21 · itens 20 níveis acima e mais raros, 30% mais ouro'], ['Inferno', 'outra descida nova: o andar 1 tem a força do andar 41 · itens 40 níveis acima, bem mais raros, 60% mais ouro · é o fim de jogo, longo']];
 const RAIO_DE_LUZ = 7.5;   // em unidades da sala: até onde a luz do necromante mostra os adormecidos
 const NOMES_ZOOM = ['Perto', 'Sala', 'Andar inteiro'];
 const pintarZoom = () => { $('b-zoom').textContent = '⤢ ' + (zoomLivre || pan[0] || pan[1] ? 'Recentrar' : NOMES_ZOOM[zoomModo]); $('salas').style.display = zoomModo === 2 ? 'none' : ''; };

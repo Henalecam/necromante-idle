@@ -1498,11 +1498,18 @@ namespace Necro.Testes
                 Afirmar(p.DificuldadeLiberada == 1 && Dificuldades.Definir(p, 1) && !Dificuldades.Definir(p, 2), "vencer o chefe do Ato 2 no Normal deveria abrir só o Pesadelo");
                 Dificuldades.Registrar(p, r, Cfg);
                 Afirmar(p.DificuldadeLiberada == 1, "vencer de novo no Normal não deveria abrir o Inferno");
+                p.AndarDeAncoragem = 20; p.Dificuldade = 0;
+                Afirmar(Dificuldades.Definir(p, 1) && p.AndarDeAncoragem == 1, "o Pesadelo é uma descida nova: começa do andar 1");
+                p.AndarDeAncoragem = 5;
+                Afirmar(Dificuldades.Definir(p, 0) && p.AndarDeAncoragem == 20, "voltar ao Normal retoma a ancoragem do Normal");
+                Afirmar(Dificuldades.Definir(p, 1) && p.AndarDeAncoragem == 5, "e voltar ao Pesadelo retoma a do Pesadelo");
+                p.Dificuldade = 0; p.AndarDeAncoragem = 1;
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
                 var pn = ProgressoCom(EspecieId.Esqueleto); var pp = ProgressoCom(EspecieId.Esqueleto); pp.DificuldadeLiberada = 1; pp.Dificuldade = 1;
                 float VidaDoPrimeiro(EstadoProgresso q) { var s = new Simulacao(c, q, 3, ModoExpedicao.Avancar, 1); int g = 0; while (g++ < 400) { s.Tick(); foreach (var e in s.Entidades) if (e.Faccao == Faccao.Inimigo && !e.Elite) return e.VidaMax; } return 0f; }
                 float vn = VidaDoPrimeiro(pn), vp = VidaDoPrimeiro(pp);
-                Perto(vp / vn, Cfg.DificuldadeVida[1], 0.01f, "vida dos inimigos no Pesadelo");
+                Perto(vp / vn, Cfg.DificuldadeVida[1] * Formulas.EscalaInimigo(1 + Cfg.DificuldadeAndaresExtras[1], Cfg) / Formulas.EscalaInimigo(1, Cfg), vp / vn * 0.02f, "vida dos inimigos no Pesadelo: andar 1 com a força do andar 21");
+                Afirmar(vp > vn * 20f, "o Pesadelo deveria ser muito mais duro que o Normal no mesmo andar (" + vp / vn + "x)");
                 var rr = new ResultadoExpedicao { Ouro = 100, Dificuldade = 1 }; long antes = pp.Ouro; pp.SemAutoReparo = true; pp.SemReporPocoes = true;
                 Progressao.AplicarResultado(pp, rr, c);
                 Afirmar(pp.Ouro - antes == (long)(100 * Cfg.DificuldadeOuro[1]), "o ouro do Pesadelo deveria vir multiplicado (" + (pp.Ouro - antes) + ")");

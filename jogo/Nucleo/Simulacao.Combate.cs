@@ -7,7 +7,7 @@ namespace Necro.Nucleo
         /// <summary>Mitigação total do alvo contra um tipo de dano no andar atual (com tetos).</summary>
         public float MitigacaoDe(Entidade alvo, TipoDano tipo)
         {
-            return Formulas.MitigacaoTotal(alvo.Armadura, alvo.Resistencias[(int)tipo], tipo, Andar, Cfg);
+            return Formulas.MitigacaoTotal(alvo.Armadura, alvo.Resistencias[(int)tipo], tipo, AndarEfetivo, Cfg);
         }
 
         /// <summary>
@@ -243,7 +243,7 @@ namespace Necro.Nucleo
                 if (execucao) Resultado.Execucoes++;
 
                 // Ossos: todo inimigo morto; extras se explodiu.
-                float ossos = Cfg.OssosPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1));
+                float ossos = Cfg.OssosPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1));
                 if (alvo.Elite) ossos *= 3f;
                 float premio = alvo.DaHorda ? 1f / Cfg.Horda : alvo.Campeao ? Cfg.CampeaoPremio : 1f;   // horda rende menos por cabeça; campeão rende mais
                 ossos *= premio;
@@ -255,7 +255,7 @@ namespace Necro.Nucleo
                 if (qOssos > 0) Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
 
                 // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
-                _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (Andar - 1)) * premio * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
+                _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1)) * premio * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
                 { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
                 // livros de feitiço: o chefe sempre larga um; Únicos com frequência; elites e Campeões de vez em quando
                 if (Cfg.LivrosDeFeitico && (alvo.Chefe || (alvo.Unico && _rngItens.Chance(Cfg.ChanceDeLivroDeUnico)) || (!alvo.Unico && (alvo.Elite || alvo.Campeao) && _rngItens.Chance(Cfg.ChanceDeLivroDeElite)))) SoltarLivro(alvo.Pos);
@@ -268,7 +268,7 @@ namespace Necro.Nucleo
                     Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 1, Valor = sangue, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
                 }
 
-                float xp = Cfg.XpPorPorte[(int)alvo.Porte] * Formulas.EscalaInimigo(Andar, Cfg);
+                float xp = Cfg.XpPorPorte[(int)alvo.Porte] * Formulas.EscalaInimigo(AndarEfetivo, Cfg);
                 if (alvo.Elite) xp *= 4f;
                 xp *= premio;
                 Resultado.Xp += xp;
@@ -289,6 +289,7 @@ namespace Necro.Nucleo
                 }
                 // Itens: sorteados num fluxo próprio de Rng e entregues direto no resultado.
                 SoltarItens(alvo, jaDerrotado);
+                if (alvo.Chefe) Resultado.ChefesVencidosNaDescida.Add(ato);   // conta em qualquer dificuldade, mesmo que já vencido antes
                 if (alvo.Chefe && !jaDerrotado)
                 {
                     _chefesDerrotados.Add(ato);

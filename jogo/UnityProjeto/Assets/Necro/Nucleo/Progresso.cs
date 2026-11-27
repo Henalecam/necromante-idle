@@ -128,6 +128,7 @@ namespace Necro.Nucleo
         public int PocoesDeVida, PocoesDeMana, PocoesCompradas; public bool SemReporPocoes;   // o cinto (repor ao voltar é ligado por padrão)
         public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
         public int[] NiveisDeFeitico = new int[7], LivrosGuardados = new int[7]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
+        public int[] AncoragemPorDificuldade;               // Ponto de Ancoragem guardado de cada dificuldade (a atual fica em AndarDeAncoragem)
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
         public int MissaoAcougueiro;                        // 0 = ainda não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -185,6 +186,7 @@ namespace Necro.Nucleo
         public int AcougueiroSorteio; public bool AcougueiroMorto;
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
+        public List<int> ChefesVencidosNaDescida = new List<int>();   // Atos cujo chefe caiu nesta descida (inclusive repetidos)
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
         public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;

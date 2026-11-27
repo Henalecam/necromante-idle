@@ -498,6 +498,8 @@ namespace Necro.Nucleo
         }
 
         /// <summary>O Golem do feitiço: um Colosso de Ossos conjurado, forte e passageiro. Só existe um por vez.</summary>
+        /// <summary>Andar para efeito de força dos inimigos e de XP: o Pesadelo começa onde o Normal termina (andar 1 do Pesadelo = andar 21), e o Inferno depois dele.</summary>
+        public int AndarEfetivo { get { return Andar + Cfg.DificuldadeAndaresExtras[_dif]; } }
         private bool _golemAprendido;
         private bool _refletindo; private float _coroaTempo;
         private int _pocoesVida, _pocoesMana; private float _pocaoEspera, _limiarVida, _limiarMana;
@@ -603,7 +605,7 @@ namespace Necro.Nucleo
         {
             var d = TabelaEspecies.Obter(especie);
             var e = CriarBase(Faccao.Inimigo, d, pos);
-            float escala = Formulas.EscalaInimigo(Andar, Cfg);
+            float escala = Formulas.EscalaInimigo(AndarEfetivo, Cfg);
             e.VidaMax = d.Vida * Cfg.FatorVidaInimigo * escala * _pVidaInimigo * Cfg.DificuldadeVida[_dif];
             e.Dano = d.Dano * Cfg.FatorDanoInimigo * escala * Cfg.DificuldadeDano[_dif];
             if (chefe)
@@ -840,7 +842,7 @@ namespace Necro.Nucleo
                 do { sala++; } while (sala < Salas.Count && Salas[sala] != TipoSala.Combate && Salas[sala] != TipoSala.Elite && Salas[sala] != TipoSala.Chefe);
                 var lista = new List<InimigoPlanejado>();
                 bool ondaDeElite = _ondaEliteNesteAndar && onda == TotalDeOndas;
-                float orcamento = Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (Andar - 1) + Cfg.OrcamentoPorOnda * (onda - 1);
+                float orcamento = Cfg.OrcamentoBaseOnda + Cfg.OrcamentoPorAndar * (AndarEfetivo - 1) + Cfg.OrcamentoPorOnda * (onda - 1);
                 if (orcamento > Cfg.OrcamentoMaximo) orcamento = Cfg.OrcamentoMaximo;
                 orcamento *= _aOrcamento;
                 int k = 0;
@@ -936,7 +938,7 @@ namespace Necro.Nucleo
         /// <summary>1 a 3 modificadores distintos (o máximo cresce com o andar: 1 até o 3, 2 até o 6, 3 depois).</summary>
         public ModificadorElite SortearModificadores()
         {
-            int max = 1 + (Andar - 1) / 3;
+            int max = 1 + (AndarEfetivo - 1) / 3;
             if (max > 3) max = 3;
             int n = Rng.Intervalo(1, max + 1);
             ModificadorElite mods = ModificadorElite.Nenhum;

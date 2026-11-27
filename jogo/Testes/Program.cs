@@ -57,12 +57,14 @@ namespace Necro.Testes
                 else if (args[i] == "--saida" && i + 1 < args.Length) saida = args[++i];
                 else if (args[i] == "--cfg" && i + 1 < args.Length) { Campanha.Ajustes = args[i + 1]; i++; }
                 else if (args[i] == "--ativo") Campanha.JogadorAtivo = true;
+                else if (args[i] == "--rastro") Campanha.Rastro = true;
                 else if (args[i] == "--sem-fusao") Campanha.UsarFusao = false;
                 else if (args[i] == "--sem-talentos") Campanha.UsarTalentos = false;
                 else if (args[i] == "--sem-sacrificio") Campanha.UsarSacrificio = false;
                 else if (args[i] == "--sem-oferendas") Campanha.UsarOferendas = false;
                 else if (args[i] == "--calibrar") { Console.WriteLine(Campanha.Calibrar(6, 14.0)); return 0; }
                 else if (args[i] == "--diagnostico") { Console.WriteLine(Campanha.Diagnostico(6, 8.0)); return 0; }
+                else if (args[i] == "--dificuldades") { int nd = i + 1 < args.Length ? int.Parse(args[i + 1]) : 6; double hd = i + 2 < args.Length ? double.Parse(args[i + 2]) : 40.0; Console.WriteLine(Campanha.MedirDificuldades(nd, hd, Campanha.ConfigComAjustes())); return 0; }
                 else if (args[i] == "--campanha" || args[i] == "--metas")
                 {
                     int nc = i + 1 < args.Length ? int.Parse(args[i + 1]) : 12;

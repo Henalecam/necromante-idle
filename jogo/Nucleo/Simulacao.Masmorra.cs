@@ -326,7 +326,7 @@ namespace Necro.Nucleo
             if (_emEmboscada)
             {
                 _emEmboscada = false;
-                long ossos = (long)(Cfg.BauOssos * (_mimico ? 2f : _ninhoChocou ? Cfg.NinhoPremioDaLuta : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                long ossos = (long)(Cfg.BauOssos * (_mimico ? 2f : _ninhoChocou ? Cfg.NinhoPremioDaLuta : 1f) * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                 Resultado.Ossos += ossos;
                 if (_mimico || _fosso) SoltarItemEm(PosDoObjeto, RaridadeItem.Magico);
                 if (_lutaDoRei)
@@ -359,7 +359,7 @@ namespace Necro.Nucleo
             {
                 _emSecreto = false;
                 PortaisAtivos = _portaisAntesDoSecreto;
-                long ossos = (long)(Cfg.BauOssos * 6f * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                long ossos = (long)(Cfg.BauOssos * 6f * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                 Resultado.Ossos += ossos; Resultado.Sangue += Cfg.SecretoSangue;
                 var centro = new Vec2(Cfg.LarguraArena * 0.6f, Cfg.AlturaArena * 0.5f);
                 SoltarItemEm(centro, RaridadeItem.Raro);
@@ -573,8 +573,8 @@ namespace Necro.Nucleo
                         return;
                     }
                     bool dourado = Rng.Chance(Cfg.BauChanceDourado * (1f + _sorte * Cfg.SorteChanceDeMelhorPorPonto));
-                    long ossos = (long)(Cfg.BauOssos * (dourado ? 3f : 1f) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
-                    Resultado.Ouro += (long)(Cfg.OuroBau * (1f + 0.1f * (Andar - 1)) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) + 0.5f); Resultado.Ossos += ossos; valor = ossos;
+                    long ossos = (long)(Cfg.BauOssos * (dourado ? 3f : 1f) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
+                    Resultado.Ouro += (long)(Cfg.OuroBau * (1f + 0.1f * (AndarEfetivo - 1)) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f) + 0.5f); Resultado.Ossos += ossos; valor = ossos;
                     if (dourado) { SoltarItemEm(PosDoObjeto, RaridadeItem.Raro); Resultado.Sangue += Cfg.BauDouradoSangue; sub = 2; especial = true; }
                     else if (_rngItens.Chance(toque ? Cfg.BauChanceDeItemComToque : Cfg.BauChanceDeItem)) SoltarItemEm(PosDoObjeto, RaridadeItem.Comum);
                     break;
@@ -601,10 +601,10 @@ namespace Necro.Nucleo
                         case Bencao.Magico:
                             for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo && e.Escudo < e.VidaMax * 3f * f) e.Escudo = e.VidaMax * 3f * f; }
                             break;
-                        case Bencao.Ornado: Resultado.Xp += Cfg.BibliotecaXp * 2f * Formulas.EscalaInimigo(Andar, Cfg); _bOssos *= 1f - 2f * f; break;   // saber em troca de Ossos
+                        case Bencao.Ornado: Resultado.Xp += Cfg.BibliotecaXp * 2f * Formulas.EscalaInimigo(AndarEfetivo, Cfg); _bOssos *= 1f - 2f * f; break;   // saber em troca de Ossos
                         case Bencao.Tetrico:
                             for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo) e.Vida = Math.Max(1f, e.Vida * (1f - 2f * f)); }
-                            Resultado.Ouro += (long)(Cfg.OuroBau * 3f * (1f + 0.1f * (Andar - 1)) + 0.5f); break;                 // sangue em troca de ouro
+                            Resultado.Ouro += (long)(Cfg.OuroBau * 3f * (1f + 0.1f * (AndarEfetivo - 1)) + 0.5f); break;                 // sangue em troca de ouro
                         case Bencao.Profano: _bProtecao *= 1f + 1.5f * f; _bAlma += f * 4f; break;                                // os inimigos ferem mais, as almas caem mais
                     }
                     sub = (int)qual; valor = f;
@@ -625,7 +625,7 @@ namespace Necro.Nucleo
                     // câmara abandonada: às vezes há ossos esquecidos num canto
                     if (Rng.Chance(Cfg.SalaVaziaChanceDeOssos))
                     {
-                        long achado = (long)(Cfg.BauOssos * 0.3f * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                        long achado = (long)(Cfg.BauOssos * 0.3f * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                         Resultado.Ossos += achado; valor = achado;
                     }
                     Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)t, Valor = valor, Origem = 0, Pos = PosDoObjeto, Alvo = -1 });
@@ -636,7 +636,7 @@ namespace Necro.Nucleo
                 {
                     if (TemChave)
                     {
-                        long ossos = (long)(Cfg.BauOssos * Cfg.CofreOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                        long ossos = (long)(Cfg.BauOssos * Cfg.CofreOssos * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                         Resultado.Ossos += ossos; valor = ossos; sub = 1; especial = true;
                         SoltarItemEm(PosDoObjeto, _rngItens.Chance(Cfg.CofreChanceDeRaro) ? RaridadeItem.Raro : RaridadeItem.Magico);
                         Resultado.BausAbertos++; Resultado.CofresAbertos++;
@@ -648,7 +648,7 @@ namespace Necro.Nucleo
                     // placas de espinhos: sozinho, o grupo pisa e sangra; o toque do jogador desarma e ainda rende os ossos de quem caiu ali antes
                     if (toque)
                     {
-                        long achado = (long)(Cfg.BauOssos * 0.6f * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                        long achado = (long)(Cfg.BauOssos * 0.6f * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                         Resultado.Ossos += achado; valor = achado; sub = 1;
                     }
                     else
@@ -669,7 +669,7 @@ namespace Necro.Nucleo
                 case TipoSala.Mercador:
                 {
                     // troca os Ossos já colhidos nesta expedição por um item; sem Ossos, o mercador só acena
-                    long preco = (long)(Cfg.MercadorPreco * (1f + 0.1f * (Andar - 1)) + 0.5f);
+                    long preco = (long)(Cfg.MercadorPreco * (1f + 0.1f * (AndarEfetivo - 1)) + 0.5f);
                     if (toque) preco = (long)(preco * (1f - Cfg.MercadorDescontoComToque));
                     if (Resultado.Ossos >= preco)
                     {
@@ -704,7 +704,7 @@ namespace Necro.Nucleo
                         Fase = FaseExpedicao.EmOnda;
                         return;
                     }
-                    long restos = (long)(Cfg.BauOssos * Cfg.NinhoOssos * (1f + 0.1f * (Andar - 1)) * _pOssos + 0.5f);
+                    long restos = (long)(Cfg.BauOssos * Cfg.NinhoOssos * (1f + 0.1f * (AndarEfetivo - 1)) * _pOssos + 0.5f);
                     Resultado.Ossos += restos; valor = restos; sub = 1;
                     break;
                 }
@@ -729,7 +729,7 @@ namespace Necro.Nucleo
                 case TipoSala.Biblioteca:
                 {
                     // Biblioteca: o necromante lê um tomo e aprende (XP); quem toca escolhe o tomo certo
-                    float xp = Cfg.BibliotecaXp * Formulas.EscalaInimigo(Andar, Cfg) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
+                    float xp = Cfg.BibliotecaXp * Formulas.EscalaInimigo(AndarEfetivo, Cfg) * (toque ? 1f + Cfg.ToqueBonusDeSala : 1f);
                     Resultado.Xp += xp; valor = xp;
                     SoltarLivro(PosDoObjeto);   // e leva um livro de feitiço da estante
                     break;
