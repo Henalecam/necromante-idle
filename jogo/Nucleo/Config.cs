@@ -393,6 +393,8 @@ namespace Necro.Nucleo
         public float BanqueteInimigoRaio = 6f;
         public float BanqueteInimigoTempo = 1.5f;                // segundos comendo (pode ser morto no meio)
         public float BanqueteInimigoCura = 0.4f;          // fração da vida máxima recuperada
+        public bool FlancoDasBestas = true;               // bestas (cães, reses) abrem para os lados e chegam pelo flanco do alvo
+        public float FlancoAbertura = 2.4f, FlancoDistDireta = 1.5f;
         public bool DespertarPorProximidade = true;       // os inimigos da sala dormem até um aliado chegar perto (a frente marcha até eles)
         public float RaioDeAlerta = 4.5f;                 // distância a que um adormecido acorda
         public float RaioDeAlertaDaMatilha = 2.6f;        // quem acorda leva junto os vizinhos de matilha

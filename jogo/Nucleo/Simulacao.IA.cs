@@ -344,9 +344,22 @@ namespace Necro.Nucleo
             }
             else
             {
+                // Bestas não vêm em linha reta: a matilha abre para os lados e fecha o cerco pelo flanco do alvo.
+                if (inimigo && Cfg.FlancoDasBestas && e.Familia == Familia.Besta && !e.Chefe && e.ProvocadoPor < 0 && d > Cfg.FlancoDistDireta)
+                {
+                    Vec2 dir = (alvo.Pos - e.Pos).Normalizado; float lado = (e.Id & 1) == 0 ? 1f : -1f;
+                    var destino = Limitar(alvo.Pos + new Vec2(-dir.Y, dir.X) * (lado * Cfg.FlancoAbertura * Math.Min(1f, d / 4f)));
+                    if (!e.Flanqueando)
+                    {
+                        e.Flanqueando = true; Resultado.Flancos++;
+                        if (_ondaDoUltimoFlanco != Onda * 1000 + Andar) { _ondaDoUltimoFlanco = Onda * 1000 + Andar; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 37, Alvo = e.Id, Origem = -1, Pos = e.Pos }); }
+                    }
+                    if (Vec2.Dist2(destino, e.Pos) > 0.09f) { MoverPara(e, destino); return; }
+                }
                 MoverPara(e, alvo.Pos);
             }
         }
+        private int _ondaDoUltimoFlanco = -1;
 
         /// <summary>Foco: entre os hostis colados no alvo mais próximo, prefere o de menor vida (o exército termina o que começou).</summary>
         private Entidade MaisFeridoPerto(Entidade e, Entidade proximo)

@@ -427,6 +427,11 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && v[14] === '37') {
+    const g = estado.get(+v[3]); numeros.push({ x: g ? g.x : +v[10], y: g ? g.y : +v[11], txt: 'Cercam!', cor: '#ffd27a', t: 1, amigo: false });
+    vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['37']) { vistosDeEspecie['37'] = 1; aviso('Bestas não vêm de frente · a matilha cerca pelos flancos'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && (v[14] === '33' || v[14] === '34')) { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: v[14] === '33' ? 'Poção de vida' : 'Poção de mana', cor: v[14] === '33' ? '#ff8a8a' : '#8ab8ff', t: 1, amigo: true }); som('bencao'); if (cintoHud) cintoHud[v[14] === '33' ? 0 : 1] = Math.max(0, cintoHud[v[14] === '33' ? 0 : 1] - 1); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '35') { numeros.push({ x: +v[10], y: +v[11], txt: +v[4] ? '+1 poção de mana' : '+1 poção de vida', cor: '#e8dcb0', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '36') { portalFx = { x: +v[10] + 1.2, y: +v[11], t: performance.now(), so: [so[0], so[1]] }; const an = Math.round(+v[4] || 0); aviso(`Portal da Cidade · você volta ao andar ${an}`); anotar(`<b style="color:#7ab0ff">Portal da Cidade aberto no andar ${an}.</b> Todo o saque veio com você; a próxima descida começa lá.`); som('bencao'); clarao = Math.max(clarao, 0.5); return; }
@@ -1799,6 +1804,7 @@ window.__rotulo = (i) => { const r = tela.getBoundingClientRect(), k = escAtual 
 window.__focar = () => { camForcar = true; };   // testes: assenta a câmera no próximo quadro
 window.__grade = () => (saidaAtual === 'o' || saidaAtual === 'n' ? gradeAberta : -1);   // testes: -1 = saída sem parede; 0 = fechada; 1 = aberta
 window.__campeoes = () => { let n = 0; for (const s of estado.values()) if (s.campeao && s.viva) n++; return n; };
+window.__flancos = () => (vistosDeEspecie && vistosDeEspecie["37"]) ? 1 : 0;
 window.__viajando = () => !!deltaDaViagem();
 window.__nomesUnicos = () => { const r = []; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) r.push(nomesUnicos.get(s.id)); return r.join('|'); };
 window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };

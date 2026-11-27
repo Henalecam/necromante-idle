@@ -1653,6 +1653,36 @@ namespace Necro.Testes
                 Afirmar(s0.Resultado.Fugas == 0 && s0.Resultado.Banquetes == 0, "desligado, ninguém foge nem come");
             });
 
+            Teste("bestas cercam pelos flancos: a matilha abre para os lados em vez de vir em linha reta, e a descida não trava", () =>
+            {
+                int flancos = 0, concluiu = 0; float maiorDesvio = 0f;
+                for (ulong sm = 1; sm <= 6; sm++)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                    var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                    var s = new Simulacao(c, p, sm, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 3 }; int g = 0;
+                    var antes = new System.Collections.Generic.Dictionary<int, Vec2>();
+                    while (!s.Encerrada && g++ < 60000)
+                    {
+                        s.Tick();
+                        foreach (var e in s.Entidades)
+                        {
+                            if (!e.Viva || e.Faccao != Faccao.Inimigo || e.Familia != Familia.Besta || !e.Flanqueando) continue;
+                            Vec2 a; if (antes.TryGetValue(e.Id, out a)) { float dy = Math.Abs(e.Pos.Y - a.Y); if (dy > maiorDesvio) maiorDesvio = dy; } else antes[e.Id] = e.Pos;
+                        }
+                    }
+                    flancos += s.Resultado.Flancos; if (s.Encerrada) concluiu++;
+                }
+                Console.WriteLine("        (bestas que flanquearam: " + flancos + ", maior desvio lateral: " + maiorDesvio.ToString("0.0") + ")");
+                Afirmar(concluiu == 6, "nenhuma descida deveria travar (" + concluiu + "/6)");
+                Afirmar(flancos >= 6, "bestas deveriam flanquear (" + flancos + ")");
+                Afirmar(maiorDesvio >= 1.2f, "o caminho da besta deveria abrir para o lado (" + maiorDesvio + ")");
+                var c0 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, FlancoDasBestas = false };
+                var p0 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p0.NivelNecromante = 30;
+                var s0 = new Simulacao(c0, p0, 1, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g0 = 0; while (!s0.Encerrada && g0++ < 60000) s0.Tick();
+                Afirmar(s0.Resultado.Flancos == 0, "desligado, ninguém flanqueia");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

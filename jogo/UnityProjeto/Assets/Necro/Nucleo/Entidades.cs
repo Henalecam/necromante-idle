@@ -46,7 +46,7 @@ namespace Necro.Nucleo
         public float Recarga;           // s até o próximo ataque
         public float TempoAcao;         // s presa na animação atual
         public float TempoMorrendo;
-        public float FugaTempo, ComendoTempo; public int FugasFeitas, CadaverAlvo = -1; public bool JaComeu;   // comportamento de espécie dos inimigos: fuga do diabrete, banquete do carniçal
+        public float FugaTempo, ComendoTempo; public int FugasFeitas, CadaverAlvo = -1; public bool JaComeu, Flanqueando;   // comportamento de espécie dos inimigos: fuga do diabrete, banquete do carniçal
         public bool Golem;                                         // o Golem conjurado pelo necromante (um só por vez)
         public bool Unico; public string NomeProprio;              // monstro único: nome próprio e séquito
         public bool DaHorda, Campeao;                              // inimigo comum de horda (mais fraco, rende menos) / campeão de pacote
