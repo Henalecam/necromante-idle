@@ -41,21 +41,21 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - A1. [feito] Salas ligadas: a luta atrai a matilha de uma sala vizinha, que entra pela porta; a sala de origem fica vazia.
 - A2. [feito: portas emperradas e emboscada de corredor; falta desenhar a porta no mapa e armadilhas de corredor] Corredores com vida: inimigos e armadilhas nos corredores entre salas; portas fechadas que o grupo abre; emboscada ao abrir.
 - A3. [etapa 1 feita: despertar por proximidade, a frente marcha sala adentro] Andar em grade única: o grupo anda pelo andar inteiro (sem troca de arena), monstros espalhados despertam por raio de luz e linha de visão. É a reescrita espacial do núcleo; fazer em etapas com o modo antigo atrás de uma chave de config até o portão passar.
-- A4. [feito no cliente: adormecidos fora da luz são vultos escuros] Raio de luz de verdade: o que está fora da luz não aparece nem ataca à distância (fecha a parte 2 da fatia 4).
+- A4. [feito no cliente (item 194): fora da luz só se veem os olhos; falta o efeito na simulação (atacar à distância só quem está na luz)] Raio de luz de verdade: o que está fora da luz não aparece nem ataca à distância (fecha a parte 2 da fatia 4).
 - A5. [Portal da Cidade feito, opcional; faltam escadas] Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.
 
 ### B. Combate e feitiços
 - B1. [feito] Livros de feitiço: caem na masmorra, cada leitura sobe o nível do feitiço (como no Diablo 1); exigem Magia.
-- B2. [já existiam 6 feitiços com mana e ordens automáticas: Lança de Ossos, Drenar Vida, Explosão de Cadáver, Reerguer, Maldição, Sacrifício; falta feitiço novo: Muralha de Ossos, Golem, Praga] Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
-- B3. [feito: diabrete foge, carniçal devora cadáver, atirador recua; falta bestas cercarem pelos flancos] Comportamento por espécie: quem foge com pouca vida, quem cerca, quem atira e recua, quem carrega em linha.
+- B2. [6 feitiços de base + por livro: Golem, Muralha de Fogo, Relâmpago em Cadeia e (item 195) Pedra Maldita; falta Muralha de Ossos e Praga] Barra de feitiços do necromante com mana: Flecha de Osso, Muralha de Ossos, Explosão de Cadáver, Golem, Maldição, Praga; automático por padrão, com prioridades escolhidas pelo jogador.
+- B3. [feito: diabrete foge, carniçal devora cadáver, atirador recua, bestas cercam pelos flancos] Comportamento por espécie: quem foge com pouca vida, quem cerca, quem atira e recua, quem carrega em linha.
 - B4. [Golem feito] Mais minions: Golem (um só, forte), Magos esqueletos por elemento, Espectros.
-- B5. Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).
+- B5. [feito: imunidades por dificuldade e resistências por família como no D1 (item 193)] Resistências e imunidades por dificuldade (imunes a fogo/raio/magia no Inferno).
 
 ### C. Progressão longa
 - C1. [feito] Ferreiro: melhorar (+1 a +5) e imbuir itens com ouro (fatia 15).
 - C2. [feito: 10 Únicos de nome e afixos fixos, tabela por dificuldade, Livro de Únicos e um efeito próprio para cada um] Itens únicos com nome e efeito próprio, por tabela de dificuldade.
 - C3. [feito: aba "Cidade" com Curandeira, Bruxa (livros), Ferreiro e Ancião (dicas e identificar)] Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
-- C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos; falta o jogador escolher os limiares] Poções e cinto: vida e mana, uso automático com regra do jogador.
+- C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos, limiar de cada poção escolhido pelo jogador no painel do cinto] Poções e cinto: vida e mana, uso automático com regra do jogador.
 - C5. [feito: 5 ramos de 8 nós (o quinto, Herança, acelera a vida seguinte: medido -13% na vida 2 e -22% na vida 3), Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
 
 - D1. [feito no item 179] Ato 3 (andares 21-30) com chefe próprio: Arcebispo Lázarus (muralha de fogo inimiga, teleporte, Súcubos). Medido: 20,68 h na primeira vida.

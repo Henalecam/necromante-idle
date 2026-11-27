@@ -171,6 +171,7 @@ namespace Necro.Nucleo
             if (Cfg.ForcarFonte && _fonte != 3) _fonte = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
             _relampagoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.RelampagoEmCadeia) >= 1;
+            _pedraAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.PedraMaldita) >= 1;
             _muralhaAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.MuralhaDeFogo) >= 1;
             _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
@@ -588,7 +589,27 @@ namespace Necro.Nucleo
             return true;
         }
 
-        private bool _relampagoAprendido;
+        private bool _relampagoAprendido, _pedraAprendida;
+
+        /// <summary>Pedra Maldita: o inimigo mais forte ao alcance (que não seja chefe) vira pedra e fica parado por alguns segundos.</summary>
+        private bool LancarPedra()
+        {
+            if (!Cfg.PedraAtiva || !_pedraAprendida || InimigosVivos < Cfg.PedraMinimoDeInimigos || !PodeLancar(FeiticoId.PedraMaldita)) return false;
+            var f = Fei(FeiticoId.PedraMaldita); var n = Necromante; float a2 = f.Alcance * f.Alcance;
+            Entidade alvo = null; int total = Entidades.Count;
+            for (int i = 0; i < total; i++)
+            {
+                var o = Entidades[i];
+                if (!o.Viva || o.Faccao != Faccao.Inimigo || o.Chefe || o.Oculto || o.TempoAcao > 0.5f || Vec2.Dist2(o.Pos, n.Pos) > a2) continue;
+                if (alvo == null || o.VidaMax * (o.Elite || o.Unico || o.Campeao ? 2f : 1f) > alvo.VidaMax * (alvo.Elite || alvo.Unico || alvo.Campeao ? 2f : 1f)) alvo = o;
+            }
+            if (alvo == null) return false;
+            PagarFeitico(FeiticoId.PedraMaldita, alvo, alvo.Pos, 0f);
+            alvo.TempoAcao = f.Potencia; alvo.PreparandoGolpe = 0f; alvo.Animacao = EstadoAnimacao.Parado;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 48, Alvo = alvo.Id, Origem = n.Id, Valor = f.Potencia, Pos = alvo.Pos });
+            Resultado.Petrificados++;
+            return true;
+        }
         private readonly List<Entidade> _atingidosPeloRaio = new List<Entidade>(8);
 
         /// <summary>Relâmpago em Cadeia: acerta o inimigo mais próximo e salta para o vizinho mais perto ainda não atingido, perdendo força a cada salto.</summary>

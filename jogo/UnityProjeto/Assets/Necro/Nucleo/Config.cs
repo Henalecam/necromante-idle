@@ -323,6 +323,7 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        public bool PedraAtiva = true; public int PedraMinimoDeInimigos = 3;
         public bool RelampagoAtivo = true; public int RelampagoSaltos = 4, RelampagoMinimoDeInimigos = 2; public float RelampagoPerdaPorSalto = 0.2f;
         public bool MuralhaAtiva = true;                   // o necromante ergue a Muralha sozinho quando há um grupo vindo
         public float MuralhaComprimento = 6f, MuralhaPulso = 0.5f; public int MuralhaMinimoDeInimigos = 3;
@@ -629,6 +630,8 @@ namespace Necro.Nucleo
             new DadosFeitico { Id = FeiticoId.MuralhaDeFogo, Nome = "Muralha de Fogo", CustoMana = 32f, Recarga = 16f, Alcance = 8f, Potencia = 0.45f, Raio = 0.9f, Duracao = 6f },
             // Relâmpago em Cadeia (Diablo 1): fere o inimigo mais próximo e salta para os vizinhos. Potência = dano de raio do primeiro acerto (x dano do necromante); Raio = alcance de cada salto
             new DadosFeitico { Id = FeiticoId.RelampagoEmCadeia, Nome = "Relâmpago em Cadeia", CustoMana = 28f, Recarga = 9f, Alcance = 8f, Potencia = 1.6f, Raio = 3.5f },
+            // Pedra Maldita (Diablo 1, Stone Curse): transforma em pedra o inimigo mais forte por perto (não chefes). Potência = segundos petrificado
+            new DadosFeitico { Id = FeiticoId.PedraMaldita, Nome = "Pedra Maldita", CustoMana = 24f, Recarga = 11f, Alcance = 8f, Potencia = 3.5f },
         };
 
         public float ExplosaoCadaverFracaoVida = 0.10f; // + fração da vida máxima de cada cadáver consumido

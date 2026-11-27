@@ -510,6 +510,7 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '48') { const g = estado.get(+v[3]); if (g) g.pedra = tempoSim + (+v[4] || 3.5); som('critico'); if (!evento.avisouPedra) { evento.avisouPedra = true; aviso('Pedra Maldita · o inimigo mais forte vira pedra'); anotar('O necromante lançou a <b>Pedra Maldita</b>: o inimigo mais forte por perto fica petrificado alguns segundos (chefes resistem).'); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '14') { aviso('A patrulha entrou na luta!'); som('chefe'); tremor = 0.25; anotar('A <b style="color:#ff7a5a">patrulha errante</b> cruzou com o grupo e entrou na luta.'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '15') { aviso('Patrulha vencida: ela carregava um item'); som('bau'); anotar('Patrulha vencida: o que ela saqueou agora é seu.'); return; }
@@ -1392,16 +1393,18 @@ function desenhar(dt) {
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
-    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.25, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.3, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.2, '120,230,170', 0.3] : s.campeao ? [null, 1.08, '70,130,255', 0.34] : visual(s.especie)), e = (prov ? prov[1] : 1) * escD1(s.especie);   // Cripta dos Espelhos: os reflexos são sombras azuladas
+    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.25, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.3, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.2, '120,230,170', 0.3] : s.campeao ? [null, 1.08, '70,130,255', 0.34] : visual(s.especie)), e = (prov ? prov[1] : 1) * escD1(s.especie);
+    const prov2 = !morto && s.pedra > tempoSim ? [null, prov ? prov[1] : 1, '176,170,158', 0.92] : null;   // Pedra Maldita: a figura vira pedra cinza   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     const ocultoA = !morto && ocultos.has(s.id); if (ocultoA) { const tO = performance.now() / 1000 + s.id; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(190,120,255,${0.55 + 0.3 * Math.sin(tO * 5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -tO * 20; ctx.beginPath(); ctx.ellipse(px, py, 26 * reforco, 11 * reforco, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); ctx.save(); ctx.globalAlpha = 0.3 + 0.08 * Math.sin(tO * 3); }
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
     if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, VETOR_D1.Diablo, s, 1);
     else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, VETOR_D1.Lazarus, s, 1);
-    else if (prov && !(morto && COR_MORTE[s.cond])) {
+    else if ((prov2 || prov) && !(morto && COR_MORTE[s.cond])) {
+      const pv = prov2 || prov;
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
-      tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H);
+      tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${pv[2]},${pv[3]})`; tctx.fillRect(0, 0, m.W, m.H);
       ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else if (morto && COR_MORTE[s.cond]) {
       // cadáver tingido pela condição da morte (queimado, congelado, putrefato...)
@@ -2160,6 +2163,7 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__pedra = () => { const p = [...estado.values()].find((e) => e.viva && e.pedra > tempoSim && (e.luzA === undefined || e.luzA > 0.9)); if (p) window.__c = [p.especie, p.elite, p.campeao, nomesUnicos.get(p.id) || '']; return !!p; };
 window.__luz = () => JSON.stringify([...estado.values()].filter((e) => e.viva && e.inimigo).map((e) => [e.especie, e.luzA === undefined ? -1 : +e.luzA.toFixed(2), necro ? +Math.hypot(e.rx - necro.rx, e.ry - necro.ry).toFixed(1) : -1]));
 window.__fila = () => {   // testes: fila de tamanhos (escala D1) ao lado de um esqueleto comum, numa tela por cima
   const fila = [['Esqueleto', null], ['Zumbi', null], ['Zumbi', [null, 1.25, '170,20,24', 0.36], 'Açougueiro'], ['Esqueleto', [null, 1.3, '230,200,90', 0.22], 'Rei Esq.'], ['CavaleiroNegro'], ['Magistrado'], ['ColossoDeOssos'], ['DiaboDeGuerra'], ['AbadessaCosturada'], ['CarcereiroDeAlmas'], ['Lazarus'], ['Diablo']];

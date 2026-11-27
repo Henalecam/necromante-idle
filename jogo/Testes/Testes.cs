@@ -1767,6 +1767,29 @@ namespace Necro.Testes
                 Afirmar(dano > 0f && Math.Abs(s.Necromante.Vida - v0 - dano * c.BeijoDeSangue) < 0.01f, "o acerto da Súcubo cura o necromante em " + c.BeijoDeSangue * 100 + "% do dano (" + (s.Necromante.Vida - v0) + " de " + dano + ")");
             });
 
+            Teste("Pedra Maldita: só depois do livro, petrifica o inimigo mais forte por perto (nunca um chefe) e ele fica parado", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                var s0 = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!s0.Encerrada && g++ < 60000) s0.Tick();
+                Afirmar(Grimorio.Nivel(p, FeiticoId.PedraMaldita) == 0 && s0.Resultado.Petrificados == 0, "sem livro, ninguém petrifica");
+                p.NiveisDeFeitico[(int)FeiticoId.PedraMaldita] = 1;
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; g = 0; int ev48 = 0; bool chefe = false, parado = true;
+                while (!s.Encerrada && g++ < 60000)
+                {
+                    s.Tick();
+                    foreach (var ev in s.Eventos)
+                        if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 48)
+                        {
+                            ev48++; var alvo = s.Entidades.Find(x => x.Id == ev.Alvo);
+                            if (alvo != null) { if (alvo.Chefe) chefe = true; if (alvo.TempoAcao < ev.Valor - 0.2f) parado = false; }
+                        }
+                }
+                Console.WriteLine("        (petrificados: " + s.Resultado.Petrificados + ")");
+                Afirmar(s.Encerrada && s.Resultado.Petrificados >= 2 && ev48 == s.Resultado.Petrificados, "com o livro, o necromante lança a pedra (" + s.Resultado.Petrificados + ")");
+                Afirmar(!chefe && parado, "nunca num chefe, e o alvo fica preso pelo tempo da pedra");
+            });
+
             Teste("Relâmpago em Cadeia: só depois do livro, dano de raio que salta entre inimigos vizinhos perdendo força, sem acertar o mesmo duas vezes", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
