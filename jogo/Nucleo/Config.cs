@@ -323,6 +323,8 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        public bool MuralhaAtiva = true;                   // o necromante ergue a Muralha sozinho quando há um grupo vindo
+        public float MuralhaComprimento = 6f, MuralhaPulso = 0.5f; public int MuralhaMinimoDeInimigos = 3;
         public bool GolemAtivo = true;                     // o necromante conjura o Golem sozinho quando há luta e nenhum Golem vivo
         public float GolemProvocaRaio = 5f;                // ao surgir, provoca os inimigos em volta por alguns segundos
         // ---- Efeito próprio de cada Único (vale enquanto o item está vestido, identificado e inteiro) ----
@@ -596,6 +598,8 @@ namespace Necro.Nucleo
             new DadosFeitico { Id = FeiticoId.Sacrificio, Nome = "Sacrifício", CustoMana = 10f, Recarga = 20f, Alcance = 99f, Potencia = 0.50f, Duracao = 8f },
             // Golem (Diablo 1): um só por vez. Potência = multiplicador de vida e dano sobre um Colosso de Ossos comum do nível do necromante
             new DadosFeitico { Id = FeiticoId.Golem, Nome = "Golem de Ossos", CustoMana = 45f, Recarga = 60f, Alcance = 99f, Potencia = 1.0f, Duracao = 40f },
+            // Muralha de Fogo (Diablo 1): linha de chamas atravessada no caminho dos inimigos. Potência = dano de fogo por pulso (x dano do necromante); Raio = meia espessura
+            new DadosFeitico { Id = FeiticoId.MuralhaDeFogo, Nome = "Muralha de Fogo", CustoMana = 32f, Recarga = 16f, Alcance = 8f, Potencia = 0.45f, Raio = 0.9f, Duracao = 6f },
         };
 
         public float ExplosaoCadaverFracaoVida = 0.10f; // + fração da vida máxima de cada cadáver consumido

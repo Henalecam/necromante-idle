@@ -8,7 +8,10 @@ namespace Necro.Nucleo
     /// </summary>
     public static class Grimorio
     {
-        public const int Quantos = 7;
+        public const int Quantos = 8;
+
+        /// <summary>Feitiços que não são de nascença: só existem depois do primeiro livro.</summary>
+        public static bool SoPorLivro(FeiticoId id) { return id == FeiticoId.Golem || id == FeiticoId.MuralhaDeFogo; }
 
         private static void Garantir(EstadoProgresso p)
         {
@@ -25,7 +28,7 @@ namespace Necro.Nucleo
         }
 
         /// <summary>Nível do feitiço: 1 de nascença + 1 por livro lido.</summary>
-        public static int Nivel(EstadoProgresso p, FeiticoId id) { Garantir(p); return (id == FeiticoId.Golem ? 0 : 1) + p.NiveisDeFeitico[(int)id]; }   // o Golem não é de nascença: nível 0 até achar o primeiro livro
+        public static int Nivel(EstadoProgresso p, FeiticoId id) { Garantir(p); return (SoPorLivro(id) ? 0 : 1) + p.NiveisDeFeitico[(int)id]; }   // o Golem não é de nascença: nível 0 até achar o primeiro livro
         public static int Guardados(EstadoProgresso p, FeiticoId id) { Garantir(p); return p.LivrosGuardados[(int)id]; }
 
         /// <summary>Magia necessária para ler o livro que leva o feitiço a este nível.</summary>

@@ -160,6 +160,7 @@ namespace Necro.Nucleo
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
+            _muralhaAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.MuralhaDeFogo) >= 1;
             _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
             {
@@ -547,6 +548,48 @@ namespace Necro.Nucleo
             }
         }
         public Entidade GolemVivo { get { for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Golem && Entidades[i].Viva) return Entidades[i]; return null; } }
+
+        /// <summary>Uma Muralha de Fogo acesa: o segmento A-B queima os inimigos que estiverem a até Raio dele, um pulso de cada vez.</summary>
+        public sealed class MuralhaDeFogo { public int Id; public Vec2 A, B; public float Tempo, Pulso, Raio, Dano; }
+        public readonly List<MuralhaDeFogo> Muralhas = new List<MuralhaDeFogo>(2);
+        private bool _muralhaAprendida;
+
+        private static float Dist2AoSegmento(Vec2 p, Vec2 a, Vec2 b)
+        {
+            float vx = b.X - a.X, vy = b.Y - a.Y, l2 = vx * vx + vy * vy;
+            float t = l2 <= 1e-6f ? 0f : ((p.X - a.X) * vx + (p.Y - a.Y) * vy) / l2; t = t < 0f ? 0f : t > 1f ? 1f : t;
+            float dx = p.X - (a.X + vx * t), dy = p.Y - (a.Y + vy * t); return dx * dx + dy * dy;
+        }
+
+        /// <summary>Muralha de Fogo: atravessada na frente do inimigo mais próximo, de lado para quem vem. Uma por vez; só depois do primeiro livro.</summary>
+        private bool LancarMuralha()
+        {
+            if (!Cfg.MuralhaAtiva || !_muralhaAprendida || Muralhas.Count > 0 || InimigosVivos < Cfg.MuralhaMinimoDeInimigos || !PodeLancar(FeiticoId.MuralhaDeFogo)) return false;
+            var f = Fei(FeiticoId.MuralhaDeFogo); var n = Necromante;
+            var alvo = HostilMaisProximo(n, n.Pos, f.Alcance * f.Alcance);
+            if (alvo == null) return false;
+            Vec2 dir = (alvo.Pos - n.Pos).Normalizado, perp = new Vec2(-dir.Y, dir.X) * (Cfg.MuralhaComprimento * 0.5f);
+            var m = new MuralhaDeFogo { Id = _proximoId++, A = Limitar(alvo.Pos - perp), B = Limitar(alvo.Pos + perp), Tempo = f.Duracao, Pulso = 0f, Raio = f.Raio, Dano = n.Dano * f.Potencia };
+            Muralhas.Add(m);
+            PagarFeitico(FeiticoId.MuralhaDeFogo, alvo, alvo.Pos, 0f);
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 39, Alvo = m.Id, Origem = n.Id, Pos = m.A, Dir = m.B - m.A, Valor = m.Tempo, TipoDano = TipoDano.Fogo });
+            Resultado.MuralhasDeFogo++;
+            return true;
+        }
+
+        private void AtualizarMuralhas()
+        {
+            for (int i = Muralhas.Count - 1; i >= 0; i--)
+            {
+                var m = Muralhas[i]; m.Tempo -= DT; m.Pulso -= DT;
+                if (m.Pulso <= 0f)
+                {
+                    m.Pulso += Cfg.MuralhaPulso; float r2 = m.Raio * m.Raio; int total = Entidades.Count;
+                    for (int k = 0; k < total; k++) { var e = Entidades[k]; if (e.Viva && e.Faccao == Faccao.Inimigo && Dist2AoSegmento(e.Pos, m.A, m.B) <= r2) CausarDano(Necromante, e, m.Dano, TipoDano.Fogo, false); }
+                }
+                if (m.Tempo <= 0f) Muralhas.RemoveAt(i);
+            }
+        }
 
         private bool LancarGolem()
         {
@@ -992,6 +1035,7 @@ namespace Necro.Nucleo
             Projeteis.Clear();
             for (int i = 0; i < Pocas.Count; i++) Emitir(new EventoSim { Tipo = TipoEvento.PocaExpirou, Alvo = Pocas[i].Id, Pos = Pocas[i].Pos, Origem = -1 });
             Pocas.Clear();
+            if (Muralhas.Count > 0) { Muralhas.Clear(); Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 40, Alvo = -1, Origem = -1 }); }
 
             int ticks = TickAtual - _tickInicioDoAndar;
             Resultado.AndaresConcluidos++;
@@ -1053,6 +1097,8 @@ namespace Necro.Nucleo
         private void AtualizarEfeitosGlobais()
         {
             if (SacrificioTempo > 0f) SacrificioTempo -= DT;
+
+            if (Muralhas.Count > 0) AtualizarMuralhas();
 
             // Poças de sangue: curam o chefe dono enquanto ele estiver dentro do raio.
             for (int i = Pocas.Count - 1; i >= 0; i--)
@@ -1170,6 +1216,7 @@ namespace Necro.Nucleo
             for (int i = 0; i < Cadaveres.Count; i++) { Misturar(ref h, Cadaveres[i].Id); Misturar(ref h, (int)Cadaveres[i].Condicao); }
             for (int i = 0; i < Orbes.Count; i++) { Misturar(ref h, Orbes[i].Id); Misturar(ref h, Orbes[i].TempoRestante); Misturar(ref h, (int)Orbes[i].Alma.Qualidade); }
             for (int i = 0; i < Pocas.Count; i++) { Misturar(ref h, Pocas[i].Id); Misturar(ref h, Pocas[i].TempoRestante); }
+            for (int i = 0; i < Muralhas.Count; i++) { Misturar(ref h, Muralhas[i].Id); Misturar(ref h, Muralhas[i].Tempo); }
             for (int i = 0; i < Projeteis.Count; i++) { Misturar(ref h, Projeteis[i].Id); Misturar(ref h, Projeteis[i].Pos.X); Misturar(ref h, Projeteis[i].Pos.Y); }
             Misturar(ref h, (int)Resultado.Ossos); Misturar(ref h, (int)Resultado.Sangue); Misturar(ref h, Resultado.Almas.Count);
             Misturar(ref h, (int)(_rngItens.Estado & 0xFFFFFFFF)); Misturar(ref h, (int)(_rngItens.Estado >> 32));

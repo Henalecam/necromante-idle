@@ -1707,6 +1707,28 @@ namespace Necro.Testes
                 Afirmar(new Simulacao(c0, p, 1, ModoExpedicao.Avancar, 3).CriarInimigo(EspecieId.Zumbi, new Vec2(5, 5)).Imune == 0, "desligado, ninguém é imune");
             });
 
+            Teste("Muralha de Fogo: só depois do livro, atravessa o caminho do grupo inimigo, queima com fogo quem está nela e apaga sozinha", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                Afirmar(Grimorio.Nivel(p, FeiticoId.MuralhaDeFogo) == 0, "sem livro, a Muralha não existe");
+                var s0 = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!s0.Encerrada && g++ < 60000) s0.Tick();
+                Afirmar(s0.Resultado.MuralhasDeFogo == 0, "sem livro, ninguém conjura");
+                p.NiveisDeFeitico[(int)FeiticoId.MuralhaDeFogo] = 1;
+                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; g = 0; int ev39 = 0; float danoDeFogo = 0f, maiorComprimento = 0f; bool apagou = false, acesa = false;
+                while (!s.Encerrada && g++ < 60000)
+                {
+                    s.Tick();
+                    if (s.Muralhas.Count > 0) { acesa = true; var mu = s.Muralhas[0]; float l = Vec2.Dist(mu.A, mu.B); if (l > maiorComprimento) maiorComprimento = l; } else if (acesa) apagou = true;
+                    foreach (var ev in s.Eventos) { if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 39) ev39++; if (ev.Tipo == TipoEvento.Dano && ev.TipoDano == TipoDano.Fogo && ev.Origem == s.Necromante.Id) danoDeFogo += ev.Valor; }
+                }
+                Console.WriteLine("        (muralhas: " + s.Resultado.MuralhasDeFogo + ", dano de fogo: " + danoDeFogo.ToString("0") + ", comprimento: " + maiorComprimento.ToString("0.0") + ")");
+                Afirmar(s.Encerrada && s.Resultado.MuralhasDeFogo >= 2 && ev39 == s.Resultado.MuralhasDeFogo, "com o livro, o necromante ergue a Muralha (" + s.Resultado.MuralhasDeFogo + ")");
+                Afirmar(danoDeFogo > 0f && apagou, "a Muralha queima e depois apaga");
+                Afirmar(maiorComprimento > 3f && maiorComprimento <= c.MuralhaComprimento + 0.01f, "comprimento dentro do configurado: " + maiorComprimento);
+                Afirmar(Grimorio.SoPorLivro(FeiticoId.Golem) && Grimorio.SoPorLivro(FeiticoId.MuralhaDeFogo) && !Grimorio.SoPorLivro(FeiticoId.LancaDeOssos), "Golem e Muralha só por livro");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

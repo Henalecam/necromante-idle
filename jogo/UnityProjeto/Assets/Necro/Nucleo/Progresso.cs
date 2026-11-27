@@ -129,7 +129,7 @@ namespace Necro.Nucleo
         public float PocaoVidaLimiar, PocaoManaLimiar;      // regra do jogador: beber abaixo desta fração (0 = padrão do jogo)
         public int PocoesDeVida, PocoesDeMana, PocoesCompradas; public bool SemReporPocoes;   // o cinto (repor ao voltar é ligado por padrão)
         public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
-        public int[] NiveisDeFeitico = new int[7], LivrosGuardados = new int[7]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
+        public int[] NiveisDeFeitico = new int[8], LivrosGuardados = new int[8]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
         public int[] AncoragemPorDificuldade;               // Ponto de Ancoragem guardado de cada dificuldade (a atual fica em AndarDeAncoragem)
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
@@ -192,7 +192,7 @@ namespace Necro.Nucleo
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
         public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;
-        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes;
+        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;

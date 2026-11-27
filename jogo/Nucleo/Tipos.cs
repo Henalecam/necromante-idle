@@ -44,7 +44,7 @@ namespace Necro.Nucleo
         ResProfana = 12, CarcereiroDeAlmas = 13
     }
 
-    public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5, Golem = 6 }
+    public enum FeiticoId { LancaDeOssos = 0, DrenarVida = 1, ExplosaoDeCadaver = 2, Reerguer = 3, MaldicaoDaFraqueza = 4, Sacrificio = 5, Golem = 6, MuralhaDeFogo = 7 }
 
     public enum ModoExpedicao { Avancar, Cacar }
 
