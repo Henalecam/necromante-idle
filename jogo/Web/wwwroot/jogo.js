@@ -268,6 +268,9 @@ function ambiente(dt, larg, alt) {
     ctx.fillStyle = 'rgba(175,168,160,0.42)';
     for (let k = 0; k < 70; k++) { const fx = ((k * 0.6180339 + Math.sin(tempoSim * 0.3 + k) * 0.02) % 1 + 1) % 1, fy = ((tempoSim * (0.03 + (k % 5) * 0.006) + k * 0.1373) % 1), rr = (1.2 + (k % 3) * 0.8) * (larg / 900 + 0.6); ctx.beginPath(); ctx.ellipse(fx * larg, fy * alt, rr * 1.4, rr, Math.sin(tempoSim + k), 0, 7); ctx.fill(); }
   }
+  if (pressagio === 8) {   // presságio Febre do Ouro: faíscas douradas piscando no chão
+    for (let k = 0; k < 28; k++) { const fx = (k * 0.6180339) % 1, fy = (k * 0.3819660 + 0.1) % 1, br = Math.max(0, Math.sin(tempoSim * (1.3 + (k % 4) * 0.4) + k * 2.1)); if (br < 0.6) continue; const rr = (1 + (br - 0.6) * 6) * (larg / 900 + 0.6); ctx.fillStyle = `rgba(255,210,90,${(br - 0.6) * 1.6})`; ctx.beginPath(); ctx.moveTo(fx * larg, fy * alt - rr * 2); ctx.lineTo(fx * larg + rr * 0.5, fy * alt); ctx.lineTo(fx * larg, fy * alt + rr * 2); ctx.lineTo(fx * larg - rr * 0.5, fy * alt); ctx.fill(); ctx.beginPath(); ctx.moveTo(fx * larg - rr * 2, fy * alt); ctx.lineTo(fx * larg, fy * alt - rr * 0.5); ctx.lineTo(fx * larg + rr * 2, fy * alt); ctx.lineTo(fx * larg, fy * alt + rr * 0.5); ctx.fill(); }
+  }
   for (let i = 0; i < 3; i++) {
     const fx = ((tempoSim * (0.012 + i * 0.006) + i * 0.37) % 1.4 - 0.2) * larg, fy = alt * (0.72 + i * 0.09);
     const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, larg * 0.45); g.addColorStop(0, 'rgba(150,160,150,0.07)'); g.addColorStop(1, 'rgba(150,160,150,0)');
@@ -289,7 +292,7 @@ const mortos = new Map();      // id -> entidade caída (cadáver à vista)
 const cadaverDe = new Map();   // id do cadáver -> id da entidade
 let particulas = [], raios = [], numeros = [], orbes = [], projeteis = [], pocas = [];
 let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '', marcado = -1, almasVoando = [], ritoEmCurso = 0, clarao = 0, deFoice = false, dicaGolpe = false, sopro = 0, dicaSopro = false, itens = [[0, 0], [0, 0]], autosAnterior = '', pressagio = 0;
-const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens']];
+const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens'], ['Febre do ouro', 'o dobro de ouro, inimigos batem mais']];
 const COR_MORTE = { Queimado: '20,14,12', Congelado: '120,170,210', Putrefato: '60,90,25', Eletrizado: '40,40,60', Oco: '50,30,80' };
 const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
@@ -304,7 +307,7 @@ function limparArena(tudo) {
 let actx = null, somLigado = true, ultimoSom = {}; try { somLigado = localStorage.getItem('necromante-idle-save-v1-som') !== '0'; } catch (e) { /* padrão: ligado */ }
 function som(tipo) {
   if (!actx || !somLigado || silencio || actx.state !== 'running') return;
-  const agora = actx.currentTime, min = { golpe: 0.05, morte: 0.07, osso: 0.1, escudo: 0.6, cinzas: 5, armadilha: 0.4 }[tipo] || 0.12;
+  const agora = actx.currentTime, min = { golpe: 0.05, morte: 0.07, osso: 0.1, escudo: 0.6, cinzas: 5, ouro: 5, armadilha: 0.4 }[tipo] || 0.12;
   if (agora - (ultimoSom[tipo] || 0) < min) return; ultimoSom[tipo] = agora;
   const tom = (f0, f1, dur, vol, forma = 'sine', atraso = 0) => { const o = actx.createOscillator(), g = actx.createGain(), t0 = agora + atraso; o.type = forma; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02); };
   const chiado = (dur, vol, freq, atraso = 0) => { const n = Math.floor(actx.sampleRate * dur), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); src.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol; src.connect(f).connect(g).connect(actx.destination); src.start(agora + atraso); };
@@ -328,6 +331,7 @@ function som(tipo) {
     case 'espirito': tom(380, 1300, 0.45, 0.05, 'sine'); tom(395, 1340, 0.45, 0.03, 'triangle', 0.02); chiado(0.3, 0.03, 5000, 0.1); break;
     case 'escudo': [1400, 1100, 1700].forEach((f, i) => tom(f, f * 0.8, 0.05, 0.03, 'square', i * 0.04)); break;
     case 'cinzas': chiado(1.4, 0.05, 700); tom(98, 92, 1.4, 0.03, 'sine'); break;
+    case 'ouro': [1318, 1568, 1976].forEach((f, i) => tom(f, f * 0.98, 0.18, 0.03, 'triangle', i * 0.07)); break;
   }
 }
 function ligarSom() { if (actx) { if (actx.state === 'suspended') actx.resume(); return; } try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
@@ -350,7 +354,7 @@ function ler(texto) {
         if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); manaAbs = [+p[2] || 0, +p[3] || 0]; saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
-        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
+        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr === 8) som('ouro'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
         break;
       }
       case 'E': {

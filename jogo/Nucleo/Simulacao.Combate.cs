@@ -276,7 +276,7 @@ namespace Necro.Nucleo
                 if (qOssos > 0) Emitir(new EventoSim { Tipo = TipoEvento.RecursoGanho, Extra = 0, Valor = qOssos, Pos = alvo.Pos, Alvo = alvo.Id, Origem = -1 });
 
                 // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
-                _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1)) * premio * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
+                _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1)) * premio * _aOuro * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
                 { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
                 // livros de feitiço: o chefe sempre larga um; Únicos com frequência; elites e Campeões de vez em quando
                 if (Cfg.LivrosDeFeitico && (alvo.Chefe || (alvo.Unico && _rngItens.Chance(Cfg.ChanceDeLivroDeUnico)) || (!alvo.Unico && (alvo.Elite || alvo.Campeao) && _rngItens.Chance(Cfg.ChanceDeLivroDeElite)))) SoltarLivro(alvo.Pos);

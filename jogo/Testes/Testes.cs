@@ -2109,6 +2109,28 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("presságio Febre do Ouro: só do andar 20 em diante; dobra o ouro dos abates", () =>
+            {
+                bool antes = false, depois = false; int semente = -1;
+                for (int k = 1; k <= 200; k++)
+                {
+                    var c0 = new ConfigJogo { ChanceDePressagio = 1f, ObjetosPorSala = 0, MissoesDeCenario = false };
+                    if (new Simulacao(c0, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 12).PressagioAtual == Pressagio.FebreDoOuro) antes = true;
+                    if (new Simulacao(c0, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 26).PressagioAtual == Pressagio.FebreDoOuro) { depois = true; if (semente < 0) semente = k; }
+                }
+                Afirmar(!antes && depois, "nunca antes do 20, aparece depois");
+                float ouro(float f)
+                {
+                    var c = new ConfigJogo { ChanceDePressagio = 1f, ObjetosPorSala = 0, MissoesDeCenario = false, FebreOuro = f };
+                    var t = new Simulacao(c, ProgressoCom(EspecieId.Zumbi), (ulong)semente, ModoExpedicao.Avancar, 26);
+                    var mi = t.Entidades.Find(e => e.Faccao == Faccao.Minion); long o0 = t.Resultado.Ouro;
+                    for (int n = 0; n < 20; n++) { var z = t.CriarInimigo(EspecieId.Zumbi, new Vec2(10f, 6f)); z.Imune = 0; t.CausarDano(mi, z, z.Vida * 100f + 1f, TipoDano.Fisico, false); }
+                    return t.Resultado.Ouro - o0;
+                }
+                float o1 = ouro(1f), o2 = ouro(2f);
+                Afirmar(o1 > 0 && Math.Abs(o2 - 2f * o1) <= 2f, "ouro " + o1 + " → " + o2);
+            });
+
             Teste("Anel da Brasa Cativa: só cai do andar 25; com ele, os minions sentem 30% menos o Fogo e nada muda nos outros tipos", () =>
             {
                 var d = Unicos.Obter(15); Afirmar(d != null && !d.SoDeMissao && d.AndarMinimo == 25, "Único de queda, do andar 25");

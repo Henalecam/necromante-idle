@@ -126,7 +126,7 @@ namespace Necro.Nucleo
         private float _restoDeOssos = 0.5f;
         private float _restoDeOuro = 0.5f;
         private int _ondaDoUnico, _dif;
-        private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f, _aVidaInimigo = 1f, _aItem = 1f;
+        private float _aOrcamento = 1f, _aOssos = 1f, _aAlma, _aDanoInimigo = 1f, _aVidaInimigo = 1f, _aItem = 1f, _aOuro = 1f;
         /// <summary>Presságio em vigor neste andar.</summary>
         public Pressagio PressagioAtual { get; private set; }
         private readonly Rng _rngItens;        // fluxo próprio: sortear itens não desloca os sorteios do combate
@@ -844,10 +844,11 @@ namespace Necro.Nucleo
             bool chefe = Formulas.AndarDeChefe(Andar, Cfg);
             _ondaEliteNesteAndar = !chefe && Rng.Chance(Cfg.ChanceOndaElite);
             // Presságio do andar: sorteado num fluxo próprio; muda as regras só deste andar
-            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f; _aVidaInimigo = 1f; _aItem = 1f;
+            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f; _aVidaInimigo = 1f; _aItem = 1f; _aOuro = 1f;
             if (!chefe && Andar >= Cfg.PressagioAPartirDoAndar && _rngPressagio.Chance(Cfg.ChanceDePressagio))
             {
-                PressagioAtual = (Pressagio)(1 + _rngPressagio.Intervalo(0, 7));
+                PressagioAtual = (Pressagio)(1 + _rngPressagio.Intervalo(0, Andar >= Cfg.FebreAPartirDoAndar ? 8 : 7));   // a Febre do Ouro só entra no sorteio do andar 20 em diante
+                if (Cfg.ForcarPressagio > 0) PressagioAtual = (Pressagio)Cfg.ForcarPressagio;   // só capturas e testes
                 switch (PressagioAtual)
                 {
                     case Pressagio.Horda: _aOrcamento = 1.4f; _aOssos = 1.3f; break;
@@ -857,6 +858,7 @@ namespace Necro.Nucleo
                     case Pressagio.CampeaoErrante: _ondaEliteNesteAndar = true; break;
                     case Pressagio.Calmaria: _aOrcamento = 0.7f; break;
                     case Pressagio.ChuvaDeCinzas: _aVidaInimigo = Cfg.CinzasVidaInimigo; _aItem = Cfg.CinzasItem; break;
+                    case Pressagio.FebreDoOuro: _aOuro = Cfg.FebreOuro; _aDanoInimigo = Cfg.FebreDanoInimigo; break;
                 }
             }
             TotalDeOndas = chefe ? 1 : Cfg.OndasPorAndar + (_ondaEliteNesteAndar ? 1 : 0);
@@ -1168,7 +1170,7 @@ namespace Necro.Nucleo
             if (Andar > Resultado.MaiorAndarConcluido) Resultado.MaiorAndarConcluido = Andar;
             Emitir(new EventoSim { Tipo = TipoEvento.AndarConcluido, Extra = Andar, Valor = ticks * DT, Alvo = -1, Origem = -1 });
             TalvezAbrirEncruzilhada();
-            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f; _aVidaInimigo = 1f; _aItem = 1f;   // o presságio acaba com o andar
+            PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f; _aVidaInimigo = 1f; _aItem = 1f; _aOuro = 1f;   // o presságio acaba com o andar
 
             if (Andar % Cfg.AndaresPorAncoragem == 0 && Andar + 1 > Resultado.AncoragemAlcancada)
             {
