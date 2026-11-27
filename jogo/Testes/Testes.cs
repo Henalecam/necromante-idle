@@ -1872,6 +1872,29 @@ namespace Necro.Testes
                 Afirmar(p.CampanhaVencida == 1, "o marco atravessa a Ascensão");
             });
 
+            Teste("missão da Fonte Envenenada: sala a mais no andar da missão, luta contra os mortos da nascente, e limpa a fonte as poções ficam mais baratas até a Ascensão", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarFonte = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 30; foreach (var m in p.Minions) m.Nivel = 18;
+                long antes = Pocoes.Preco(p, false, c);
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.FonteAndar) { LimiteDeAndares = 1 }; int g = 0; bool temSala = false, ev44 = false, resolvida = false;
+                while (!s.Encerrada && g++ < 60000)
+                {
+                    s.Tick(); if (!temSala) temSala = s.Salas.Contains(TipoSala.FonteEnvenenada);
+                    foreach (var ev in s.Eventos) { if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 44) ev44 = true; if (ev.Tipo == TipoEvento.SalaResolvida && ev.Extra == (int)TipoSala.FonteEnvenenada) resolvida = true; }
+                }
+                Afirmar(temSala && ev44 && resolvida && s.Resultado.FonteLimpa, "a sala existe no andar " + c.FonteAndar + ", a luta acontece e a fonte fica limpa (" + temSala + ", " + ev44 + ", " + resolvida + ")");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoFonte == 3 && Pocoes.Preco(p, false, c) < antes * (1.0 + c.PocaoPrecoPorAndar * p.MaiorAndarConcluido) * 0.85, "missão cumprida: poção mais barata (" + antes + " -> " + Pocoes.Preco(p, false, c) + ")");
+                var s2 = new Simulacao(c, p, 8, ModoExpedicao.Avancar, c.FonteAndar) { LimiteDeAndares = 1 };
+                Afirmar(!s2.Salas.Contains(TipoSala.FonteEnvenenada), "limpa, a sala não volta");
+                p.ChefesDerrotados.Add(1); Ascensao.Ascender(p, c);
+                Afirmar(p.MissaoFonte == 0, "a missão é sorteada de novo na vida seguinte");
+                var c0 = new ConfigJogo { MissoesDeCenario = false };
+                var s0 = new Simulacao(c0, ProgressoCom(EspecieId.Esqueleto), 7, ModoExpedicao.Avancar, c0.FonteAndar);
+                Afirmar(!s0.Salas.Contains(TipoSala.FonteEnvenenada), "sem missões de cenário, nada de fonte");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

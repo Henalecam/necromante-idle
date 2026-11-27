@@ -11,7 +11,7 @@ namespace Necro.Nucleo
         public static long Preco(EstadoProgresso p, bool mana, ConfigJogo cfg)
         {
             double b = mana ? cfg.PocaoManaPreco : cfg.PocaoVidaPreco;
-            return Math.Max(1, (long)Math.Round(b * (1.0 + cfg.PocaoPrecoPorAndar * p.MaiorAndarConcluido)));
+            return Math.Max(1, (long)Math.Round(b * (1.0 + cfg.PocaoPrecoPorAndar * p.MaiorAndarConcluido) * (p.MissaoFonte == 3 ? 1.0 - cfg.FonteDesconto : 1.0)));
         }
 
         public static bool Comprar(EstadoProgresso p, bool mana, ConfigJogo cfg)

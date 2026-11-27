@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto; private bool _lutaDoAcougueiro, _lutaDoRei; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -107,6 +107,7 @@ namespace Necro.Nucleo
                 Salas.Add(_ondaEliteNesteAndar && w == TotalDeOndas ? TipoSala.Elite : TipoSala.Combate);
                 if (w == 1 && TotalDeOndas > 1 && (_acougueiro == 1 || (Cfg.ForcarAcougueiro && _acougueiro != 3)) && Andar == Cfg.AcougueiroAndar) Salas.Add(TipoSala.Acougue);   // missão do Açougueiro: a porta trancada do andar 2
                 if (w == 1 && TotalDeOndas > 1 && (_reiEsqueleto == 1 || (Cfg.ForcarReiEsqueleto && _reiEsqueleto != 3)) && Andar == Cfg.ReiAndar) Salas.Add(TipoSala.TumbaDoRei);   // missão do Rei Esqueleto: a tumba do andar 3
+                if (w == 1 && TotalDeOndas > 1 && (_fonte == 1 || (Cfg.ForcarFonte && _fonte != 3)) && Andar == Cfg.FonteAndar) Salas.Add(TipoSala.FonteEnvenenada);   // missão da Fonte Envenenada
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -339,6 +340,13 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDaFonte)
+                {
+                    _lutaDaFonte = false; _fonte = 3; Resultado.FonteLimpa = true; Resultado.Ouro += Cfg.FonteOuro;
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.FonteEnvenenada, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDoAcougueiro)
                 {
                     _lutaDoAcougueiro = false; _acougueiro = 3; Resultado.AcougueiroMorto = true;
@@ -397,6 +405,7 @@ namespace Necro.Nucleo
             Emitir(new EventoSim { Tipo = TipoEvento.SalaIniciada, Extra = (int)t, Valor = SalaAtual, Alvo = Salas.Count, Pos = PosDoObjeto, Origem = -1 });
             if (t == TipoSala.Emboscada) { IniciarEmboscada(false); return; }
             if (t == TipoSala.FossoDeMonstros) { IniciarFosso(); return; }
+            if (t == TipoSala.FonteEnvenenada) { IniciarFonteEnvenenada(); return; }
             Fase = FaseExpedicao.Explorando;
             _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
         }
@@ -412,6 +421,16 @@ namespace Necro.Nucleo
             int n = Math.Max(6, Math.Min(Cfg.FossoMaximo, (int)(orcamento / Math.Max(0.5f, TabelaEspecies.Obter(esp).CustoOnda))));
             for (int k = 0; k < n; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = esp, Fraco = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 2 });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>A Fonte Envenenada (Diablo 1, "Poisoned Water Supply"): a nascente da vila, tomada por mortos que apodrecem a água. Limpa a sala, a fonte volta a correr.</summary>
+        private void IniciarFonteEnvenenada()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDaFonte = true;
+            for (int k = 0; k < Cfg.FonteInimigos; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 2 ? EspecieId.Carnical : EspecieId.Zumbi, Elite = k == 0, Mods = k == 0 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 3 });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 44, Alvo = -1, Origem = -1, Valor = Cfg.FonteInimigos, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
         }
 
