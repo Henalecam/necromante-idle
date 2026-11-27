@@ -320,6 +320,7 @@ public static partial class Jogo
             for (int i = 0; i < c.BonusCom2.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(TabelaItens.Descrever(c.BonusCom2[i]))); }
             sb.Append("],\"b3\":[");
             for (int i = 0; i < c.BonusCom3.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(TabelaItens.Descrever(c.BonusCom3[i]))); }
+            if (c.Id == ConjuntoId.PregadorDeCinzas) { sb.Append(','); sb.Append(S("cada feitiço cura o necromante em " + Math.Round(_cfg.PregadorCura * 100f) + "% da vida")); }
             sb.Append("]}");
         }
         sb.Append('}');

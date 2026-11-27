@@ -263,6 +263,7 @@ namespace Necro.Nucleo
             var n = Necromante;
             n.Mana -= f.CustoMana;
             _recargaFeitico[(int)id] = f.Recarga * _fatorRecarga;
+            if (Bonus.PecasDeConjunto.Length > (int)ConjuntoId.PregadorDeCinzas && Bonus.PecasDeConjunto[(int)ConjuntoId.PregadorDeCinzas] >= 3 && n.Vida < n.VidaMax) { Curar(n, n, n.VidaMax * Cfg.PregadorCura); Resultado.SermoesDoPregador++; }   // Sermão do Pregador de Cinzas
             // Único 7, Grimório de Pele Humana: às vezes o feitiço não entra em recarga (o Golem não conta)
             if (Bonus.Unico[7] && id != FeiticoId.Golem && id != FeiticoId.MuralhaDeFogo && id != FeiticoId.RelampagoEmCadeia && id != FeiticoId.PedraMaldita && id != FeiticoId.EspiritoDeOssos && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
             n.TempoAcao = Cfg.TempoDeConjuracao;

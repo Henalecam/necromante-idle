@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         MareRubra = 6
     }
 
-    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1, GarrasDoCarniceiro = 2 }
+    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1, GarrasDoCarniceiro = 2, PregadorDeCinzas = 3 }
 
     /// <summary>Como a faixa de um afixo cresce com o nível do item.</summary>
     public enum EscalaAfixo
@@ -199,6 +199,15 @@ namespace Necro.Nucleo
                 NomesDasPecas = new[] { "Garras do Carniceiro", "Colar de Dentes do Carniceiro", "Sinete do Carniceiro" },
                 BonusCom2 = new[] { new AfixoRolado(AfixoItem.DanoDosMinions, 0.12f) },
                 BonusCom3 = new[] { new AfixoRolado(AfixoItem.VelAtaqueDosMinions, 0.08f), new AfixoRolado(AfixoItem.RouboDeVidaDosMinions, 0.03f) }
+            },
+            // conjunto original: o pregador que lia sermões aos mortos. 3 peças: cada feitiço lançado devolve vida ao necromante (Cfg.PregadorCura)
+            new DadosConjunto
+            {
+                Id = ConjuntoId.PregadorDeCinzas, Nome = "Sermão do Pregador de Cinzas",
+                Pecas = new[] { TipoItem.Cajado, TipoItem.Grimorio, TipoItem.Anel },
+                NomesDasPecas = new[] { "Báculo do Pregador de Cinzas", "Missal do Pregador de Cinzas", "Aliança do Pregador de Cinzas" },
+                BonusCom2 = new[] { new AfixoRolado(AfixoItem.DanoDeFeiticos, 0.15f) },
+                BonusCom3 = new[] { new AfixoRolado(AfixoItem.RegenMana, 1.0f) }
             }
         };
 

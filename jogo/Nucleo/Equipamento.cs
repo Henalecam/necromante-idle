@@ -43,7 +43,7 @@ namespace Necro.Nucleo
         public bool UltimoSuspiro;
         public bool MareRubra;
         /// <summary>Peças equipadas de cada conjunto (índice = (int)ConjuntoId).</summary>
-        public int[] PecasDeConjunto = new int[3];
+        public int[] PecasDeConjunto = new int[4];
         public int ItensQuebrados;
         public int ItensEquipados;
 

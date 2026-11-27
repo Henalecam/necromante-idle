@@ -762,7 +762,7 @@ Teste("requisito de atributo (Diablo 1): item pede Força/Magia/Destreza pelo ti
                 int comComando = 0;
                 for (int i = 0; i < 4000; i++) if (GeradorDeItens.GerarDoTipo(rng, Cfg, 5, RaridadeItem.Raro, TipoItem.Amuleto).Tem(AfixoItem.Comando)) comComando++;
                 Afirmar(comComando > 20 && comComando < 1200, "+Comando deveria ser raro, mas possível: " + comComando + "/4000");
-                Afirmar(TabelaItens.Conjuntos.Length == 2 && TabelaItens.Conjuntos[0].Pecas.Length == 3 && TabelaItens.Conjuntos[1].Pecas.Length == 3 && TabelaItens.Lendarios.Length == 6, "2 conjuntos de 3 peças e 6 lendários");
+                Afirmar(TabelaItens.Conjuntos.Length == 3 && System.Array.TrueForAll(TabelaItens.Conjuntos, cj => cj.Pecas.Length == 3) && TabelaItens.Lendarios.Length == 6, "3 conjuntos de 3 peças e 6 lendários");
                 {   // Garras do Carniceiro: 2 peças = +12% dano dos minions; 3 peças = +8% velocidade e +3% roubo de vida
                     var r2 = new Rng(77); var g = new List<Item>();
                     for (int i = 0; i < 3; i++) { var it = GeradorDeItens.GerarPecaDeConjunto(r2, Cfg, 1, ConjuntoId.GarrasDoCarniceiro, i); it.Afixos.Clear(); it.Implicito = new AfixoRolado(); g.Add(it); }
@@ -911,6 +911,19 @@ Teste("requisito de atributo (Diablo 1): item pede Força/Magia/Destreza pelo ti
                 Afirmar(b3.Comando == 1 && b3.PecasDeConjunto[(int)ConjuntoId.VestesDoCoveiro] == 3, "3 peças: +1 Comando");
                 Perto(b3.VidaDosMinions, 0.20f, 1e-6f, "3 peças: vida dos minions"); Perto(b3.PoderNecromantico, 0.15f, 1e-6f, "bônus de 2 continua");
                 Afirmar(new Simulacao(Cfg, q, 1, ModoExpedicao.Cacar, 1, false).Bonus.Comando == 1, "a simulação enxerga o bônus de conjunto");
+            });
+
+            Teste("conjunto Sermão do Pregador de Cinzas: 3 peças (báculo, missal, aliança); com as 3, cada feitiço cura o necromante", () =>
+            {
+                var cj = TabelaItens.Conjunto(ConjuntoId.PregadorDeCinzas);
+                Afirmar(cj != null && cj.Pecas.Length == 3 && cj.NomesDasPecas[1].StartsWith("Missal"), "o conjunto existe");
+                var r = new Rng(5); var p = ProgressoCom(EspecieId.Esqueleto); p.NivelNecromante = 20;
+                for (int i = 0; i < 3; i++) { var pc = GeradorDeItens.GerarPecaDeConjunto(r, Cfg, 5, ConjuntoId.PregadorDeCinzas, i); Equipamento.Equipar(p, pc); }
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 4) { LimiteDeAndares = 1 };
+                Afirmar(s.Bonus.PecasDeConjunto[(int)ConjuntoId.PregadorDeCinzas] == 3, "as 3 peças contam");
+                int g = 0; while (!s.Encerrada && g++ < 40000) { s.Tick(); if (g % 50 == 0) s.Necromante.Vida = Math.Max(1f, s.Necromante.Vida * 0.9f); }
+                Afirmar(s.Resultado.SermoesDoPregador > 0, "os feitiços curaram o necromante (" + s.Resultado.SermoesDoPregador + ")");
             });
             Teste("pontuação e auto-equipar: troca só por item melhor, e o que sai volta ao inventário", () =>
             {
