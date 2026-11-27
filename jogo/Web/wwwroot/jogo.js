@@ -432,11 +432,12 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '17') { const g = estado.get(+v[3]); if (g) { g.sede = tempoSim + (+v[4] || 4); numeros.push({ x: g.x, y: g.y, txt: 'Sede!', cor: '#ff8a6a', t: 1, amigo: true }); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '25') {   // porta emperrada: botão por alguns segundos para o jogador abrir na hora
     aviso('Porta emperrada · o grupo está arrombando'); som('golpe');
-    let bp = $('b-porta'); if (!bp) { bp = document.createElement('button'); bp.id = 'b-porta'; bp.textContent = '🚪 Abrir a porta já'; bp.style.cssText = 'position:absolute;left:50%;top:46%;transform:translateX(-50%);z-index:6;padding:10px 16px;font-size:15px;border:1px solid var(--ouro);background:#2a1418;color:#ffe9b0;border-radius:8px;box-shadow:0 0 18px #000'; bp.addEventListener('click', () => { if (J && J.AbrirPorta()) aviso('Porta aberta'); bp.hidden = true; }); tela.parentElement.appendChild(bp); }
+    portaPendente = { t: tempoSim, dur: +v[4] || 3 }; if (viag && Math.abs(tempoSim - viag.t0) < 0.02) viag.dur = portaPendente.dur;
+    let bp = $('b-porta'); if (!bp) { bp = document.createElement('button'); bp.id = 'b-porta'; bp.textContent = '🚪 Abrir a porta já'; bp.style.cssText = 'position:absolute;right:8px;bottom:128px;z-index:6;padding:10px 16px;font-size:15px;border:1px solid var(--ouro);background:#2a1418;color:#ffe9b0;border-radius:8px;box-shadow:0 0 18px #000'; bp.addEventListener('click', () => { if (J && J.AbrirPorta()) aviso('Porta aberta'); bp.hidden = true; }); tela.parentElement.appendChild(bp); }
     bp.hidden = false; clearTimeout(bp.t); bp.t = setTimeout(() => { bp.hidden = true; }, Math.max(600, (+v[4] || 3) * 1000 / Math.max(1, velocidade || 1)));
     return;
   }
-  if (tipo === 'EfeitoAplicado' && v[14] === '26') { const bp = $('b-porta'); if (bp) bp.hidden = true; return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '26') { const bp = $('b-porta'); if (bp) bp.hidden = true; abrirPortaNaViagem(); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '27') { const n = Math.round(+v[4] || 0); aviso(`Emboscada no corredor! ${n} inimigos em cima do grupo`); anotar(`<b style="color:#ff8a6a">Emboscada no corredor:</b> ${n} inimigos caíram sobre o grupo antes de ele formar.`); som('chefe'); tremor = Math.max(tremor, 0.35); return; }
   if (tipo === 'EfeitoAplicado' && (v[14] === '30' || v[14] === '31' || v[14] === '32')) {   // comportamento de espécie: avisa só na primeira vez de cada um por descida
     const k = v[14]; vistosDeEspecie = vistosDeEspecie || {};
@@ -616,20 +617,34 @@ function iniciarViagem(de, para) {
   pts.push(centro(para, 5, 6));
   let total = 0; const seg = []; for (let k = 0; k + 1 < pts.length; k++) { const d = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); seg.push(d); total += d; }
   const passos = cam.length - 1, T = Math.min(2.9, 0.8 + 0.7 * passos) * 0.95;   // igual a Config.ViagemBase/PorPassagem/Maxima
-  viag = { pts, seg, total, t0: tempoSim, T, fim: centro(para, 5, 6) };
+  viag = { pts, seg, total, t0: tempoSim, T, fim: centro(para, 5, 6), dur: 0, ate: 0 };
+  if (cam.length > 1) { const dxp = mapa[cam[1]][0] - mapa[cam[0]][0]; viag.ate = Math.min(total * 0.8, dxp === 1 ? 15.3 : dxp === -1 ? 5.3 : 11.3); }
+  if (portaPendente && Math.abs(tempoSim - portaPendente.t) < 0.35) { viag.dur = portaPendente.dur; portaPendente = null; }
 }
+let portaPendente = null;
+// porta emperrada: o grupo anda até a porta, para encostado nela batendo pelo tempo do arrombamento e só então segue viagem
+function distanciaNaViagem(e) {
+  const sm = (x) => { const u = Math.max(0, Math.min(1, x)); return u * u * (3 - 2 * u); };
+  if (!viag.dur) return viag.total * sm(e / viag.T);
+  const T1 = viag.T * Math.max(0.2, viag.ate / viag.total);
+  if (e < T1) return viag.ate * sm(e / T1);
+  if (e < T1 + viag.dur) return viag.ate - 0.18 * Math.abs(Math.sin((e - T1) * 7));
+  return viag.ate + (viag.total - viag.ate) * sm((e - T1 - viag.dur) / Math.max(0.2, viag.T - T1));
+}
+function abrirPortaNaViagem() { if (!viag || !viag.dur) return; const T1 = viag.T * Math.max(0.2, viag.ate / viag.total), e = tempoSim - viag.t0; viag.dur = Math.max(0.01, Math.min(viag.dur, e - T1)); }
+window.__naPorta = () => { if (!viag || !viag.dur) return 0; const T1 = viag.T * Math.max(0.2, viag.ate / viag.total), e = tempoSim - viag.t0; return e >= T1 && e < T1 + viag.dur ? 1 : 0; };
 // deslocamento (em unidades da simulação) dos aliados em relação à posição final, e para onde olham
 function deltaDaViagem(atraso = 0, ox = 0, oy = 0) {
   if (!viag) return null;
-  const t0 = (tempoSim - viag.t0) / viag.T; if (t0 >= 1 || viag.total < 0.01) { if (!atraso) viag = null; return null; }
+  const dec = tempoSim - viag.t0, t0 = dec / (viag.T + viag.dur); if (t0 >= 1 || viag.total < 0.01) { if (!atraso) viag = null; return null; }
   // cada um parte um pouco depois do anterior e se espreme para caber no corredor: o grupo passa em fila, não em bloco
   const t = Math.max(0, Math.min(1, t0 * (1 + atraso) - atraso)), aperto = 1 - 0.72 * Math.sin(Math.PI * t);
   if (atraso || ox || oy) {
-    let d2 = viag.total * (t * t * (3 - 2 * t)), k2 = 0; while (k2 < viag.seg.length - 1 && d2 > viag.seg[k2]) { d2 -= viag.seg[k2]; k2++; }
+    let d2 = viag.dur ? distanciaNaViagem(Math.max(0, dec - atraso * 0.5)) : viag.total * (t * t * (3 - 2 * t)), k2 = 0; while (k2 < viag.seg.length - 1 && d2 > viag.seg[k2]) { d2 -= viag.seg[k2]; k2++; }
     const a2 = viag.pts[k2], b2 = viag.pts[k2 + 1], f2 = viag.seg[k2] > 0 ? d2 / viag.seg[k2] : 1;
     return [a2[0] + (b2[0] - a2[0]) * f2 - viag.fim[0] + ox * (aperto - 1), a2[1] + (b2[1] - a2[1]) * f2 - viag.fim[1] + oy * (aperto - 1), b2[0] - a2[0], b2[1] - a2[1]];
   }
-  let d = viag.total * (t * t * (3 - 2 * t)), k = 0; while (k < viag.seg.length - 1 && d > viag.seg[k]) { d -= viag.seg[k]; k++; }
+  let d = viag.dur ? distanciaNaViagem(dec) : viag.total * (t * t * (3 - 2 * t)), k = 0; while (k < viag.seg.length - 1 && d > viag.seg[k]) { d -= viag.seg[k]; k++; }
   const a = viag.pts[k], b = viag.pts[k + 1], f = viag.seg[k] > 0 ? d / viag.seg[k] : 1;
   return [a[0] + (b[0] - a[0]) * f - viag.fim[0], a[1] + (b[1] - a[1]) * f - viag.fim[1], b[0] - a[0], b[1] - a[1]];
 }
@@ -718,6 +733,7 @@ function anotar(t) { diario.unshift([andar, t]); if (diario.length > 40) diario.
 function lerMasmorra(p) {
   const antes = masm.sala, faseAntes = masm.fase, secAntes = masm.secreto;
   masm = { fase: p[1], sala: +p[2], amb: +p[3], bencao: +p[4], secreto: +p[5] > 0, qualSecreto: +p[5], ox: +p[6], oy: +p[7], tipos: p.slice(8).map(Number) };
+  if (masm.fase === 'EmOnda' && faseAntes !== 'EmOnda' && viag && viag.dur) abrirPortaNaViagem();
   if (masm.sala !== antes) {
     objeto = null;
     if (masm.sala === 0 || antes > masm.sala) { mapaSujo = true; viag = null; descida = null; chegada = silencio ? null : { t0: tempoSim, T: 1.1 }; if (!silencio) { transicao = 1; tituloAndar = { t: performance.now(), a: 'Andar ' + andar, b: TEMAS_ANDAR[temaDoAndar(andar)][0] }; } }     // andar novo: tudo de novo, com um escurecer só aqui
