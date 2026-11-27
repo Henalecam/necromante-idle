@@ -1766,6 +1766,13 @@ function salvar() { try { localStorage.setItem(CHAVE, J.Salvar()); localStorage.
 const subSel = {}; try { Object.assign(subSel, JSON.parse(localStorage.getItem('necromante-idle-save-v1-subsel') || '{}')); } catch (e) { /* padrão */ }
 const SUB_JUNTA = /^(Árvore|Melhorar|Reparar|Vender)/, SUB_PADRAO = ['Construções', 'Ferreiro'];
 // painéis longos viram sub-abas: cada <h3> abre uma seção; seções com o mesmo nome (ou de apoio) se juntam
+function dobrarCumpridas(h) {   // aba Masmorra: as missões já cumpridas descem para uma dobra, as que faltam ficam à vista
+  const ini = h.indexOf('<h3>Missões deste save</h3>'); if (ini < 0) return h;
+  const corpo0 = ini + '<h3>Missões deste save</h3>'.length, fim = h.indexOf('<h3', corpo0) < 0 ? h.length : h.indexOf('<h3', corpo0);
+  const linhas = h.slice(corpo0, fim).split(/(?=<div class="linha">)/).filter(Boolean), feitas = linhas.filter((l) => l.includes('· cumprida')), faltam = linhas.filter((l) => !l.includes('· cumprida'));
+  if (feitas.length < 2) return h;
+  return h.slice(0, corpo0) + faltam.join('') + dobra('cumpridas', `Missões cumpridas · ${feitas.length}`, feitas.join('')) + h.slice(fim);
+}
 function emSubAbas(h, chave) {
   const partes = h.split(/(?=<h3[ >])/), cab = partes[0].startsWith('<h3') ? '' : partes.shift(), secs = [];
   for (const p of partes) {
@@ -2061,7 +2068,7 @@ function atualizarPainel(forcar) {
   desenharFicha(d);
   for (const lado of ['esq', 'dir', 'baixo']) {
     if (lado === 'esq' && invAberto) continue;
-    const h0 = render(abasSel[lado]), h = abasSel[lado] === 'necropole' || abasSel[lado] === 'ferreiro' ? emSubAbas(h0, abasSel[lado]) : h0;
+    const h0 = render(abasSel[lado]), h = abasSel[lado] === 'necropole' || abasSel[lado] === 'ferreiro' ? emSubAbas(h0, abasSel[lado]) : abasSel[lado] === 'masmorra' ? dobrarCumpridas(h0) : h0;
     if (forcar || h !== htmlAnterior[lado]) { htmlAnterior[lado] = h; $(ALVO[lado]).innerHTML = h; }
   }
 }

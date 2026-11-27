@@ -530,6 +530,8 @@ public static partial class Jogo
         NovaExpedicao();    // o que foi mexido vale já
         return nome;
     }
+    /// <summary>Só para capturas de teste: derruba os inimigos vivos da sala atual (marca o save como de teste).</summary>
+    [JSExport] public static int LimparSalaTeste() { _p.UsouCheats = true; int n = 0; foreach (var e in _sim.Entidades.ToArray()) if (e.Viva && e.Faccao == Faccao.Inimigo && !e.Unico && !e.Chefe) { _sim.CausarDano(null, e, e.Vida * 10f + 1f, TipoDano.Fisico, false); n++; } return n; }
     [JSExport] public static bool Resgatar() { return Missoes.Resgatar(_p, _cfg, _sim.Resultado); }
     [JSExport] public static int AutoEquipar() { return Equipamento.AutoEquipar(_p, _cfg); }
     [JSExport]
