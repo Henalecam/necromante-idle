@@ -1556,8 +1556,8 @@ namespace Necro.Testes
                 var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos), 4, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; int g = 0;
                 while (!s.Encerrada && g++ < 20000) s.Tick();
                 Afirmar(s.Resultado.Livros.Count >= 1, "a Biblioteca deveria render um livro de feitiço");
-                var q = ProgressoCom(EspecieId.Esqueleto); q.NivelNecromante = 30; int antes = 0; for (int i = 0; i < 6; i++) antes += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
-                Progressao.AplicarResultado(q, s.Resultado, c); int depois = 0; for (int i = 0; i < 6; i++) depois += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
+                var q = ProgressoCom(EspecieId.Esqueleto); q.NivelNecromante = 30; int antes = 0; for (int i = 0; i < Grimorio.Quantos; i++) antes += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
+                Progressao.AplicarResultado(q, s.Resultado, c); int depois = 0; for (int i = 0; i < Grimorio.Quantos; i++) depois += Grimorio.Nivel(q, (FeiticoId)i) + Grimorio.Guardados(q, (FeiticoId)i);
                 Afirmar(depois == antes + s.Resultado.Livros.Count, "os livros achados deveriam entrar no grimório (lidos ou guardados)");
             });
 
@@ -1582,6 +1582,29 @@ namespace Necro.Testes
                 while (!s2.Encerrada && g2++ < 30000) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 27) perto = true; }
                 Afirmar(s2.Resultado.EmboscadasDeCorredor >= 1 && perto, "com chance 100% deveria haver emboscada de corredor");
                 Afirmar(s2.Encerrada, "a descida não deveria travar");
+            });
+
+            Teste("Golem: o necromante conjura um só por vez durante a luta, ele some com o tempo, e saves antigos ganham o 7º feitiço sem perder níveis", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 20;
+                var semLivro = new Simulacao(c, p, 6, ModoExpedicao.Avancar, 3); int g0 = 0; while (!semLivro.Encerrada && g0++ < 3000) semLivro.Tick();
+                Afirmar(semLivro.Resultado.GolensConjurados == 0, "sem o livro, o necromante não conhece o Golem");
+                Afirmar(Grimorio.Receber(p, FeiticoId.Golem, c) && Grimorio.Nivel(p, FeiticoId.Golem) == 1, "o primeiro livro ensina o Golem (não pede Magia)");
+                var s = new Simulacao(c, p, 6, ModoExpedicao.Avancar, 3); int g = 0, maxGolens = 0; bool viu = false, sumiu = false;
+                while (!s.Encerrada && g++ < 6000)
+                {
+                    s.Tick(); int n = 0; foreach (var e in s.Entidades) if (e.Golem && e.Viva) n++;
+                    if (n > maxGolens) maxGolens = n; if (n > 0) viu = true; else if (viu) sumiu = true;
+                }
+                Afirmar(viu && s.Resultado.GolensConjurados >= 1, "o Golem deveria ser conjurado na luta");
+                Afirmar(maxGolens == 1, "só pode haver um Golem por vez (" + maxGolens + ")");
+                Afirmar(sumiu, "o Golem deveria acabar (tempo ou morte)");
+                var semGolem = new Simulacao(new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, GolemAtivo = false }, p, 6, ModoExpedicao.Avancar, 3); g = 0;
+                while (!semGolem.Encerrada && g++ < 3000) semGolem.Tick();
+                Afirmar(semGolem.Resultado.GolensConjurados == 0, "com o Golem desligado, nada de Golem");
+                var antigo = ProgressoCom(EspecieId.Esqueleto); antigo.NiveisDeFeitico = new[] { 2, 0, 1, 0, 0, 3 }; antigo.LivrosGuardados = new[] { 0, 1, 0, 0, 0, 0 };
+                Afirmar(Grimorio.Nivel(antigo, FeiticoId.Golem) == 0 && Grimorio.Nivel(antigo, FeiticoId.Sacrificio) == 4 && Grimorio.Nivel(antigo, FeiticoId.LancaDeOssos) == 3 && Grimorio.Guardados(antigo, FeiticoId.DrenarVida) == 1, "o save antigo mantém os níveis e ganha o Golem ainda por aprender");
             });
 
             Teste("santuários de efeito incerto: o tipo é sorteado, usar revela o efeito, recusar não faz nada, e o Livro guarda o que já se viu", () =>

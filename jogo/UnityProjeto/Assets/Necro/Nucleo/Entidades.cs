@@ -46,6 +46,7 @@ namespace Necro.Nucleo
         public float Recarga;           // s até o próximo ataque
         public float TempoAcao;         // s presa na animação atual
         public float TempoMorrendo;
+        public bool Golem;                                         // o Golem conjurado pelo necromante (um só por vez)
         public bool Unico; public string NomeProprio;              // monstro único: nome próprio e séquito
         public bool DaHorda, Campeao;                              // inimigo comum de horda (mais fraco, rende menos) / campeão de pacote
         public bool Aparou; public int GolpesSofridos;             // Esqueleto (minion): já aparou um golpe nesta sala

@@ -93,14 +93,14 @@ namespace Necro.Nucleo
         private readonly List<Entidade> _minions = new List<Entidade>(16); // todos os da expedição, vivos ou mortos
         private readonly List<Ordem> _ordens = new List<Ordem>(8);
         private readonly List<int> _chefesDerrotados = new List<int>(4);
-        private readonly float[] _recargaFeitico = new float[6];
-        private readonly DadosFeitico[] _feiticos = new DadosFeitico[6];   // os feitiços já no nível dos livros lidos
+        private readonly float[] _recargaFeitico = new float[Grimorio.Quantos];
+        private readonly DadosFeitico[] _feiticos = new DadosFeitico[Grimorio.Quantos];   // os feitiços já no nível dos livros lidos
         private DadosFeitico Fei(FeiticoId id) { return _feiticos[(int)id]; }
         /// <summary>Um livro de feitiço cai: sorteia qual e avisa a tela.</summary>
         private void SoltarLivro(Vec2 pos)
         {
             if (!Cfg.LivrosDeFeitico) return;
-            int qual = _rngItens.Intervalo(0, 6);
+            int qual = _rngItens.Intervalo(0, Grimorio.Quantos);
             Resultado.Livros.Add(qual);
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 24, Valor = qual, Alvo = -1, Origem = -1, Pos = pos });
         }
@@ -158,7 +158,8 @@ namespace Necro.Nucleo
             if (_acougueiro == 0 && Cfg.MissoesDeCenario) { _acougueiro = (semente * 2654435761UL >> 7) % 3UL != 0UL ? 1 : 2; Resultado.AcougueiroSorteio = _acougueiro; }
             if (Cfg.ForcarAcougueiro) _acougueiro = 1;
             _dif = Dificuldades.Atual(progresso); Resultado.Dificuldade = _dif;
-            for (int fi = 0; fi < 6; fi++)
+            _golemAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1;
+            for (int fi = 0; fi < Grimorio.Quantos; fi++)
             {
                 var b0 = cfg.Feitico((FeiticoId)fi); int nv = cfg.LivrosDeFeitico ? Grimorio.Nivel(progresso, (FeiticoId)fi) : 1;
                 _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
@@ -428,6 +429,33 @@ namespace Necro.Nucleo
         }
 
         /// <summary>Minion temporário chegou ao fim do tempo: some sem deixar cadáver.</summary>
+        /// <summary>O Golem do feitiço: um Colosso de Ossos conjurado, forte e passageiro. Só existe um por vez.</summary>
+        private bool _golemAprendido;
+        public Entidade GolemVivo { get { for (int i = 0; i < Entidades.Count; i++) if (Entidades[i].Golem && Entidades[i].Viva) return Entidades[i]; return null; } }
+
+        private bool LancarGolem()
+        {
+            if (!Cfg.GolemAtivo || !_golemAprendido || InimigosVivos == 0 || !PodeLancar(FeiticoId.Golem) || GolemVivo != null) return false;
+            var f = Fei(FeiticoId.Golem); var n = Necromante;
+            var d = TabelaEspecies.Obter(EspecieId.ColossoDeOssos);
+            var e = CriarBase(Faccao.Minion, d, Limitar(new Vec2(n.Pos.X + 2.2f, n.Pos.Y)));
+            int nivel = Math.Min(_nivelNecromante, Cfg.NivelMaximoPorEstagio * Cfg.EstagioMaximo);
+            e.VidaMax = Formulas.AtributoMinion(d.Vida, Qualidade.Comum, nivel, _poderTotal, Cfg) * f.Potencia;
+            e.Dano = Formulas.AtributoMinion(d.Dano, Qualidade.Comum, nivel, _poderTotal, Cfg) * f.Potencia;
+            e.Armadura = Formulas.AtributoMinion(d.Armadura, Qualidade.Comum, nivel, _poderTotal, Cfg);
+            AplicarEquipamentoAoMinion(e);
+            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao; e.Golem = true; e.NomeProprio = "Golem de Ossos";
+            Adicionar(e);
+            PagarFeitico(FeiticoId.Golem, e, e.Pos, 0f);
+            Emitir(new EventoSim { Tipo = TipoEvento.EntidadeSurgiu, Alvo = e.Id, Origem = n.Id, Pos = e.Pos, Especie = e.Especie });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 29, Alvo = e.Id, Origem = n.Id, Pos = e.Pos });
+            // surge provocando: os inimigos em volta viram para ele
+            float r2 = Cfg.GolemProvocaRaio * Cfg.GolemProvocaRaio;
+            for (int i = 0; i < Entidades.Count; i++) { var o = Entidades[i]; if (o.Viva && o.Faccao == Faccao.Inimigo && Vec2.Dist2(o.Pos, e.Pos) <= r2) { o.ProvocadoPor = e.Id; o.ProvocadoTempo = 3f; } }
+            Resultado.GolensConjurados++;
+            return true;
+        }
+
         private void ExpirarTemporario(Entidade e)
         {
             e.Viva = false;

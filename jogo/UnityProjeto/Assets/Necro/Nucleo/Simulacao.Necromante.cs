@@ -60,6 +60,7 @@ namespace Necro.Nucleo
                 return;
             }
             if (n.TempoAcao > 0f) { n.TempoAcao -= DT; return; }
+            if (LancarGolem()) return;   // o Golem vem antes das ordens: é o escudo do exército
 
             // Ordens "SE condição ENTÃO ação", de cima para baixo; a primeira que puder agir encerra o tick.
             bool agiu = false;

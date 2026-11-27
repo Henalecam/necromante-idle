@@ -87,7 +87,7 @@ public static partial class Jogo
             _sb.Append("K ").Append(_sim.PactosOferecidos[0]).Append(' ').Append(_sim.PactosOferecidos[1]).Append(' ').Append(_sim.PactosOferecidos[2]).Append(' ').Append(F(_sim.TempoDaOferta)).Append('\n');
         if (_sim.PactosAtivos.Count > 0) { _sb.Append('A'); foreach (int pa in _sim.PactosAtivos) _sb.Append(' ').Append(pa); _sb.Append('\n'); }
         foreach (var ob in _sim.Objetos) _sb.Append("Q ").Append(ob.Sala).Append(' ').Append((int)ob.Tipo).Append(' ').Append(F(ob.Pos.X)).Append(' ').Append(F(ob.Pos.Y)).Append(' ').Append(ob.Quebrado ? 1 : 0).Append('\n');
-        foreach (var e in _sim.Entidades) if (e.Unico && e.Viva) _sb.Append("U ").Append(e.Id).Append(' ').Append(e.NomeProprio).Append('\n');
+        foreach (var e in _sim.Entidades) if ((e.Unico || e.Golem) && e.Viva) _sb.Append("U ").Append(e.Id).Append(' ').Append(e.NomeProprio).Append('\n');
         foreach (var e in _sim.Entidades)
             _sb.Append("E ").Append(e.Id).Append(' ').Append(e.Especie).Append(' ').Append(e.Faccao == Faccao.Inimigo ? 1 : 0).Append(' ')
               .Append(F(e.Pos.X)).Append(' ').Append(F(e.Pos.Y)).Append(' ').Append(F(e.Olhar.X)).Append(' ').Append(F(e.Olhar.Y)).Append(' ')
@@ -449,7 +449,8 @@ public static partial class Jogo
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
             case "unico": { var ud = Unicos.Obter((int)v); if (ud != null) { var ui2 = Unicos.Gerar(rng, _cfg, Math.Max(5, _p.MaiorAndarConcluido), ud); _p.Inventario.Add(ui2); _p.UnicosAchados |= 1 << ud.Id; } break; }
-            case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % 6), _cfg); break;
+            case "golem": Grimorio.Receber(_p, FeiticoId.Golem, _cfg); break;
+            case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % Grimorio.Quantos), _cfg); break;
             case "rei": _cfg.ForcarReiEsqueleto = true; _p.MissaoReiEsqueleto = 1; break;
             case "acougueiro": _cfg.ForcarAcougueiro = true; _p.MissaoAcougueiro = 1; break;
             case "santuario": _cfg.ForcarSalaEspecial = 4; _cfg.ForcarSantuario = (int)v; break;

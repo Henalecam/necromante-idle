@@ -123,7 +123,7 @@ namespace Necro.Nucleo
         public long FragmentosDeAlma;
         public int[] Atributos = new int[4]; public bool SemAutoAtributos;   // Força, Magia, Destreza, Vitalidade; por padrão o jogo distribui sozinho
         public int UnicosAchados;                           // bits: itens Únicos já encontrados (o Livro de Únicos)
-        public int[] NiveisDeFeitico = new int[6], LivrosGuardados = new int[6]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
+        public int[] NiveisDeFeitico = new int[7], LivrosGuardados = new int[7]; public int LivrosLidos;   // livros de feitiço: níveis ganhos e livros à espera de Magia
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
         public int MissaoAcougueiro;                        // 0 = ainda não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -181,6 +181,7 @@ namespace Necro.Nucleo
         public int AcougueiroSorteio; public bool AcougueiroMorto;
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
+        public int GolensConjurados;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;
