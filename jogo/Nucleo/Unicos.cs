@@ -25,6 +25,7 @@ namespace Necro.Nucleo
             new DadosUnico { Id = 11, Efeito = "Os Ocultos perdem o golpe de emboscada contra o seu exército.", Nome = "Olho Óptico", Tipo = TipoItem.Amuleto, Afixos = new[] { AfixoItem.ChanceCritico, AfixoItem.ResRaio, AfixoItem.Mana }, SoDeMissao = true, Lenda = "Achado nos Salões dos Cegos, no andar 9." },
             new DadosUnico { Id = 12, Efeito = "Os minions causam +30% de dano a elites, campeões, Únicos e chefes.", Nome = "Estandarte Sangrento", Tipo = TipoItem.Relicario, Afixos = new[] { AfixoItem.DanoDosMinions, AfixoItem.VidaDosMinions, AfixoItem.Comando }, SoDeMissao = true, Lenda = "Tomado de Vargoth, na Fortaleza Rubra do andar 13." },
             new DadosUnico { Id = 13, Efeito = "Os minions começam cada sala com um escudo de ossos de 10% da vida.", Nome = "Cinza do Primeiro Sermão", Tipo = TipoItem.Amuleto, Afixos = new[] { AfixoItem.VidaDosMinions, AfixoItem.Armadura, AfixoItem.Mana }, SoDeMissao = true, Lenda = "Recolhida do Relicário Profanado, no andar 25, depois que o Sermonário Ossyr calou." },
+            new DadosUnico { Id = 14, Efeito = "Os minions causam +25% de dano a Demônios.", Nome = "Mãos de Escória", Tipo = TipoItem.Luvas, Afixos = new[] { AfixoItem.DanoDosMinions, AfixoItem.VelAtaqueDosMinions, AfixoItem.ResFogo }, SoDeMissao = true, Lenda = "Arrancadas de Brasamor, o Ferreiro do Fundo, na Forja do Abismo do andar 35." },
         };
 
         public static DadosUnico Obter(int id) { for (int i = 0; i < Todos.Length; i++) if (Todos[i].Id == id) return Todos[i]; return null; }

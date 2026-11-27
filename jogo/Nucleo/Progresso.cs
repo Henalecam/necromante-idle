@@ -136,6 +136,7 @@ namespace Necro.Nucleo
         public int[] AncoragemPorDificuldade;               // Ponto de Ancoragem guardado de cada dificuldade (a atual fica em AndarDeAncoragem)
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
+        public int MissaoForja;                              // Forja do Abismo: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoRelicario;                          // Relicário Profanado: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoPoco;                               // Poço dos Lamentos: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoFortaleza;                          // Fortaleza Rubra: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -197,6 +198,7 @@ namespace Necro.Nucleo
         public int AcougueiroSorteio; public bool AcougueiroMorto;
         public int FonteSorteio; public bool FonteLimpa;
         public int CamaraSorteio; public bool CamaraVencida;
+        public int ForjaSorteio; public bool ForjaVencida;
         public int RelicarioSorteio; public bool RelicarioVencido;
         public int PocoSorteio; public bool PocoVencido;
         public int FortalezaSorteio; public bool FortalezaVencida;
@@ -426,6 +428,8 @@ namespace Necro.Nucleo
             if (r.PocoVencido) p.MissaoPoco = 3;
             if (p.MissaoRelicario == 0 && r.RelicarioSorteio != 0) p.MissaoRelicario = r.RelicarioSorteio;
             if (r.RelicarioVencido) p.MissaoRelicario = 3;
+            if (p.MissaoForja == 0 && r.ForjaSorteio != 0) p.MissaoForja = r.ForjaSorteio;
+            if (r.ForjaVencida) p.MissaoForja = 3;
             if (p.MissaoReiEsqueleto == 0 && r.ReiEsqueletoSorteio != 0) p.MissaoReiEsqueleto = r.ReiEsqueletoSorteio;
             if (r.ReiEsqueletoMorto) p.MissaoReiEsqueleto = 3;
             if (!r.SemDesgaste) Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento (salvo pelo Santuário Oculto)

@@ -2050,6 +2050,18 @@ namespace Necro.Testes
                 Afirmar(longe.Escudo == 0f, "quem está longe não ganha escudo");
             });
 
+            Teste("missão da Forja do Abismo: no andar 35 Brasamor (Único) e levas de Lacaios; vencida, dá as Mãos de Escória (+25% contra Demônios)", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarForja = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 170; p.PoderNecromantico = 400000f; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.ForjaAndar) { LimiteDeAndares = 1 }; int g = 0; bool ev56 = false, viu = false;
+                while (!s.Encerrada && g++ < 90000) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 56) ev56 = true; if (!viu) viu = s.Entidades.Exists(e => e.Viva && e.Unico && e.NomeProprio != null && e.NomeProprio.StartsWith("Brasamor")); }
+                Afirmar(s.Salas.Contains(TipoSala.ForjaDoAbismo) && ev56 && viu, "a sala existe e Brasamor aparece");
+                Afirmar(s.Resultado.ForjaVencida && s.Resultado.Itens.Exists(it => it.UnicoId == 14), "vencida, larga as Mãos de Escória");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoForja == 3, "missão cumprida");
+            });
+
             Teste("missão do Relicário Profanado: no andar 25 o Sermonário Ossyr (Único) e os devotos; vencida, dá a Cinza do Primeiro Sermão (escudo nos minions a cada sala)", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarRelicario = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
