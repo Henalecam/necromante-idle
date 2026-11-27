@@ -96,6 +96,8 @@ namespace Necro.Nucleo
         private readonly float[] _recargaFeitico = new float[Grimorio.Quantos];
         private readonly DadosFeitico[] _feiticos = new DadosFeitico[Grimorio.Quantos];   // os feitiços já no nível dos livros lidos
         private DadosFeitico Fei(FeiticoId id) { return _feiticos[(int)id]; }
+        /// <summary>Custo de mana do feitiço nesta descida, já com livros e itens.</summary>
+        public float CustoDeMana(FeiticoId id) { return _feiticos[(int)id].CustoMana; }
         /// <summary>Um livro de feitiço cai: sorteia qual e avisa a tela.</summary>
         private void SoltarLivro(Vec2 pos)
         {
@@ -515,12 +517,14 @@ namespace Necro.Nucleo
             if (_pocoesVida > 0 && n.Vida < n.VidaMax * _limiarVida)
             {
                 _pocoesVida--; Resultado.PocoesDeVidaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
+                if (Bonus.Unico[8]) Resultado.EfeitosDeUnicos++;
                 float cura = n.VidaMax * Cfg.PocaoVidaCura * (Bonus.Unico[8] ? Cfg.BotasPocao : 1f); n.Vida = Math.Min(n.VidaMax, n.Vida + cura);
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 33, Valor = cura, Alvo = n.Id, Origem = n.Id, Pos = n.Pos });
             }
             else if (_pocoesMana > 0 && InimigosVivos > 0 && n.Mana < n.ManaMax * _limiarMana)
             {
                 _pocoesMana--; Resultado.PocoesDeManaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
+                if (Bonus.Unico[8]) Resultado.EfeitosDeUnicos++;
                 float m = n.ManaMax * Cfg.PocaoManaCura * (Bonus.Unico[8] ? Cfg.BotasPocao : 1f); n.Mana = Math.Min(n.ManaMax, n.Mana + m);
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 34, Valor = m, Alvo = n.Id, Origem = n.Id, Pos = n.Pos });
             }

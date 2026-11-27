@@ -516,10 +516,22 @@ namespace Necro.Testes
                 Afirmar(!Equipamento.CalcularBonus(Com(3), new ConfigJogo { EfeitosDeUnicos = false }).Unico[3], "com os efeitos desligados, não vale");
                 int Efeitos(int unico) { int t = 0; for (ulong sem = 1; sem <= 4; sem++) t += ExecutorSemTela.RodarExpedicao(c, Com(unico), sem, ModoExpedicao.Avancar, 3, 3).EfeitosDeUnicos; return t; }
                 Afirmar(Efeitos(0) == 0, "sem Único, nenhum efeito dispara");
-                Console.WriteLine("        (efeitos: cutelo " + Efeitos(1) + ", coroa " + Efeitos(2) + ", garras " + Efeitos(6) + ", mortalha " + Efeitos(4) + ")");
                 Afirmar(Efeitos(1) >= 3, "o Cutelo deveria executar inimigos quase mortos");
                 Afirmar(Efeitos(2) >= 2, "a Coroa deveria erguer mortos durante a luta");
                 Afirmar(Efeitos(6) >= 3, "as Garras deveriam curar o minion que mata");
+                // os outros sete efeitos
+                var sCaj = new Simulacao(c, Com(3), 1, ModoExpedicao.Avancar, 1); var sSem = new Simulacao(c, Com(0), 1, ModoExpedicao.Avancar, 1);
+                Perto(sCaj.CustoDeMana(FeiticoId.LancaDeOssos), sSem.CustoDeMana(FeiticoId.LancaDeOssos) * c.CajadoMana, 1e-3f, "Cajado: a Lança de Ossos custa menos mana");
+                Perto(sCaj.CustoDeMana(FeiticoId.DrenarVida), sSem.CustoDeMana(FeiticoId.DrenarVida), 1e-3f, "Cajado: os outros feitiços não mudam");
+                Afirmar(Efeitos(5) >= 3, "o Anel deveria curar os minions a cada alma ceifada (" + Efeitos(5) + ")");
+                Afirmar(Efeitos(7) >= 2, "o Grimório deveria, às vezes, poupar a recarga de um feitiço (" + Efeitos(7) + ")");
+                int EfeitosFundo(int unico, Action<EstadoProgresso> prep, int andar)
+                { int t = 0; for (ulong sem = 1; sem <= 5; sem++) { var p = Com(unico); if (prep != null) prep(p); t += ExecutorSemTela.RodarExpedicao(c, p, sem, ModoExpedicao.Avancar, andar, 3).EfeitosDeUnicos; } return t; }
+                Afirmar(EfeitosFundo(10, null, 4) >= 2, "o Relicário deveria curar o exército quando um inimigo especial morre (" + EfeitosFundo(10, null, 4) + ")");
+                Afirmar(EfeitosFundo(9, p => Grimorio.Receber(p, FeiticoId.Golem, c), 3) >= 2, "o Amuleto deveria reforçar o Golem conjurado (" + EfeitosFundo(9, p => Grimorio.Receber(p, FeiticoId.Golem, c), 3) + ")");
+                Afirmar(EfeitosFundo(9, null, 3) == 0, "sem o Golem aprendido, o Amuleto não faz nada");
+                Afirmar(EfeitosFundo(8, p => { p.PocoesDeVida = 3; p.PocoesDeMana = 3; p.SemReporPocoes = true; }, 6) >= 2, "as Botas deveriam reforçar as poções bebidas (" + EfeitosFundo(8, p => { p.PocoesDeVida = 3; p.PocoesDeMana = 3; p.SemReporPocoes = true; }, 6) + ")");
+                Afirmar(EfeitosFundo(4, null, 8) >= 1, "a Mortalha deveria devolver dano a quem fere o necromante (" + EfeitosFundo(4, null, 8) + ")");
                 foreach (var d in Unicos.Todos) Afirmar(!string.IsNullOrEmpty(d.Efeito), "todo Único tem um efeito descrito (" + d.Nome + ")");
             });
 

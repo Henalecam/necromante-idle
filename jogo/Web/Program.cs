@@ -109,7 +109,7 @@ public static partial class Jogo
         Progressao.AjustarAoComando(_p, _cfg);   // equipamento ou talentos podem ter baixado o Comando
         var sb = new StringBuilder(4096);
         sb.Append("{\"andar\":").Append(_sim.Andar).Append(",\"recorde\":").Append(_p.MaiorAndarConcluido).Append(",\"ossos\":").Append(_p.Ossos)
-          .Append(",\"essencia\":").Append(_p.Essencia).Append(",\"sangue\":").Append(_p.Sangue).Append(",\"nivel\":").Append(_p.NivelNecromante).Append(",\"poder\":").Append(Poder.Total(_p, _cfg)).Append(",\"poderSugerido\":").Append(Poder.SugeridoParaOAndar(_sim.Andar, _cfg)).Append(",\"poderProximo\":").Append(Poder.SugeridoParaOAndar(_p.MaiorAndarConcluido + 1, _cfg)).Append(",\"sorte\":").Append(F(_p.Sorte)).Append(",\"poderNec\":").Append((int)Math.Round(_p.PoderNecromantico * 100f)).Append(",\"comandoBase\":").Append(_p.ComandoMaximo).Append(",\"cheats\":").Append(B(_p.UsouCheats)).Append(",\"cinzas\":").Append(_p.Cinzas).Append(",\"xp\":").Append(F(Math.Min(1f, _p.XpNecromante / Formulas.XpParaProximoNivelNecromante(_p.NivelNecromante))))
+          .Append(",\"essencia\":").Append(_p.Essencia).Append(",\"sangue\":").Append(_p.Sangue).Append(",\"nivel\":").Append(_p.NivelNecromante).Append(",\"poder\":").Append(Poder.Total(_p, _cfg)).Append(",\"poderSugerido\":").Append(Poder.SugeridoParaOAndar(_sim.AndarEfetivo, _cfg)).Append(",\"poderProximo\":").Append(Poder.SugeridoParaOAndar(_p.MaiorAndarConcluido + 1, _cfg)).Append(",\"sorte\":").Append(F(_p.Sorte)).Append(",\"poderNec\":").Append((int)Math.Round(_p.PoderNecromantico * 100f)).Append(",\"comandoBase\":").Append(_p.ComandoMaximo).Append(",\"cheats\":").Append(B(_p.UsouCheats)).Append(",\"cinzas\":").Append(_p.Cinzas).Append(",\"xp\":").Append(F(Math.Min(1f, _p.XpNecromante / Formulas.XpParaProximoNivelNecromante(_p.NivelNecromante))))
           .Append(",\"comando\":").Append(Progressao.ComandoEmUso(_p, _cfg)).Append(",\"comandoMax\":").Append(Progressao.ComandoMaximoEfetivo(_p, _cfg))
           .Append(",\"filacterioMax\":").Append(Necropole.CapacidadeDoFilacterio(_p, _cfg)).Append(",\"inventarioMax\":").Append(_cfg.CapacidadeInventario)
           .Append(",\"largura\":").Append(F(_cfg.LarguraArena)).Append(",\"altura\":").Append(F(_cfg.AlturaArena));
@@ -458,6 +458,7 @@ public static partial class Jogo
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
             case "unico": { var ud = Unicos.Obter((int)v); if (ud != null) { var ui2 = Unicos.Gerar(rng, _cfg, Math.Max(5, _p.MaiorAndarConcluido), ud); _p.Inventario.Add(ui2); _p.UnicosAchados |= 1 << ud.Id; } break; }
+            case "ouro": _p.Ouro += (long)Math.Max(0, v); break;
             case "golem": Grimorio.Receber(_p, FeiticoId.Golem, _cfg); break;
             case "livros": for (int li = 0; li < (int)Math.Min(30, v); li++) Grimorio.Receber(_p, (FeiticoId)(li % Grimorio.Quantos), _cfg); break;
             case "rei": _cfg.ForcarReiEsqueleto = true; _p.MissaoReiEsqueleto = 1; break;
