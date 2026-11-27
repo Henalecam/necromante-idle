@@ -20,3 +20,15 @@ Fonte: tabelas públicas do DevilutionX (`assets/txtdata`, reimplementação abe
 
 ## Resistências e imunidades
 - No original, a imunidade já existe no Normal (esqueletos e zumbis imunes a magia; demônios de lava imunes a fogo; Storm/Death Wing imunes a raio) e o Inferno usa uma tabela própria, mais dura. Nosso jogo só cria imunidade no Pesadelo/Inferno.
+
+## Comparação da vida (item 191)
+Crescimento da vida de um comum, andar N ÷ andar 1 (nosso = EscalaInimigo; D1 = média dos monstros do andar):
+
+| andar | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 16 |
+|---|---|---|---|---|---|---|---|---|
+| D1 | 2,2 | 6,0 | 10,5 | 16,5 | 23,8 | 32,2 | 37,0 | 41,0 |
+| nosso | 1,3 | 2,2 | 4,6 | 11,1 | 26,8 | 32,4 | 55,1 | 93,9 |
+
+Até o andar 12 a curva bate com a do D1 (começa mais suave, para a primeira expedição passar). Depois disso a nossa continua exponencial de propósito: o jogo tem 40 andares e progressão idle, o D1 tem 16.
+
+Chefe ÷ comum do mesmo andar: D1 Açougueiro ~24×, Rei Esqueleto ~16×, Lázarus ~4×, Diablo ~10×. Nosso: Açougueiro 17,5× (elite 3,5 × 5), Rei 21×, chefes dos Atos 1 e 2 ~15-17× (proporcionais). Lázarus estava ~13-19× e o chefe do Ato 4 ~18-31× → vida base 560→300 e 900→520 (agora ~7× e ~11×). Tempo da campanha quase não muda: chefe do Ato 3 20,7 → 18,4 h; chefe do Ato 4 34,6 → 36,4 h na 1ª vida (dentro do ruído; a parede são os andares, não os chefes).

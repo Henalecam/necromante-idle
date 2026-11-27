@@ -167,14 +167,14 @@ namespace Necro.Nucleo
             t[(int)EspecieId.Lazarus] = new DadosEspecie
             {
                 Id = EspecieId.Lazarus, Nome = "Arcebispo Lázarus", Familia = Familia.Aberracao, Porte = Porte.Colossal, Papel = Papel.Atirador,
-                Vida = 560f, Dano = 22f, VelAtaque = 0.7f, Armadura = 20f, Alcance = 8.0f, VelMovimento = 1.8f, TipoDano = TipoDano.Sombra,
+                Vida = 300f, Dano = 22f, VelAtaque = 0.7f, Armadura = 20f, Alcance = 8.0f, VelMovimento = 1.8f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0.1f, 0.5f, 0f, -0.1f, 0.2f, 0.4f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
             };
             // Chefe do Ato 4 e fim da campanha (Diablo 1): o Senhor do Terror. Corpo a corpo brutal e o Apocalipse, um anel de fogo que fere todos em volta.
             t[(int)EspecieId.Diablo] = new DadosEspecie
             {
                 Id = EspecieId.Diablo, Nome = "Diablo, o Senhor do Terror", Familia = Familia.Demonio, Porte = Porte.Colossal, Papel = Papel.Lutador,
-                Vida = 900f, Dano = 30f, VelAtaque = 0.8f, Armadura = 50f, Alcance = 2.2f, VelMovimento = 1.9f, TipoDano = TipoDano.Fisico,
+                Vida = 520f, Dano = 30f, VelAtaque = 0.8f, Armadura = 50f, Alcance = 2.2f, VelMovimento = 1.9f, TipoDano = TipoDano.Fisico,
                 Resistencias = Res(0.2f, 0.6f, -0.1f, 0.2f, 0.2f, 0.3f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
             };
             return t;
