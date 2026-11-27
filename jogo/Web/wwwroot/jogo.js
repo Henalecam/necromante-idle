@@ -1768,7 +1768,7 @@ const SUB_JUNTA = /^(Árvore|Melhorar|Reparar|Vender)/, SUB_PADRAO = ['Construç
 // painéis longos viram sub-abas: cada <h3> abre uma seção; seções com o mesmo nome (ou de apoio) se juntam
 function dobrarCumpridas(h) {   // aba Masmorra: as missões já cumpridas descem para uma dobra, as que faltam ficam à vista
   const ini = h.indexOf('<h3>Missões deste save</h3>'); if (ini < 0) return h;
-  const corpo0 = ini + '<h3>Missões deste save</h3>'.length, fim = h.indexOf('<h3', corpo0) < 0 ? h.length : h.indexOf('<h3', corpo0);
+  const corpo0 = ini + '<h3>Missões deste save</h3>'.length, fim = Math.min(...['<h3', '<details', '<p'].map((m) => h.indexOf(m, corpo0)).filter((i) => i >= 0), h.length);
   const linhas = h.slice(corpo0, fim).split(/(?=<div class="linha">)/).filter(Boolean), feitas = linhas.filter((l) => l.includes('· cumprida')), faltam = linhas.filter((l) => !l.includes('· cumprida'));
   if (feitas.length < 2) return h;
   return h.slice(0, corpo0) + faltam.join('') + dobra('cumpridas', `Missões cumpridas · ${feitas.length}`, feitas.join('')) + h.slice(fim);
@@ -1919,7 +1919,7 @@ function atualizarPainel(forcar) {
     d.loja.forEach((l, i) => {
       const it = l.item;
       h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · ${TIPOS[it.tipo]} · nível ${it.nivel} · Poder ${fmt(it.poder)}</span><small>${it.afixos.map(esc).join(' · ')}</small></div>` +
-        `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? '' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Inventário cheio' : `Comprar · ${fmt(l.preco)} ouro`}</button></div>`;
+        `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? 'Comprar' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Mochila cheia' : `${fmt(l.preco)} ouro`}</button></div>`;
     });
     h += `<div class="linha"><div class="corpo">Reparo automático<small>ao voltar de cada descida, o Ferreiro já conserta o equipamento com o seu ouro (se der)</small></div><button data-ac="auto-reparo" class="${d.autoReparo ? 'ativo' : ''}">${d.autoReparo ? 'Ligado' : 'Desligado'}</button></div>`;
     // melhorar e imbuir o que está vestido
