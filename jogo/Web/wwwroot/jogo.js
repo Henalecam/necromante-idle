@@ -36,7 +36,11 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { diablo: ['diabrete', 3.1, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.9, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { diablo: ['diabrete', 1.4, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.35, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.07, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+// escala como no Diablo 1: o maior monstro tem no máximo ~1,25-1,4× a altura de um esqueleto comum (sprites próprios desenhados grandes demais)
+const ESCALA_D1 = { colossodeossos: 0.73, diabodeguerra: 0.8, abadessacosturada: 0.92, carcereirodealmas: 0.97 };
+const VETOR_D1 = { Diablo: 0.6, Lazarus: 0.62 };
+function escD1(especie) { return ESCALA_D1[especie.toLowerCase()] || 1; }
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -1229,7 +1233,7 @@ function desenhar(dt) {
     if (dist > 0.01) { const passo = Math.min(dist, 11 * dt * Math.max(1, velocidade)); patPos[0] += ddx / dist * passo; patPos[1] += ddy / dist * passo; }
     if (dist <= 0.3 && patRota.length) patRota.shift();
     patrulha.especies.forEach((esp, q) => {
-      const [px, py] = W(patPos[0] + (q - 1) * 1.3, patPos[1] + (q % 2) * 1.1), m = monstro(esp, false), e = reforco;
+      const [px, py] = W(patPos[0] + (q - 1) * 1.3, patPos[1] + (q % 2) * 1.1), m = monstro(esp, false), e = reforco * escD1(esp);
       const [img, sx, sy] = quadro(m, andando ? 'andar' : 'parado', andando ? direcao(ddx, ddy) : direcao(-1, 0), tempoSim * (andando ? 1.4 : 0.6) + q);
       ctx.strokeStyle = 'rgba(255,110,80,0.75)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(px, py, 22 * reforco, 9 * reforco, 0, 0, 7); ctx.stroke();
       ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
@@ -1247,7 +1251,7 @@ function desenhar(dt) {
   // inimigos à espera nas salas: parados, virados para a entrada, um pouco apagados até despertarem
   for (const [sala, especie, ix, iy, elite, ehChefe] of [...aEspera].sort((a, b) => b[3] - a[3] + (a[2] - b[2]))) {
     if (!revelada(sala)) continue;
-    const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * reforco;
+    const o = offDaSala(sala), [px, py] = W(o[0] + ix, o[1] + iy), m = monstro(especie, elite), prov = visual(especie), e = (prov ? prov[1] : 1) * escD1(especie) * reforco;
     if (px < camX - 300 || px > camX + visivel + 300 || py < camY - 300 || py > camY + visAlt + 300) continue;
     // encaram o grupo, esteja ele onde estiver no andar: dá para ver que sabem que alguém vem
     const gx = so[0] + (necro ? necro.rx : 5) - (o[0] + ix), gy = so[1] + (necro ? necro.ry : 6) - (o[1] + iy);
@@ -1382,12 +1386,12 @@ function desenhar(dt) {
     }
     if (!morto && !s.inimigo && !s.necro && poderes[2] > 0) { ctx.fillStyle = 'rgba(255,60,40,0.22)'; ctx.beginPath(); ctx.ellipse(px, py, 26, 11, 0, 0, 7); ctx.fill(); }
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
-    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.55, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.25, '120,230,170', 0.3] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
+    const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.25, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.3, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.2, '120,230,170', 0.3] : s.campeao ? [null, 1.08, '70,130,255', 0.34] : visual(s.especie)), e = (prov ? prov[1] : 1) * escD1(s.especie);   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     const ocultoA = !morto && ocultos.has(s.id); if (ocultoA) { const tO = performance.now() / 1000 + s.id; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(190,120,255,${0.55 + 0.3 * Math.sin(tO * 5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -tO * 20; ctx.beginPath(); ctx.ellipse(px, py, 26 * reforco, 11 * reforco, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); ctx.save(); ctx.globalAlpha = 0.3 + 0.08 * Math.sin(tO * 3); }
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
-    if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, reforco, s, 1);
-    else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, reforco, s, 1);
+    if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, VETOR_D1.Diablo, s, 1);
+    else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, VETOR_D1.Lazarus, s, 1);
     else if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
@@ -1402,8 +1406,8 @@ function desenhar(dt) {
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     if (ocultoA) ctx.restore();
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 1, px, py, e, s.id);
-    if (!morto && s.flash > 0 && s.especie === 'Lazarus') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharLazarus(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
-    else if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
+    if (!morto && s.flash > 0 && s.especie === 'Lazarus') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharLazarus(px, py, VETOR_D1.Lazarus, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
+    else if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, VETOR_D1.Diablo, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
     else if (!morto && s.flash > 0) {
       // clarão de impacto: o mesmo quadro somado por cima
       s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, s.flash * 9);
@@ -2149,6 +2153,21 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__fila = () => {   // testes: fila de tamanhos (escala D1) ao lado de um esqueleto comum, numa tela por cima
+  const fila = [['Esqueleto', null], ['Zumbi', null], ['Zumbi', [null, 1.25, '170,20,24', 0.36], 'Açougueiro'], ['Esqueleto', [null, 1.3, '230,200,90', 0.22], 'Rei Esq.'], ['CavaleiroNegro'], ['Magistrado'], ['ColossoDeOssos'], ['DiaboDeGuerra'], ['AbadessaCosturada'], ['CarcereiroDeAlmas'], ['Lazarus'], ['Diablo']];
+  const L = 1500, A = 300; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#1a1614'; ctx.fillRect(0, 0, L, A);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.setLineDash([6, 6]); for (const f of [1, 1.25, 1.4]) { ctx.beginPath(); ctx.moveTo(0, 240 - 92 * f); ctx.lineTo(L, 240 - 92 * f); ctx.stroke(); } ctx.setLineDash([]);
+  fila.forEach(([esp, provX, rot], k) => {
+    const px = 40 + k * 68, py = 240, m = monstro(esp, false), prov = provX !== undefined && provX !== null ? provX : visual(esp), e = (prov ? prov[1] : 1) * escD1(esp), sF = { especie: esp, anim: 'Parado', x: 0 };
+    if (esp === 'Diablo') desenharDiablo(px, py, VETOR_D1.Diablo, sF, 1); else if (esp === 'Lazarus') desenharLazarus(px, py, VETOR_D1.Lazarus, sF, 1);
+    else { const [img, sx, sy] = quadro(m, 'parado', 0, 0), dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
+      if (prov) { tinta.width = m.W; tinta.height = m.H; tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H); tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H); ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e); }
+      else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e); }
+    ctx.fillStyle = '#ddd'; ctx.font = '10px Georgia'; ctx.textAlign = 'center'; ctx.fillText((rot || esp).slice(0, 11), px, 262 + (k % 2) * 12);
+  });
+  const c = document.createElement('canvas'); c.width = L; c.height = A; c.getContext('2d').drawImage(tela, 0, 0, L, A, 0, 0, L, A); ctx.restore();
+  c.id = 'fila'; c.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;background:#1a1614'; document.body.appendChild(c); return true;
+};
 window.__titulo = () => tituloAndar ? tituloAndar.a + "|" + tituloAndar.b : "";
 window.__marcarPrimeiro = () => { const al = [...estado.values()].filter((e) => e.viva && e.inimigo); if (al.length < 3 || !J) return false; const u = al.find((e) => e.campeao) || al[0]; J.Marcar(u.id); return true; };
 window.__ficha = () => fichaTxt;
