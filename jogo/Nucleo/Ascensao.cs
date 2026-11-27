@@ -86,7 +86,7 @@ namespace Necro.Nucleo
             // o que mais pertence à vida que acaba: livros lidos, cinto, portal, prateleira da Bruxa, missões (sorteadas de novo) e a descida de cada dificuldade
             p.NiveisDeFeitico = new int[Grimorio.Quantos]; p.LivrosGuardados = new int[Grimorio.Quantos];
             p.PocoesDeVida = 0; p.PocoesDeMana = 0; p.PergaminhosDePortal = 0; p.PortalNoAndar = 0; p.LivrosDaBruxa = null;
-            p.MissaoAcougueiro = 0; p.MissaoReiEsqueleto = 0; p.MissaoFonte = 0; p.MissaoCamara = 0; p.MissaoCegos = 0;
+            p.MissaoAcougueiro = 0; p.MissaoReiEsqueleto = 0; p.MissaoFonte = 0; p.MissaoCamara = 0; p.MissaoCegos = 0; p.MissaoFortaleza = 0;
             p.Dificuldade = 0; p.AncoragemPorDificuldade = null;
             p.Minions.Clear(); p.Minions.AddRange(novo.Minions);
             p.Inventario.Clear(); p.Equipados = new Item[9];

@@ -13,7 +13,7 @@ namespace Necro.Nucleo
         private struct SpawnPendente
         {
             public EspecieId Especie;
-            public bool Fraco; public bool Acougueiro; public bool Rei; public bool Oculto;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
+            public bool Fraco; public bool Acougueiro; public bool Rei; public bool Oculto; public bool Senhor;   // inimigo de horda fora do plano do andar (fosso de monstros): mesma fraqueza e prêmio dos comuns de horda
             public bool Elite;
             public bool Chefe;
             public ModificadorElite Mods;
@@ -167,6 +167,9 @@ namespace Necro.Nucleo
             _cegos = progresso.MissaoCegos;
             if (_cegos == 0 && Cfg.MissoesDeCenario) { _cegos = (semente * 1103515245UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.CegosSorteio = _cegos; }
             if (Cfg.ForcarCegos && _cegos != 3) _cegos = 1;
+            _fortaleza = progresso.MissaoFortaleza;
+            if (_fortaleza == 0 && Cfg.MissoesDeCenario) { _fortaleza = (semente * 2246822519UL >> 13) % 3UL != 0UL ? 1 : 2; Resultado.FortalezaSorteio = _fortaleza; }
+            if (Cfg.ForcarFortaleza && _fortaleza != 3) _fortaleza = 1;
             _fonte = progresso.MissaoFonte;
             if (_fonte == 0 && Cfg.MissoesDeCenario) { _fonte = (semente * 40503UL >> 5) % 3UL != 0UL ? 1 : 2; Resultado.FonteSorteio = _fonte; }
             if (Cfg.ForcarFonte && _fonte != 3) _fonte = 1;
@@ -867,6 +870,7 @@ namespace Necro.Nucleo
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                         if (s.Oculto) { novo.Oculto = true; novo.OcultoAte = TickAtual * DT + Cfg.OcultoDuracao; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 46, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        else if (s.Senhor) { novo.Unico = true; novo.NomeProprio = "Vargoth, o Estandarte Sangrento"; novo.VidaMax *= Cfg.FortalezaMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.FortalezaMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Rei) { novo.Unico = true; novo.NomeProprio = "Rei Esqueleto"; novo.VidaMax *= Cfg.ReiMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.ReiMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Acougueiro) { novo.Unico = true; novo.NomeProprio = "O Açougueiro"; novo.VidaMax *= Cfg.AcougueiroMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.AcougueiroMultDano; novo.VelMovimento *= Cfg.AcougueiroMultVelocidade; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Planejado != null && s.Planejado.Sequito) { novo.VidaMax *= Cfg.SequitoMultVida; novo.Vida = novo.VidaMax; }

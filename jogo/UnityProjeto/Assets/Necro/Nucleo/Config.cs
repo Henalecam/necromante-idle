@@ -446,6 +446,8 @@ namespace Necro.Nucleo
         public int ReiAbreSozinhoNoRecorde = 7;
         public int ReiNivelDaCoroa = 8;
         public long ReiOuro = 250;
+        public bool ForcarFortaleza;                     // só para testes e capturas
+        public int FortalezaAndar = 13, FortalezaSequito = 4; public float FortalezaMultVida = 7f, FortalezaMultDano = 1.5f, EstandarteDanoContraFortes = 0.3f; public long FortalezaOuro = 400;   // missão da Fortaleza Rubra
         public bool ForcarCegos;                         // só para testes e capturas
         public int CegosAndar = 9, CegosInimigos = 4;     // missão dos Salões dos Cegos: sala às escuras no andar 9
         public float OcultoVistoA = 2.5f, OcultoGolpe = 1.6f, OcultoDuracao = 9f; public long CegosOuro = 250;

@@ -1993,6 +1993,29 @@ namespace Necro.Testes
                 Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
             });
 
+            Teste("missão da Fortaleza Rubra: no andar 13 o senhor da guerra (Único) e o séquito; vencida, dá o Estandarte Sangrento, que fere mais os fortes, e a sala não volta", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarFortaleza = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 70; p.PoderNecromantico = 2500f; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.FortalezaAndar) { LimiteDeAndares = 1 }; int g = 0; bool ev51 = false, viuSenhor = false;
+                while (!s.Encerrada && g++ < 90000)
+                {
+                    s.Tick();
+                    foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 51) ev51 = true;
+                    if (!viuSenhor) viuSenhor = s.Entidades.Exists(e => e.Viva && e.Unico && e.NomeProprio != null && e.NomeProprio.StartsWith("Vargoth"));
+                }
+                Afirmar(s.Salas.Contains(TipoSala.FortalezaRubra) && ev51 && viuSenhor, "a sala existe e o senhor da guerra aparece");
+                Afirmar(s.Resultado.FortalezaVencida && s.Resultado.Itens.Exists(it => it.UnicoId == 12), "vencida, larga o Estandarte Sangrento");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoFortaleza == 3 && !new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.FortalezaAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.FortalezaRubra), "missão cumprida e a sala não volta");
+                var c2 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var q = ProgressoCom(EspecieId.Esqueleto); var t = new Simulacao(c2, q, 3, ModoExpedicao.Avancar, 2);
+                var mi = t.Entidades.Find(e => e.Faccao == Faccao.Minion); var el = t.CriarInimigo(EspecieId.Zumbi, new Vec2(10f, 6f), elite: true); var co = t.CriarInimigo(EspecieId.Zumbi, new Vec2(11f, 6f));
+                el.VidaMax = co.VidaMax = el.Vida = co.Vida = 1e6f; el.Armadura = co.Armadura = 0f; for (int k = 0; k < 6; k++) { el.Resistencias[k] = 0f; co.Resistencias[k] = 0f; } el.Imune = co.Imune = 0;
+                float d0 = t.CausarDano(mi, el, 100f, TipoDano.Fogo, false); t.Bonus.Unico[12] = true; float d1 = t.CausarDano(mi, el, 100f, TipoDano.Fogo, false), d2 = t.CausarDano(mi, co, 100f, TipoDano.Fogo, false);
+                Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
+            });
+
             Teste("missão dos Salões dos Cegos: Ocultos invisíveis de longe, golpe de emboscada, todos acabam revelados; vencida, dá o Olho Óptico, que tira a emboscada", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarCegos = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };

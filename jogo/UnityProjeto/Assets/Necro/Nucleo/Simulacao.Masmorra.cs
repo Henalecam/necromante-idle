@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos, _fortaleza; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos, _lutaDaFortaleza; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -110,6 +110,7 @@ namespace Necro.Nucleo
                 if (w == 1 && TotalDeOndas > 1 && (_fonte == 1 || (Cfg.ForcarFonte && _fonte != 3)) && Andar == Cfg.FonteAndar) Salas.Add(TipoSala.FonteEnvenenada);   // missão da Fonte Envenenada
                 if (w == 1 && TotalDeOndas > 1 && (_camara == 1 || (Cfg.ForcarCamara && _camara != 3)) && Andar == Cfg.CamaraAndar) Salas.Add(TipoSala.CamaraDeOssos);   // missão da Câmara de Ossos
                 if (w == 1 && TotalDeOndas > 1 && (_cegos == 1 || (Cfg.ForcarCegos && _cegos != 3)) && Andar == Cfg.CegosAndar) Salas.Add(TipoSala.SaloesDosCegos);   // missão dos Salões dos Cegos
+                if (w == 1 && TotalDeOndas > 1 && (_fortaleza == 1 || (Cfg.ForcarFortaleza && _fortaleza != 3)) && Andar == Cfg.FortalezaAndar) Salas.Add(TipoSala.FortalezaRubra);   // missão da Fortaleza Rubra
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -342,6 +343,16 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDaFortaleza)
+                {
+                    _lutaDaFortaleza = false; _fortaleza = 3; Resultado.FortalezaVencida = true; Resultado.Ouro += Cfg.FortalezaOuro;
+                    var estandarte = Unicos.Gerar(_rngItens, Cfg, Math.Max(Andar, Cfg.FortalezaAndar), Unicos.Obter(12));
+                    Resultado.Itens.Add(estandarte);
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)estandarte.Raridade, Valor = estandarte.Nivel });
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.FortalezaRubra, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDosCegos)
                 {
                     _lutaDosCegos = false; _cegos = 3; Resultado.CegosVencidos = true; Resultado.Ouro += Cfg.CegosOuro;
@@ -427,6 +438,7 @@ namespace Necro.Nucleo
             if (t == TipoSala.FossoDeMonstros) { IniciarFosso(); return; }
             if (t == TipoSala.FonteEnvenenada) { IniciarFonteEnvenenada(); return; }
             if (t == TipoSala.SaloesDosCegos) { IniciarSaloesDosCegos(); return; }
+            if (t == TipoSala.FortalezaRubra) { IniciarFortalezaRubra(); return; }
             Fase = FaseExpedicao.Explorando;
             _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
         }
@@ -462,6 +474,17 @@ namespace Necro.Nucleo
             for (int k = 0; k < Cfg.CegosInimigos; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Aparicao, Oculto = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 4 });
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 47, Alvo = -1, Origem = -1, Valor = Cfg.CegosInimigos, Pos = Necromante.Pos });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>A Fortaleza Rubra (missão original, no molde das do Diablo 1): um senhor da guerra com estandarte de sangue e o séquito dele, entrincheirados numa sala de armas.</summary>
+        private void IniciarFortalezaRubra()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDaFortaleza = true;
+            _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.CavaleiroNegro, Elite = true, Senhor = true, Portal = 0, TickDeSpawn = TickAtual + 1 });
+            for (int k = 0; k < Cfg.FortalezaSequito; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = k % 2 == 0 ? EspecieId.DiaboDeGuerra : EspecieId.CavaleiroNegro, Elite = k < 2, Mods = k < 2 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = (k + 1) % 3, TickDeSpawn = TickAtual + 4 + k * 3 });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 51, Alvo = -1, Origem = -1, Valor = Cfg.FortalezaSequito, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
         }
 
