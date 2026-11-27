@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")"
 dotnet publish -c Release -nologo -v q 2>&1 | grep -E " error |rror CS" && exit 1
 rm -rf dist && mkdir -p dist && cp -r bin/Release/net8.0/browser-wasm/AppBundle/. dist/
-cp wwwroot/main.js wwwroot/jogo.js wwwroot/index.html dist/ && cp -r wwwroot/fontes dist/
+cp wwwroot/main.js wwwroot/jogo.js wwwroot/index.html dist/ && cp -r wwwroot/fontes dist/ && rm -f dist/*.woff2 dist/OFL-*.txt
 rm -f dist/_framework/*.map dist/_framework/*.symbols dist/package.json dist/*.runtimeconfig.json
 python3 - <<'PY'
 import os, shutil
