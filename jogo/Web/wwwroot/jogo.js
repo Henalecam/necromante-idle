@@ -334,7 +334,7 @@ function ler(texto) {
       case 'T': {
         const a = +p[1];
         if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
-        mana = +p[2] / Math.max(1, +p[3]); saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
+        mana = +p[2] / Math.max(1, +p[3]); manaAbs = [+p[2] || 0, +p[3] || 0]; saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
         { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
         break;
@@ -731,6 +731,7 @@ const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
+let manaAbs = [0, 0], cintoMax = 3;
 let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null, raiosFx = [];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
@@ -1123,11 +1124,11 @@ function desenhar(dt) {
     }
   }
   if (raiosFx.length) {     // relâmpago em cadeia: cada salto é um ziguezague branco-azulado que dura um instante
-    const agoraR = performance.now(); raiosFx = raiosFx.filter((r) => agoraR - r.t < 340);
+    const agoraR = performance.now(); raiosFx = raiosFx.filter((r) => agoraR - r.t < 520);
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const r of raiosFx) {
       const idR = agoraR - r.t; if (idR < 0) continue;
-      const fR = 1 - idR / 340, [x0, y0] = W(r.a[0], r.a[1]), [x1, y1] = W(r.b[0], r.b[1]), alto = 26 * reforco, nR = 7, dxR = x1 - x0, dyR = y1 - y0, lR = Math.hypot(dxR, dyR) || 1;
+      const fR = 1 - idR / 520, [x0, y0] = W(r.a[0], r.a[1]), [x1, y1] = W(r.b[0], r.b[1]), alto = 26 * reforco, nR = 7, dxR = x1 - x0, dyR = y1 - y0, lR = Math.hypot(dxR, dyR) || 1;
       const pts = []; for (let k = 0; k <= nR; k++) { const f = k / nR, des = k === 0 || k === nR ? 0 : Math.sin(r.s + k * 12.9898 + Math.floor(idR / 60) * 7.1) * 11 * reforco; pts.push([x0 + dxR * f - dyR / lR * des, y0 - alto + dyR * f + dxR / lR * des]); }
       for (const [larg2, cor] of [[7 * reforco, `rgba(90,140,255,${0.35 * fR})`], [2.2 * reforco, `rgba(235,245,255,${0.95 * fR})`]]) { ctx.strokeStyle = cor; ctx.lineWidth = larg2; ctx.beginPath(); pts.forEach(([px, py], k) => { if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py); }); ctx.stroke(); }
       const gR = ctx.createRadialGradient(x1, y1 - alto, 0, x1, y1 - alto, 26 * reforco); gR.addColorStop(0, `rgba(200,225,255,${0.6 * fR})`); gR.addColorStop(1, 'rgba(60,110,255,0)'); ctx.fillStyle = gR; ctx.beginPath(); ctx.arc(x1, y1 - alto, 26 * reforco, 0, 7); ctx.fill();
@@ -1351,7 +1352,7 @@ function desenhar(dt) {
   }
   ctx.globalAlpha = 1; numeros = numeros.filter((n) => n.t > 0);
   if (numeros.length > 60) numeros.splice(0, numeros.length - 60);
-  const sq = `+${fmt(saque[0])} ossos · ${saque[1]} almas · ${saque[2]} itens` + (cintoHud ? ` · poções ${cintoHud[0]}♥ ${cintoHud[1]}✦` : ''); if (sq !== desenhar.sq) { desenhar.sq = sq; $('t-saque').textContent = sq; }
+  const sq = `+${fmt(saque[0])} ossos · ${saque[1]} almas · ${saque[2]} itens`; if (sq !== desenhar.sq) { desenhar.sq = sq; $('t-saque').textContent = sq; }
   // encruzilhada: três pactos, um toque, tempo contado
   const enc = $('encruzilhada'), chave = oferta && pactos.length ? oferta.slice(0, 3).join(',') : '';
   if (chave !== ofertaMostrada) {
@@ -1394,6 +1395,13 @@ function desenhar(dt) {
   desenhar.tg = (desenhar.tg || 0) + dt;
   if (desenhar.tg > 0.25) {
     desenhar.tg = 0;
+    {   // globos de vida e mana do necromante e o cinto de poções, como no painel do Diablo 1
+      const vN = necro && necro.viva ? Math.max(0, Math.min(1, necro.vida)) : 0, mN = Math.max(0, Math.min(1, mana)), gv = $('g-vida'), gm = $('g-mana');
+      gv.firstElementChild.style.height = Math.round(vN * 100) + '%'; gv.lastElementChild.textContent = Math.round(vN * 100) + '%'; gv.classList.toggle('baixo', vN > 0 && vN < 0.25);
+      gm.firstElementChild.style.height = Math.round(mN * 100) + '%'; gm.lastElementChild.textContent = manaAbs[1] ? Math.round(manaAbs[0]) + '' : Math.round(mN * 100) + '%';
+      const cx = cintoHud ? cintoHud[0] + ',' + cintoHud[1] + ',' + cintoMax : '';
+      if (cx !== desenhar.cx) { desenhar.cx = cx; let hc = ''; if (cintoHud) { for (let k = 0; k < Math.min(6, cintoMax); k++) hc += `<span class="${k < cintoHud[0] ? 'v' : ''}"></span>`; for (let k = 0; k < Math.min(6, cintoMax); k++) hc += `<span class="${k < cintoHud[1] ? 'm' : ''}"></span>`; } const ce = $('cinto'); ce.style.gridTemplateColumns = `repeat(${Math.max(1, Math.min(6, cintoMax))}, 11px)`; ce.innerHTML = hc; ce.title = cintoHud ? `Cinto: ${cintoHud[0]} poções de vida e ${cintoHud[1]} de mana (bebe sozinho pela regra da Curandeira)` : ''; }
+    }
     const corQ = ['#9a9a9a', '#e6e0d0', '#6fa8ff', '#ffd84a', '#ff4d6a'];
     let hg = '';
     const grupo = [...estado.values()].filter((s) => !s.inimigo).sort((a, b) => (b.necro ? 1 : 0) - (a.necro ? 1 : 0) || a.id - b.id).slice(0, 24);
@@ -1463,7 +1471,7 @@ const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map(esc).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
-  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; $('b-portal').hidden = !(d.portal && d.portal.agora);
+  const d = JSON.parse(J.Painel()); cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; cintoMax = d.cinto ? d.cinto.max : 3; $('b-portal').hidden = !(d.portal && d.portal.agora);
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
   $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
   $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
@@ -1942,6 +1950,7 @@ window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
 window.__raios = () => raiosFx.length;
+for (const idG of ['g-vida', 'g-mana']) $(idG).addEventListener('click', () => { const g = $(idG); g.classList.add('mostra'); clearTimeout(g.tm); g.tm = setTimeout(() => g.classList.remove('mostra'), 2500); });
 window.__muralha = () => muralhaFx ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });
