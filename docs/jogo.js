@@ -1707,7 +1707,12 @@ function laco(agora) {
   requestAnimationFrame(laco);
 }
 
+function arrumarFaixa() {   // no computador, os botões do automático entram na faixa dos retratos e globos (uma linha só)
+  const larga = window.innerWidth > 1050, au = $('autos'), ti = $('tira'), gl = $('globos');
+  if (larga && au.parentElement !== ti) ti.insertBefore(au, gl); else if (!larga && au.parentElement === ti) ti.after(au);
+}
 function ajustarTela() {
+  arrumarFaixa();
   const larg = $('cena').clientWidth, razao = Math.min(window.devicePixelRatio || 1, 2);
   const altFinal = larg < 700 ? Math.min(window.innerHeight * 0.58, 540) : Math.max(300, Math.min(larg * 0.75, window.innerHeight * 0.68));   // a arena é o jogo: ocupa a maior parte da tela
   tela.width = Math.round(larg * razao); tela.height = Math.round(Math.max(200, altFinal) * razao);
@@ -2003,7 +2008,7 @@ function atualizarPainel(forcar) {
   };
   // tira dos automáticos: cada feitiço pode disparar sozinho, com recarga maior
   const nomesAuto = ['Detonar', 'Frenesi', 'Sopro', itens[0][0] ? ['', 'Raio Sombrio', 'Ceifada', 'Chuva de Ossos', 'Escudo de Almas'][itens[0][0]] : null, itens[1][0] ? ['', 'Raio Sombrio', 'Ceifada', 'Chuva de Ossos', 'Escudo de Almas'][itens[1][0]] : null];
-  const ha = `<span title="No automático a recarga é ${d.autoPenalidade}% maior">Automático (recarga +${d.autoPenalidade}%):</span>` + nomesAuto.map((n, i) => n ? `<button data-auto="${i}" class="${d.auto[i] ? 'ativo' : ''}">${n}</button>` : '').join('');
+  const ha = `<span title="No automático a recarga é ${d.autoPenalidade}% maior">Automático:</span>` + nomesAuto.map((n, i) => n ? `<button data-auto="${i}" class="${d.auto[i] ? 'ativo' : ''}">${n}</button>` : '').join('');
   if (ha !== autosAnterior) { autosAnterior = ha; $('autos').innerHTML = ha; }
   desenharInventario(d);
   desenharFicha(d);
