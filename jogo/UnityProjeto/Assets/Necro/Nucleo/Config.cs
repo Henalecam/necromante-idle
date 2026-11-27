@@ -441,6 +441,9 @@ namespace Necro.Nucleo
         public int ReiAbreSozinhoNoRecorde = 7;
         public int ReiNivelDaCoroa = 8;
         public long ReiOuro = 250;
+        public bool ForcarCegos;                         // só para testes e capturas
+        public int CegosAndar = 9, CegosInimigos = 4;     // missão dos Salões dos Cegos: sala às escuras no andar 9
+        public float OcultoVistoA = 2.5f, OcultoGolpe = 1.6f, OcultoDuracao = 9f; public long CegosOuro = 250;
         public bool ForcarCamara;                        // só para testes e capturas
         public int CamaraAndar = 7, CamaraInimigos = 9, CamaraAbreSozinhoNoRecorde = 8;   // missão da Câmara de Ossos: sala selada no andar 7, guarda um livro de feitiço
         public long CamaraOuro = 200;

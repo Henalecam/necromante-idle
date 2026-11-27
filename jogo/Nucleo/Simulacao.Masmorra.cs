@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -109,6 +109,7 @@ namespace Necro.Nucleo
                 if (w == 1 && TotalDeOndas > 1 && (_reiEsqueleto == 1 || (Cfg.ForcarReiEsqueleto && _reiEsqueleto != 3)) && Andar == Cfg.ReiAndar) Salas.Add(TipoSala.TumbaDoRei);   // missão do Rei Esqueleto: a tumba do andar 3
                 if (w == 1 && TotalDeOndas > 1 && (_fonte == 1 || (Cfg.ForcarFonte && _fonte != 3)) && Andar == Cfg.FonteAndar) Salas.Add(TipoSala.FonteEnvenenada);   // missão da Fonte Envenenada
                 if (w == 1 && TotalDeOndas > 1 && (_camara == 1 || (Cfg.ForcarCamara && _camara != 3)) && Andar == Cfg.CamaraAndar) Salas.Add(TipoSala.CamaraDeOssos);   // missão da Câmara de Ossos
+                if (w == 1 && TotalDeOndas > 1 && (_cegos == 1 || (Cfg.ForcarCegos && _cegos != 3)) && Andar == Cfg.CegosAndar) Salas.Add(TipoSala.SaloesDosCegos);   // missão dos Salões dos Cegos
                 bool forcar = Cfg.ForcarCofre && !temCofre && w < TotalDeOndas;   // só para testes
                 bool forcarTipo = Cfg.ForcarSalaEspecial > 0 && w == 1 && TotalDeOndas > 1;   // só para testes e capturas
                 if (forcar || forcarTipo || (w < TotalDeOndas && Andar >= Cfg.SalasEspeciaisAPartirDoAndar && _rngMasmorra.Chance(Cfg.ChanceDeSalaEspecial)))
@@ -341,6 +342,16 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDosCegos)
+                {
+                    _lutaDosCegos = false; _cegos = 3; Resultado.CegosVencidos = true; Resultado.Ouro += Cfg.CegosOuro;
+                    var olho = Unicos.Gerar(_rngItens, Cfg, Math.Max(Andar, Cfg.CegosAndar), Unicos.Obter(11));
+                    Resultado.Itens.Add(olho);
+                    Emitir(new EventoSim { Tipo = TipoEvento.ItemCaiu, Origem = -1, Alvo = Resultado.Itens.Count - 1, Pos = PosDoObjeto, Extra = (int)olho.Raridade, Valor = olho.Nivel });
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.SaloesDosCegos, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDaCamara)
                 {
                     _lutaDaCamara = false; _camara = 3; Resultado.CamaraVencida = true; Resultado.Ouro += Cfg.CamaraOuro;
@@ -415,6 +426,7 @@ namespace Necro.Nucleo
             if (t == TipoSala.Emboscada) { IniciarEmboscada(false); return; }
             if (t == TipoSala.FossoDeMonstros) { IniciarFosso(); return; }
             if (t == TipoSala.FonteEnvenenada) { IniciarFonteEnvenenada(); return; }
+            if (t == TipoSala.SaloesDosCegos) { IniciarSaloesDosCegos(); return; }
             Fase = FaseExpedicao.Explorando;
             _temporizadorDeFase = _viagem + (t == TipoSala.Vazia ? Cfg.TempoDeSalaVazia : Cfg.TempoDeSalaEspecial);
         }
@@ -440,6 +452,16 @@ namespace Necro.Nucleo
             for (int k = 0; k < Cfg.FonteInimigos; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 2 ? EspecieId.Carnical : EspecieId.Zumbi, Elite = k == 0, Mods = k == 0 ? SortearModificadores() : ModificadorElite.Nenhum, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 3 });
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 44, Alvo = -1, Origem = -1, Valor = Cfg.FonteInimigos, Pos = Necromante.Pos });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>Os Salões dos Cegos (Diablo 1, "Halls of the Blind"): sala às escuras onde os Ocultos só se mostram quando já estão em cima do grupo.</summary>
+        private void IniciarSaloesDosCegos()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDosCegos = true;
+            for (int k = 0; k < Cfg.CegosInimigos; k++)
+                _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.Aparicao, Oculto = true, Portal = k % 3, TickDeSpawn = TickAtual + 1 + k * 4 });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 47, Alvo = -1, Origem = -1, Valor = Cfg.CegosInimigos, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
         }
 

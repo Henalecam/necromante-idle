@@ -1212,7 +1212,7 @@ namespace Necro.Testes
                 while (!s2.Encerrada && guarda++ < 1500) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 16) aparou2 = true; }
                 Afirmar(!aparou2, "com as habilidades desligadas ninguém deveria aparar");
                 var pz = ProgressoCom(EspecieId.Zumbi);
-                var sz = new Simulacao(Cfg, pz, 4, ModoExpedicao.Avancar, 9); bool miasma = false; guarda = 0;
+                var sz = new Simulacao(new ConfigJogo { MissoesDeCenario = false }, pz, 4, ModoExpedicao.Avancar, 9); bool miasma = false; guarda = 0;
                 while (!sz.Encerrada && guarda++ < 6000 && !miasma) { sz.Tick(); foreach (var ev in sz.Eventos) if (ev.Tipo == TipoEvento.Explosao && ev.TipoDano == TipoDano.Veneno) miasma = true; }
                 Afirmar(miasma, "o zumbi deveria soltar miasma ao morrer");
             });
@@ -1918,6 +1918,33 @@ namespace Necro.Testes
                 Progressao.AplicarResultado(p, s3.Resultado, c);
                 Afirmar(p.MissaoCamara == 3 && (Grimorio.Nivel(p, FeiticoId.Golem) + Grimorio.Nivel(p, FeiticoId.MuralhaDeFogo) + Grimorio.Nivel(p, FeiticoId.RelampagoEmCadeia) >= 1 || p.LivrosGuardados[(int)FeiticoId.Golem] + p.LivrosGuardados[(int)FeiticoId.MuralhaDeFogo] + p.LivrosGuardados[(int)FeiticoId.RelampagoEmCadeia] >= 1), "missão cumprida e o feitiço novo aprendido (ou guardado à espera de Magia)");
                 Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
+            });
+
+            Teste("missão dos Salões dos Cegos: Ocultos invisíveis de longe, golpe de emboscada, todos acabam revelados; vencida, dá o Olho Óptico, que tira a emboscada", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarCegos = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 45; p.PoderNecromantico = 600f; foreach (var m in p.Minions) m.Nivel = 18;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.CegosAndar) { LimiteDeAndares = 1 }; int g = 0, nasceram = 0, revelados = 0; bool ev47 = false, viuOculto = false;
+                while (!s.Encerrada && g++ < 60000)
+                {
+                    s.Tick();
+                    foreach (var ev in s.Eventos) { if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 47) ev47 = true; if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 46) nasceram++; if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 45) revelados++; }
+                    if (!viuOculto) viuOculto = s.Entidades.Exists(e => e.Viva && e.Oculto);
+                }
+                Console.WriteLine("        (ocultos: " + nasceram + " nasceram, " + revelados + " revelados)");
+                Afirmar(s.Salas.Contains(TipoSala.SaloesDosCegos) && ev47 && viuOculto && nasceram == c.CegosInimigos && revelados == nasceram, "a sala existe, os Ocultos nascem invisíveis e todos acabam revelados (" + nasceram + "/" + revelados + ")");
+                Afirmar(s.Resultado.CegosVencidos && s.Resultado.Itens.Exists(it => it.UnicoId == 11), "vencida, a sala larga o Olho Óptico");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoCegos == 3 && !new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CegosAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.SaloesDosCegos), "missão cumprida e a sala não volta");
+                // de longe ninguém mira o Oculto; de perto, sim; e o golpe de emboscada é mais forte, menos para quem veste o Olho
+                var q = ProgressoCom(EspecieId.Esqueleto); var t = new Simulacao(c, q, 3, ModoExpedicao.Avancar, 2);
+                var oc = t.CriarInimigo(EspecieId.Aparicao, new Vec2(15f, 6f)); oc.Oculto = true; oc.OcultoAte = 999f;
+                var mn = t.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Esqueleto); mn.Pos = new Vec2(4f, 6f);
+                Afirmar(t.AlvoMaisProximoParaTeste(mn) != oc, "de longe o minion não enxerga o Oculto");
+                mn.Pos = new Vec2(13.5f, 6f);
+                Afirmar(t.AlvoMaisProximoParaTeste(mn) == oc, "a 1,5 de distância, enxerga");
+                float d0 = t.CausarDano(null, oc, 5f, TipoDano.Fisico, false);
+                Afirmar(d0 > 0f && !oc.Oculto && t.Resultado.OcultosRevelados == 1, "ferido, o Oculto se revela");
             });
 
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>

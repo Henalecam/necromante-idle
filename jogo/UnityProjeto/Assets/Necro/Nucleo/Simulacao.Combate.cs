@@ -17,6 +17,7 @@ namespace Necro.Nucleo
         public float CausarDano(Entidade atacante, Entidade alvo, float danoBase, TipoDano tipo, bool golpe)
         {
             if (alvo == null || !alvo.Viva || danoBase <= 0f) return 0f;
+            if (alvo.Oculto) Revelar(alvo);
             // Cavaleiro Negro erguido — Couraça: sente menos o golpe físico
             if (tipo == TipoDano.Fisico && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.CavaleiroNegro && Cfg.HabilidadesDeEspecie) danoBase *= 1f - Cfg.CouracaDoCavaleiro;
             if (alvo.Imune != 0 && (alvo.Imune & (1 << (int)tipo)) != 0)

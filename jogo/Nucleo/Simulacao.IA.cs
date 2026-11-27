@@ -10,6 +10,9 @@ namespace Necro.Nucleo
         }
 
         /// <summary>Hostil vivo mais próximo de "referencia". filtro2 = raio² em volta do necromante (posturas).</summary>
+        /// <summary>Só para testes: o alvo que esta entidade escolheria agora.</summary>
+        public Entidade AlvoMaisProximoParaTeste(Entidade e) { return HostilMaisProximo(e, e.Pos, float.MaxValue); }
+
         private Entidade HostilMaisProximo(Entidade e, Vec2 referencia, float filtro2)
         {
             if (MarcadoId >= 0 && e.Faccao == Faccao.Minion)
@@ -24,6 +27,7 @@ namespace Necro.Nucleo
             {
                 var o = Entidades[i];
                 if (!o.Viva || !Hostil(e, o)) continue;
+                if (o.Oculto && Vec2.Dist2(o.Pos, e.Pos) > Cfg.OcultoVistoA * Cfg.OcultoVistoA) continue;   // Oculto: ninguém o enxerga de longe
                 if (filtro2 < float.MaxValue && Vec2.Dist2(o.Pos, Necromante.Pos) > filtro2) continue;
                 float d = Vec2.Dist2(o.Pos, referencia);
                 if (d < melhorD) { melhorD = d; melhor = o; }
@@ -138,6 +142,7 @@ namespace Necro.Nucleo
                     }
                 }
             }
+            if (e.Oculto && TickAtual * DT >= e.OcultoAte) Revelar(e);
             if (e.Especie == EspecieId.Magistrado && TickAtual * DT >= e.TeleporteAte)
             {
                 var encostado = HostilMaisProximo(e, e.Pos, Cfg.TeleporteDist * Cfg.TeleporteDist);
@@ -161,6 +166,14 @@ namespace Necro.Nucleo
                 }
             }
             return false;
+        }
+
+        /// <summary>Um Oculto se mostra (atacou, foi ferido ou o tempo dele acabou).</summary>
+        private void Revelar(Entidade e)
+        {
+            if (!e.Oculto) return;
+            e.Oculto = false; Resultado.OcultosRevelados++;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 45, Alvo = e.Id, Origem = -1, Pos = e.Pos });
         }
 
         /// <summary>Teleporte do Magistrado: some de um ponto e aparece no outro (evento 42: Pos = de onde, Dir = deslocamento).</summary>
@@ -203,6 +216,7 @@ namespace Necro.Nucleo
 
         private void Atacar(Entidade e, Entidade alvo, float multiplicador)
         {
+            if (e.Oculto) { if (!Bonus.Unico[11]) multiplicador *= Cfg.OcultoGolpe; Revelar(e); }   // o golpe que sai do escuro
             e.Recarga = 1f / (e.VelAtaque * (e.SedeTempo > 0f ? 1f + Cfg.SedeBonus : 1f));
             e.TempoAcao = Math.Min(0.3f, 0.5f / e.VelAtaque);
             e.Animacao = EstadoAnimacao.Atacando;

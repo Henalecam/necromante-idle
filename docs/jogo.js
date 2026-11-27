@@ -446,6 +446,9 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && v[14] === '47') { aviso('Os Salões dos Cegos · eles só aparecem quando já estão em cima de você'); anotar('Você entrou nos <b>Salões dos Cegos</b>: os Ocultos atacam do escuro.'); som('chefe'); ocultos.clear(); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '46') { ocultos.add(+v[3]); return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '45') { if (ocultos.delete(+v[3])) { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: 'Oculto!', cor: '#c9a0ff', t: 1, amigo: false }); g.flash = 0.2; } } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '44') { aviso('A Fonte Envenenada · os mortos apodrecem a água da vila'); anotar('Você achou a <b>Fonte Envenenada</b>: limpe a sala para a água voltar a correr.'); som('chefe'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '43') {
     tremor = Math.max(tremor, 0.6); clarao = Math.max(clarao, 0.45); som('chefe'); apocFx.push({ p: [+v[10] + so[0], +v[11] + so[1]], r: +v[4] || 4.5, t: performance.now() }); if (apocFx.length > 4) apocFx.shift();
@@ -722,7 +725,7 @@ function atualizarLicao() {
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
-const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal'], ['🜏', 'Porta do Açougueiro'], ['♚', 'Tumba do Rei'], ['♒', 'Fonte envenenada'], ['☗', 'Câmara de Ossos']];
+const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal'], ['🜏', 'Porta do Açougueiro'], ['♚', 'Tumba do Rei'], ['♒', 'Fonte envenenada'], ['☗', 'Câmara de Ossos'], ['◉', 'Salões dos Cegos']];
 let chaveCofre = [-1, false];
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
@@ -747,6 +750,7 @@ let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebr
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
 let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [];
+const ocultos = new Set();
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -830,6 +834,7 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 13) { if (sub === 1) { aviso('Cofre aberto! +' + fmt(Math.round(val)) + ' Ossos e um item'); anotar(`<b style="color:#ffd84a">Cofre aberto</b> com a chave: +${fmt(Math.round(val))} Ossos e um item.`); brilho('#ffd84a', 60); clarao = 0.5; } else { if (objeto) objeto.aberto = 0; aviso('Cofre trancado: a chave estava em outra sala'); anotar('O cofre estava trancado. A chave ficava com os inimigos de outra sala: toque nela antes para mudar a rota.'); } }
   else if (ts === 12) { if (sub === 1) { aviso('Armadilha desarmada · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Armadilha desarmada por você: +${fmt(Math.round(val))} Ossos.`); } else { aviso('Armadilha! Todos sangram'); tremor = 0.25; anotar(`Armadilha de espinhos: todos perderam ${Math.round(val * 100)}% da vida. Tocando nela antes, você a desarma.`); } }
   else if (ts === 18) { aviso('Sala de tortura · +' + Math.round(val) + ' Sangue'); anotar(`Sala de tortura: o necromante colheu ${Math.round(val)} de Sangue${toque ? ' (um a mais pelo seu toque)' : ''}.`); brilho('#c8323c', 30); for (let i = 0; i < 6; i++) mancha(x + rnd(-1, 1), y + rnd(-0.6, 0.6), 7, 3); }
+  else if (ts === 24) { aviso('Os Salões dos Cegos caíram · o Olho Óptico é seu'); anotar('<b style="color:#ffcf5a">Missão cumprida: os Salões dos Cegos.</b> O amuleto Olho Óptico foi para o inventário.'); brilho('#c9a0ff', 50); clarao = 0.4; ocultos.clear(); }
   else if (ts === 23) { if (val < 0) { aviso('A Câmara de Ossos ficou selada'); anotar('Você deixou a Câmara de Ossos selada. Ela continua no mesmo andar.'); } else { aviso('A Câmara de Ossos caiu · o livro é seu'); anotar('<b style="color:#ffcf5a">Missão cumprida: a Câmara de Ossos.</b> O livro que ela guardava é seu.'); brilho('#e6e0d0', 50); clarao = 0.4; } }
   else if (ts === 22) { aviso('A fonte corre limpa de novo · poções mais baratas'); anotar('<b style="color:#ffcf5a">Missão cumprida: a Fonte Envenenada está limpa.</b> A Curandeira agradece com poções mais baratas até o fim desta vida.'); brilho('#7fd8ff', 50); clarao = 0.4; }
   else if (ts === 21) { if (val < 0) { aviso('A tumba do Rei ficou fechada'); anotar('Você deixou a tumba do Rei Esqueleto fechada. Ele espera no andar 3.'); } else { aviso('O Rei Esqueleto caiu · Coroa do Rei Morto'); anotar('<b style="color:#ffcf5a">Missão cumprida: o Rei Esqueleto voltou ao pó.</b> A Coroa do Rei Morto é sua.'); som('chefe'); clarao = 0.6; } }
@@ -1281,6 +1286,10 @@ function desenhar(dt) {
       ctx.restore(); ctx.lineWidth = 1;
     }
   }
+  if (masm.tipos && masm.tipos[masm.sala] === 24 && masm.fase === 'EmOnda' && necro) {     // Salões dos Cegos: a sala fica às escuras, só um círculo de luz em volta do necromante
+    const [lx, ly] = naTela(necro.rx, necro.ry), rl = 170 * reforco, gE = ctx.createRadialGradient(lx, ly - 30 * reforco, rl * 0.5, lx, ly - 30 * reforco, rl * 1.6);
+    gE.addColorStop(0, 'rgba(0,0,0,0)'); gE.addColorStop(1, 'rgba(0,0,6,0.76)'); ctx.fillStyle = gE; ctx.fillRect(lx - 6000, ly - 6000, 12000, 12000);
+  }
   if (apocFx.length) {      // Apocalipse: anel de fogo que se abre no chão até o raio do golpe
     const agoraA = performance.now(); apocFx = apocFx.filter((a) => agoraA - a.t < 800);
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round';
@@ -1379,6 +1388,7 @@ function desenhar(dt) {
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
     const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.55, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.25, '120,230,170', 0.3] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
+    const ocultoA = !morto && ocultos.has(s.id); if (ocultoA) { ctx.save(); ctx.globalAlpha = 0.13 + 0.05 * Math.sin(performance.now() / 300 + s.id); }
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
     if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, reforco, s, 1);
     else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, reforco, s, 1);
@@ -1394,6 +1404,7 @@ function desenhar(dt) {
       tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${COR_MORTE[s.cond]},0.45)`; tctx.fillRect(0, 0, m.W, m.H);
       ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
+    if (ocultoA) ctx.restore();
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 1, px, py, e, s.id);
     if (!morto && s.flash > 0 && s.especie === 'Lazarus') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharLazarus(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
     else if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
@@ -1790,6 +1801,7 @@ function atualizarPainel(forcar) {
     // o Ancião: uma dica sobre o que vem pela frente
     { const prox = (d.recorde || 0) + 1, tm = TEMAS_ANDAR[temaDoAndar(prox)], dicas = [`O andar ${prox} fica em <b>${tm[0]}</b>: ${tm[4]}.`];
       if (d.acougueiro === 1) dicas.push('O <b>Açougueiro</b> ainda espera atrás da porta do andar 2. Volte forte: ele larga o Cutelo.');
+      if (d.cegos === 1) dicas.push('Os <b>Salões dos Cegos</b> esperam no andar ' + d.cegosAndar + '. Lá os inimigos atacam do escuro: o primeiro golpe deles dói mais.');
       if (d.camara === 1) dicas.push('A <b>Câmara de Ossos</b> continua selada no andar ' + d.camaraAndar + '. Lá dentro há um livro de feitiço garantido.');
       if (d.rei === 1) dicas.push('O <b>Rei Esqueleto</b> dorme na tumba do andar 3. Mate o Rei antes dos esqueletos que ele ergue.');
       const faltam = d.unicos.filter((u) => !u.achado).length; if (faltam) dicas.push(`Ainda há ${faltam} itens Únicos que você não achou. Pesadelo e Inferno guardam os melhores.`);
@@ -1839,7 +1851,8 @@ function atualizarPainel(forcar) {
     if (masm.amb) h += `<div class="linha"><div class="corpo">Ambiente: ${AMBIENTES[masm.amb][0]}<small>${AMBIENTES[masm.amb][1]}</small></div></div>`;
     if (masm.bencao) h += `<div class="linha"><div class="corpo">Santuário ativo<small>${BENCAOS[masm.bencao]} · até o fim do andar</small></div></div>`;
     santuariosVistos |= d.santuarios;
-    if (d.rei === 1 || d.rei === 3 || d.acougueiro === 1 || d.acougueiro === 3 || d.fonte === 1 || d.fonte === 3 || d.camara === 1 || d.camara === 3) h += `<h3>Missões deste save</h3>`;
+    if (d.rei === 1 || d.rei === 3 || d.acougueiro === 1 || d.acougueiro === 3 || d.fonte === 1 || d.fonte === 3 || d.camara === 1 || d.camara === 3 || d.cegos === 1 || d.cegos === 3) h += `<h3>Missões deste save</h3>`;
+    if (d.cegos === 1 || d.cegos === 3) h += `<div class="linha"><div class="corpo">${d.cegos === 3 ? '<b style="color:#8fd89f">Os Salões dos Cegos · cumprida</b>' : '<b style="color:#ffcf5a">Os Salões dos Cegos</b>'}<small>${d.cegos === 3 ? 'Os Ocultos caíram. O amuleto Olho Óptico é seu.' : 'Andar ' + d.cegosAndar + ': uma sala às escuras onde os Ocultos só aparecem em cima do grupo. Recompensa: o amuleto Olho Óptico.'}</small></div></div>`;
     if (d.camara === 1 || d.camara === 3) h += `<div class="linha"><div class="corpo">${d.camara === 3 ? '<b style="color:#8fd89f">A Câmara de Ossos · cumprida</b>' : '<b style="color:#ffcf5a">A Câmara de Ossos</b>'}<small>${d.camara === 3 ? 'O selo foi rompido e o livro é seu.' : 'Andar ' + d.camaraAndar + ', atrás de um selo: esqueletos guardam um livro de feitiço garantido.'}</small></div></div>`;
     if (d.fonte === 1 || d.fonte === 3) h += `<div class="linha"><div class="corpo">${d.fonte === 3 ? '<b style="color:#8fd89f">A Fonte Envenenada · cumprida</b>' : '<b style="color:#ffcf5a">A Fonte Envenenada</b>'}<small>${d.fonte === 3 ? 'A água voltou a correr limpa. A Curandeira vende poções ' + d.fonteDesc + '% mais baratas até o fim desta vida.' : 'Andar ' + d.fonteAndar + ': mortos apodrecem a nascente da vila. Limpe a sala e a Curandeira passa a vender poções ' + d.fonteDesc + '% mais baratas.'}</small></div></div>`;
     if (d.rei === 1 || d.rei === 3) h += `<div class="linha"><div class="corpo">${d.rei === 3 ? '<b style="color:#8fd89f">O Rei Esqueleto · cumprida</b>' : '<b style="color:#ffcf5a">O Rei Esqueleto</b>'}<small>${d.rei === 3 ? 'De volta ao pó. A Coroa do Rei Morto é sua.' : 'Andar 3, numa tumba selada. Ergue esqueletos enquanto vive. Recompensa: a Coroa do Rei Morto.'}</small></div></div>`;

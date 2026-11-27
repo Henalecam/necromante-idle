@@ -22,6 +22,7 @@ namespace Necro.Nucleo
             new DadosUnico { Id = 8, Efeito = "Poções de vida e de mana rendem 60% a mais.", Nome = "Botas do Peregrino Enforcado", Tipo = TipoItem.Botas, Afixos = new[] { AfixoItem.Vida, AfixoItem.ResFogo, AfixoItem.ResGelo, AfixoItem.ResRaio }, DificuldadeMinima = 1, Lenda = "Só no Pesadelo ou no Inferno." },
             new DadosUnico { Id = 9, Efeito = "O Golem tem 60% a mais de vida e dura o dobro.", Nome = "Amuleto do Senhor do Terror", Tipo = TipoItem.Amuleto, Afixos = new[] { AfixoItem.Comando, AfixoItem.DanoDosMinions, AfixoItem.VidaDosMinions, AfixoItem.PoderNecromantico }, DificuldadeMinima = 2, Lenda = "Só no Inferno." },
             new DadosUnico { Id = 10, Efeito = "Matar um elite, Campeão, Único ou chefe cura todos os minions em 25%.", Nome = "Relicário das Almas Presas", Tipo = TipoItem.Relicario, Afixos = new[] { AfixoItem.ChanceDeAlma, AfixoItem.Mana, AfixoItem.RouboDeVidaDosMinions, AfixoItem.Armadura }, DificuldadeMinima = 2, Lenda = "Só no Inferno." },
+            new DadosUnico { Id = 11, Efeito = "Os Ocultos perdem o golpe de emboscada contra o seu exército.", Nome = "Olho Óptico", Tipo = TipoItem.Amuleto, Afixos = new[] { AfixoItem.ChanceCritico, AfixoItem.ResRaio, AfixoItem.Mana }, SoDeMissao = true, Lenda = "Achado nos Salões dos Cegos, no andar 9." },
         };
 
         public static DadosUnico Obter(int id) { for (int i = 0; i < Todos.Length; i++) if (Todos[i].Id == id) return Todos[i]; return null; }
