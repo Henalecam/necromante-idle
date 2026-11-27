@@ -575,7 +575,28 @@ namespace Necro.Testes
                 Afirmar(ExecutorSemTela.RodarExpedicao(c, semP, 3, ModoExpedicao.Avancar, 12, 5).Motivo == MotivoFim.NecromanteMorreu, "sem pergaminho, a derrota é derrota");
             });
 
-            Teste("Árvore de Ascensão: 5 ramos de 8 nós em ordem, Cinzas e depois Selos, nós dão bônus, o final muda mecânica, e tudo atravessa a Ascensão", () =>
+Teste("requisito de atributo (Diablo 1): item pede Força/Magia/Destreza pelo tipo, nível e raridade; sem o atributo não é vestido, e os pontos automáticos destravam o melhor item guardado", () =>
+            {
+                var c = new ConfigJogo();
+                var p = Progressao.NovoJogo(c);
+                var foice = new Item { Tipo = TipoItem.Foice, Raridade = RaridadeItem.Raro, Nivel = 13, Nome = "Foice de teste", Implicito = new AfixoRolado { Afixo = AfixoItem.DanoDosMinions, Valor = 0.5f } };
+                int req = Requisitos.Valor(foice, c);
+                Afirmar(Requisitos.AtributoDe(TipoItem.Foice) == Atributo.Forca && Requisitos.AtributoDe(TipoItem.Grimorio) == Atributo.Magia && Requisitos.AtributoDe(TipoItem.Botas) == Atributo.Destreza, "atributo pelo tipo da peça");
+                Afirmar(req == (int)Math.Round((13 - c.RequisitoNivelLivre) * c.RequisitoPorNivel * (1f + c.RequisitoPorRaridade * 2)) && req > 0, "valor pelo nível e raridade: " + req);
+                Afirmar(Requisitos.Valor(new Item { Tipo = TipoItem.Foice, Nivel = c.RequisitoNivelLivre }, c) == 0, "itens dos primeiros andares não pedem nada");
+                p.Inventario.Add(foice);
+                Afirmar(!Requisitos.Atende(p, foice, c) && Requisitos.Falta(p, foice, c) == req && Equipamento.AutoEquipar(p, c) == 0 && Equipamento.Obter(p, EspacoEquipamento.Arma) == null, "sem Força, o equipar automático não veste");
+                p.NivelNecromante = 1 + (req + 4) / c.PontosDeAtributoPorNivel + 1;   // pontos livres suficientes
+                Atributos.AutoDistribuir(p, c);
+                Afirmar(Atributos.Valor(p, Atributo.Forca) >= req && Atributos.Livres(p, c) == 0, "os pontos automáticos vão primeiro para a Força que destrava a foice: " + Atributos.Valor(p, Atributo.Forca));
+                Afirmar(Equipamento.AutoEquipar(p, c) == 1 && ReferenceEquals(Equipamento.Obter(p, EspacoEquipamento.Arma), foice), "com o atributo, veste");
+                Atributos.Zerar(p);
+                Afirmar(ReferenceEquals(Equipamento.Obter(p, EspacoEquipamento.Arma), foice) && Equipamento.CalcularBonus(p, c).DanoDosMinions > 0f, "o que já está vestido continua valendo");
+                var c0 = new ConfigJogo { RequisitoDeAtributo = false };
+                Afirmar(Requisitos.Valor(foice, c0) == 0, "desligado, nada pede atributo");
+            });
+
+                        Teste("Árvore de Ascensão: 5 ramos de 8 nós em ordem, Cinzas e depois Selos, nós dão bônus, o final muda mecânica, e tudo atravessa a Ascensão", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false };
                 var p = Progressao.NovoJogo(c);

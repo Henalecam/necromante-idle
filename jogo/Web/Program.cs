@@ -295,12 +295,12 @@ public static partial class Jogo
         if (it.NaoIdentificado)
         {
             // fechado: só o tipo, a raridade e o nível aparecem; nome e propriedades só depois de identificar
-            sb.Append("{\"nome\":").Append(S("Não identificado")).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":0,\"tipo\":").Append((int)it.Tipo)
+            sb.Append("{\"req\":[").Append((int)Requisitos.AtributoDe(it.Tipo)).Append(',').Append(Requisitos.Valor(it, _cfg)).Append(',').Append(Atributos.Valor(_p, Requisitos.AtributoDe(it.Tipo))).Append("],\"nome\":").Append(S("Não identificado")).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":0,\"tipo\":").Append((int)it.Tipo)
               .Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg))
               .Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"nid\":true,\"custoId\":").Append(Ferreiro.CustoDeIdentificar(it, _cfg)).Append(",\"afixos\":[]}");
             return;
         }
-        sb.Append("{\"nome\":").Append(S((it.UnicoId > 0 ? "★ " : "") + (it.Melhoria > 0 ? it.Nome + " +" + it.Melhoria : it.Nome))).Append(",\"mel\":").Append(it.Melhoria).Append(",\"custoMel\":").Append(Ferreiro.CustoDeMelhorar(it, _cfg)).Append(",\"custoImb\":").Append(Ferreiro.CustoDeImbuir(it, _cfg)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"afixos\":[");
+        sb.Append("{\"req\":[").Append((int)Requisitos.AtributoDe(it.Tipo)).Append(',').Append(Requisitos.Valor(it, _cfg)).Append(',').Append(Atributos.Valor(_p, Requisitos.AtributoDe(it.Tipo))).Append("],\"nome\":").Append(S((it.UnicoId > 0 ? "★ " : "") + (it.Melhoria > 0 ? it.Nome + " +" + it.Melhoria : it.Nome))).Append(",\"mel\":").Append(it.Melhoria).Append(",\"custoMel\":").Append(Ferreiro.CustoDeMelhorar(it, _cfg)).Append(",\"custoImb\":").Append(Ferreiro.CustoDeImbuir(it, _cfg)).Append(",\"trava\":").Append(B(it.Bloqueado)).Append(",\"ouro\":").Append(Ferreiro.PrecoDeVenda(it, _cfg)).Append(",\"poder\":").Append(Poder.DoItem(it, _cfg)).Append(",\"tipo\":").Append((int)it.Tipo).Append(",\"w\":").Append(tw).Append(",\"h\":").Append(th).Append(",\"r\":").Append((int)it.Raridade).Append(",\"nivel\":").Append(it.Nivel).Append(",\"ess\":").Append(Equipamento.ValorEmEssencia(it, _cfg)).Append(",\"dur\":").Append(Ferreiro.DurabilidadeAtual(it, _cfg)).Append(",\"durMax\":").Append(Ferreiro.DurabilidadeMax(it, _cfg)).Append(",\"reparo\":").Append(Ferreiro.CustoDeReparo(it, _cfg)).Append(",\"afixos\":[");
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
@@ -517,7 +517,7 @@ public static partial class Jogo
     [JSExport]
     public static void Equipar(int i)
     {
-        if (i < 0 || i >= _p.Inventario.Count || _p.Inventario[i] == null || _p.Inventario[i].NaoIdentificado) return;
+        if (i < 0 || i >= _p.Inventario.Count || _p.Inventario[i] == null || _p.Inventario[i].NaoIdentificado || !Requisitos.Atende(_p, _p.Inventario[i], _cfg)) return;
         var it = _p.Inventario[i]; _p.Inventario.RemoveAt(i);
         var saiu = Equipamento.Equipar(_p, it);
         if (!Equipamento.Vazio(saiu)) _p.Inventario.Add(saiu);

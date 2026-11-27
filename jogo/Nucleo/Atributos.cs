@@ -30,7 +30,26 @@ namespace Necro.Nucleo
         /// <summary>Distribui os pontos livres por igual, sempre no atributo mais baixo (o jogo é idle: ninguém precisa voltar só para isso).</summary>
         public static int AutoDistribuir(EstadoProgresso p, ConfigJogo cfg)
         {
+            Garantir(p);
             int n = 0, livres = Livres(p, cfg);
+            // primeiro o que destrava o melhor item guardado que ainda não dá para vestir (se os pontos livres bastarem)
+            int guarda = 0;
+            while (livres > 0 && cfg.RequisitoDeAtributo && guarda++ < 12)
+            {
+                Item melhor = null; float ganho = 0f;
+                for (int i = 0; i < p.Inventario.Count; i++)
+                {
+                    var it = p.Inventario[i];
+                    if (Equipamento.Vazio(it) || it.NaoIdentificado) continue;
+                    int falta = Requisitos.Falta(p, it, cfg); if (falta <= 0 || falta > livres) continue;
+                    var esp = TabelaItens.EspacoDoTipo(it.Tipo); float atual = Equipamento.Pontuacao(Equipamento.Obter(p, esp), cfg);
+                    if (esp == EspacoEquipamento.Anel1) atual = Math.Min(atual, Equipamento.Pontuacao(Equipamento.Obter(p, EspacoEquipamento.Anel2), cfg));
+                    float g = Equipamento.Pontuacao(it, cfg) - atual;
+                    if (g > ganho) { ganho = g; melhor = it; }
+                }
+                if (melhor == null) break;
+                int f = Requisitos.Falta(p, melhor, cfg); p.Atributos[(int)Requisitos.AtributoDe(melhor.Tipo)] += f; livres -= f; n += f;
+            }
             while (livres-- > 0)
             {
                 int menor = 0; for (int i = 1; i < Quantos; i++) if (p.Atributos[i] < p.Atributos[menor]) menor = i;

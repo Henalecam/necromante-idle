@@ -420,7 +420,7 @@ namespace Necro.Nucleo
                 for (int i = 0; i < p.Inventario.Count; i++)
                 {
                     var item = p.Inventario[i];
-                    if (Vazio(item) || item.NaoIdentificado) continue;
+                    if (Vazio(item) || item.NaoIdentificado || !Requisitos.Atende(p, item, cfg)) continue;
                     var espaco = TabelaItens.EspacoDoTipo(item.Tipo);
                     if (espaco == EspacoEquipamento.Anel1
                         && Pontuacao(Obter(p, EspacoEquipamento.Anel2), cfg) < Pontuacao(Obter(p, EspacoEquipamento.Anel1), cfg))
