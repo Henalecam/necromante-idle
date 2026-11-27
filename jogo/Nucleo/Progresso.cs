@@ -110,7 +110,7 @@ namespace Necro.Nucleo
         // ---- Ascensão ----
         public int Ascensoes;
         public long Cinzas;
-        public int[] ArvoreDeAscensao = new int[4];   // nós comprados em cada ramo da Árvore (Invocador, Ossos, Sangue, Pragas)
+        public int[] ArvoreDeAscensao = new int[5];   // nós comprados em cada ramo da Árvore (Invocador, Ossos, Sangue, Pragas, Herança)
         public int SelosDoAbismo, SelosGanhos;       // segundo recurso da Ascensão: chefes vencidos no Pesadelo e no Inferno
         public long CinzasGanhas;
         /// <summary>Nível de cada Legado (0 Ossos, 1 Sangue, 2 Sombras).</summary>
@@ -394,7 +394,7 @@ namespace Necro.Nucleo
             Missoes.RegistrarExpedicao(p, r, cfg);
             Dificuldades.Registrar(p, r, cfg);
             Bestiario.Registrar(p, r);
-            p.Ossos += (long)Math.Round(r.Ossos * (double)cfg.DificuldadeOssos[r.Dificuldade] * (double)(Necropole.MultOssos(p, cfg) + Talentos.Total(p, EfeitoDeTalento.Ossos, cfg) + Oferendas.Total(p, EfeitoDeTalento.Ossos, cfg) + Ascensao.Valor(p, 0, cfg)));
+            p.Ossos += (long)Math.Round(r.Ossos * (double)cfg.DificuldadeOssos[r.Dificuldade] * (double)(Necropole.MultOssos(p, cfg) + Talentos.Total(p, EfeitoDeTalento.Ossos, cfg) + Oferendas.Total(p, EfeitoDeTalento.Ossos, cfg) + Ascensao.Valor(p, 0, cfg) + Arvore.Ossos(p, cfg)));
             p.Sangue += r.Sangue;
             p.SantuariosVistos |= r.SantuariosVistos;
             if (p.MissaoAcougueiro == 0 && r.AcougueiroSorteio != 0) p.MissaoAcougueiro = r.AcougueiroSorteio;
@@ -424,7 +424,8 @@ namespace Necro.Nucleo
             for (int i = 0; i < r.Itens.Count; i++) Equipamento.GuardarItem(p, r.Itens[i], cfg);
 
             // XP: o necromante recebe tudo; os minions ativos dividem igualmente.
-            p.XpNecromante += r.Xp;
+            float xpGanho = r.Xp * (1f + Arvore.Xp(p, cfg));
+            p.XpNecromante += xpGanho;
             while (p.XpNecromante >= Formulas.XpParaProximoNivelNecromante(p.NivelNecromante))
             {
                 p.XpNecromante -= Formulas.XpParaProximoNivelNecromante(p.NivelNecromante);
@@ -434,7 +435,7 @@ namespace Necro.Nucleo
             for (int i = 0; i < p.Minions.Count; i++) if (p.Minions[i].Ativo) ativos++;
             if (ativos > 0)
             {
-                float parte = r.Xp / ativos;
+                float parte = xpGanho / ativos;
                 for (int i = 0; i < p.Minions.Count; i++)
                     if (p.Minions[i].Ativo) DarXp(p.Minions[i], parte, cfg);
             }

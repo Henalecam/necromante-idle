@@ -64,7 +64,7 @@ namespace Necro.Testes
                 else if (args[i] == "--sem-oferendas") Campanha.UsarOferendas = false;
                 else if (args[i] == "--calibrar") { Console.WriteLine(Campanha.Calibrar(6, 14.0)); return 0; }
                 else if (args[i] == "--diagnostico") { Console.WriteLine(Campanha.Diagnostico(6, 8.0)); return 0; }
-                else if (args[i] == "--ascensao") { int na = i + 1 < args.Length ? int.Parse(args[i + 1]) : 6; string modo = i + 2 < args.Length ? args[i + 2] : "tudo"; Console.WriteLine("[" + modo + "]\n" + Campanha.MedirAscensao(na, 3, Campanha.ConfigComAjustes(), modo == "tudo" || modo == "arvore", modo == "tudo" || modo == "legados", i + 3 < args.Length ? int.Parse(args[i + 3]) : 1)); return 0; }
+                else if (args[i] == "--ascensao") { int na = i + 1 < args.Length ? int.Parse(args[i + 1]) : 6; string modo = i + 2 < args.Length ? args[i + 2] : "tudo"; Console.WriteLine("[" + modo + "]\n" + Campanha.MedirAscensao(na, 3, Campanha.ConfigComAjustes(), modo == "tudo" || modo == "arvore", modo == "tudo" || modo == "legados", i + 3 < args.Length ? int.Parse(args[i + 3]) : 1, modo == "tudo" || modo == "heranca")); return 0; }
                 else if (args[i] == "--dificuldades") { int nd = i + 1 < args.Length ? int.Parse(args[i + 1]) : 6; double hd = i + 2 < args.Length ? double.Parse(args[i + 2]) : 40.0; Console.WriteLine(Campanha.MedirDificuldades(nd, hd, Campanha.ConfigComAjustes())); return 0; }
                 else if (args[i] == "--campanha" || args[i] == "--metas")
                 {

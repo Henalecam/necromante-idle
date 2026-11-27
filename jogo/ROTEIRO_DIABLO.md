@@ -56,4 +56,4 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 - C2. [feito: 10 Únicos de nome e afixos fixos, tabela por dificuldade, Livro de Únicos e um efeito próprio para cada um] Itens únicos com nome e efeito próprio, por tabela de dificuldade.
 - C3. [feito: aba "Cidade" com Curandeira, Bruxa (livros), Ferreiro e Ancião (dicas e identificar)] Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
 - C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos; falta o jogador escolher os limiares] Poções e cinto: vida e mana, uso automático com regra do jogador.
-- C5. [feito: 4 ramos de 8 nós, Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
+- C5. [feito: 5 ramos de 8 nós (o quinto, Herança, acelera a vida seguinte: medido -13% na vida 2 e -22% na vida 3), Cinzas + Selos do Abismo, nó final por ramo] Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.

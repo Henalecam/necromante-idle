@@ -87,6 +87,7 @@ namespace Necro.Nucleo
             for (int i = 0; i < guardados.Count; i++) if (Equipamento.Cabe(p, guardados[i], cfg)) p.Inventario.Add(guardados[i]);
 
             p.Cinzas += cinzas; p.CinzasGanhas += cinzas; p.Ascensoes++;
+            Arvore.AplicarHeranca(p, cfg);   // o ramo Herança adianta a vida nova
             return cinzas;
         }
     }

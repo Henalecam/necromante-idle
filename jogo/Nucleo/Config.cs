@@ -358,6 +358,9 @@ namespace Necro.Nucleo
         public int ImbuirMaximoDeAfixos = 2;
         // ---- Masmorra contínua: as salas se ouvem ----
         public bool ArvoreDeAscensao = true;
+        // ramo Herança (ritmo da vida seguinte)
+        public float HerancaOssos1 = 0.60f, HerancaOssos2 = 0.50f, HerancaXp = 0.60f;
+        public int HerancaAndar1 = 3, HerancaAndar2 = 6, HerancaNivelDosMinions = 10, HerancaNivelDoNecromante = 10;
         public int CintoDoCarniceiro = 2;                 // nó final do ramo Sangue: poções a mais de cada tipo
         public float PragaMaior = 1.5f;                   // nó final do ramo Pragas: potência da Maldição da Fraqueza
         // ---- Portal da Cidade ----

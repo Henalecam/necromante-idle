@@ -36,7 +36,7 @@ namespace Necro.Nucleo
         // ---- Lendários e conjuntos ----
         public bool CeifeiroFaminto;
         public bool MaeCarnica;
-        public readonly bool[] ArvoreFinal = new bool[4];   // nós finais da Árvore de Ascensão (Invocador, Ossos, Sangue, Pragas)
+        public readonly bool[] ArvoreFinal = new bool[5];   // nós finais da Árvore de Ascensão (Invocador, Ossos, Sangue, Pragas)
         public readonly bool[] Unico = new bool[16];   // efeitos próprios dos itens Únicos vestidos (índice = UnicoId)
         public bool ReiSolitario;
         public bool LegiaoMuda;

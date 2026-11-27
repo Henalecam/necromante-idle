@@ -240,7 +240,7 @@ namespace Necro.Testes
         /// Mede a Ascensão: joga até vencer o chefe do Ato 1, ascende, gasta as Cinzas (árvore e/ou legados, em rodízio) e joga de novo.
         /// Devolve as horas de cada vida até o chefe do Ato 1 (mediana das campanhas).
         /// </summary>
-        public static string MedirAscensao(int campanhas, int vidas, ConfigJogo cfg, bool usarArvore, bool usarLegados, int ato = 1)
+        public static string MedirAscensao(int campanhas, int vidas, ConfigJogo cfg, bool usarArvore, bool usarLegados, int ato = 1, bool usarHeranca = false)
         {
             var horas = new List<double>[vidas]; var cinzas = new List<double>[vidas];
             for (int v = 0; v < vidas; v++) { horas[v] = new List<double>(); cinzas[v] = new List<double>(); }
@@ -262,13 +262,14 @@ namespace Necro.Testes
                     horas[v].Add(h);
                     long ganho = Ascensao.Ascender(p, cfg); cinzas[v].Add(ganho);
                     bool comprou = true; int rod = 0;
+                    while (usarHeranca && Arvore.Comprar(p, Arvore.Heranca, cfg)) { }
                     while (comprou)
                     {
                         comprou = false;
                         for (int k = 0; k < 7 && !comprou; k++)
                         {
                             int q = (rod + k) % 7;
-                            if (q < 4) { if (usarArvore && Arvore.Comprar(p, q)) comprou = true; }
+                            if (q < 4) { if (usarArvore && Arvore.Comprar(p, q, cfg)) comprou = true; }
                             else if (usarLegados && Ascensao.Comprar(p, q - 4, cfg)) comprou = true;
                         }
                         rod++;

@@ -181,7 +181,7 @@ public static partial class Jogo
         }
         sb.Append(']');
         sb.Append(",\"ascensao\":{\"pode\":").Append(B(Ascensao.Pode(_p))).Append(",\"renderia\":").Append(Ascensao.CinzasDestaVida(_p)).Append(",\"cinzas\":").Append(_p.Cinzas)
-          .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"selos\":").Append(_p.SelosDoAbismo).Append(",\"arvore\":[");
+          .Append(",\"vezes\":").Append(_p.Ascensoes).Append(",\"maior\":").Append(_p.MaiorAndarConcluido).Append(",\"leva\":[").Append(string.Join(",", Arvore.Resumo(_p, _cfg).ConvertAll(S))).Append("]").Append(",\"selos\":").Append(_p.SelosDoAbismo).Append(",\"arvore\":[");
         for (int ar = 0; ar < Arvore.Ramos; ar++)
         {
             int an = Arvore.Comprados(_p, ar);
@@ -407,7 +407,7 @@ public static partial class Jogo
         valor = Math.Max(0, Math.Min(2, valor));
         for (int i = 0; i < _p.PosturasDosGrupos.Length; i++) _p.PosturasDosGrupos[i] = (Postura)valor;
     }
-    [JSExport] public static bool ComprarNoDaArvore(int ramo) { return Arvore.Comprar(_p, ramo); }
+    [JSExport] public static bool ComprarNoDaArvore(int ramo) { return Arvore.Comprar(_p, ramo, _cfg); }
     [JSExport] public static bool ComprarLegado(int i) { return Ascensao.Comprar(_p, i, _cfg); }
     /// <summary>Ascende: zera a vida atual, soma as Cinzas e começa uma expedição nova. Devolve as Cinzas ganhas.</summary>
     [JSExport]

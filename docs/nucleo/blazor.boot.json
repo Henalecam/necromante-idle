@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Necro.Web.dll",
   "resources": {
-    "hash": "sha256-YSFss6/INnJeUSOJ17wGNf7Ui+cpwHu5dlBriQ2iJcI=",
+    "hash": "sha256-XcqhZdMX8COQhphZGfihm4Tqp0TsWJ8TaqOSlimFve8=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-jM5CDYGrtS2pA0oytUArKrGJ9S6Ovlw0f8d56LMfReg="
     },
@@ -9,18 +9,18 @@
       "dotnet.runtime.js": "sha256-yfeZF+44sm5Vmntzx5cJUWTQnreqOew1wNJPII7IWP4="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-TCJa0QH9fd78G+sxrFbp99Ra+POZqNAo0x5HycQyOTU="
+      "dotnet.native.wasm": "sha256-oHipvCHgdSunHbPBK7kUth7F6Q7ale6uJvo3Fv0JvDk="
     },
     "assembly": {
-      "Necro.Nucleo.wasm": "sha256-4+NJfVK6AlyrN7LFMz9FMIabAR3u/a4a80hsX1MVwWE=",
-      "Necro.Web.wasm": "sha256-yZ8Yvc1xEncP5sTTyNpZRJ7CYbtU/QD5hM5bchNHntU=",
+      "Necro.Nucleo.wasm": "sha256-K37HSZfaChRISOUVZINbVeOy57bX5PrPAqdn+/L2qK4=",
+      "Necro.Web.wasm": "sha256-ssL06I/ZDR089KH82FKnUwGuKc6aNDMCqxo23Opn3r4=",
       "netstandard.wasm": "sha256-p66Bbnm7mnS8KbruqscFRYcrqOjfqlo3rJib8EvFGBU=",
       "System.Collections.Concurrent.wasm": "sha256-vOrGmlkTElU7l6FlERYOgusSeB6teFyNv+CWwfMGEeQ=",
       "System.Collections.wasm": "sha256-iYwguHzIBS6ywV00ALR/sU2xBeALL65WFwdeaJ0RcGU=",
       "System.Memory.wasm": "sha256-uGdVV+zVKAIGODA4SyhExSAQ39tJnHQlR6zrNmRIM6w=",
-      "System.Private.CoreLib.wasm": "sha256-Q9M6Io3NXrdchUDCg/vszbylIxObnn7WDY2s04r/vn4=",
+      "System.Private.CoreLib.wasm": "sha256-8sJGAAJgiLEQDU2K4z0qKKvDPrqunfftM6WUuEwXkdo=",
       "System.Private.Uri.wasm": "sha256-vdaaXKDQrjLuAk/JYrP5/4SmLXQ20Mo/B2uZKA+3UMk=",
-      "System.Runtime.wasm": "sha256-aFZNu1UVqVlfjQF/C6eqh8Mk5tbNqfkszhlJiJqSULM=",
+      "System.Runtime.wasm": "sha256-Q8dkrgla1NWYHub/mbHnf5tXAmdN3IBIhFxZ1CsYets=",
       "System.Runtime.InteropServices.JavaScript.wasm": "sha256-BTqG+6SdvtBo0hCWCknHC4FroWiTGC6Z75+T6OPDspk=",
       "System.Text.Encodings.Web.wasm": "sha256-i/JBKaDb1tOVCV9IJN8JVgYr+48HMeyj4qtPC0dZ9zU=",
       "System.Text.Json.wasm": "sha256-0795mgxaFeYxgg43Kgd6u633bMDXyKdn3RGq7xOkzzE="

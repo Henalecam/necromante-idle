@@ -575,7 +575,7 @@ namespace Necro.Testes
                 Afirmar(ExecutorSemTela.RodarExpedicao(c, semP, 3, ModoExpedicao.Avancar, 12, 5).Motivo == MotivoFim.NecromanteMorreu, "sem pergaminho, a derrota é derrota");
             });
 
-            Teste("Árvore de Ascensão: 4 ramos de 8 nós em ordem, Cinzas e depois Selos, nós dão bônus, o final muda mecânica, e tudo atravessa a Ascensão", () =>
+            Teste("Árvore de Ascensão: 5 ramos de 8 nós em ordem, Cinzas e depois Selos, nós dão bônus, o final muda mecânica, e tudo atravessa a Ascensão", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false };
                 var p = Progressao.NovoJogo(c);
@@ -603,7 +603,20 @@ namespace Necro.Testes
                 Ascensao.Ascender(p, c);
                 Afirmar(Arvore.Final(p, 0) && Arvore.Final(p, 2) && p.SelosDoAbismo > 0, "a Árvore e os Selos atravessam a Ascensão");
                 Afirmar(Grimorio.Nivel(p, FeiticoId.LancaDeOssos) == 1 && p.PocoesDeVida == 0 && p.Dificuldade == 0, "livros lidos, cinto e dificuldade recomeçam");
-                Afirmar(Arvore.Tabela.Length == Arvore.Ramos, "quatro ramos"); foreach (var ramo in Arvore.Tabela) Afirmar(ramo.Length == Arvore.Nos && ramo[Arvore.Nos - 1].Final, "oito nós, o último é o final");
+                Afirmar(Arvore.Tabela.Length == Arvore.Ramos, "cinco ramos");
+                // Herança: mexe no ritmo da vida seguinte
+                var h = Progressao.NovoJogo(c); h.Cinzas = 1000; h.SelosDoAbismo = 50; float xp0;
+                Afirmar(Arvore.Ossos(h, c) == 0f && Arvore.AndarInicial(h, c) == 1, "sem o ramo, nada muda");
+                Afirmar(Arvore.Comprar(h, Arvore.Heranca, c) && Arvore.Xp(h, c) == c.HerancaXp, "Lições Antigas: mais experiência");
+                Afirmar(Arvore.Comprar(h, Arvore.Heranca, c) && Arvore.Ossos(h, c) == c.HerancaOssos1, "Saque Farto: mais Ossos");
+                var rh = new ResultadoExpedicao { Ossos = 1000, Xp = 10 }; long o0 = h.Ossos; xp0 = h.XpNecromante; Progressao.AplicarResultado(h, rh, c);
+                Afirmar(h.Ossos - o0 == (long)Math.Round(1000 * (1.0 + c.HerancaOssos1)) && Math.Abs(h.XpNecromante - xp0 - 10f * (1f + c.HerancaXp)) < 0.01f, "Ossos e experiência da expedição vêm multiplicados: " + (h.Ossos - o0) + " e " + (h.XpNecromante - xp0));
+                Afirmar(Arvore.Comprar(h, Arvore.Heranca, c) && Progressao.AndarDePartida(h, c) == c.HerancaAndar1, "Mapa Decorado: parte do andar " + c.HerancaAndar1 + " (deu " + Progressao.AndarDePartida(h, c) + ")");
+                Afirmar(Arvore.Comprar(h, Arvore.Heranca, c) && h.Minions[0].Nivel == c.HerancaNivelDosMinions, "Guarda de Honra: os mortos sobem de nível na hora");
+                while (Arvore.Comprar(h, Arvore.Heranca, c)) { }
+                Afirmar(Arvore.Final(h, Arvore.Heranca) && h.NivelNecromante == c.HerancaNivelDoNecromante && Grimorio.Nivel(h, FeiticoId.Golem) == 1 && Grimorio.Nivel(h, FeiticoId.LancaDeOssos) == 2, "ramo completo: nível do necromante e livros");
+                h.ChefesDerrotados.Add(1); h.MaiorAndarConcluido = 10; Ascensao.Ascender(h, c);
+                Afirmar(Progressao.AndarDePartida(h, c) == c.HerancaAndar2 && h.Minions[0].Nivel == c.HerancaNivelDosMinions && h.NivelNecromante == c.HerancaNivelDoNecromante && Grimorio.Nivel(h, FeiticoId.Golem) == 1, "ao renascer, a vida já começa adiantada"); foreach (var ramo in Arvore.Tabela) Afirmar(ramo.Length == Arvore.Nos && ramo[Arvore.Nos - 1].Final, "oito nós, o último é o final");
             });
 
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
