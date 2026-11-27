@@ -447,7 +447,7 @@ function evento(v) {
     return;
   }
   if (tipo === 'EfeitoAplicado' && v[14] === '43') {
-    tremor = Math.max(tremor, 0.6); clarao = Math.max(clarao, 0.45); som('chefe');
+    tremor = Math.max(tremor, 0.6); clarao = Math.max(clarao, 0.45); som('chefe'); apocFx.push({ p: [+v[10] + so[0], +v[11] + so[1]], r: +v[4] || 4.5, t: performance.now() }); if (apocFx.length > 4) apocFx.shift();
     vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['43']) { vistosDeEspecie['43'] = 1; aviso('Apocalipse! · o fogo de Diablo fere todos em volta dele'); }
     return;
   }
@@ -745,7 +745,7 @@ let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [];
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -837,8 +837,45 @@ function eventoDeSala(tipo, v, x, y) {
   else if (ts === 6) { aviso('Emboscada vencida · +' + fmt(Math.round(val)) + ' Ossos'); anotar(`Emboscada vencida: +${fmt(Math.round(val))} Ossos${toque ? ' e um item' : ''}.`); }
   else if (ts === 8) { aviso((NOME_SECRETO[sub] || 'Nível secreto') + ': tesouro tomado!'); anotar(`${NOME_SECRETO[sub] || 'Nível secreto'} limpo: +${fmt(Math.round(val))} Ossos, ${sub === 2 ? '3 itens (com chance de Lendário)' : '2 itens (um Raro)'} e Sangue.`); clarao = 0.6; brilho('#ffd84a', 80); }
 }
+// ---- Diablo, o Senhor do Terror: desenhado inteiro em vetor (não há sprite dele). Origem nos pés; u = pixels por unidade do desenho ----
+function desenharDiablo(px, py, u, s, alfa) {
+  const t = performance.now() / 1000, anim = String(s.anim || ''), conj = /Conjur/.test(anim), ataca = /Atac/.test(anim), anda = /And/.test(anim);
+  const resp = Math.sin(t * 2.2) * 2, passo = anda ? Math.sin(t * 9) : 0, lado = necro && necro.x > s.x ? 1 : -1, inclina = ataca ? 0.12 * Math.sin((tempoSim - (s.t || 0)) * 14) : 0;
+  const P2 = (x, y) => [px + x * u * lado, py + y * u];
+  const forma = (pts, cor, borda) => { ctx.beginPath(); pts.forEach(([x, y], k) => { const [qx, qy] = P2(x, y); if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); }); ctx.closePath(); if (cor) { ctx.fillStyle = cor; ctx.fill(); } if (borda) { ctx.strokeStyle = borda; ctx.stroke(); } };
+  const curva = (a, c, b, cor, larg) => { const [ax, ay] = P2(a[0], a[1]), [cx, cy] = P2(c[0], c[1]), [bx, by] = P2(b[0], b[1]); ctx.strokeStyle = cor; ctx.lineWidth = larg * u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(cx, cy, bx, by); ctx.stroke(); };
+  ctx.save(); ctx.globalAlpha = alfa; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = 2;
+  if (alfa >= 1) {             // sombra e brasa no chão
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(px, py, 62 * u, 24 * u, 0, 0, 7); ctx.fill();
+    const g = ctx.createRadialGradient(px, py, 4, px, py, 110 * u); g.addColorStop(0, `rgba(255,90,20,${0.30 + 0.08 * Math.sin(t * 3)})`); g.addColorStop(1, 'rgba(160,20,0,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(px, py, 110 * u, 50 * u, 0, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  }
+  const escuro = '#3a0707', medio = '#7a1410', claro = '#b02a1c', traco = '#160303';
+  curva([-14, -70], [-70, -20 + 6 * Math.sin(t * 2)], [-92, -66 + 8 * Math.sin(t * 2)], escuro, 9); forma([[-92, -82 + 8 * Math.sin(t * 2)], [-102, -62 + 8 * Math.sin(t * 2)], [-84, -62 + 8 * Math.sin(t * 2)]], escuro, traco);
+  for (let q = 0; q < 5; q++) forma([[-30 - q * 3, -150 + q * 20], [-64 - q * 2, -168 + q * 21], [-30 - q * 3, -132 + q * 20]], escuro, traco);    // crista
+  forma([[-24, -84], [-40, -44 + passo * 4], [-30, -40 + passo * 4], [-34, -4], [-12, -4], [-16, -40], [-4, -84]], medio, traco);                 // perna de trás
+  forma([[4, -84], [22, -44 - passo * 4], [14, -40 - passo * 4], [14, -4], [36, -4], [30, -40], [28, -84]], medio, traco);
+  forma([[-36, 0], [-34, -8], [-10, -8], [-8, 0]], '#1a1010', traco); forma([[12, 0], [14, -8], [38, -8], [40, 0]], '#1a1010', traco);                // cascos
+  const gt = ctx.createLinearGradient(px, py - 156 * u, px, py - 76 * u); gt.addColorStop(0, claro); gt.addColorStop(1, escuro);
+  forma([[-46, -152 + resp], [46, -152 + resp], [30, -112], [24, -78], [-24, -78], [-30, -112]], gt, traco);                                           // tronco
+  ctx.strokeStyle = 'rgba(20,3,3,0.7)'; ctx.lineWidth = 1.5 * u; for (const yy of [-128, -112, -96]) { ctx.beginPath(); const [a1, b1] = P2(-16, yy), [a2, b2] = P2(16, yy); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  { const [a1, b1] = P2(0, -146), [a2, b2] = P2(0, -84); ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke(); }
+  for (const l of [-1, 1]) {                                                                                                                           // braços e garras
+    const om = [l * 46, -146 + resp], cot = conj ? [l * 72, -176] : ataca && l === 1 ? [l * 78, -128] : [l * 68, -106], mao = conj ? [l * 62, -214 + 4 * Math.sin(t * 18)] : ataca && l === 1 ? [l * 104, -118 + inclina * 80] : [l * 60, -68 + resp];
+    curva(om, cot, mao, medio, 15); curva(om, cot, mao, claro, 6);
+    for (const dq of [-7, 0, 7]) curva(mao, [mao[0] + l * 4 + dq, mao[1] + (conj ? -10 : 10)], [mao[0] + l * 6 + dq * 1.4, mao[1] + (conj ? -20 : 20)], '#e8dcc8', 2.5);
+    forma([[l * 34, -156 + resp], [l * 58, -160 + resp], [l * 52, -138 + resp]], escuro, traco);                                                       // ombreira de osso
+  }
+  forma([[-17, -150 + resp], [-19, -176 + resp], [-9, -190 + resp], [9, -190 + resp], [19, -176 + resp], [17, -150 + resp], [8, -142 + resp], [-8, -142 + resp]], medio, traco);   // cabeça
+  forma([[-10, -150 + resp], [10, -150 + resp], [5, -140 + resp], [-5, -140 + resp]], '#12060a', null);                                                 // boca
+  for (const l of [-1, 1]) { curva([l * 12, -182 + resp], [l * 58, -184 + resp], [l * 48, -232 + resp], '#e8dcc8', 9); curva([l * 12, -182 + resp], [l * 54, -186 + resp], [l * 47, -228 + resp], '#8a7a66', 3); }   // chifres
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(255,220,90,${(0.8 + 0.2 * Math.sin(t * 7)) * alfa})`;
+  for (const l of [-1, 1]) { const [ex, ey] = P2(l * 8, -170 + resp); ctx.beginPath(); ctx.ellipse(ex, ey, 4.5 * u, 2.5 * u, 0, 0, 7); ctx.fill(); }
+  if (conj) { const [cx2, cy2] = P2(0, -214); const gc = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, 60 * u); gc.addColorStop(0, 'rgba(255,230,150,0.8)'); gc.addColorStop(0.4, 'rgba(255,110,20,0.5)'); gc.addColorStop(1, 'rgba(160,20,0,0)'); ctx.fillStyle = gc; ctx.beginPath(); ctx.arc(cx2, cy2, 60 * u, 0, 7); ctx.fill(); }
+  ctx.restore(); ctx.lineWidth = 1;
+}
 // ---- silhueta própria dos monstros que ainda usam um sprite emprestado: desenhada por trás (camada 0) e pela frente (camada 1) ----
-const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1, Diablo: 1 };
+const ADORNOS = { Sucubo: 1, Magistrado: 1, CavaleiroNegro: 1, Lazarus: 1 };
 function adorno(especie, camada, px, py, e, id) {
   const t = performance.now() / 1000 + id * 0.37;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -1208,6 +1245,19 @@ function desenhar(dt) {
       ctx.restore(); ctx.lineWidth = 1;
     }
   }
+  if (apocFx.length) {      // Apocalipse: anel de fogo que se abre no chão até o raio do golpe
+    const agoraA = performance.now(); apocFx = apocFx.filter((a) => agoraA - a.t < 800);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round';
+    for (const a of apocFx) {
+      const fA = (agoraA - a.t) / 800, abre = Math.min(1, fA / 0.6), rA = a.r * (0.15 + 0.85 * abre), forcaA = 1 - Math.max(0, (fA - 0.6) / 0.4);
+      const volta = (raio) => { ctx.beginPath(); for (let k = 0; k <= 40; k++) { const an = k / 40 * Math.PI * 2, [qx, qy] = W(a.p[0] + Math.cos(an) * raio, a.p[1] + Math.sin(an) * raio); if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); } ctx.closePath(); };
+      volta(rA); ctx.fillStyle = `rgba(255,90,10,${0.16 * forcaA})`; ctx.fill();
+      ctx.strokeStyle = `rgba(255,140,30,${0.85 * forcaA})`; ctx.lineWidth = 9 * reforco; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,240,180,${0.9 * forcaA})`; ctx.lineWidth = 3 * reforco; ctx.stroke();
+      for (let k = 0; k < 14; k++) { const an = k / 14 * Math.PI * 2 + fA * 2, [qx, qy] = W(a.p[0] + Math.cos(an) * rA, a.p[1] + Math.sin(an) * rA), hf = (26 + 12 * Math.sin(agoraA / 90 + k)) * reforco * forcaA, gl = ctx.createRadialGradient(qx, qy - hf * 0.4, 1, qx, qy - hf * 0.4, hf); gl.addColorStop(0, `rgba(255,230,140,${0.8 * forcaA})`); gl.addColorStop(0.4, `rgba(255,120,20,${0.5 * forcaA})`); gl.addColorStop(1, 'rgba(160,20,0,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(qx, qy - hf * 0.45, 11 * reforco, hf, 0, 0, 7); ctx.fill(); }
+    }
+    ctx.restore(); ctx.lineWidth = 1;
+  }
   if (teleFx.length) {      // teleporte: anel roxo que se abre onde o Magistrado some e onde reaparece
     const agoraT = performance.now(); teleFx = teleFx.filter((t) => agoraT - t.t < 600);
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -1294,7 +1344,8 @@ function desenhar(dt) {
     const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.55, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.25, '120,230,170', 0.3] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
-    if (prov && !(morto && COR_MORTE[s.cond])) {
+    if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, reforco, s, 1);
+    else if (prov && !(morto && COR_MORTE[s.cond])) {
       if (tinta.width !== m.W || tinta.height !== m.H) { tinta.width = m.W; tinta.height = m.H; }
       tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, m.W, m.H); tctx.drawImage(img, sx, sy, m.W, m.H, 0, 0, m.W, m.H);
       tctx.globalCompositeOperation = 'source-atop'; tctx.fillStyle = `rgba(${prov[2]},${prov[3]})`; tctx.fillRect(0, 0, m.W, m.H);
@@ -1307,7 +1358,8 @@ function desenhar(dt) {
       ctx.drawImage(tinta, 0, 0, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     } else ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e);
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 1, px, py, e, s.id);
-    if (!morto && s.flash > 0) {
+    if (!morto && s.flash > 0 && s.especie === 'Diablo') { s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; desenharDiablo(px, py, reforco, s, Math.min(1, s.flash * 9) * 0.6); ctx.globalCompositeOperation = 'source-over'; }
+    else if (!morto && s.flash > 0) {
       // clarão de impacto: o mesmo quadro somado por cima
       s.flash -= dt; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, s.flash * 9);
       ctx.drawImage(img, sx, sy, m.W, m.H, dx0, dy0, m.W * e, m.H * e); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -2051,6 +2103,7 @@ window.__ficha = () => fichaTxt;
 window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
+window.__apoc = () => apocFx.length;
 window.__teles = () => teleFx.length;
 window.__raios = () => raiosFx.length;
 for (const idG of ['g-vida', 'g-mana']) $(idG).addEventListener('click', () => { const g = $(idG); g.classList.add('mostra'); clearTimeout(g.tm); g.tm = setTimeout(() => g.classList.remove('mostra'), 2500); });

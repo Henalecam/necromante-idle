@@ -60,4 +60,4 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 
 - D1. [feito no item 179] Ato 3 (andares 21-30) com chefe próprio: Arcebispo Lázarus (muralha de fogo inimiga, teleporte, Súcubos). Medido: 20,68 h na primeira vida.
 - D2. [feito no item 180] Ato 4 com Diablo no andar 40 (Apocalipse) e desfecho de campanha por dificuldade. Medido: 43,07 h a campanha do Normal na primeira vida.
-- D3. [a fazer] Arte própria de Diablo (a provisória é ilegível) e conferir o Apocalipse na tela.
+- D3. [feito no item 181] Diablo desenhado em vetor e anel do Apocalipse (o anel inteiro ainda não foi visto em captura).
