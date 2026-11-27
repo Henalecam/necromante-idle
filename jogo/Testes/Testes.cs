@@ -2050,6 +2050,18 @@ namespace Necro.Testes
                 Afirmar(longe.Escudo == 0f, "quem está longe não ganha escudo");
             });
 
+            Teste("missão do Poço dos Lamentos: no andar 16, três levas de Aparições; vencida, dá um livro de feitiço e não volta", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarPoco = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 70; p.PoderNecromantico = 2500f; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.PocoAndar) { LimiteDeAndares = 1 }; int g = 0; bool ev54 = false; int livros0 = 0;
+                while (!s.Encerrada && g++ < 90000) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 54) { ev54 = true; livros0 = s.Resultado.Livros.Count; } }
+                Afirmar(s.Salas.Contains(TipoSala.PocoDosLamentos) && ev54, "a sala existe e as levas começam");
+                Afirmar(s.Resultado.PocoVencido && s.Resultado.Livros.Count > livros0, "vencida, deu um livro de feitiço");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoPoco == 3 && !new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.PocoAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.PocoDosLamentos), "missão cumprida e a sala não volta");
+            });
+
             Teste("missão da Fortaleza Rubra: no andar 13 o senhor da guerra (Único) e o séquito; vencida, dá o Estandarte Sangrento, que fere mais os fortes, e a sala não volta", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarFortaleza = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };

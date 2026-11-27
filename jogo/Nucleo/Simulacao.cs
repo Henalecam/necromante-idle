@@ -167,6 +167,9 @@ namespace Necro.Nucleo
             _cegos = progresso.MissaoCegos;
             if (_cegos == 0 && Cfg.MissoesDeCenario) { _cegos = (semente * 1103515245UL >> 11) % 3UL != 0UL ? 1 : 2; Resultado.CegosSorteio = _cegos; }
             if (Cfg.ForcarCegos && _cegos != 3) _cegos = 1;
+            _poco = progresso.MissaoPoco;
+            if (_poco == 0 && Cfg.MissoesDeCenario) { _poco = (semente * 3266489917UL >> 15) % 3UL != 0UL ? 1 : 2; Resultado.PocoSorteio = _poco; }
+            if (Cfg.ForcarPoco && _poco != 3) _poco = 1;
             _fortaleza = progresso.MissaoFortaleza;
             if (_fortaleza == 0 && Cfg.MissoesDeCenario) { _fortaleza = (semente * 2246822519UL >> 13) % 3UL != 0UL ? 1 : 2; Resultado.FortalezaSorteio = _fortaleza; }
             if (Cfg.ForcarFortaleza && _fortaleza != 3) _fortaleza = 1;

@@ -136,6 +136,7 @@ namespace Necro.Nucleo
         public int[] AncoragemPorDificuldade;               // Ponto de Ancoragem guardado de cada dificuldade (a atual fica em AndarDeAncoragem)
         public int Dificuldade, DificuldadeLiberada;        // 0 Normal, 1 Pesadelo, 2 Inferno: a escolhida e a mais alta já aberta
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
+        public int MissaoPoco;                               // Poço dos Lamentos: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoFortaleza;                          // Fortaleza Rubra: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
         public int MissaoCegos;                              // Salões dos Cegos: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
         public int MissaoCamara;                             // Câmara de Ossos: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -195,6 +196,7 @@ namespace Necro.Nucleo
         public int AcougueiroSorteio; public bool AcougueiroMorto;
         public int FonteSorteio; public bool FonteLimpa;
         public int CamaraSorteio; public bool CamaraVencida;
+        public int PocoSorteio; public bool PocoVencido;
         public int FortalezaSorteio; public bool FortalezaVencida;
         public int CegosSorteio; public bool CegosVencidos; public int OcultosRevelados;
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
@@ -418,6 +420,8 @@ namespace Necro.Nucleo
             if (r.CegosVencidos) p.MissaoCegos = 3;
             if (p.MissaoFortaleza == 0 && r.FortalezaSorteio != 0) p.MissaoFortaleza = r.FortalezaSorteio;
             if (r.FortalezaVencida) p.MissaoFortaleza = 3;
+            if (p.MissaoPoco == 0 && r.PocoSorteio != 0) p.MissaoPoco = r.PocoSorteio;
+            if (r.PocoVencido) p.MissaoPoco = 3;
             if (p.MissaoReiEsqueleto == 0 && r.ReiEsqueletoSorteio != 0) p.MissaoReiEsqueleto = r.ReiEsqueletoSorteio;
             if (r.ReiEsqueletoMorto) p.MissaoReiEsqueleto = 3;
             if (!r.SemDesgaste) Ferreiro.Desgastar(p, cfg);   // a descida gasta o equipamento (salvo pelo Santuário Oculto)
