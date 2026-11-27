@@ -325,6 +325,18 @@ namespace Necro.Nucleo
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
         public bool GolemAtivo = true;                     // o necromante conjura o Golem sozinho quando há luta e nenhum Golem vivo
         public float GolemProvocaRaio = 5f;                // ao surgir, provoca os inimigos em volta por alguns segundos
+        // ---- Efeito próprio de cada Único (vale enquanto o item está vestido, identificado e inteiro) ----
+        public bool EfeitosDeUnicos = true;
+        public float CuteloExecuta = 0.30f;                // 1 Cutelo do Açougueiro: golpe de minion em inimigo comum abaixo desta fração de vida mata na hora
+        public float CoroaIntervalo = 20f, CoroaDuracao = 12f;   // 2 Coroa do Rei Morto: na luta, um morto temporário se ergue a cada N s
+        public float CajadoMana = 0.6f;                    // 3 Cajado do Coveiro Cego: a Lança de Ossos custa esta fração da mana
+        public float MortalhaReflexo = 0.5f;               // 4 Mortalha da Abadessa: o necromante devolve esta fração do dano que sofre
+        public float AnelCura = 0.06f;                     // 5 Anel dos Mil Sussurros: cada alma ceifada cura os minions nesta fração da vida máxima
+        public float GarrasCura = 0.08f;                   // 6 Garras do Primeiro Carniçal: o minion que mata recupera esta fração da vida
+        public float GrimorioSemRecarga = 0.25f;           // 7 Grimório de Pele Humana: chance de um feitiço não entrar em recarga
+        public float BotasPocao = 1.6f;                    // 8 Botas do Peregrino Enforcado: poções rendem este tanto a mais
+        public float AmuletoGolem = 1.6f;                  // 9 Amuleto do Senhor do Terror: o Golem tem este tanto de vida e dura o dobro
+        public float RelicarioCura = 0.25f;                // 10 Relicário das Almas Presas: matar um elite, Campeão ou Único cura todos os minions nesta fração
         // ---- Itens Únicos ----
         public float UnicoForcaDosAfixos = 1.25f;                          // cada afixo vem no topo da faixa x isto
         public float[] ChanceDeItemUnico = { 0.006f, 0.015f, 0.03f };      // por item Mágico ou melhor que cai, por dificuldade

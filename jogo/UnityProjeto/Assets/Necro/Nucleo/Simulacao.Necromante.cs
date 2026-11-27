@@ -30,6 +30,8 @@ namespace Necro.Nucleo
             if (n.FraquezaTempo > 0f) n.FraquezaTempo -= DT;
             if (_ceifaEspera > 0f) _ceifaEspera -= DT;
             if (Cfg.PocoesNoCinto) BeberPocoes();
+            // Único 2, Coroa do Rei Morto: durante a luta, um morto se ergue de tempos em tempos para lutar por você
+            if (Bonus.Unico[2] && InimigosVivos > 0) { _coroaTempo += DT; if (_coroaTempo >= Cfg.CoroaIntervalo) { _coroaTempo = 0f; CriarZumbiTemporario(new Vec2(n.Pos.X + 1.5f, n.Pos.Y), Cfg.CoroaDuracao); Resultado.EfeitosDeUnicos++; } }
 
             // Sala especial: caminha até o objeto (baú, santuário...) se não houver alma para ceifar.
             if (Fase == FaseExpedicao.Explorando && !CaminhandoAteASala && _ceifaOrbe == null && Orbes.Count == 0)
@@ -195,6 +197,8 @@ namespace Necro.Nucleo
         {
             Orbes.Remove(o);
             Resultado.Almas.Add(o.Alma);
+            // Único 5, Anel dos Mil Sussurros: cada alma ceifada cura os minions
+            if (Bonus.Unico[5]) { for (int i = 0; i < _minions.Count; i++) if (_minions[i].Viva) _minions[i].Vida = Math.Min(_minions[i].VidaMax, _minions[i].Vida + _minions[i].VidaMax * Cfg.AnelCura); Resultado.EfeitosDeUnicos++; }
             Emitir(new EventoSim { Tipo = TipoEvento.AlmaCeifada, Alvo = o.Id, Origem = Necromante.Id, Pos = o.Pos, Especie = o.Alma.Especie, Extra = (int)o.Alma.Qualidade, Critico = melhorada });
             // Foice do Ceifeiro Faminto: cada alma ceifada cura todos os minions vivos.
             if (Bonus.CeifeiroFaminto)
@@ -255,6 +259,8 @@ namespace Necro.Nucleo
             var n = Necromante;
             n.Mana -= f.CustoMana;
             _recargaFeitico[(int)id] = f.Recarga * _fatorRecarga;
+            // Único 7, Grimório de Pele Humana: às vezes o feitiço não entra em recarga (o Golem não conta)
+            if (Bonus.Unico[7] && id != FeiticoId.Golem && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
             n.TempoAcao = Cfg.TempoDeConjuracao;
             n.Animacao = EstadoAnimacao.Conjurando;
             Olhar(n, ponto);

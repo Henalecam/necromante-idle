@@ -136,7 +136,7 @@ public static partial class Jogo
             var ud = Unicos.Todos[ui]; bool achado = (_p.UnicosAchados & (1 << ud.Id)) != 0;
             if (!achado) for (int k = 0; k < _sim.Resultado.Itens.Count; k++) if (_sim.Resultado.Itens[k].UnicoId == ud.Id) achado = true;
             if (ui > 0) sb.Append(',');
-            sb.Append("{\"nome\":").Append(S(ud.Nome)).Append(",\"tipo\":").Append((int)ud.Tipo).Append(",\"achado\":").Append(B(achado)).Append(",\"lenda\":").Append(S(ud.Lenda)).Append('}');
+            sb.Append("{\"nome\":").Append(S(ud.Nome)).Append(",\"tipo\":").Append((int)ud.Tipo).Append(",\"achado\":").Append(B(achado)).Append(",\"lenda\":").Append(S(ud.Lenda)).Append(",\"efeito\":").Append(S(ud.Efeito)).Append('}');
         }
         sb.Append(']');
         sb.Append(",\"grimorio\":[");
@@ -274,7 +274,7 @@ public static partial class Jogo
         bool primeiro = true;
         if (it.Implicito != null && it.Implicito.Valor != 0f) { sb.Append(S(TabelaItens.Descrever(it.Implicito))); primeiro = false; }
         for (int i = 0; i < it.Afixos.Count; i++) { if (!primeiro) sb.Append(','); sb.Append(S(TabelaItens.Descrever(it.Afixos[i]))); primeiro = false; }
-        if (it.UnicoId > 0) { if (!primeiro) sb.Append(','); sb.Append(S("Item Único: afixos fixos, no topo da faixa e 25% mais fortes")); primeiro = false; }
+        if (it.UnicoId > 0) { if (!primeiro) sb.Append(','); sb.Append(S("★ " + (Unicos.Obter(it.UnicoId) != null ? Unicos.Obter(it.UnicoId).Efeito : "Item Único"))); primeiro = false; }
         if (it.Melhoria > 0) { if (!primeiro) sb.Append(','); sb.Append(S("Melhoria +" + it.Melhoria + ": tudo acima vale " + (int)Math.Round((Ferreiro.FatorDeMelhoria(it, _cfg) - 1f) * 100f) + "% a mais")); primeiro = false; }
         if (it.Efeito != EfeitoLendario.Nenhum) { if (!primeiro) sb.Append(','); sb.Append(S("Lendário: " + it.Efeito)); }
         sb.Append(']');

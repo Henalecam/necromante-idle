@@ -184,6 +184,7 @@ namespace Necro.Nucleo
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
         public int Dificuldade;
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
+        public int EfeitosDeUnicos;
         public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)

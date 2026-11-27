@@ -162,7 +162,7 @@ namespace Necro.Nucleo
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
             {
                 var b0 = cfg.Feitico((FeiticoId)fi); int nv = cfg.LivrosDeFeitico ? Grimorio.Nivel(progresso, (FeiticoId)fi) : 1;
-                _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
+                _feiticos[fi] = new DadosFeitico { Id = b0.Id, Nome = b0.Nome, CustoMana = b0.CustoMana * Grimorio.FatorDeMana(nv, cfg) * (fi == (int)FeiticoId.LancaDeOssos && Bonus.Unico[3] ? cfg.CajadoMana : 1f), Recarga = b0.Recarga, Alcance = b0.Alcance, Potencia = b0.Potencia * Grimorio.FatorDePotencia(nv, cfg), Raio = b0.Raio, Duracao = b0.Duracao };
             }
             _limiarVida = progresso.PocaoVidaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoVidaLimiar) : cfg.PocaoVidaAbaixoDe; _limiarMana = progresso.PocaoManaLimiar > 0f ? Math.Min(0.9f, progresso.PocaoManaLimiar) : cfg.PocaoManaAbaixoDe;
             _pocoesVida = cfg.PocoesNoCinto ? progresso.PocoesDeVida : 0; _pocoesMana = cfg.PocoesNoCinto ? progresso.PocoesDeMana : 0;
@@ -474,6 +474,7 @@ namespace Necro.Nucleo
 
         /// <summary>O Golem do feitiço: um Colosso de Ossos conjurado, forte e passageiro. Só existe um por vez.</summary>
         private bool _golemAprendido;
+        private bool _refletindo; private float _coroaTempo;
         private int _pocoesVida, _pocoesMana; private float _pocaoEspera, _limiarVida, _limiarMana;
         /// <summary>Poções que restam no cinto nesta descida.</summary>
         public int PocoesDeVidaNoCinto { get { return _pocoesVida; } }
@@ -487,13 +488,13 @@ namespace Necro.Nucleo
             if (_pocoesVida > 0 && n.Vida < n.VidaMax * _limiarVida)
             {
                 _pocoesVida--; Resultado.PocoesDeVidaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
-                float cura = n.VidaMax * Cfg.PocaoVidaCura; n.Vida = Math.Min(n.VidaMax, n.Vida + cura);
+                float cura = n.VidaMax * Cfg.PocaoVidaCura * (Bonus.Unico[8] ? Cfg.BotasPocao : 1f); n.Vida = Math.Min(n.VidaMax, n.Vida + cura);
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 33, Valor = cura, Alvo = n.Id, Origem = n.Id, Pos = n.Pos });
             }
             else if (_pocoesMana > 0 && InimigosVivos > 0 && n.Mana < n.ManaMax * _limiarMana)
             {
                 _pocoesMana--; Resultado.PocoesDeManaUsadas++; _pocaoEspera = Cfg.PocaoRecarga;
-                float m = n.ManaMax * Cfg.PocaoManaCura; n.Mana = Math.Min(n.ManaMax, n.Mana + m);
+                float m = n.ManaMax * Cfg.PocaoManaCura * (Bonus.Unico[8] ? Cfg.BotasPocao : 1f); n.Mana = Math.Min(n.ManaMax, n.Mana + m);
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 34, Valor = m, Alvo = n.Id, Origem = n.Id, Pos = n.Pos });
             }
         }
@@ -510,7 +511,8 @@ namespace Necro.Nucleo
             e.Dano = Formulas.AtributoMinion(d.Dano, Qualidade.Comum, nivel, _poderTotal, Cfg) * f.Potencia;
             e.Armadura = Formulas.AtributoMinion(d.Armadura, Qualidade.Comum, nivel, _poderTotal, Cfg);
             AplicarEquipamentoAoMinion(e);
-            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao; e.Golem = true; e.NomeProprio = "Golem de Ossos";
+            if (Bonus.Unico[9]) { e.VidaMax *= Cfg.AmuletoGolem; Resultado.EfeitosDeUnicos++; }   // Único 9, Amuleto do Senhor do Terror
+            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao * (Bonus.Unico[9] ? 2f : 1f); e.Golem = true; e.NomeProprio = "Golem de Ossos";
             Adicionar(e);
             PagarFeitico(FeiticoId.Golem, e, e.Pos, 0f);
             Emitir(new EventoSim { Tipo = TipoEvento.EntidadeSurgiu, Alvo = e.Id, Origem = n.Id, Pos = e.Pos, Especie = e.Especie });

@@ -36,6 +36,7 @@ namespace Necro.Nucleo
         // ---- Lendários e conjuntos ----
         public bool CeifeiroFaminto;
         public bool MaeCarnica;
+        public readonly bool[] Unico = new bool[16];   // efeitos próprios dos itens Únicos vestidos (índice = UnicoId)
         public bool ReiSolitario;
         public bool LegiaoMuda;
         public bool UltimoSuspiro;
@@ -335,6 +336,7 @@ namespace Necro.Nucleo
                 if (Vazio(item)) continue;
                 if (Ferreiro.Quebrado(item, cfg)) { b.ItensQuebrados++; continue; }   // quebrado: ocupa o espaço mas não dá nada
                 b.ItensEquipados++;
+                if (item.UnicoId > 0 && item.UnicoId < 16 && !item.NaoIdentificado && cfg.EfeitosDeUnicos) b.Unico[item.UnicoId] = true;
                 float mel = Ferreiro.FatorDeMelhoria(item, cfg);   // +N do Ferreiro: tudo o que o item dá cresce junto
                 if (item.Implicito != null && item.Implicito.Valor != 0f) b.Somar(item.Implicito.Afixo, item.Implicito.Valor * mel);
                 if (item.Afixos != null)

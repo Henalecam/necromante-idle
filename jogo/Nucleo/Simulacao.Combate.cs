@@ -123,6 +123,12 @@ namespace Necro.Nucleo
 
             alvo.Vida -= dano;
             if (sacrificado != null) alvo.Vida = 1f;
+            // Único 1, Cutelo do Açougueiro: o golpe de um minion executa o inimigo comum já quase morto
+            if (Bonus.Unico[1] && golpe && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && alvo.Vida > 0f && !alvo.Chefe && !alvo.Elite && !alvo.Unico && alvo.Vida < alvo.VidaMax * Cfg.CuteloExecuta)
+            { alvo.Vida = 0f; execucao = true; Resultado.EfeitosDeUnicos++; }
+            // Único 4, Mortalha da Abadessa: quem fere o necromante recebe parte de volta
+            if (Bonus.Unico[4] && alvo == Necromante && atacante != null && atacante.Faccao == Faccao.Inimigo && atacante.Viva && dano > 0f && !_refletindo)
+            { _refletindo = true; Resultado.EfeitosDeUnicos++; CausarDano(null, atacante, dano * Cfg.MortalhaReflexo, TipoDano.Sombra, false); _refletindo = false; }
             Emitir(new EventoSim
             {
                 Tipo = TipoEvento.Dano, Origem = atacante != null ? atacante.Id : -1, Alvo = alvo.Id, Valor = dano,
@@ -219,6 +225,12 @@ namespace Necro.Nucleo
                 matador.Vida += cura;
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 18, Alvo = matador.Id, Origem = -1, Valor = cura, Pos = matador.Pos });
             }
+            // Único 6, Garras do Primeiro Carniçal: o minion que mata recupera vida
+            if (Bonus.Unico[6] && matador != null && matador.Viva && matador.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && matador.Vida < matador.VidaMax)
+            { matador.Vida = Math.Min(matador.VidaMax, matador.Vida + matador.VidaMax * Cfg.GarrasCura); Resultado.EfeitosDeUnicos++; }
+            // Único 10, Relicário das Almas Presas: um inimigo especial morto cura o exército
+            if (Bonus.Unico[10] && alvo.Faccao == Faccao.Inimigo && (alvo.Elite || alvo.Campeao || alvo.Unico || alvo.Chefe))
+            { for (int i = 0; i < _minions.Count; i++) if (_minions[i].Viva) _minions[i].Vida = Math.Min(_minions[i].VidaMax, _minions[i].Vida + _minions[i].VidaMax * Cfg.RelicarioCura); Resultado.EfeitosDeUnicos++; }
             if (overkill) Resultado.Overkills++;
             else if (alvo != Necromante && !alvo.Temporario) CriarCadaver(alvo, condicao);
 

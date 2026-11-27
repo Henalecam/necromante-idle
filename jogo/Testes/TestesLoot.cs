@@ -502,6 +502,27 @@ namespace Necro.Testes
                 Afirmar(z.PocoesDeVida == Cfg.CintoPorTipo && z.PocoesDeMana == Cfg.CintoPorTipo, "com a reposição ligada (padrão), o cinto volta cheio");
             });
 
+            Teste("efeito próprio dos Únicos: só vale vestido e identificado, e cada um mexe na mecânica (Cajado barateia a Lança, Coroa ergue mortos, Cutelo executa)", () =>
+            {
+                var c = new ConfigJogo { MissoesDeCenario = false, ObjetosPorSala = 0 };
+                EstadoProgresso Com(int unico, bool fechado = false)
+                {
+                    var p = Progressao.NovoJogo(c); p.PoderNecromantico = 6f; p.NivelNecromante = 15;
+                    if (unico > 0) { var it = Unicos.Gerar(new Rng(3), c, 8, Unicos.Obter(unico)); it.NaoIdentificado = fechado; p.Equipados[(int)Equipamento.EspacoPadrao(p, it)] = it; }
+                    return p;
+                }
+                Afirmar(Equipamento.CalcularBonus(Com(3), c).Unico[3], "vestido e identificado, o efeito vale");
+                Afirmar(!Equipamento.CalcularBonus(Com(0), c).Unico[3], "sem o item, não vale");
+                Afirmar(!Equipamento.CalcularBonus(Com(3), new ConfigJogo { EfeitosDeUnicos = false }).Unico[3], "com os efeitos desligados, não vale");
+                int Efeitos(int unico) { int t = 0; for (ulong sem = 1; sem <= 4; sem++) t += ExecutorSemTela.RodarExpedicao(c, Com(unico), sem, ModoExpedicao.Avancar, 3, 3).EfeitosDeUnicos; return t; }
+                Afirmar(Efeitos(0) == 0, "sem Único, nenhum efeito dispara");
+                Console.WriteLine("        (efeitos: cutelo " + Efeitos(1) + ", coroa " + Efeitos(2) + ", garras " + Efeitos(6) + ", mortalha " + Efeitos(4) + ")");
+                Afirmar(Efeitos(1) >= 3, "o Cutelo deveria executar inimigos quase mortos");
+                Afirmar(Efeitos(2) >= 2, "a Coroa deveria erguer mortos durante a luta");
+                Afirmar(Efeitos(6) >= 3, "as Garras deveriam curar o minion que mata");
+                foreach (var d in Unicos.Todos) Afirmar(!string.IsNullOrEmpty(d.Efeito), "todo Único tem um efeito descrito (" + d.Nome + ")");
+            });
+
             Teste("itens não identificados: Raros para cima caem fechados, não equipam, e o ouro os revela", () =>
             {
                 var p = Progressao.NovoJogo(Cfg); p.PoderNecromantico = 60f; p.Sorte = 200f;

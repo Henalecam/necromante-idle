@@ -53,7 +53,7 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 
 ### C. Progressão longa
 - C1. [feito] Ferreiro: melhorar (+1 a +5) e imbuir itens com ouro (fatia 15).
-- C2. [feito: 10 Únicos de nome e afixos fixos, tabela por dificuldade, Livro de Únicos; falta efeito próprio de cada um] Itens únicos com nome e efeito próprio, por tabela de dificuldade.
+- C2. [feito: 10 Únicos de nome e afixos fixos, tabela por dificuldade, Livro de Únicos e um efeito próprio para cada um] Itens únicos com nome e efeito próprio, por tabela de dificuldade.
 - C3. [começado: aba "Cidade" com Ferreiro e Curandeira; faltam Bruxa e Ancião] Cidade (Tristram do necromante): Ferreiro, Curandeira (poções), Bruxa (livros e cajados), Ancião (identifica), cada um com estoque que renova.
 - C4. [feito: vida e mana, cinto de 3 de cada, uso e reposição automáticos; falta o jogador escolher os limiares] Poções e cinto: vida e mana, uso automático com regra do jogador.
 - C5. Árvore de ascensão muito maior (fatia 14), com ramos por estilo: Invocador, Ossos, Sangue, Pragas.
