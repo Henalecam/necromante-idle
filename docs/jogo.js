@@ -660,6 +660,26 @@ const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () =>
   ['rota', 'Toque no símbolo de uma sala para o grupo ir a ela primeiro', () => !!licoes.mapa && mapa.length - masm.sala >= 4]];
 let licoes = {}; try { licoes = JSON.parse(localStorage.getItem('necromante-idle-save-v1-licoes') || '{}'); } catch (e) { /* começa do zero */ }
 function aprendeu(k) { if (licoes[k]) return; licoes[k] = 1; try { localStorage.setItem('necromante-idle-save-v1-licoes', JSON.stringify(licoes)); } catch (e) { /* tudo bem */ } }
+// ---- ficha do inimigo marcado: a barra de descrição do Diablo 1 ----
+const FAMILIAS = ['Morto-vivo', 'Demônio', 'Besta', 'Aberração', 'Espírito'], TIPOS_DANO = ['físico', 'fogo', 'gelo', 'raio', 'veneno', 'sombra'], MODS_ELITE = [[1, 'Vampírico'], [2, 'Explosivo'], [4, 'Veloz'], [8, 'Escudo de Ossos']];
+let fichaTxt = '', fichaEm = 0;
+function atualizarFicha() {
+  const c = $('ficha'); if (!c || !J || !J.FichaDoMarcado) return;
+  const agora = performance.now(); if (agora - fichaEm < 200) return; fichaEm = agora;
+  let h = '';
+  if (marcado >= 0) {
+    let f = null; try { const bruto = J.FichaDoMarcado(); f = bruto ? JSON.parse(bruto) : null; } catch (e) { f = null; }
+    if (f) {
+      const imu = [], rst = [], frc = []; f.res.forEach((v, t) => { if (v >= 100) imu.push(TIPOS_DANO[t]); else if (v > 0) rst.push(TIPOS_DANO[t] + ' ' + v + '%'); else if (v < 0) frc.push(TIPOS_DANO[t]); });
+      const mods = MODS_ELITE.filter(([bit]) => f.mods & bit).map(([, n]) => n);
+      const cls = f.tipo === 'Único' ? 'unico' : f.tipo === 'Campeão' ? 'campeao' : f.tipo === 'Chefe' ? 'chefe' : '';
+      h = `<b class="${cls}">${esc(f.nome)}${f.tipo ? ' · ' + f.tipo : ''}</b>` +
+        `${FAMILIAS[f.familia] || ''}${f.nome !== f.especie ? ' · ' + esc(f.especie) : ''} · vida ${fmt(f.vida)} de ${fmt(f.max)} · ${fmt(f.mortes)} mortos${mods.length ? ' · ' + mods.join(', ') : ''}<br>` +
+        ((imu.length ? `<span class="im">Imune a ${imu.join(', ')}</span>` : '') + (rst.length ? (imu.length ? ' · ' : '') + 'resiste a ' + rst.join(', ') : '') + (frc.length ? (imu.length || rst.length ? ' · ' : '') + `<span class="fr">fraco a ${frc.join(', ')}</span>` : '') || 'sem resistências');
+    }
+  }
+  if (h !== fichaTxt) { fichaTxt = h; c.innerHTML = h; c.hidden = !h; }
+}
 function atualizarLicao() {
   const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '';
   if (c.textContent !== tx) { c.textContent = tx; c.hidden = !tx; }
@@ -1329,7 +1349,7 @@ function desenhar(dt) {
       hg += `<div class="ret ${s.viva ? '' : 'morto'} ${s.viva && v < 0.5 && sopro <= 0 ? 'cura' : ''}" data-ret="${s.id}" style="border-color:${cor}">${thumb(s.necro && deFoice && monstros.necromante_foice ? 'necromante_foice' : s.especie)}<i><b style="width:${Math.round(v * 100)}%;background:${v > 0.5 ? '#5a9f5a' : v > 0.25 ? '#c8a030' : '#c8323c'}"></b></i>${s.viva && s.escudo > 0.01 ? `<u style="width:${Math.round(Math.min(1, s.escudo) * 100)}%"></u>` : ''}</div>`;
     }
     if (hg !== desenhar.hg) { desenhar.hg = hg; $('grupo').innerHTML = hg; }
-    atualizarLicao();
+    atualizarLicao(); atualizarFicha();
   }
 }
 
@@ -1861,6 +1881,8 @@ window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
 window.__titulo = () => tituloAndar ? tituloAndar.a + "|" + tituloAndar.b : "";
+window.__marcarPrimeiro = () => { const al = [...estado.values()].filter((e) => e.viva && e.inimigo); if (al.length < 3 || !J) return false; const u = al.find((e) => e.campeao) || al[0]; J.Marcar(u.id); return true; };
+window.__ficha = () => fichaTxt;
 window.__muralha = () => muralhaFx ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });

@@ -374,6 +374,23 @@ public static partial class Jogo
     [JSExport] public static void Ceifar(int orbeId) { _sim.ComandoCeifar(orbeId); }
     [JSExport] public static void Pacto(int opcao) { _sim.ComandoPacto(opcao); }
     [JSExport] public static void Marcar(int entidadeId) { _sim.ComandoMarcar(entidadeId); }
+
+    /// <summary>Ficha do inimigo marcado (a barra de descrição do Diablo 1): nome, vida, tipo, modificadores, resistências. "" se não há marcado vivo.</summary>
+    [JSExport] public static string FichaDoMarcado()
+    {
+        if (_sim == null || _sim.MarcadoId < 0) return "";
+        var e = _sim.AcharEntidade(_sim.MarcadoId);
+        if (e == null || !e.Viva || e.Faccao != Faccao.Inimigo) return "";
+        var d = TabelaEspecies.Obter(e.Especie); var sb = new StringBuilder(256);
+        string tipo = e.Chefe ? "Chefe" : e.Unico ? "Único" : e.Campeao ? "Campeão" : e.Elite ? "Elite" : "";
+        sb.Append("{\"id\":").Append(e.Id).Append(",\"nome\":").Append(S(e.Unico && !string.IsNullOrEmpty(e.NomeProprio) ? e.NomeProprio : d.Nome)).Append(",\"especie\":").Append(S(d.Nome)).Append(",\"tipo\":").Append(S(tipo))
+          .Append(",\"familia\":").Append((int)d.Familia).Append(",\"vida\":").Append((long)Math.Ceiling(e.Vida)).Append(",\"max\":").Append((long)Math.Ceiling(e.VidaMax))
+          .Append(",\"mods\":").Append((int)e.Modificadores).Append(",\"imune\":").Append(e.Imune)
+          .Append(",\"mortes\":").Append(Bestiario.Mortes(_p, e.Especie) + ((int)e.Especie < _sim.Resultado.MortesPorEspecie.Length ? _sim.Resultado.MortesPorEspecie[(int)e.Especie] : 0)).Append(",\"res\":[");
+        for (int t = 0; t < 6; t++) { if (t > 0) sb.Append(','); sb.Append((e.Imune & (1 << t)) != 0 ? 100 : (int)Math.Round(100 * e.Resistencias[t])); }
+        sb.Append("]}");
+        return sb.ToString();
+    }
     [JSExport] public static void Curar(int entidadeId) { _sim.ComandoCurar(entidadeId); }
     [JSExport] public static void EscolherBencao(int opcao) { _sim.ComandoEscolherBencao(opcao); }
     [JSExport] public static bool IrPara(int sala) { return _sim.ComandoIrPara(sala); }
