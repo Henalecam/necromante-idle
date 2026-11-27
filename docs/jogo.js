@@ -1098,6 +1098,24 @@ function desenhar(dt) {
     } else ctx.drawImage(img, sx, sy, m.W, m.H, Math.round(px - m.pivo[0] * e), Math.round(py - (m.H - m.pivo[1]) * e), m.W * e, m.H * e);
     ctx.globalAlpha = 1; ctx.filter = 'none';
   }
+  if (viag && viag.dur && viag.total > 0.01) {      // porta emperrada: duas folhas de madeira fechadas na frente do grupo; tremem a cada pancada e somem quando cedem
+    const eP = tempoSim - viag.t0, T1p = viag.T * Math.max(0.2, viag.ate / viag.total), fimP = T1p + viag.dur;
+    if (eP < fimP + 0.35) {
+      let dP = Math.min(viag.total, viag.ate + 0.9), kP = 0; while (kP < viag.seg.length - 1 && dP > viag.seg[kP]) { dP -= viag.seg[kP]; kP++; }
+      const aP = viag.pts[kP], bP = viag.pts[kP + 1], fP = viag.seg[kP] > 0 ? dP / viag.seg[kP] : 1, cx = aP[0] + (bP[0] - aP[0]) * fP, cy = aP[1] + (bP[1] - aP[1]) * fP;
+      const lP = Math.hypot(bP[0] - aP[0], bP[1] - aP[1]) || 1, nx = -(bP[1] - aP[1]) / lP, ny = (bP[0] - aP[0]) / lP;
+      const bate = eP >= T1p && eP < fimP ? Math.abs(Math.sin((eP - T1p) * 7)) : 0, abre = eP > fimP ? (eP - fimP) / 0.35 : 0, hP = 74 * reforco;
+      ctx.save(); ctx.globalAlpha = 1 - abre;
+      for (const lado of [-1, 1]) {
+        const larguraF = 1.35 * (1 - 0.6 * abre), [x0, y0] = W(cx + nx * lado * 0.05, cy + ny * lado * 0.05), [x1, y1] = W(cx + nx * lado * larguraF, cy + ny * lado * larguraF), tr = bate * 2.5 * lado;
+        ctx.fillStyle = '#3a2414'; ctx.strokeStyle = '#120a06'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x0 + tr, y0); ctx.lineTo(x1 + tr, y1); ctx.lineTo(x1 + tr, y1 - hP); ctx.lineTo(x0 + tr, y0 - hP); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#6a5a4a'; ctx.lineWidth = 3;
+        for (const fr of [0.25, 0.72]) { ctx.beginPath(); ctx.moveTo(x0 + tr, y0 - hP * fr); ctx.lineTo(x1 + tr, y1 - hP * fr); ctx.stroke(); }
+      }
+      ctx.restore(); ctx.lineWidth = 1;
+    }
+  }
   if (muralhaFx) {
     const idadeM = tempoSim - muralhaFx.t0;
     if (idadeM > muralhaFx.dur || idadeM < 0) muralhaFx = null;
