@@ -247,7 +247,7 @@ function ambiente(dt, larg, alt) {
   if (tituloAndar) {
     const ft = (performance.now() - tituloAndar.t) / 2600;
     const bpT = $('b-porta'), eT = $('encruzilhada'), bT = $('bencaos');
-    if (ft >= 1 || (bpT && !bpT.hidden) || (eT && !eT.hidden && !eT.classList.contains('min')) || (bT && !bT.hidden)) tituloAndar = null;
+    if (ft >= 1 || !$('resumo').hidden || (bpT && !bpT.hidden) || (eT && !eT.hidden && !eT.classList.contains('min')) || (bT && !bT.hidden)) tituloAndar = null;
     else {
       const af = ft < 0.15 ? ft / 0.15 : ft > 0.7 ? (1 - ft) / 0.3 : 1, tam = Math.max(22, Math.min(46, larg / 14));
       ctx.save(); ctx.globalAlpha = af; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -716,11 +716,11 @@ function batizar(id, mods, especie) {
   if (!silencio) { aviso('Campeão: ' + nome); anotar(`Surge o campeão <b style="color:#ffd84a">${nome}</b>.`); som('perigo'); }
 }
 // ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
-const LICOES = [['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
+const LICOES = [['resgatar', 'Missão cumprida: toque em Resgatar para levar o prêmio', () => !!document.querySelector('#missao .pronta')], ['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
   ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
   ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
-  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'Use o botão ⤢ para aproximar ou ver o andar inteiro', () => mapa.length >= 4],
+  ['detonar', 'Detonar explode os cadáveres no chão', () => poderes[0] <= 0 && poderes[3] >= 3], ['mapa', 'O botão ⤢ muda o zoom: perto, sala ou o andar inteiro', () => mapa.length >= 4],
   ['rota', 'Toque no símbolo de uma sala para o grupo ir a ela primeiro', () => !!licoes.mapa && mapa.length - masm.sala >= 4]];
 let licoes = {}; try { licoes = JSON.parse(localStorage.getItem('necromante-idle-save-v1-licoes') || '{}'); } catch (e) { /* começa do zero */ }
 function aprendeu(k) { if (licoes[k]) return; licoes[k] = 1; try { localStorage.setItem('necromante-idle-save-v1-licoes', JSON.stringify(licoes)); } catch (e) { /* tudo bem */ } }
@@ -745,8 +745,11 @@ function atualizarFicha() {
   if (h) { let chefeVivo = false; for (const eC of estado.values()) if (eC.viva && eC.chefe && eC.inimigo) { chefeVivo = true; break; } c.style.top = chefeVivo ? '104px' : ''; }
   if (h !== fichaTxt) { fichaTxt = h; c.innerHTML = h; c.hidden = !h; }
 }
+const licaoVista = {}; let licaoT0 = 0;
 function atualizarLicao() {
-  const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '';
+  const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '', agoraL = performance.now();
+  if (l && licaoT0) { licaoVista[l[0]] = (licaoVista[l[0]] || 0) + Math.min(1000, agoraL - licaoT0); if (licaoVista[l[0]] > 20000) aprendeu(l[0]); }   // dica vista por 20 s sai sozinha: quem só assiste não fica com ela grudada
+  licaoT0 = agoraL;
   if (c.textContent !== tx) { c.textContent = tx; c.hidden = !tx; }
 }
 let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = true;
@@ -1765,7 +1768,7 @@ function atualizarPainel(forcar) {
   const IC = {
     ossos: '<path d="M5 5l14 14M4 7a2 2 0 1 1 3-3M17 20a2 2 0 1 0 3-3" stroke="#d8c9b4"/>', ess: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" stroke="#6dffa8"/>',
     sangue: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" fill="#a01420" stroke="#ff5060"/>', frag: '<path d="M12 3l5 7-5 11-5-11z" stroke="#9a6aff"/>',
-    cmd: '<path d="M5 19V9l7-5 7 5v10M9 19v-6h6v6" stroke="#d9b25f"/>', cinzas: '<path d="M4 19h16M7 19c0-5 3-6 3-10M14 19c0-6 3-7 2-12" stroke="#aaa"/>',
+    cmd: '<path d="M5 19V9l7-5 7 5v10M9 19v-6h6v6" stroke="#d9b25f"/>', ouro: '<circle cx="12" cy="12" r="7" stroke="#ffd84a"/><path d="M12 8v8M9.5 10h5M9.5 14h5" stroke="#ffd84a"/>', cinzas: '<path d="M4 19h16M7 19c0-5 3-6 3-10M14 19c0-6 3-7 2-12" stroke="#aaa"/>',
   };
   const folga = d.poder / Math.max(1, d.poderSugerido), corP = folga >= 1 ? '#8fd89f' : folga >= 0.8 ? '#ffd84a' : '#ff6a6a';
   IC.poder = `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.3l6.1-.7z" stroke="${corP}"/>`;
@@ -2340,6 +2343,7 @@ $('b-frenesi').addEventListener('click', () => { if (J) J.Frenesi(); });
 $('b-portal').addEventListener('click', () => { if (J && J.Portal()) $('b-portal').hidden = true; });
 $('missao').addEventListener('click', (ev) => {
   const b = ev.target.closest('button[data-ac="resgatar"]'); if (!b || !J) return;
+  aprendeu("resgatar");
   if (J.Resgatar()) { aviso('Missão cumprida'); salvar(); atualizarPainel(true); }
 });
 for (const idp of ['painel', 'p-esq', 'p-dir']) $(idp).addEventListener('click', (ev) => {
