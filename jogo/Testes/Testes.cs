@@ -1742,6 +1742,31 @@ namespace Necro.Testes
                 }
             });
 
+            Teste("Súcubo: demônio atirador dos andares fundos; inimiga recua de quem chega perto; erguida, cura o necromante a cada acerto", () =>
+            {
+                var d = TabelaEspecies.Obter(EspecieId.Sucubo);
+                Afirmar(TabelaEspecies.Total == 15 && d != null && d.Familia == Familia.Demonio && d.Papel == Papel.Atirador && d.AtoMinimo == 2 && d.AndarMinimo == 2 && d.PesoOnda > 0f, "está na tabela, do andar 12 em diante (Ato 2, segundo andar)");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                // aparece nas ondas dos andares fundos e não antes
+                int cedo = 0, fundo = 0;
+                for (ulong sm = 1; sm <= 6; sm++)
+                {
+                    var p1 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p1.NivelNecromante = 60; p1.PoderNecromantico = 50f; foreach (var m in p1.Minions) m.Nivel = 20;
+                    var a = new Simulacao(c, p1, sm, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!a.Encerrada && g++ < 40000) { a.Tick(); foreach (var ev in a.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Sucubo) cedo++; }
+                    var b = new Simulacao(c, p1, sm, ModoExpedicao.Avancar, 13) { LimiteDeAndares = 2 }; g = 0; while (!b.Encerrada && g++ < 40000) { b.Tick(); foreach (var ev in b.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu && ev.Especie == EspecieId.Sucubo) fundo++; }
+                }
+                Console.WriteLine("        (súcubos vistas: " + cedo + " nos andares 6-7, " + fundo + " nos andares 13-14)");
+                Afirmar(cedo == 0 && fundo >= 3, "só nos andares fundos: " + cedo + " / " + fundo);
+                // erguida: Beijo de Sangue
+                var p = ProgressoCom(EspecieId.Sucubo); p.NivelNecromante = 10;
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 2);
+                var suc = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Sucubo);
+                var alvo = s.CriarInimigo(EspecieId.Zumbi, new Vec2(8, 6));
+                s.Necromante.Vida = s.Necromante.VidaMax * 0.5f; float v0 = s.Necromante.Vida;
+                float dano = s.CausarDano(suc, alvo, 20f, TipoDano.Sombra, true);
+                Afirmar(dano > 0f && Math.Abs(s.Necromante.Vida - v0 - dano * c.BeijoDeSangue) < 0.01f, "o acerto da Súcubo cura o necromante em " + c.BeijoDeSangue * 100 + "% do dano (" + (s.Necromante.Vida - v0) + " de " + dano + ")");
+            });
+
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>
             {
                 var c = new ConfigJogo { MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false };

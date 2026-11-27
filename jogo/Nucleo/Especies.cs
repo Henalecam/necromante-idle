@@ -25,6 +25,7 @@ namespace Necro.Nucleo
         public bool Chefe;
         // Geração de ondas
         public int AndarMinimo = 1; // primeiro andar do Ato em que aparece
+        public int AtoMinimo = 1;   // primeiro Ato em que aparece (a Súcubo só do Ato 2 em diante)
         public float PesoOnda;      // 0 = nunca sorteado em ondas
         public float CustoOnda = 1f;
     }
@@ -53,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[14];
+            var t = new DadosEspecie[15];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -140,6 +141,13 @@ namespace Necro.Nucleo
                 Id = EspecieId.CarcereiroDeAlmas, Nome = "O Carcereiro de Almas", Familia = Familia.Espirito, Porte = Porte.Colossal, Papel = Papel.Lutador,
                 Vida = 640f, Dano = 26f, VelAtaque = 0.75f, Armadura = 40f, Alcance = 2.0f, VelMovimento = 1.7f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0.2f, 0f, 0f, 0f, 0.2f, 0.5f), Chefe = true, AndarMinimo = 99, PesoOnda = 0f, CustoOnda = 10f
+            };
+            // Súcubo (Diablo 1): atiradora demoníaca dos andares fundos. Dispara de longe e recua para manter a distância.
+            t[(int)EspecieId.Sucubo] = new DadosEspecie
+            {
+                Id = EspecieId.Sucubo, Nome = "Súcubo", Familia = Familia.Demonio, Porte = Porte.Medio, Papel = Papel.Atirador,
+                Vida = 70f, Dano = 13f, VelAtaque = 0.8f, Armadura = 0f, Alcance = 7.5f, VelMovimento = 2.8f, TipoDano = TipoDano.Sombra,
+                Resistencias = Res(0f, 0.3f, 0f, -0.2f, 0f, 0.3f), AtoMinimo = 2, AndarMinimo = 2, PesoOnda = 3f, CustoOnda = 2f
             };
             return t;
         }

@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -1438,7 +1438,7 @@ function thumb(sprite) {
   const k = 46 / Math.min(m.W, m.H) * 1.9, x = 23 - m.pivo[0] * k, y = 40 - (m.H - m.pivo[1]) * k;
   return `<div class="thumb" style="background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
 }
-const HABILIDADE = { esqueleto: ['Aparar', 'ignora o primeiro golpe que levar em cada sala'], zumbi: ['Miasma', 'ao cair, envenena os inimigos em volta'], caodecripta: ['Sede', 'ataca 25% mais rápido por 4 s depois de matar'], arqueiroossudo: ['Olho Morto', '+30% de dano em alvos com a vida ainda cheia'], diabrete: ['Matilha', '+8% de dano por outro Diabrete vivo no exército (até 3)'], acolitocaido: ['Agouro', 'o golpe enfraquece o alvo por 2,5 s (menos dano; não afeta chefes)'], carnical: ['Banquete', 'ao matar, devora o corpo e recupera 15% da vida'], diabodeguerra: ['Fúria de Guerra', '+25% de dano enquanto estiver abaixo de metade da vida'], aparicao: ['Incorpórea', 'um a cada 4 golpes simplesmente a atravessa'], colossodeossos: ['Baluarte', 'enquanto estiver de pé, os outros minions sofrem 10% menos dano'], resprofana: ['Investida', 'o primeiro golpe de cada sala causa dano dobrado'] };
+const HABILIDADE = { sucubo: ['Beijo de Sangue', '20% do dano de cada acerto cura o necromante'], esqueleto: ['Aparar', 'ignora o primeiro golpe que levar em cada sala'], zumbi: ['Miasma', 'ao cair, envenena os inimigos em volta'], caodecripta: ['Sede', 'ataca 25% mais rápido por 4 s depois de matar'], arqueiroossudo: ['Olho Morto', '+30% de dano em alvos com a vida ainda cheia'], diabrete: ['Matilha', '+8% de dano por outro Diabrete vivo no exército (até 3)'], acolitocaido: ['Agouro', 'o golpe enfraquece o alvo por 2,5 s (menos dano; não afeta chefes)'], carnical: ['Banquete', 'ao matar, devora o corpo e recupera 15% da vida'], diabodeguerra: ['Fúria de Guerra', '+25% de dano enquanto estiver abaixo de metade da vida'], aparicao: ['Incorpórea', 'um a cada 4 golpes simplesmente a atravessa'], colossodeossos: ['Baluarte', 'enquanto estiver de pé, os outros minions sofrem 10% menos dano'], resprofana: ['Investida', 'o primeiro golpe de cada sala causa dano dobrado'] };
 const tracosHtml = (t) => t.length ? '<small>' + t.map((k) => TRACOS[k] ? `<b style="color:#c8a86a;font-weight:normal">${TRACOS[k][0]}</b>: ${TRACOS[k][1]}` : '').join(' · ') + '</small>' : '';
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
@@ -1921,6 +1921,7 @@ window.__marcarPrimeiro = () => { const al = [...estado.values()].filter((e) => 
 window.__ficha = () => fichaTxt;
 window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
+window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
 window.__muralha = () => muralhaFx ? 1 : 0;
 window.__dbg = () => [orbes.length, orbes[0] ? naTela(orbes[0][0], orbes[0][1])[0] | 0 : 0, camX | 0, tela.getBoundingClientRect().width, chao.height];
 $('bencaos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-b]'); if (b && J) { J.EscolherBencao(+b.dataset.b); aprendeu('sala'); som('toque'); } });

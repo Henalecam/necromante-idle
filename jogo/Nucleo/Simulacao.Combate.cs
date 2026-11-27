@@ -155,6 +155,9 @@ namespace Necro.Nucleo
 
             // Roubo de vida (Faminto / Vampírico).
             if (atacante != null && atacante.Viva && atacante.RouboDeVida > 0f && dano > 0f) Curar(atacante, atacante, dano * atacante.RouboDeVida);
+            // Súcubo erguida — Beijo de Sangue: parte do dano de cada acerto volta como vida para o necromante
+            if (golpe && dano > 0f && Cfg.HabilidadesDeEspecie && atacante != null && atacante.Faccao == Faccao.Minion && atacante.Especie == EspecieId.Sucubo && Necromante != null && Necromante.Viva && Necromante.Vida < Necromante.VidaMax)
+                Curar(atacante, Necromante, dano * Cfg.BeijoDeSangue);
 
             if (alvo.Vida <= 0f) Matar(alvo, atacante, tipoFinal, dano, execucao);
             return dano;

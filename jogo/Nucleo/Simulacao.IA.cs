@@ -141,7 +141,8 @@ namespace Necro.Nucleo
             if (e.Papel == Papel.Atirador && e.Recarga > 0f && !e.Elite)
             {
                 var perto = HostilMaisProximo(e, e.Pos, float.MaxValue);
-                if (perto != null && Vec2.Dist2(perto.Pos, e.Pos) < Cfg.AtiradorInimigoRecuaDist * Cfg.AtiradorInimigoRecuaDist)
+                float dRecuo = e.Especie == EspecieId.Sucubo ? Cfg.SucuboRecuaDist : Cfg.AtiradorInimigoRecuaDist;
+                if (perto != null && Vec2.Dist2(perto.Pos, e.Pos) < dRecuo * dRecuo)
                 {
                     Vec2 fuga = (e.Pos - perto.Pos).Normalizado; var destino = Limitar(e.Pos + fuga * 1.0f);
                     if (Vec2.Dist2(destino, e.Pos) > 0.25f) { MoverPara(e, destino); return true; }   // encurralado na parede: fica e atira
