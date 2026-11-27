@@ -489,6 +489,9 @@ public static partial class Jogo
                     if (Equipamento.Cabe(_p, it, _cfg)) _p.Inventario.Add(it);
                 }
                 break;
+            case "novas":   // teste: almas do Arauto de Cinzas e do Lacaio Ígneo no fim do Filactério
+                _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.ArautoDeCinzas, Qualidade.Vigorosa)); _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.LacaioIgneo, Qualidade.Vigorosa));
+                break;
             case "almas":
                 for (int i = 0; i < (int)Math.Min(30, v); i++)
                     _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, (EspecieId)(1 + rng.Intervalo(0, TabelaEspecies.Total - 1)), (Qualidade)rng.Intervalo(1, 5)));

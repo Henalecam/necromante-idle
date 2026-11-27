@@ -203,7 +203,7 @@ namespace Necro.Nucleo
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
         public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;
-        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago, Teleportes, MuralhasDeLazarus, Apocalipses, Petrificados, ArmadilhasDisparadas, ArmadilhasDesarmadas, Espiritos, EscudosDeArauto, LacaiosExplodidos, SermoesDoPregador;
+        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago, Teleportes, MuralhasDeLazarus, Apocalipses, Petrificados, ArmadilhasDisparadas, ArmadilhasDesarmadas, Espiritos, EscudosDeArauto, LacaiosExplodidos, SermoesDoPregador, SermoesDeOssos, BrasasFinais;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;

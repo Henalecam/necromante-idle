@@ -331,6 +331,11 @@ namespace Necro.Nucleo
             else if (alvo.Faccao == Faccao.Minion)
             {
                 if (!alvo.Temporario) Resultado.MinionsMortos++;
+                if (alvo.Especie == EspecieId.LacaioIgneo && Cfg.HabilidadesDeEspecie)   // Lacaio Ígneo erguido — Brasa Final: ao cair, explode só nos inimigos
+                {
+                    _explosoes.Add(new ExplosaoPendente { Pos = alvo.Pos, Dano = alvo.Dano * Cfg.BrasaFinalMult, Raio = Cfg.LacaioExplosaoRaio, AtingeInimigos = true, OrigemId = alvo.Id, Tipo = TipoDano.Fogo });
+                    Resultado.BrasasFinais++;
+                }
                 if (alvo.Rancoroso)
                     _explosoes.Add(new ExplosaoPendente { Pos = alvo.Pos, Dano = alvo.Dano * Cfg.RancorosoMult, Raio = Cfg.ExplosaoAoMorrerRaio, AtingeInimigos = true, OrigemId = alvo.Id, Tipo = TipoDano.Fogo });
             }

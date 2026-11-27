@@ -664,6 +664,27 @@ namespace Necro.Nucleo
             return true;
         }
 
+        /// <summary>Arauto de Cinzas erguido — Sermão de Ossos: a cada tantos segundos, escudo de ossos nos minions mais próximos que estão sem escudo.</summary>
+        private void SermoesDeOssos()
+        {
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var ar = Entidades[i];
+                if (!ar.Viva || ar.Faccao != Faccao.Minion || ar.Especie != EspecieId.ArautoDeCinzas) continue;
+                ar.TempoHabilidade -= DT * 5f;
+                if (ar.TempoHabilidade > 0f) continue;
+                ar.TempoHabilidade = Cfg.SermaoIntervalo;
+                for (int n = 0; n < Cfg.SermaoAlvos; n++)
+                {
+                    Entidade melhor = null; float md = float.MaxValue;
+                    for (int j = 0; j < Entidades.Count; j++) { var m = Entidades[j]; if (!m.Viva || m == ar || m.Faccao != Faccao.Minion || m.Escudo > 0f) continue; float d2 = Vec2.Dist2(m.Pos, ar.Pos); if (d2 < md) { md = d2; melhor = m; } }
+                    if (melhor == null) break;
+                    melhor.Escudo = melhor.VidaMax * Cfg.SermaoEscudo; Resultado.SermoesDeOssos++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 52, Alvo = melhor.Id, Origem = ar.Id, Pos = ar.Pos, Dir = melhor.Pos - ar.Pos });
+                }
+            }
+        }
+
         private void AtualizarMuralhas()
         {
             for (int i = Muralhas.Count - 1; i >= 0; i--)
@@ -1190,6 +1211,7 @@ namespace Necro.Nucleo
             if (SacrificioTempo > 0f) SacrificioTempo -= DT;
 
             if (Muralhas.Count > 0) AtualizarMuralhas();
+            if (Cfg.HabilidadesDeEspecie && TickAtual % 5 == 0) SermoesDeOssos();
 
             // Poças de sangue: curam o chefe dono enquanto ele estiver dentro do raio.
             for (int i = Pocas.Count - 1; i >= 0; i--)

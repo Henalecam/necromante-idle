@@ -2004,6 +2004,23 @@ namespace Necro.Testes
                 Afirmar(Math.Abs(v1 / v0 - c.CinzasVidaInimigo) < 0.01f, "vida ×" + c.CinzasVidaInimigo + " (" + v0 + " → " + v1 + ")");
             });
 
+            Teste("Arauto e Lacaio erguidos: Sermão de Ossos dá escudo aos minions; Brasa Final explode só nos inimigos", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.ArautoDeCinzas, EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.LacaioIgneo); p.NivelNecromante = 20; foreach (var m in p.Minions) m.Nivel = 10;
+                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2) { LimiteDeAndares = 1 }; int g = 0;
+                while (!s.Encerrada && g++ < 3000) s.Tick();
+                Afirmar(s.Resultado.SermoesDeOssos >= 2, "o Arauto erguido deu escudo aos minions (" + s.Resultado.SermoesDeOssos + ")");
+                var s2 = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2);
+                foreach (var e0 in s2.Entidades) if (e0.Faccao == Faccao.Inimigo) e0.Viva = false;
+                var la = s2.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.LacaioIgneo); var vizinho = s2.Entidades.Find(e => e.Faccao == Faccao.Minion && e != la);
+                var ini = s2.CriarInimigo(EspecieId.Zumbi, la.Pos + new Vec2(0.8f, 0f)); ini.VidaMax = ini.Vida = 1e6f; float vi = ini.Vida, vv = vizinho.Vida; bool fogoEmAliado = false;
+                s2.CausarDano(null, la, la.Vida * 5f, TipoDano.Fisico, false);
+                for (int k = 0; k < 3; k++) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.Dano && ev.TipoDano == TipoDano.Fogo && ev.Alvo == vizinho.Id) fogoEmAliado = true; }
+                Afirmar(s2.Resultado.BrasasFinais == 1 && ini.Vida < vi, "a Brasa Final feriu o inimigo ao lado");
+                Afirmar(!fogoEmAliado, "e não queimou o minion vizinho");
+            });
+
             Teste("Lacaio Ígneo: só a partir do Ato 4; ao morrer explode em fogo e fere os minions em volta, não os inimigos", () =>
             {
                 var d = TabelaEspecies.Obter(EspecieId.LacaioIgneo);
