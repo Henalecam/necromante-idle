@@ -1745,7 +1745,7 @@ namespace Necro.Testes
             Teste("Súcubo: demônio atirador dos andares fundos; inimiga recua de quem chega perto; erguida, cura o necromante a cada acerto", () =>
             {
                 var d = TabelaEspecies.Obter(EspecieId.Sucubo);
-                Afirmar(TabelaEspecies.Total == 15 && d != null && d.Familia == Familia.Demonio && d.Papel == Papel.Atirador && d.AtoMinimo == 2 && d.AndarMinimo == 2 && d.PesoOnda > 0f, "está na tabela, do andar 12 em diante (Ato 2, segundo andar)");
+                Afirmar(TabelaEspecies.Total >= 15 && d != null && d.Familia == Familia.Demonio && d.Papel == Papel.Atirador && d.AtoMinimo == 2 && d.AndarMinimo == 2 && d.PesoOnda > 0f, "está na tabela, do andar 12 em diante (Ato 2, segundo andar)");
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
                 // aparece nas ondas dos andares fundos e não antes
                 int cedo = 0, fundo = 0;
@@ -1788,6 +1788,34 @@ namespace Necro.Testes
                 Afirmar(s.Encerrada && s.Resultado.Relampagos >= 3 && ev41 == s.Resultado.Relampagos + s.Resultado.SaltosDeRelampago, "com o livro, o necromante lança o raio (" + s.Resultado.Relampagos + ")");
                 Afirmar(s.Resultado.SaltosDeRelampago >= 2 && maiorCadeia >= 2 && maiorCadeia <= c.RelampagoSaltos + 1, "o raio salta, até " + (c.RelampagoSaltos + 1) + " alvos: " + maiorCadeia);
                 Afirmar(danoDeRaio > 0f && !repetiu, "fere com raio e não repete alvo na mesma cadeia");
+            });
+
+            Teste("Cavaleiro Negro e Magistrado: só no Ato 2; o Cavaleiro tem couraça (inimigo e erguido); o Magistrado se teleporta de quem encosta e, erguido, volta para junto do necromante", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var cav = TabelaEspecies.Obter(EspecieId.CavaleiroNegro); var mag = TabelaEspecies.Obter(EspecieId.Magistrado);
+                Afirmar(TabelaEspecies.Total == 17 && cav.AtoMinimo == 2 && mag.AtoMinimo == 2 && cav.Armadura >= 60f && cav.Resistencias[0] > 0f, "na tabela, do Ato 2 em diante, com armadura alta");
+                int cedoC = 0, fundoC = 0, cedoM = 0, fundoM = 0, teles = 0, concluiu = 0;
+                for (ulong sm = 1; sm <= 6; sm++)
+                {
+                    var p1 = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p1.NivelNecromante = 60; p1.PoderNecromantico = 50f; foreach (var m in p1.Minions) m.Nivel = 20;
+                    var a = new Simulacao(c, p1, sm, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!a.Encerrada && g++ < 40000) { a.Tick(); foreach (var ev in a.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu) { if (ev.Especie == EspecieId.CavaleiroNegro) cedoC++; if (ev.Especie == EspecieId.Magistrado) cedoM++; } }
+                    var b = new Simulacao(c, p1, sm, ModoExpedicao.Avancar, 16) { LimiteDeAndares = 2 }; g = 0; while (!b.Encerrada && g++ < 40000) { b.Tick(); foreach (var ev in b.Eventos) if (ev.Tipo == TipoEvento.EntidadeSurgiu) { if (ev.Especie == EspecieId.CavaleiroNegro) fundoC++; if (ev.Especie == EspecieId.Magistrado) fundoM++; } }
+                    teles += b.Resultado.Teleportes; if (b.Encerrada) concluiu++;
+                }
+                Console.WriteLine("        (andares 16-17: " + fundoC + " cavaleiros, " + fundoM + " magistrados, " + teles + " teleportes)");
+                Afirmar(cedoC == 0 && cedoM == 0 && fundoC >= 2 && fundoM >= 2, "só no Ato 2: " + cedoC + "/" + cedoM + " cedo, " + fundoC + "/" + fundoM + " fundo");
+                Afirmar(teles >= 2 && concluiu == 6, "magistrados se teleportam e nenhuma descida trava (" + teles + ", " + concluiu + "/6)");
+                // erguidos
+                var p = ProgressoCom(EspecieId.CavaleiroNegro, EspecieId.Esqueleto, EspecieId.Magistrado); p.NivelNecromante = 10;
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 2);
+                var mc = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.CavaleiroNegro); var me = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Esqueleto); var mm = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Magistrado);
+                mc.Armadura = 0f; me.Armadura = 0f; me.Aparou = true; for (int r = 0; r < 6; r++) { mc.Resistencias[r] = 0f; me.Resistencias[r] = 0f; }
+                float dc = s.CausarDano(null, mc, 40f, TipoDano.Fisico, false), de = s.CausarDano(null, me, 40f, TipoDano.Fisico, false), df = s.CausarDano(null, mc, 40f, TipoDano.Fogo, false);
+                Afirmar(Math.Abs(dc - de * (1f - c.CouracaDoCavaleiro)) < 0.01f && Math.Abs(df - de) < 0.01f, "Couraça: " + c.CouracaDoCavaleiro * 100 + "% a menos de dano físico (" + dc + " x " + de + "), fogo inteiro (" + df + ")");
+                mm.Pos = new Vec2(12f, 6f); mm.Vida = mm.VidaMax * 0.55f; int antes = s.Resultado.Teleportes;
+                s.CausarDano(null, mm, mm.VidaMax * 0.2f, TipoDano.Fogo, false);
+                Afirmar(s.Resultado.Teleportes == antes + 1 && Vec2.Dist(mm.Pos, s.Necromante.Pos) < 2.5f, "Passo Sombrio: ferido, reaparece junto do necromante (" + Vec2.Dist(mm.Pos, s.Necromante.Pos) + ")");
             });
 
             Teste("comandos do jogador entre dois ticks não perdem eventos: quebrar um objeto pela tela aparece no tick seguinte", () =>

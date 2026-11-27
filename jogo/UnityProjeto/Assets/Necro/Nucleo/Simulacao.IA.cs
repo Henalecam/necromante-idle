@@ -138,6 +138,18 @@ namespace Necro.Nucleo
                     }
                 }
             }
+            if (e.Especie == EspecieId.Magistrado && TickAtual * DT >= e.TeleporteAte)
+            {
+                var encostado = HostilMaisProximo(e, e.Pos, Cfg.TeleporteDist * Cfg.TeleporteDist);
+                if (encostado != null)
+                {
+                    Vec2 fuga = (e.Pos - encostado.Pos).Normalizado; if (fuga.X == 0f && fuga.Y == 0f) fuga = new Vec2(1f, 0f);
+                    var destino = Limitar(e.Pos + fuga * Cfg.TeleporteSalto);
+                    if (Vec2.Dist2(destino, e.Pos) < 9f) destino = Limitar(e.Pos + new Vec2(-fuga.Y, fuga.X) * Cfg.TeleporteSalto);   // encurralado: salta de lado
+                    if (Vec2.Dist2(destino, e.Pos) < 9f) destino = Limitar(e.Pos - new Vec2(-fuga.Y, fuga.X) * Cfg.TeleporteSalto);
+                    if (Vec2.Dist2(destino, e.Pos) >= 9f) { Teleportar(e, destino); return true; }
+                }
+            }
             if (e.Papel == Papel.Atirador && e.Recarga > 0f && !e.Elite)
             {
                 var perto = HostilMaisProximo(e, e.Pos, float.MaxValue);
@@ -149,6 +161,13 @@ namespace Necro.Nucleo
                 }
             }
             return false;
+        }
+
+        /// <summary>Teleporte do Magistrado: some de um ponto e aparece no outro (evento 42: Pos = de onde, Dir = deslocamento).</summary>
+        private void Teleportar(Entidade e, Vec2 destino)
+        {
+            Vec2 de = e.Pos; e.Pos = destino; e.TeleporteAte = TickAtual * DT + Cfg.TeleporteRecarga; e.ProvocadoPor = -1; Resultado.Teleportes++;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 42, Alvo = e.Id, Origem = -1, Pos = de, Dir = destino - de });
         }
 
         /// <summary>Um inimigo morreu: os diabretes por perto perdem a coragem e fogem (como os Caídos do Diablo 1).</summary>

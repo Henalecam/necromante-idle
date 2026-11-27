@@ -17,6 +17,8 @@ namespace Necro.Nucleo
         public float CausarDano(Entidade atacante, Entidade alvo, float danoBase, TipoDano tipo, bool golpe)
         {
             if (alvo == null || !alvo.Viva || danoBase <= 0f) return 0f;
+            // Cavaleiro Negro erguido — Couraça: sente menos o golpe físico
+            if (tipo == TipoDano.Fisico && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.CavaleiroNegro && Cfg.HabilidadesDeEspecie) danoBase *= 1f - Cfg.CouracaDoCavaleiro;
             if (alvo.Imune != 0 && (alvo.Imune & (1 << (int)tipo)) != 0)
             {
                 Resultado.GolpesEmImunes++;
@@ -155,6 +157,12 @@ namespace Necro.Nucleo
 
             // Roubo de vida (Faminto / Vampírico).
             if (atacante != null && atacante.Viva && atacante.RouboDeVida > 0f && dano > 0f) Curar(atacante, atacante, dano * atacante.RouboDeVida);
+            // Magistrado erguido — Passo Sombrio: ferido, some e reaparece atrás do necromante
+            if (dano > 0f && Cfg.HabilidadesDeEspecie && alvo.Viva && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.Magistrado && alvo.Vida < alvo.VidaMax * Cfg.PassoSombrioVida && TickAtual * DT >= alvo.TeleporteAte && Necromante != null && Necromante.Viva)
+            {
+                var atras = Limitar(Necromante.Pos + new Vec2(-1.4f, 0.6f));
+                if (Vec2.Dist2(atras, alvo.Pos) > 4f) Teleportar(alvo, atras);
+            }
             // Súcubo erguida — Beijo de Sangue: parte do dano de cada acerto volta como vida para o necromante
             if (golpe && dano > 0f && Cfg.HabilidadesDeEspecie && atacante != null && atacante.Faccao == Faccao.Minion && atacante.Especie == EspecieId.Sucubo && Necromante != null && Necromante.Viva && Necromante.Vida < Necromante.VidaMax)
                 Curar(atacante, Necromante, dano * Cfg.BeijoDeSangue);

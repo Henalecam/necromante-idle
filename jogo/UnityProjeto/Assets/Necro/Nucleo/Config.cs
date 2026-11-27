@@ -478,6 +478,8 @@ namespace Necro.Nucleo
         public float MatilhaBonus = 0.08f; public int MatilhaMaximo = 3; // Diabrete: por outro diabrete vivo
         public float AgouroDuracao = 2.5f;                               // Acólito Caído: fraqueza no alvo (não chefe)
         public float BanqueteCura = 0.15f;                               // Carniçal: fração da vida máxima ao matar
+        public float CouracaDoCavaleiro = 0.25f;           // Cavaleiro Negro erguido: fração a menos de dano físico
+        public float TeleporteDist = 2.0f, TeleporteSalto = 6.5f, TeleporteRecarga = 6f, PassoSombrioVida = 0.5f;   // Magistrado: foge de quem encosta; erguido, volta para junto do necromante quando ferido
         public float SucuboRecuaDist = 3.6f;              // Súcubo inimiga: enquanto recarrega, recua se alguém chegar a esta distância (mais longe que os outros atiradores)
         public float BeijoDeSangue = 0.2f;                // Súcubo erguida: fração do dano de cada acerto que cura o necromante
         public float FuriaDeGuerraBonus = 0.25f, FuriaDeGuerraLimiar = 0.5f; // Diabo de Guerra: dano extra abaixo de metade da vida

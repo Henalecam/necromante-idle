@@ -32,6 +32,7 @@ namespace Necro.Nucleo
         public float VelMovimento;
         public TipoDano TipoDano;
         public readonly float[] Resistencias = new float[6];
+        public float TeleporteAte;   // Magistrado: instante (s de simulação) em que pode se teleportar de novo
         public int Imune;            // bits por TipoDano: dano desse tipo não entra (inimigos no Pesadelo e no Inferno)
         public float ImuneAviso;     // intervalo entre dois avisos de "Imune" do mesmo inimigo
         public float ChanceCritico;

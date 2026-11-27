@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { cavaleironegro: ['esqueleto_elite', 1.28, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // tom fixo por cima do sprite próprio (a Aparição sai clara demais do render: ganha um azul espectral)
 const TINTA_FIXA = { aparicao: ['aparicao', 1, '70,130,200', 0.38] };
 function visual(especie) { const n = especie.toLowerCase(); return !monstros[n] && PROVISORIO[n] ? PROVISORIO[n] : TINTA_FIXA[n] || null; }
@@ -446,6 +446,13 @@ function evento(v) {
     if (!vistosDeEspecie[k] && k !== '31') { vistosDeEspecie[k] = 1; aviso(k === '30' ? 'Diabretes fogem quando um deles morre · voltam logo' : 'Carniçais feridos devoram cadáveres para se curar'); }
     return;
   }
+  if (tipo === 'EfeitoAplicado' && v[14] === '42') {
+    const ox2 = +v[10], oy2 = +v[11], dx2 = ox2 + +v[12], dy2 = oy2 + +v[13], g = estado.get(+v[3]);
+    teleFx.push({ p: [ox2 + so[0], oy2 + so[1]], t: performance.now() }, { p: [dx2 + so[0], dy2 + so[1]], t: performance.now() + 90 }); if (teleFx.length > 12) teleFx.splice(0, teleFx.length - 12);
+    if (g) { g.rx = dx2; g.ry = dy2; g.x = dx2; g.y = dy2; }
+    som('bencao'); vistosDeEspecie = vistosDeEspecie || {}; if (!vistosDeEspecie['42']) { vistosDeEspecie['42'] = 1; aviso('O Magistrado se teleporta quando alguém encosta'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '41') {
     const semente = Math.random() * 1000; raiosFx.push({ a: [+v[10] + so[0], +v[11] + so[1]], b: [+v[10] + +v[12] + so[0], +v[11] + +v[13] + so[1]], t: performance.now() + (+v[4] || 0) * 55, s: semente });
     if (raiosFx.length > 24) raiosFx.shift();
@@ -732,7 +739,7 @@ let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null, raiosFx = [];
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhaFx = null, raiosFx = [], teleFx = [];
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
 let explor = { salas: 0, baus: 0, toques: 0, secretos: 0 };
@@ -1123,6 +1130,14 @@ function desenhar(dt) {
       ctx.restore(); ctx.lineWidth = 1;
     }
   }
+  if (teleFx.length) {      // teleporte: anel roxo que se abre onde o Magistrado some e onde reaparece
+    const agoraT = performance.now(); teleFx = teleFx.filter((t) => agoraT - t.t < 600);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const t of teleFx) { const idT = agoraT - t.t; if (idT < 0) continue; const fT = idT / 600, [tx, ty] = W(t.p[0], t.p[1]), rT = (10 + 34 * fT) * reforco;
+      ctx.strokeStyle = `rgba(190,110,255,${0.9 * (1 - fT)})`; ctx.lineWidth = 3 * reforco; ctx.beginPath(); ctx.ellipse(tx, ty, rT, rT * 0.5, 0, 0, 7); ctx.stroke();
+      const gT = ctx.createRadialGradient(tx, ty - 24 * reforco, 0, tx, ty - 24 * reforco, 40 * reforco); gT.addColorStop(0, `rgba(210,150,255,${0.55 * (1 - fT)})`); gT.addColorStop(1, 'rgba(120,40,220,0)'); ctx.fillStyle = gT; ctx.beginPath(); ctx.arc(tx, ty - 24 * reforco, 40 * reforco, 0, 7); ctx.fill(); }
+    ctx.restore(); ctx.lineWidth = 1;
+  }
   if (raiosFx.length) {     // relâmpago em cadeia: cada salto é um ziguezague branco-azulado que dura um instante
     const agoraR = performance.now(); raiosFx = raiosFx.filter((r) => agoraR - r.t < 520);
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -1464,7 +1479,7 @@ function thumb(sprite) {
   const k = 46 / Math.min(m.W, m.H) * 1.9, x = 23 - m.pivo[0] * k, y = 40 - (m.H - m.pivo[1]) * k;
   return `<div class="thumb" style="background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
 }
-const HABILIDADE = { sucubo: ['Beijo de Sangue', '20% do dano de cada acerto cura o necromante'], esqueleto: ['Aparar', 'ignora o primeiro golpe que levar em cada sala'], zumbi: ['Miasma', 'ao cair, envenena os inimigos em volta'], caodecripta: ['Sede', 'ataca 25% mais rápido por 4 s depois de matar'], arqueiroossudo: ['Olho Morto', '+30% de dano em alvos com a vida ainda cheia'], diabrete: ['Matilha', '+8% de dano por outro Diabrete vivo no exército (até 3)'], acolitocaido: ['Agouro', 'o golpe enfraquece o alvo por 2,5 s (menos dano; não afeta chefes)'], carnical: ['Banquete', 'ao matar, devora o corpo e recupera 15% da vida'], diabodeguerra: ['Fúria de Guerra', '+25% de dano enquanto estiver abaixo de metade da vida'], aparicao: ['Incorpórea', 'um a cada 4 golpes simplesmente a atravessa'], colossodeossos: ['Baluarte', 'enquanto estiver de pé, os outros minions sofrem 10% menos dano'], resprofana: ['Investida', 'o primeiro golpe de cada sala causa dano dobrado'] };
+const HABILIDADE = { cavaleironegro: ['Couraça', 'sofre 25% menos dano físico'], magistrado: ['Passo Sombrio', 'ferido abaixo de metade da vida, teleporta para trás do necromante (a cada 6 s)'], sucubo: ['Beijo de Sangue', '20% do dano de cada acerto cura o necromante'], esqueleto: ['Aparar', 'ignora o primeiro golpe que levar em cada sala'], zumbi: ['Miasma', 'ao cair, envenena os inimigos em volta'], caodecripta: ['Sede', 'ataca 25% mais rápido por 4 s depois de matar'], arqueiroossudo: ['Olho Morto', '+30% de dano em alvos com a vida ainda cheia'], diabrete: ['Matilha', '+8% de dano por outro Diabrete vivo no exército (até 3)'], acolitocaido: ['Agouro', 'o golpe enfraquece o alvo por 2,5 s (menos dano; não afeta chefes)'], carnical: ['Banquete', 'ao matar, devora o corpo e recupera 15% da vida'], diabodeguerra: ['Fúria de Guerra', '+25% de dano enquanto estiver abaixo de metade da vida'], aparicao: ['Incorpórea', 'um a cada 4 golpes simplesmente a atravessa'], colossodeossos: ['Baluarte', 'enquanto estiver de pé, os outros minions sofrem 10% menos dano'], resprofana: ['Investida', 'o primeiro golpe de cada sala causa dano dobrado'] };
 const tracosHtml = (t) => t.length ? '<small>' + t.map((k) => TRACOS[k] ? `<b style="color:#c8a86a;font-weight:normal">${TRACOS[k][0]}</b>: ${TRACOS[k][1]}` : '').join(' · ') + '</small>' : '';
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
@@ -1949,6 +1964,7 @@ window.__ficha = () => fichaTxt;
 window.__imune = () => (vistosDeEspecie && vistosDeEspecie['38']) ? 1 : 0;
 window.__marcarUnico = () => { for (const e of estado.values()) if (e.viva && nomesUnicos.has(e.id) && e.inimigo && J) { J.Marcar(e.id); return true; } return false; };
 window.__marcarEspecie = (nome) => { for (const e of estado.values()) if (e.viva && e.inimigo && e.especie === nome && J) { J.Marcar(e.id); return true; } return false; };
+window.__teles = () => teleFx.length;
 window.__raios = () => raiosFx.length;
 for (const idG of ['g-vida', 'g-mana']) $(idG).addEventListener('click', () => { const g = $(idG); g.classList.add('mostra'); clearTimeout(g.tm); g.tm = setTimeout(() => g.classList.remove('mostra'), 2500); });
 window.__muralha = () => muralhaFx ? 1 : 0;

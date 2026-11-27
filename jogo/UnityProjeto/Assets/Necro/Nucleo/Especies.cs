@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[15];
+            var t = new DadosEspecie[17];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -148,6 +148,20 @@ namespace Necro.Nucleo
                 Id = EspecieId.Sucubo, Nome = "Súcubo", Familia = Familia.Demonio, Porte = Porte.Medio, Papel = Papel.Atirador,
                 Vida = 70f, Dano = 13f, VelAtaque = 0.8f, Armadura = 0f, Alcance = 7.5f, VelMovimento = 2.8f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0f, 0.3f, 0f, -0.2f, 0f, 0.3f), AtoMinimo = 2, AndarMinimo = 2, PesoOnda = 3f, CustoOnda = 2f
+            };
+            // Cavaleiro Negro (Diablo 1): couraça pesada. Quase não sente golpe físico: pede feitiço (raio, fogo) ou paciência.
+            t[(int)EspecieId.CavaleiroNegro] = new DadosEspecie
+            {
+                Id = EspecieId.CavaleiroNegro, Nome = "Cavaleiro Negro", Familia = Familia.MortoVivo, Porte = Porte.Medio, Papel = Papel.Lutador,
+                Vida = 170f, Dano = 20f, VelAtaque = 0.5f, Armadura = 80f, Alcance = 1.3f, VelMovimento = 1.5f, TipoDano = TipoDano.Fisico,
+                Resistencias = Res(0.3f, 0f, 0f, -0.2f, 0f, 0.2f), AtoMinimo = 2, AndarMinimo = 5, PesoOnda = 2f, CustoOnda = 4f
+            };
+            // Magistrado (Diablo 1): feiticeiro que some num clarão quando alguém encosta e reaparece longe.
+            t[(int)EspecieId.Magistrado] = new DadosEspecie
+            {
+                Id = EspecieId.Magistrado, Nome = "Magistrado", Familia = Familia.Aberracao, Porte = Porte.Medio, Papel = Papel.Atirador,
+                Vida = 60f, Dano = 12f, VelAtaque = 0.6f, Armadura = 0f, Alcance = 7.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Sombra,
+                Resistencias = Res(0f, -0.2f, 0f, 0f, 0f, 0.4f), AtoMinimo = 2, AndarMinimo = 3, PesoOnda = 2.5f, CustoOnda = 2f
             };
             return t;
         }

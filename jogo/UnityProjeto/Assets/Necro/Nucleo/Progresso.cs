@@ -144,7 +144,7 @@ namespace Necro.Nucleo
         /// <summary>Pontos em cada talento, indexado como ConfigJogo.Talentos.</summary>
         public int[] Talentos = new int[15];
         /// <summary>Bestiário: inimigos mortos de cada espécie desde o começo do jogo, indexado por EspecieId.</summary>
-        public long[] MortesPorEspecie = new long[16];        // contador da missão atual (missões de estado não usam)
+        public long[] MortesPorEspecie = new long[24];        // contador da missão atual (missões de estado não usam)
 
         public ulong ContadorDeSementes = 1;  // para gerar sementes de expedição reproduzíveis
     }
@@ -192,7 +192,7 @@ namespace Necro.Nucleo
         public int PocoesDeVidaUsadas, PocoesDeManaUsadas, PocoesDeVidaAchadas, PocoesDeManaAchadas;
         public int PortalNoAndar;   // > 0: a descida terminou por um Portal da Cidade aberto neste andar
         public int EfeitosDeUnicos;
-        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago;
+        public int GolensConjurados, DespertaresPorProximidade, Fugas, Banquetes, Flancos, GolpesEmImunes, MuralhasDeFogo, Relampagos, SaltosDeRelampago, Teleportes;
         public int SalasAtraidas, PortasArrombadas, PortasAbertasPorToque, EmboscadasDeCorredor;
         public List<int> Livros = new List<int>();   // livros de feitiço achados (FeiticoId)
         public int ObjetosQuebrados;
@@ -201,7 +201,7 @@ namespace Necro.Nucleo
         public int PatrulhasEnfrentadas;
         public int CofresAbertos;
         public int InimigosMortos;
-        public int[] MortesPorEspecie = new int[16];   // indexado por EspecieId
+        public int[] MortesPorEspecie = new int[24];   // indexado por EspecieId
         public int ElitesMortos;
         public int MinionsMortos;
         public int Execucoes;
