@@ -1993,6 +1993,19 @@ namespace Necro.Testes
                 Afirmar(!new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CamaraAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CamaraDeOssos), "vencida, a sala não volta");
             });
 
+            Teste("Arauto de Cinzas: só a partir do Ato 3; ergue escudo de ossos nos aliados próximos, a cada tantos segundos", () =>
+            {
+                var d = TabelaEspecies.Obter(EspecieId.ArautoDeCinzas);
+                Afirmar(d != null && d.AtoMinimo == 3 && d.Nome == "Arauto de Cinzas", "a espécie existe e é do Ato 3");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.Esqueleto); var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2);
+                foreach (var e0 in s.Entidades) if (e0.Faccao == Faccao.Inimigo) e0.Viva = false;
+                var ar = s.CriarInimigo(EspecieId.ArautoDeCinzas, new Vec2(30f, 6f)); var z1 = s.CriarInimigo(EspecieId.Zumbi, new Vec2(31f, 6f)); var z2 = s.CriarInimigo(EspecieId.Zumbi, new Vec2(31f, 7f)); var longe = s.CriarInimigo(EspecieId.Zumbi, new Vec2(4f, 1f));
+                int ev52 = 0; for (int k = 0; k < 120; k++) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 52) ev52++; }
+                Afirmar(ev52 >= 2 && s.Resultado.EscudosDeArauto == ev52, "o Arauto ergueu escudos (" + ev52 + ")");
+                Afirmar(longe.Escudo == 0f, "quem está longe não ganha escudo");
+            });
+
             Teste("missão da Fortaleza Rubra: no andar 13 o senhor da guerra (Único) e o séquito; vencida, dá o Estandarte Sangrento, que fere mais os fortes, e a sala não volta", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarFortaleza = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };

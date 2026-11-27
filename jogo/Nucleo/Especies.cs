@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[19];
+            var t = new DadosEspecie[20];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -162,6 +162,13 @@ namespace Necro.Nucleo
                 Id = EspecieId.Magistrado, Nome = "Magistrado", Familia = Familia.Aberracao, Porte = Porte.Medio, Papel = Papel.Atirador,
                 Vida = 60f, Dano = 12f, VelAtaque = 0.6f, Armadura = 0f, Alcance = 7.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0f, -0.2f, 0f, 0f, 0f, 0.4f), AtoMinimo = 2, AndarMinimo = 3, PesoOnda = 2.5f, CustoOnda = 2f
+            };
+            // Arauto de Cinzas (original): cinzas vivas num manto de ossos queimados. Pouco dano; a cada tantos segundos ergue um escudo de ossos nos aliados em volta. Mate-o primeiro.
+            t[(int)EspecieId.ArautoDeCinzas] = new DadosEspecie
+            {
+                Id = EspecieId.ArautoDeCinzas, Nome = "Arauto de Cinzas", Familia = Familia.Aberracao, Porte = Porte.Medio, Papel = Papel.Suporte,
+                Vida = 80f, Dano = 8f, VelAtaque = 0.6f, Armadura = 10f, Alcance = 6.0f, VelMovimento = 2.0f, TipoDano = TipoDano.Fogo,
+                Resistencias = Res(0f, 0.4f, -0.2f, 0f, 0.2f, 0.25f), AtoMinimo = 3, AndarMinimo = 1, PesoOnda = 2f, CustoOnda = 3f
             };
             // Chefe do Ato 3 (Diablo 1): o Arcebispo Lázarus. Acende muralhas de fogo sob o grupo, some quando o cercam e chama Súcubos.
             t[(int)EspecieId.Lazarus] = new DadosEspecie

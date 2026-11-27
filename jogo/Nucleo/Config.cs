@@ -326,6 +326,7 @@ namespace Necro.Nucleo
         public int MapaFundoLadoMaximo = 5;              // o andar irregular não passa disto de lado (para caber na tela)
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
+        public float ArautoIntervalo = 7f, ArautoRaio = 5f, ArautoEscudo = 0.25f; public int ArautoAlvos = 3;   // Arauto de Cinzas: escudo de ossos nos aliados próximos
         public bool PedraAtiva = true; public int PedraMinimoDeInimigos = 3;
         public bool EspiritoAtivo = true; public float EspiritoVidaMinima = 6f;   // só vale a pena em alvo com vida atual acima de N× o dano do necromante
         public bool RelampagoAtivo = true; public int RelampagoSaltos = 4, RelampagoMinimoDeInimigos = 2; public float RelampagoPerdaPorSalto = 0.2f;

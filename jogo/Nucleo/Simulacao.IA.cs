@@ -143,6 +143,18 @@ namespace Necro.Nucleo
                 }
             }
             if (e.Oculto && TickAtual * DT >= e.OcultoAte) Revelar(e);
+            if (e.Especie == EspecieId.ArautoDeCinzas && Cfg.HabilidadesDeEspecie && (e.TempoHabilidade -= DT) <= 0f)
+            {
+                e.TempoHabilidade = Cfg.ArautoIntervalo; int dados = 0; float r2 = Cfg.ArautoRaio * Cfg.ArautoRaio;
+                for (int i = 0; i < Entidades.Count && dados < Cfg.ArautoAlvos; i++)
+                {
+                    var a = Entidades[i];
+                    if (!a.Viva || a == e || a.Faccao != Faccao.Inimigo || a.Escudo > 0f || Vec2.Dist2(a.Pos, e.Pos) > r2) continue;
+                    a.Escudo = a.VidaMax * Cfg.ArautoEscudo; dados++; Resultado.EscudosDeArauto++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 52, Alvo = a.Id, Origem = e.Id, Pos = e.Pos, Dir = a.Pos - e.Pos });
+                }
+                if (dados > 0) { e.Animacao = EstadoAnimacao.Conjurando; e.TempoAcao = 0.6f; return true; }
+            }
             if (e.Especie == EspecieId.Magistrado && TickAtual * DT >= e.TeleporteAte)
             {
                 var encostado = HostilMaisProximo(e, e.Pos, Cfg.TeleporteDist * Cfg.TeleporteDist);

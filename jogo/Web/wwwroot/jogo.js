@@ -36,7 +36,7 @@ async function carregarArte() {
 }
 
 // espécies ainda sem modelo próprio: usam um sprite existente, com outra escala e cor, até o render delas ficar pronto
-const PROVISORIO = { diablo: ['diabrete', 1.4, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.35, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.07, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
+const PROVISORIO = { arautodecinzas: ['acolitocaido', 1.08, '255,110,35', 0.5], diablo: ['diabrete', 1.4, '150,14,10', 0.42], lazarus: ['acolitocaido', 1.35, '120,20,20', 0.5], cavaleironegro: ['esqueleto_elite', 1.07, '14,14,26', 0.6], magistrado: ['acolitocaido', 1.1, '150,60,220', 0.45], sucubo: ['acolitocaido', 1.05, '215,40,95', 0.45], carnical: ['zumbi', 0.92, '110,150,175', 0.38], diabodeguerra: ['diabrete', 1.9, '50,8,8', 0.32], aparicao: ['acolitocaido', 1.0, '110,190,255', 0.5], colossodeossos: ['esqueleto', 1.75, '80,70,50', 0.28], resprofana: ['caodecripta', 1.55, '235,225,215', 0.5], carcereirodealmas: ['aparicao', 2.1, '46,12,78', 0.8] };
 // escala como no Diablo 1: o maior monstro tem no máximo ~1,25-1,4× a altura de um esqueleto comum (sprites próprios desenhados grandes demais)
 const ESCALA_D1 = { colossodeossos: 0.73, diabodeguerra: 0.8, abadessacosturada: 0.92, carcereirodealmas: 0.97 };
 const VETOR_D1 = { Diablo: 0.6, Lazarus: 0.62 };
@@ -381,7 +381,7 @@ function ler(texto) {
 
 // ---- estatísticas de combate: tudo sai dos eventos da simulação ----
 const NOME_ESPECIE = { Necromante: 'Necromante', Esqueleto: 'Esqueleto', ArqueiroOssudo: 'Arqueiro Ossudo', Zumbi: 'Zumbi', CaoDeCripta: 'Cão de Cripta', Diabrete: 'Diabrete', AcolitoCaido: 'Acólito Caído',
-  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus', Diablo: 'Diablo' };
+  AbadessaCosturada: 'Abadessa Costurada', Carnical: 'Carniçal', DiaboDeGuerra: 'Diabo de Guerra', Aparicao: 'Aparição', ColossoDeOssos: 'Colosso de Ossos', ResProfana: 'Rês Profana', CarcereiroDeAlmas: 'Carcereiro de Almas', Sucubo: 'Súcubo', CavaleiroNegro: 'Cavaleiro Negro', Magistrado: 'Magistrado', Lazarus: 'Arcebispo Lázarus', Diablo: 'Diablo', ArautoDeCinzas: 'Arauto de Cinzas' };
 const novaEstat = () => ({ aliados: new Map(), inimigos: new Map(), inicio: tempoSim, fim: 0, dano: 0, sofrido: 0, cura: 0, abates: 0, maiorGolpe: 0, criticos: 0, golpes: 0 });
 let estat = null, estatAnterior = null;
 function linhaAliado(s) {
@@ -511,6 +511,11 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '52') {   // Arauto de Cinzas: escudo de ossos num aliado dele
+    const g = estado.get(+v[3]); if (g) for (let i = 0; i < 12; i++) particulas.push([g.rx + rnd(-0.4, 0.4), g.ry + rnd(-0.3, 0.3), 0.3, rnd(-0.6, 0.6), rnd(-0.4, 0.4), rnd(2, 4.5), i % 3 ? '#e8dcc0' : '#ff8a3a', rnd(0.5, 1)]);
+    if (!evento.avisouArauto) { evento.avisouArauto = true; aviso('Arauto de Cinzas · protege os aliados com ossos'); anotar('Um <b>Arauto de Cinzas</b> apareceu: a cada poucos segundos ele ergue um escudo de ossos nos inimigos em volta. Marque-o primeiro.'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '51') { aviso('A Fortaleza Rubra · Vargoth ergue o estandarte'); anotar('Você invadiu a <b>Fortaleza Rubra</b>: Vargoth, o Estandarte Sangrento, e o séquito dele defendem a sala.'); som('chefe'); tremor = Math.max(tremor, 0.4); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '50') {   // Espírito de Ossos: caveira fantasma do necromante até o alvo
     espFx.push({ de: [+v[10] + so[0], +v[11] + so[1]], alvo: +v[3], t: performance.now() }); if (espFx.length > 6) espFx.shift();
@@ -1172,7 +1177,7 @@ function desenhar(dt) {
   const esc = escAtual, visivel = larg / esc, visAlt = alt / esc, reforco = Math.max(1, Math.min(1.7, (escPerto * 0.5) / esc));   // no mapa inteiro as figuras crescem para continuarem legíveis
   {
     let sx = 0, sy = 0, n = 0;
-    for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? (zoomModo === 1 ? 1.5 : 3) : 1; sx += px * w; sy += py * w; n += w; }
+    for (const s of estado.values()) if (s.viva) { const d = dvg && !s.inimigo ? dvg : null, [px, py] = naTela(s.rx + (d ? d[0] : 0), s.ry + (d ? d[1] : 0)), w = s.necro ? (zoomModo === 1 ? (visivel < CW * 0.7 ? 0.6 : 1.5) : 3) : !s.inimigo && visivel < CW * 0.7 ? 1.5 : 1; sx += px * w; sy += py * w; n += w; }
     if (!dvg) { for (const o of orbes) { const [px, py] = naTela(o[0], o[1]); sx += px * 3; sy += py * 3; n += 3; } if (objeto) { const [px, py] = naTela(objeto.x, objeto.y); sx += px * 4; sy += py * 4; n += 4; } }
     const c0 = naTela(10, 6); let cx = n ? sx / n : c0[0], cy = n ? sy / n : c0[1];
     if (zoomModo === 2) { cx = (lim[0] + lim[2]) / 2; cy = (lim[1] + lim[3]) / 2 + visAlt * 0.085; }
