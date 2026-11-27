@@ -1767,6 +1767,31 @@ namespace Necro.Testes
                 Afirmar(dano > 0f && Math.Abs(s.Necromante.Vida - v0 - dano * c.BeijoDeSangue) < 0.01f, "o acerto da Súcubo cura o necromante em " + c.BeijoDeSangue * 100 + "% do dano (" + (s.Necromante.Vida - v0) + " de " + dano + ")");
             });
 
+            Teste("Armadilhas: sarcófagos e urnas armados disparam em quem abre a partir do andar 3, sem matar de uma vez; a Destreza desarma parte", () =>
+            {
+                var c = new ConfigJogo { ArmadilhaChance = 1f, ObjetosPorSala = 6, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 20; foreach (var m in p.Minions) m.Nivel = 14;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 2 }; int g = 0, ev49 = 0, mortesPorArmadilha = 0;
+                while (!s.Encerrada && g++ < 80000)
+                {
+                    s.Tick();
+                    for (int k = 0; k < s.Eventos.Count; k++)
+                    {
+                        var ev = s.Eventos[k];
+                        if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 49 && ev.Valor < 3f) { ev49++; var v = s.Entidades.Find(x => x.Id == ev.Alvo); if (v != null && !v.Viva) mortesPorArmadilha++; }
+                    }
+                }
+                Console.WriteLine("        (disparadas: " + s.Resultado.ArmadilhasDisparadas + ", desarmadas: " + s.Resultado.ArmadilhasDesarmadas + ")");
+                Afirmar(s.Resultado.ArmadilhasDisparadas >= 3 && ev49 == s.Resultado.ArmadilhasDisparadas && s.Resultado.ArmadilhasDesarmadas == 0, "sem Destreza, toda armadilha dispara");
+                Afirmar(mortesPorArmadilha == 0, "a armadilha sozinha não mata");
+                var c2 = new ConfigJogo { ArmadilhaChance = 1f, ObjetosPorSala = 6, MissoesDeCenario = false, ArmadilhaAPartirDe = 99 };
+                var s2 = new Simulacao(c2, p, 7, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 2 }; g = 0; while (!s2.Encerrada && g++ < 80000) s2.Tick();
+                Afirmar(s2.Resultado.ArmadilhasDisparadas == 0, "antes do andar mínimo, nada armado");
+                p.Atributos = new int[] { 0, 0, 200, 0 };
+                var s3 = new Simulacao(c, p, 7, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 2 }; g = 0; while (!s3.Encerrada && g++ < 80000) s3.Tick();
+                Afirmar(s3.Resultado.ArmadilhasDesarmadas >= 1 && s3.Resultado.ArmadilhasDesarmadas >= s3.Resultado.ArmadilhasDisparadas * 0.6f, "com muita Destreza, a maioria é desarmada (" + s3.Resultado.ArmadilhasDesarmadas + " de " + (s3.Resultado.ArmadilhasDesarmadas + s3.Resultado.ArmadilhasDisparadas) + ")");
+            });
+
             Teste("Pedra Maldita: só depois do livro, petrifica o inimigo mais forte por perto (nunca um chefe) e ele fica parado", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };

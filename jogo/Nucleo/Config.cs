@@ -84,6 +84,9 @@ namespace Necro.Nucleo
         public float VendaNaoIdentificado = 0.4f;                       // vender sem identificar rende só uma fração
         // Objetos quebráveis das salas de combate (barris, urnas, sarcófagos)
         public int ObjetosPorSala = 5; public float ObjetoRaioDeQuebra = 1.0f;
+        // Armadilhas (Diablo 1): sarcófagos e urnas podem estar armados a partir de ArmadilhaAPartirDe; ao abrir disparam seta, fogo ou raio em quem abriu.
+        // Dano = fração da vida máxima da vítima (nunca mata de uma vez); a Destreza do necromante desarma uma parte.
+        public bool Armadilhas = true; public int ArmadilhaAPartirDe = 3; public float ArmadilhaChance = 0.25f, ArmadilhaDeObjetoDano = 0.18f, ArmadilhaDesarmePorDestreza = 0.012f, ArmadilhaDesarmeMaximo = 0.6f;
         public float BarrilOssos = 2f, BarrilChanceDeOssos = 0.5f, UrnaOssos = 3f, UrnaChanceDeItem = 0.04f, SarcofagoOssos = 8f, SarcofagoChanceDeMorto = 0.45f;
         public float BarrilExplosivoRaio = 2.2f, BarrilExplosivoDano = 0.35f, BarrilExplosivoDanoElite = 0.08f, BarrilExplosivoDanoAliado = 0.06f;
         // Únicos: um monstro com nome próprio e séquito da mesma espécie, num ponto sorteado do andar (como no Diablo)

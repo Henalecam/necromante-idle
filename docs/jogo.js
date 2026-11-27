@@ -510,6 +510,14 @@ function evento(v) {
   if (tipo === 'EfeitoAplicado' && v[14] === '20') { unicoAnunciar = +v[3]; tremor = 0.25; som('secreto'); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '19') { const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'Atravessou', cor: '#b8c8ff', t: 1, amigo: true }); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '18') { const g = estado.get(+v[3]); if (g) { numeros.push({ x: g.x, y: g.y, txt: '+' + Math.round(+v[4]), cor: '#7fe08a', t: 1, amigo: true }); for (let i = 0; i < 5; i++) particulas.push([g.x, g.y, 0.6, rnd(-1, 1), rnd(-1, 1), rnd(1.5, 3.5), '#7fe08a', 0.5]); } return; }
+  if (tipo === 'EfeitoAplicado' && v[14] === '49') {   // armadilha de sarcófago/urna (Diablo 1): 0 seta, 1 fogo, 2 raio, 3 desarmada pela Destreza
+    const q = Math.round(+v[4] || 0), pA = [+v[10] + so[0], +v[11] + so[1]];
+    if (q === 3) { aviso('Armadilha desarmada · Destreza'); if (!evento.avisouDesarme) { evento.avisouDesarme = true; anotar('Uma <b>armadilha</b> foi desarmada: cada ponto de <b>Destreza</b> aumenta a chance.'); } return; }
+    armaFx.push({ p: pA, q, alvo: +v[3], t: performance.now() }); if (armaFx.length > 8) armaFx.shift();
+    som(q === 2 ? 'critico' : 'perigo'); tremor = Math.max(tremor, 0.15);
+    if (!evento.avisouArmadilha) { evento.avisouArmadilha = true; aviso(['Armadilha! Uma seta sai da parede', 'Armadilha! O sarcófago cospe fogo', 'Armadilha! Uma faísca salta da urna'][q] || 'Armadilha!'); anotar('Sarcófagos e urnas podem estar <b>armados</b> a partir do andar 3, como no Diablo. A <b>Destreza</b> do necromante desarma parte delas.'); }
+    return;
+  }
   if (tipo === 'EfeitoAplicado' && v[14] === '48') { const g = estado.get(+v[3]); if (g) g.pedra = tempoSim + (+v[4] || 3.5); som('critico'); if (!evento.avisouPedra) { evento.avisouPedra = true; aviso('Pedra Maldita · o inimigo mais forte vira pedra'); anotar('O necromante lançou a <b>Pedra Maldita</b>: o inimigo mais forte por perto fica petrificado alguns segundos (chefes resistem).'); } return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '11') { const g = estado.get(+v[3]); if (g) g.gelo = tempoSim + (+v[4] || 1.8); return; }
   if (tipo === 'EfeitoAplicado' && v[14] === '14') { aviso('A patrulha entrou na luta!'); som('chefe'); tremor = 0.25; anotar('A <b style="color:#ff7a5a">patrulha errante</b> cruzou com o grupo e entrou na luta.'); return; }
@@ -755,7 +763,7 @@ let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
 const nomesUnicos = new Map();   // id da entidade -> nome próprio do monstro único
 let manaAbs = [0, 0], cintoMax = 3;
-let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [];
+let vistosDeEspecie = null, cintoHud = null, portalFx = null, muralhasFx = [], raiosFx = [], teleFx = [], apocFx = [], armaFx = [];
 const ocultos = new Set();
 let bencaos = null, bencaosMostradas = '', aEspera = [];   // aEspera: inimigos já postos nas salas do andar, ainda adormecidos
 let masm = { fase: '', sala: 0, amb: 0, bencao: 0, secreto: false, ox: 0, oy: 0, tipos: [] }, salasChave = '', transicao = 0, objeto = null, perigos = [], diario = [], dicaSala = true;   // as lições de toque (LICOES) já ensinam isto
@@ -1304,6 +1312,20 @@ function desenhar(dt) {
       for (let k = 0; k < 14; k++) { const an = k / 14 * Math.PI * 2 + fA * 2, [qx, qy] = W(a.p[0] + Math.cos(an) * rA, a.p[1] + Math.sin(an) * rA), hf = (26 + 12 * Math.sin(agoraA / 90 + k)) * reforco * forcaA, gl = ctx.createRadialGradient(qx, qy - hf * 0.4, 1, qx, qy - hf * 0.4, hf); gl.addColorStop(0, `rgba(255,230,140,${0.8 * forcaA})`); gl.addColorStop(0.4, `rgba(255,120,20,${0.5 * forcaA})`); gl.addColorStop(1, 'rgba(160,20,0,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(qx, qy - hf * 0.45, 11 * reforco, hf, 0, 0, 7); ctx.fill(); }
     }
     ctx.restore(); ctx.lineWidth = 1;
+  }
+  if (armaFx.length) {      // armadilhas: seta vinda da parede, jato de fogo ou faísca saindo do objeto até a vítima
+    const agoraR = performance.now(); armaFx = armaFx.filter((a) => agoraR - a.t < 900);
+    for (const a of armaFx) {
+      const fR = (agoraR - a.t) / 900, [ox, oy] = W(a.p[0], a.p[1]), vt = estado.get(a.alvo), [vx, vy] = vt ? naTela(vt.rx, vt.ry) : [ox, oy];
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      if (a.q === 0) { const sx0 = ox - 160 * reforco, sy0 = oy - 120 * reforco, k = Math.min(1, fR * 4), hx = sx0 + (vx - sx0) * k, hy = sy0 + (vy - 40 * reforco - sy0) * k, an = Math.atan2(vy - 40 * reforco - sy0, vx - sx0);
+        ctx.strokeStyle = `rgba(235,225,200,${1 - fR})`; ctx.lineWidth = 2.5 * reforco; ctx.beginPath(); ctx.moveTo(hx - Math.cos(an) * 30 * reforco, hy - Math.sin(an) * 30 * reforco); ctx.lineTo(hx, hy); ctx.stroke();
+        ctx.fillStyle = `rgba(255,240,210,${1 - fR})`; ctx.beginPath(); ctx.moveTo(hx + Math.cos(an) * 6 * reforco, hy + Math.sin(an) * 6 * reforco); ctx.lineTo(hx + Math.cos(an + 2.5) * 6 * reforco, hy + Math.sin(an + 2.5) * 6 * reforco); ctx.lineTo(hx + Math.cos(an - 2.5) * 6 * reforco, hy + Math.sin(an - 2.5) * 6 * reforco); ctx.fill(); }
+      else if (a.q === 1) { for (let k = 0; k < 7; k++) { const f = k / 6, x = ox + (vx - ox) * f, y = oy - 20 * reforco + (vy - 40 * reforco - oy + 20 * reforco) * f, r = (20 + 12 * Math.sin(agoraR / 70 + k)) * reforco * (1 - fR * 0.6), g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(255,230,140,${0.8 * (1 - fR)})`); g.addColorStop(0.5, `rgba(255,110,20,${0.5 * (1 - fR)})`); g.addColorStop(1, 'rgba(150,20,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); } }
+      else { const pts = []; for (let k = 0; k <= 6; k++) { const f = k / 6, des = k === 0 || k === 6 ? 0 : Math.sin(a.t + k * 12.9898 + Math.floor((agoraR - a.t) / 60) * 7.1) * 10 * reforco; pts.push([ox + (vx - ox) * f + des, oy - 20 * reforco + (vy - 40 * reforco - oy + 20 * reforco) * f - des * 0.5]); }
+        for (const [lg, cor] of [[6 * reforco, `rgba(90,140,255,${0.4 * (1 - fR)})`], [2 * reforco, `rgba(235,245,255,${1 - fR})`]]) { ctx.strokeStyle = cor; ctx.lineWidth = lg; ctx.beginPath(); pts.forEach(([x, y], k) => { if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); } }
+      ctx.restore();
+    }
   }
   if (teleFx.length) {      // teleporte: anel roxo que se abre onde o Magistrado some e onde reaparece
     const agoraT = performance.now(); teleFx = teleFx.filter((t) => agoraT - t.t < 600);
@@ -2163,6 +2185,7 @@ window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
+window.__arma = () => armaFx.length > 0 && performance.now() - armaFx[armaFx.length - 1].t < 250;
 window.__pedra = () => { const p = [...estado.values()].find((e) => e.viva && e.pedra > tempoSim && (e.luzA === undefined || e.luzA > 0.9)); if (p) window.__c = [p.especie, p.elite, p.campeao, nomesUnicos.get(p.id) || '']; return !!p; };
 window.__luz = () => JSON.stringify([...estado.values()].filter((e) => e.viva && e.inimigo).map((e) => [e.especie, e.luzA === undefined ? -1 : +e.luzA.toFixed(2), necro ? +Math.hypot(e.rx - necro.rx, e.ry - necro.ry).toFixed(1) : -1]));
 window.__fila = () => {   // testes: fila de tamanhos (escala D1) ao lado de um esqueleto comum, numa tela por cima

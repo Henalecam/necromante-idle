@@ -39,7 +39,7 @@ O dono escolheu três frentes: masmorra contínua, combate e feitiços, progress
 
 ### A. Masmorra contínua (o andar como um lugar só, não uma fila de arenas)
 - A1. [feito] Salas ligadas: a luta atrai a matilha de uma sala vizinha, que entra pela porta; a sala de origem fica vazia.
-- A2. [feito: portas emperradas e emboscada de corredor; falta desenhar a porta no mapa e armadilhas de corredor] Corredores com vida: inimigos e armadilhas nos corredores entre salas; portas fechadas que o grupo abre; emboscada ao abrir.
+- A2. [feito: portas emperradas, emboscada de corredor e (item 196) armadilhas em sarcófagos e urnas; falta desenhar a porta no mapa] Corredores com vida: inimigos e armadilhas nos corredores entre salas; portas fechadas que o grupo abre; emboscada ao abrir.
 - A3. [etapa 1 feita: despertar por proximidade, a frente marcha sala adentro] Andar em grade única: o grupo anda pelo andar inteiro (sem troca de arena), monstros espalhados despertam por raio de luz e linha de visão. É a reescrita espacial do núcleo; fazer em etapas com o modo antigo atrás de uma chave de config até o portão passar.
 - A4. [feito no cliente (item 194): fora da luz só se veem os olhos; falta o efeito na simulação (atacar à distância só quem está na luz)] Raio de luz de verdade: o que está fora da luz não aparece nem ataca à distância (fecha a parte 2 da fatia 4).
 - A5. [Portal da Cidade feito, opcional; faltam escadas] Escadas para cima/baixo e portal da cidade: voltar ao acampamento no meio da descida e retomar do mesmo andar.

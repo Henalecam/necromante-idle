@@ -147,6 +147,7 @@ namespace Necro.Nucleo
             _rngItens = new Rng(semente ^ 0x4954454E53UL); // "ITENS"
             _sementePactos = semente ^ 0x50414354UL;       // "PACT"
             _rngPressagio = new Rng(semente ^ 0x50524553UL);
+            _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
             _tempoDeCeifa = cfg.TempoDeCeifa / (1f + Bonus.VelocidadeDeCeifa);

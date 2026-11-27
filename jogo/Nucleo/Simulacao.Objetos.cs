@@ -68,6 +68,29 @@ namespace Necro.Nucleo
             }
         }
 
+        /// <summary>Armadilha do objeto: a Destreza do necromante pode desarmá-la; se não, seta (física), fogo ou raio em quem abriu (o aliado mais perto; por toque, o necromante). Nunca mata de uma vez.</summary>
+        private Rng _rngArmadilha;
+        private void DispararArmadilha(ObjetoDeSala o, bool toque)
+        {
+            int dex = _progressoInicial != null && _progressoInicial.Atributos != null && _progressoInicial.Atributos.Length > 2 ? _progressoInicial.Atributos[2] : 0;
+            if (_rngArmadilha.Chance(Math.Min(Cfg.ArmadilhaDesarmeMaximo, dex * Cfg.ArmadilhaDesarmePorDestreza)))
+            {
+                Resultado.ArmadilhasDesarmadas++;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 49, Valor = 3, Alvo = -1, Origem = -1, Pos = o.Pos });
+                return;
+            }
+            Entidade vitima = toque ? Necromante : null; float md = float.MaxValue;
+            if (vitima == null || !vitima.Viva)
+                for (int j = 0; j < Entidades.Count; j++) { var e = Entidades[j]; if (!e.Viva || e.Faccao == Faccao.Inimigo) continue; float d2 = Vec2.Dist2(e.Pos, o.Pos); if (d2 < md) { md = d2; vitima = e; } }
+            if (vitima == null) return;
+            int qual = _rngArmadilha.Intervalo(0, 3);   // 0 seta, 1 fogo, 2 raio
+            var tipo = qual == 0 ? TipoDano.Fisico : qual == 1 ? TipoDano.Fogo : TipoDano.Raio;
+            float dano = Math.Min(vitima.VidaMax * Cfg.ArmadilhaDeObjetoDano, Math.Max(0f, vitima.Vida - 1f));
+            Resultado.ArmadilhasDisparadas++;
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 49, Valor = qual, Alvo = vitima.Id, Origem = -1, Pos = o.Pos, TipoDano = tipo });
+            if (dano > 0f) CausarDano(null, vitima, dano, tipo, false);
+        }
+
         private void Quebrar(int indice, bool toque)
         {
             var o = Objetos[indice];
@@ -110,6 +133,7 @@ namespace Necro.Nucleo
                     else { long q = Math.Max(1L, (long)(Cfg.SarcofagoOssos * escala + 0.5f)); Resultado.Ossos += q; valor = q; }
                     break;
             }
+            if ((o.Tipo == TipoObjeto.Sarcofago || o.Tipo == TipoObjeto.Urna) && Cfg.Armadilhas && AndarEfetivo >= Cfg.ArmadilhaAPartirDe && _rngArmadilha.Chance(Cfg.ArmadilhaChance)) DispararArmadilha(o, toque);
             Resultado.Ouro += (long)((o.Tipo == TipoObjeto.Barril ? Cfg.OuroBarril : o.Tipo == TipoObjeto.Urna ? Cfg.OuroUrna : o.Tipo == TipoObjeto.Sarcofago && sub != 2 ? Cfg.OuroSarcofago : 0f) * (1f + 0.1f * (AndarEfetivo - 1)) + 0.5f);
             Resultado.ObjetosQuebrados++;
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 21, Valor = valor, Origem = indice, Alvo = sub, Pos = o.Pos, Critico = toque });
