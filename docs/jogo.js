@@ -1691,7 +1691,22 @@ function desenhar(dt) {
 // ---- laço principal ----
 let J = null, velocidade = 1, acumulado = 0, ultimo = 0, atraso = 0, silencio = false, saiuEm = 0;
 const AUSENCIA_MAX = 8 * 3600;   // segundos de progresso ausente, no máximo
-function ausencia(seg) { if (seg > 20) atraso += Math.round(Math.min(seg, AUSENCIA_MAX) * TPS); }
+let ausFoto = null, ausTotal = 0, ausSeg = 0;
+function fotoAus() { try { const d = JSON.parse(J.Painel()); return { n: d.nivel, r: d.recorde, o: d.ossos, e: d.essencia, g: d.ouroTotal, a: d.almas.length, i: d.inventario.length, m: d.bestiario.reduce((t, b) => t + (+b.mortes || 0), 0) }; } catch (e) { return null; } }
+function ausencia(seg) {
+  if (seg <= 20) return;
+  if (atraso <= 0 && J) { ausFoto = fotoAus(); ausTotal = 0; ausSeg = 0; }
+  const add = Math.round(Math.min(seg, AUSENCIA_MAX) * TPS); atraso += add; ausTotal += add; ausSeg += Math.min(seg, AUSENCIA_MAX);
+}
+function resumoDaAusencia() {   // cartão do que aconteceu enquanto o jogador esteve fora
+  const a = ausFoto, b = fotoAus(); ausFoto = null; if (!a || !b) return;
+  const h = Math.floor(ausSeg / 3600), mi = Math.round((ausSeg % 3600) / 60), tempo = h ? (mi ? `${h} h ${mi} min` : `${h} h`) : `${mi} min`;
+  const cel = (v, n) => `<div><b>${v}</b><span>${n}</span></div>`;
+  const extra = [b.n > a.n ? `+${b.n - a.n} ${b.n - a.n > 1 ? 'níveis' : 'nível'} (agora ${b.n})` : '', b.r > a.r ? `recorde: andar ${b.r}` : '', b.e > a.e ? `+${fmt(b.e - a.e)} Essência` : '', b.g > a.g ? `+${fmt(b.g - a.g)} de ouro` : ''].filter(Boolean).join(' · ');
+  const r = $('resumo');
+  r.innerHTML = `<div class="t">Enquanto você esteve fora · ${tempo}</div><div class="g">${cel(fmt(Math.max(0, b.o - a.o)), 'Ossos')}${cel(Math.max(0, b.a - a.a), 'almas')}${cel(Math.max(0, b.i - a.i), 'itens')}${cel(fmt(Math.max(0, b.m - a.m)), 'mortes')}</div>` + (extra ? `<div class="nota" style="color:var(--texto)">${extra}</div>` : '') + '<div class="nota">Toque para fechar.</div>';
+  r.hidden = false; clearTimeout(fimDeExpedicao.t);   // fica até o jogador tocar
+}
 function laco(agora) {
   const dt = Math.min(0.1, (agora - ultimo) / 1000 || 0); ultimo = agora;
   if (atraso > 0) {
@@ -1700,8 +1715,9 @@ function laco(agora) {
     while (atraso > 0 && performance.now() - ini < 14) { const n = Math.min(100, atraso); saida = J.Avancar(n); atraso -= n; tempoSim += n / TPS; }
     silencio = true; ler(saida); silencio = false; particulas = []; numeros = []; raios = [];
     const c = $('ausente'); c.style.display = atraso > 0 ? 'flex' : 'none';
-    c.textContent = `Enquanto você esteve fora, a masmorra não parou… faltam ${Math.ceil(atraso / TPS / 60)} min`;
-    if (atraso <= 0) { salvar(); atualizarPainel(true); }
+    const pctA = ausTotal ? Math.round(100 * (1 - atraso / ausTotal)) : 100;
+    c.innerHTML = `<div class="caixa-aus"><div>Enquanto você esteve fora, a masmorra não parou…</div><div class="barra-aus"><i style="width:${pctA}%"></i></div><small>recuperando ${Math.ceil(atraso / TPS / 60)} min</small></div>`;
+    if (atraso <= 0) { salvar(); atualizarPainel(true); resumoDaAusencia(); }
   } else {
     acumulado += dt * velocidade * TPS;
     const ticks = Math.min(8, Math.floor(acumulado));
