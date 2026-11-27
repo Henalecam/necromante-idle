@@ -1384,7 +1384,7 @@ function desenhar(dt) {
     const [img, sx, sy] = quadro(m, cen && !cen[5] ? 'andar' : acao, cen && !cen[5] ? direcao(cen[3], cen[4]) : dvE ? direcao(dvE[2], dvE[3]) : s.dir, cen && !cen[5] ? tempoSim * 1.4 : tempo);
     const prov = s.necro ? null : (masm.qualSecreto === 3 && s.inimigo ? [null, 1, '60,80,210', 0.5] : nomesUnicos.get(s.id) === 'O Açougueiro' ? [null, 1.6, '170,20,24', 0.36] : nomesUnicos.get(s.id) === 'Rei Esqueleto' ? [null, 1.55, '230,200,90', 0.22] : nomesUnicos.get(s.id) === 'Golem de Ossos' ? [null, 1.25, '120,230,170', 0.3] : s.campeao ? [null, 1.12, '70,130,255', 0.34] : visual(s.especie)), e = prov ? prov[1] : 1;   // Cripta dos Espelhos: os reflexos são sombras azuladas
     const dx0 = Math.round(px - m.pivo[0] * e), dy0 = Math.round(py - (m.H - m.pivo[1]) * e);
-    const ocultoA = !morto && ocultos.has(s.id); if (ocultoA) { ctx.save(); ctx.globalAlpha = 0.13 + 0.05 * Math.sin(performance.now() / 300 + s.id); }
+    const ocultoA = !morto && ocultos.has(s.id); if (ocultoA) { const tO = performance.now() / 1000 + s.id; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = `rgba(190,120,255,${0.55 + 0.3 * Math.sin(tO * 5)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -tO * 20; ctx.beginPath(); ctx.ellipse(px, py, 26 * reforco, 11 * reforco, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); ctx.save(); ctx.globalAlpha = 0.3 + 0.08 * Math.sin(tO * 3); }
     if (!morto && ADORNOS[s.especie]) adorno(s.especie, 0, px, py, e, s.id);
     if (s.especie === 'Diablo' && !morto) desenharDiablo(px, py, reforco, s, 1);
     else if (s.especie === 'Lazarus' && !morto) desenharLazarus(px, py, reforco, s, 1);
