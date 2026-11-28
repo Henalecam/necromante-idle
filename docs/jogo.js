@@ -1871,7 +1871,8 @@ const HABILIDADE = { carpideira: ['Lamento', 'a cada 8 s cura em 6% da vida os 3
 const donsTracosCurto = (dn, t) => { const ds = (dn || []).map((v, k) => v ? `<span style="color:${v > 0 ? '#8fd89f' : '#e08a8a'}">${['Vida', 'Dano', 'Vel.'][k]} ${v > 0 ? '+' : ''}${v}%</span>` : '').filter(Boolean), ts = (t || []).filter((k) => TRACOS[k]).map((k) => `<b style="color:#c8a86a;font-weight:normal" title="${TRACOS[k][1]}">${TRACOS[k][0]}</b>`); return ds.length || ts.length ? '<small>' + [...ds, ...ts].join(' · ') + '</small>' : ''; };
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
-function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map(esc).join(' · ')}</small>`; }
+const decBR = (t) => String(t).replace(/(\d)\.(\d)/g, '$1,$2');   // números do núcleo vêm com ponto; na tela, vírgula
+function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map((a) => esc(decBR(a))).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
   const d = JSON.parse(J.Painel());
@@ -1984,7 +1985,7 @@ function atualizarPainel(forcar) {
     if (!d.loja.length) h += '<p class="nota">Estoque vendido. Volta cheio depois da próxima expedição.</p>';
     d.loja.forEach((l, i) => {
       const it = l.item;
-      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · ${TIPOS[it.tipo]} · nível ${it.nivel} · Poder ${fmt(it.poder)}</span><small>${it.afixos.map(esc).join(' · ')}</small></div>` +
+      h += `<div class="linha">${icone(it.tipo)}<div class="corpo"><span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">${RARIDADES[it.r]} · ${TIPOS[it.tipo]} · nível ${it.nivel} · Poder ${fmt(it.poder)}</span><small>${it.afixos.map((a) => esc(decBR(a))).join(' · ')}</small></div>` +
         `<button data-ac="comprar" data-i="${i}" ${l.pode ? '' : 'disabled'} title="${l.preco > d.ouroTotal ? 'Falta ouro' : l.pode ? 'Comprar' : 'Sem espaço no inventário'}">${!l.pode && l.preco <= d.ouroTotal ? 'Mochila cheia' : `${fmt(l.preco)} ouro`}</button></div>`;
     });
     h += `<div class="linha"><div class="corpo">Reparo automático<small>ao voltar de cada descida, o Ferreiro já conserta o equipamento com o seu ouro (se der)</small></div><button data-ac="auto-reparo" class="${d.autoReparo ? 'ativo' : ''}">${d.autoReparo ? 'Ligado' : 'Desligado'}</button></div>`;
@@ -2174,7 +2175,7 @@ function desenharInventario(d) {
       `<div class="nota" style="color:${sel.dur <= 0 ? '#ff6a6a' : sel.dur / sel.durMax < 0.3 ? '#e0b040' : ''}">Durabilidade ${sel.dur}/${sel.durMax}${sel.dur <= 0 ? ' · QUEBRADO: não dá nenhum bônus até ser reparado' : ''}</div>` +
       (sel.req && sel.req[1] > 0 ? `<div class="nota" style="color:${sel.req[2] >= sel.req[1] ? '#8fd89f' : '#ff6a6a'}">Requer ${['Força', 'Magia', 'Destreza', 'Vitalidade'][sel.req[0]]} ${sel.req[1]} · você tem ${sel.req[2]}${sel.req[2] >= sel.req[1] ? '' : ' · faltam ' + (sel.req[1] - sel.req[2]) + (ehEquipado ? ' (já vestido: continua valendo)' : ': os pontos automáticos vão para lá primeiro')}</div>` : '') +
       (sel.nid ? '<div class="nota">As propriedades deste item estão ocultas. Identifique-o com ouro para ver o que ele faz e poder equipá-lo.</div>' : '') +
-      sel.afixos.map((a) => `<div>${esc(a)}</div>`).join('') +
+      sel.afixos.map((a) => `<div>${esc(decBR(a))}</div>`).join('') +
       (sel.conj ? `<div style="margin-top:6px;border-left:3px solid #c05ad8;padding-left:8px"><b style="color:#d58cf0">${esc(sel.conj.nome)}</b> <span class="nota">· ${sel.conj.tem}/3 peças equipadas</span><div class="nota">${sel.conj.pecas.map(esc).join(' · ')}</div><div style="opacity:${sel.conj.tem >= 2 ? 1 : 0.5}">2 peças: ${sel.conj.b2.map(esc).join(', ')}</div><div style="opacity:${sel.conj.tem >= 3 ? 1 : 0.5}">3 peças: ${sel.conj.b3.map(esc).join(', ')}</div></div>` : '') +
       (sel.tipo === 0 ? '<div class="nota">Cajado: o necromante luta à distância.</div>' : sel.tipo === 1 ? '<div class="nota">Foice: o necromante luta corpo a corpo.</div>' : '') +
       (sel.trava ? '<div class="nota">Travado: não é vendido nem desmanchado.</div>' : '') +

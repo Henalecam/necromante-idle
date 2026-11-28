@@ -505,6 +505,9 @@ public static partial class Jogo
                 for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) for (int i = 0; i < 3; i++)
                 { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
                 break;
+            case "afixo":   // teste: um Relicário Raro com o afixo de duração dos mortos temporários
+                for (int t = 0; t < 400; t++) { var ra = GeradorDeItens.GerarDoTipo(rng, _cfg, Math.Max(10, _p.MaiorAndarConcluido), RaridadeItem.Raro, TipoItem.Relicario); if (ra.Afixos.Exists(a => a.Afixo == AfixoItem.DuracaoDosTemporarios)) { ra.NaoIdentificado = false; if (Equipamento.Cabe(_p, ra, _cfg)) _p.Inventario.Add(ra); break; } }
+                break;
             case "sala": _cfg.ForcarSalaEspecial = (int)v; break;
             case "dificuldade": _p.DificuldadeLiberada = (int)Math.Max(0, Math.Min(2, v)); break;
             case "unico": { var ud = Unicos.Obter((int)v); if (ud != null) { var ui2 = Unicos.Gerar(rng, _cfg, Math.Max(5, _p.MaiorAndarConcluido), ud); _p.Inventario.Add(ui2); _p.UnicosAchados |= 1 << ud.Id; } break; }
