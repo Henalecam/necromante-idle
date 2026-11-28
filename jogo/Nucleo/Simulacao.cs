@@ -122,7 +122,7 @@ namespace Necro.Nucleo
         // Equipamento
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
-        private readonly Rng _rngOssario;
+        private readonly Rng _rngOssario, _rngNoite;
         private readonly Rng _rngGrevalda; private bool _grevaldaUsada;   // Grevalda, a Pele de Cardo: Único nomeado raro dos andares 10–20
         public const string NomeGrevalda = "Grevalda, a Pele de Cardo";
         private float _sorte;   // pontos de Sorte do progresso
@@ -152,6 +152,7 @@ namespace Necro.Nucleo
             _rngPressagio = new Rng(semente ^ 0x50524553UL);
             _rngGrevalda = new Rng(semente ^ 0x47524556UL);
             _rngOssario = new Rng(semente ^ 0x4F535355UL);
+            _rngNoite = new Rng(semente ^ 0x4E4F4954UL);
             _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
@@ -899,6 +900,7 @@ namespace Necro.Nucleo
             if (!chefe && Andar >= Cfg.PressagioAPartirDoAndar && _rngPressagio.Chance(Cfg.ChanceDePressagio))
             {
                 PressagioAtual = (Pressagio)(1 + _rngPressagio.Intervalo(0, Andar >= Cfg.FebreAPartirDoAndar ? 8 : 7));   // a Febre do Ouro só entra no sorteio do andar 20 em diante
+                if (Andar >= Cfg.NoiteAPartirDoAndar && Andar <= Cfg.NoiteAteOAndar && _rngNoite.Chance(Cfg.NoiteChance)) PressagioAtual = Pressagio.NoiteSemLua;   // fluxo próprio: o sorteio dos outros não muda
                 if (Cfg.ForcarPressagio > 0) PressagioAtual = (Pressagio)Cfg.ForcarPressagio;   // só capturas e testes
                 switch (PressagioAtual)
                 {
@@ -909,6 +911,7 @@ namespace Necro.Nucleo
                     case Pressagio.CampeaoErrante: _ondaEliteNesteAndar = true; break;
                     case Pressagio.Calmaria: _aOrcamento = 0.7f; break;
                     case Pressagio.ChuvaDeCinzas: _aVidaInimigo = Cfg.CinzasVidaInimigo; _aItem = Cfg.CinzasItem; break;
+                    case Pressagio.NoiteSemLua: _aAlma = Cfg.NoiteAlma; _aVidaInimigo = Cfg.NoiteVidaInimigo; break;
                     case Pressagio.FebreDoOuro: _aOuro = Cfg.FebreOuro; _aDanoInimigo = Cfg.FebreDanoInimigo; break;
                 }
             }

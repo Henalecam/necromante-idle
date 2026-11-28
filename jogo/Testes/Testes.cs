@@ -2219,6 +2219,23 @@ namespace Necro.Testes
                 Afirmar(!g.Viva && t.Resultado.Ouro - o0 >= c2.GrevaldaOuro, "morta, larga o ouro garantido");
             });
 
+            Teste("presságio Noite sem Lua: só nos andares 7–19, por fluxo próprio; mais chance de alma", () =>
+            {
+                bool dentro = false, fora = false;
+                for (int k = 1; k <= 200; k++)
+                {
+                    var c0 = new ConfigJogo { ChanceDePressagio = 1f, ObjetosPorSala = 0, MissoesDeCenario = false };
+                    if (new Simulacao(c0, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 12).PressagioAtual == Pressagio.NoiteSemLua) dentro = true;
+                    if (new Simulacao(c0, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 25).PressagioAtual == Pressagio.NoiteSemLua) fora = true;
+                }
+                Afirmar(dentro && !fora, "aparece no 12 e nunca no 25");
+                var c1 = new ConfigJogo { ChanceDePressagio = 1f, ObjetosPorSala = 0, MissoesDeCenario = false, NoiteChance = 0f };
+                var c2 = new ConfigJogo { ChanceDePressagio = 1f, ObjetosPorSala = 0, MissoesDeCenario = false };
+                int iguais = 0, total = 0;
+                for (int k = 1; k <= 100; k++) { var p1 = new Simulacao(c1, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 12).PressagioAtual; var p2 = new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 12).PressagioAtual; if (p2 != Pressagio.NoiteSemLua) { total++; if (p1 == p2) iguais++; } }
+                Afirmar(total > 0 && iguais == total, "onde não troca, o presságio sorteado é o mesmo de antes (" + iguais + "/" + total + ")");
+            });
+
             Teste("presságio Febre do Ouro: só do andar 20 em diante; dobra o ouro dos abates", () =>
             {
                 bool antes = false, depois = false; int semente = -1;

@@ -268,6 +268,7 @@ function ambiente(dt, larg, alt) {
     ctx.fillStyle = 'rgba(175,168,160,0.42)';
     for (let k = 0; k < 70; k++) { const fx = ((k * 0.6180339 + Math.sin(tempoSim * 0.3 + k) * 0.02) % 1 + 1) % 1, fy = ((tempoSim * (0.03 + (k % 5) * 0.006) + k * 0.1373) % 1), rr = (1.2 + (k % 3) * 0.8) * (larg / 900 + 0.6); ctx.beginPath(); ctx.ellipse(fx * larg, fy * alt, rr * 1.4, rr, Math.sin(tempoSim + k), 0, 7); ctx.fill(); }
   }
+  if (pressagio === 9) { ctx.fillStyle = 'rgba(4,4,14,0.28)'; ctx.fillRect(0, 0, larg, alt); }   // Noite sem Lua: tudo um tom mais escuro
   if (pressagio === 8) {   // presságio Febre do Ouro: faíscas douradas piscando no chão
     for (let k = 0; k < 28; k++) { const fx = (k * 0.6180339) % 1, fy = (k * 0.3819660 + 0.1) % 1, br = Math.max(0, Math.sin(tempoSim * (1.3 + (k % 4) * 0.4) + k * 2.1)); if (br < 0.6) continue; const rr = (1 + (br - 0.6) * 6) * (larg / 900 + 0.6); ctx.fillStyle = `rgba(255,210,90,${(br - 0.6) * 1.6})`; ctx.beginPath(); ctx.moveTo(fx * larg, fy * alt - rr * 2); ctx.lineTo(fx * larg + rr * 0.5, fy * alt); ctx.lineTo(fx * larg, fy * alt + rr * 2); ctx.lineTo(fx * larg - rr * 0.5, fy * alt); ctx.fill(); ctx.beginPath(); ctx.moveTo(fx * larg - rr * 2, fy * alt); ctx.lineTo(fx * larg, fy * alt - rr * 0.5); ctx.lineTo(fx * larg + rr * 2, fy * alt); ctx.lineTo(fx * larg, fy * alt + rr * 0.5); ctx.fill(); }
   }
@@ -292,7 +293,7 @@ const mortos = new Map();      // id -> entidade caída (cadáver à vista)
 const cadaverDe = new Map();   // id do cadáver -> id da entidade
 let particulas = [], raios = [], numeros = [], orbes = [], projeteis = [], pocas = [];
 let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '', marcado = -1, almasVoando = [], ritoEmCurso = 0, clarao = 0, deFoice = false, dicaGolpe = false, sopro = 0, dicaSopro = false, itens = [[0, 0], [0, 0]], autosAnterior = '', pressagio = 0;
-const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens'], ['Febre do ouro', 'o dobro de ouro, inimigos batem mais']];
+const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens'], ['Febre do ouro', 'o dobro de ouro, inimigos batem mais'], ['Noite sem lua', 'a luz alcança menos; mais almas, inimigos mais duros']];
 const COR_MORTE = { Queimado: '20,14,12', Congelado: '120,170,210', Putrefato: '60,90,25', Eletrizado: '40,40,60', Oco: '50,30,80' };
 const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
@@ -354,7 +355,7 @@ function ler(texto) {
         if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); manaAbs = [+p[2] || 0, +p[3] || 0]; saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
-        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr === 8) som('ouro'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
+        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr === 8) som('ouro'); if (pr === 9) som('cinzas'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
         break;
       }
       case 'E': {
@@ -1364,7 +1365,7 @@ function desenhar(dt) {
     const [img, sx, sy] = quadro(m, 'parado', Math.abs(gx) + Math.abs(gy) > 0.5 ? direcao(gx, gy) : direcao(-1, 0), tempoSim * 0.6 + ix);
     if (elite || ehChefe) { ctx.strokeStyle = ehChefe ? 'rgba(255,50,60,0.6)' : 'rgba(255,190,60,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(px, py, (ehChefe ? 46 : 28) * reforco, (ehChefe ? 19 : 12) * reforco, 0, 0, 7); ctx.stroke(); }
     // raio de luz (Diablo 1): fora da luz do necromante o adormecido é só um vulto escuro
-    const naLuz = sala === masm.sala && necro && Math.hypot(gx, gy) <= RAIO_DE_LUZ;
+    const naLuz = sala === masm.sala && necro && Math.hypot(gx, gy) <= raioDeLuz();
     if (!naLuz && sala === masm.sala && zoomModo !== 2 && !masm.secreto) { olhosNoEscuro(px, py, 1, ix * 7 + iy * 13); continue; }   // na sala do grupo, fora da luz: só os olhos
     ctx.globalAlpha = naLuz ? 0.95 : 0.9; ctx.filter = naLuz ? 'none' : 'brightness(0.16) saturate(0.4)';
     if (prov) {
@@ -2451,12 +2452,12 @@ $('b-item1').addEventListener('click', () => { if (J) J.FeiticoDeItem(1); });
 $('autos').addEventListener('click', (ev) => { const b = ev.target.closest('button[data-auto]'); if (b && J) { J.AlternarAuto(+b.dataset.auto); salvar(); atualizarPainel(true); } });
 $('b-detonar').addEventListener('click', () => { if (J) { J.Detonar(); aprendeu('detonar'); } });
 const DIFICULDADES = [['Normal', 'a descida como você a conhece'], ['Pesadelo', 'uma descida nova, do andar 1, mas continuando de onde o Normal parou: o andar 1 tem a força do andar 21 · itens 20 níveis acima e mais raros, 30% mais ouro'], ['Inferno', 'outra descida nova: o andar 1 tem a força do andar 41 · itens 40 níveis acima, bem mais raros, 60% mais ouro · é o fim de jogo, longo']];
-const RAIO_DE_LUZ = 7.5;
+const RAIO_DE_LUZ_BASE = 7.5; const raioDeLuz = () => (pressagio === 9 ? 5 : RAIO_DE_LUZ_BASE);   // Noite sem Lua encurta a luz
 const LUZ_DO_MINION = 3;   // os minions carregam uma brasa fraca: o inimigo colado neles aparece
 function luzDoInimigo(s, dt) {
   let alvo = 1;
   if (zoomModo !== 2 && !zoomLivre && !masm.secreto && !s.chefe && !nomesUnicos.has(s.id) && necro) {
-    alvo = Math.hypot(s.rx - necro.rx, s.ry - necro.ry) <= RAIO_DE_LUZ ? 1 : 0;
+    alvo = Math.hypot(s.rx - necro.rx, s.ry - necro.ry) <= raioDeLuz() ? 1 : 0;
     if (!alvo) for (const a of estado.values()) if (a.viva && !a.inimigo && !a.necro && Math.hypot(s.rx - a.rx, s.ry - a.ry) <= LUZ_DO_MINION) { alvo = 1; break; }
   }
   if (s.luzA === undefined) s.luzA = alvo;
