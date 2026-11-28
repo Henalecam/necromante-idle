@@ -293,7 +293,7 @@ const mortos = new Map();      // id -> entidade caída (cadáver à vista)
 const cadaverDe = new Map();   // id do cadáver -> id da entidade
 let particulas = [], raios = [], numeros = [], orbes = [], projeteis = [], pocas = [];
 let tempoSim = 0, andar = 0, mana = 0, necro = null, tremor = 0, saque = [0, 0, 0], poderes = [0, 0, 0, 0], oferta = null, ativos = [], pactos = [], ofertaMostrada = '', marcado = -1, almasVoando = [], ritoEmCurso = 0, clarao = 0, deFoice = false, dicaGolpe = false, sopro = 0, dicaSopro = false, itens = [[0, 0], [0, 0]], autosAnterior = '', pressagio = 0;
-const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens'], ['Febre do ouro', 'o dobro de ouro, inimigos batem mais'], ['Noite sem lua', 'a luz alcança menos; mais almas, inimigos mais duros']];
+const PRESSAGIOS = [null, ['Horda', 'mais inimigos, mais Ossos'], ['Ossário', 'muito mais Ossos'], ['Almas inquietas', 'chance de alma dobrada'], ['Sede de sangue', 'inimigos batem mais forte, mais Ossos'], ['Campeão errante', 'um elite a mais'], ['Calmaria', 'menos inimigos'], ['Chuva de cinzas', 'inimigos mais duros, mais itens'], ['Febre do ouro', 'o dobro de ouro, inimigos batem mais'], ['Noite sem lua', 'a luz alcança menos; mais almas, inimigos mais duros'], ['Sinos da abadia', 'mais Ossos, inimigos um pouco mais duros']];
 const COR_MORTE = { Queimado: '20,14,12', Congelado: '120,170,210', Putrefato: '60,90,25', Eletrizado: '40,40,60', Oco: '50,30,80' };
 const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
@@ -332,6 +332,7 @@ function som(tipo) {
     case 'espirito': tom(380, 1300, 0.45, 0.05, 'sine'); tom(395, 1340, 0.45, 0.03, 'triangle', 0.02); chiado(0.3, 0.03, 5000, 0.1); break;
     case 'escudo': [1400, 1100, 1700].forEach((f, i) => tom(f, f * 0.8, 0.05, 0.03, 'square', i * 0.04)); break;
     case 'cinzas': chiado(1.4, 0.05, 700); tom(98, 92, 1.4, 0.03, 'sine'); break;
+    case 'sino': [[392, 0], [294, 0.9]].forEach(([f, d]) => { tom(f, f * 0.995, 1.6, 0.05, 'sine', d); tom(f * 2.76, f * 2.75, 0.9, 0.015, 'sine', d); }); break;   // dois toques de sino ao longe
     case 'ouro': [1318, 1568, 1976].forEach((f, i) => tom(f, f * 0.98, 0.18, 0.03, 'triangle', i * 0.07)); break;
   }
 }
@@ -355,7 +356,7 @@ function ler(texto) {
         if (a !== andar) { if (andar) limparArena(); andar = a; if (a === 1 || temaDoAndar(a) !== temaDoAndar(a - 1)) { const t = TEMAS_ANDAR[temaDoAndar(a)]; aviso(t[0] + ' · ' + t[4]); anotar(`Você entra em <b>${t[0]}</b>: ${t[4]}.`); } }
         mana = +p[2] / Math.max(1, +p[3]); manaAbs = [+p[2] || 0, +p[3] || 0]; saque = [+p[4] || 0, +p[5] || 0, +p[6] || 0];
         poderes = [+p[7] || 0, +p[8] || 0, +p[9] || 0, +p[10] || 0]; marcado = p[11] === undefined ? -1 : +p[11]; deFoice = p[12] === '1'; sopro = +p[13] || 0; itens = [[+p[14] || 0, +p[15] || 0], [+p[16] || 0, +p[17] || 0]];
-        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr === 8) som('ouro'); if (pr === 9) som('cinzas'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
+        { const pr = +p[18] || 0; if (pr !== pressagio) { pressagio = pr; if (pr === 7) som('cinzas'); if (pr === 8) som('ouro'); if (pr === 9) som('cinzas'); if (pr === 10) som('sino'); if (pr && !silencio) aviso('Presságio: ' + PRESSAGIOS[pr][0] + ' · ' + PRESSAGIOS[pr][1]); } }
         break;
       }
       case 'E': {

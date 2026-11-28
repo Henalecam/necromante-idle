@@ -2256,6 +2256,21 @@ namespace Necro.Testes
                 Afirmar(total > 0 && iguais == total, "onde não troca, o presságio sorteado é o mesmo de antes (" + iguais + "/" + total + ")");
             });
 
+            Teste("presságio Sinos da Abadia: andares 2–6 já vencidos; nunca na primeira descida nem depois do 6; mais Ossos", () =>
+            {
+                bool comRecorde = false, semRecorde = false, depois = false;
+                for (int k = 1; k <= 200; k++)
+                {
+                    var c0 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                    var pv = ProgressoCom(EspecieId.Zumbi); pv.MaiorAndarConcluido = 6;
+                    if (new Simulacao(c0, pv, (ulong)k, ModoExpedicao.Avancar, 4).PressagioAtual == Pressagio.SinosDaAbadia) comRecorde = true;
+                    if (new Simulacao(c0, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 4).PressagioAtual == Pressagio.SinosDaAbadia) semRecorde = true;
+                    var pv2 = ProgressoCom(EspecieId.Zumbi); pv2.MaiorAndarConcluido = 20;
+                    if (new Simulacao(c0, pv2, (ulong)k, ModoExpedicao.Avancar, 12).PressagioAtual == Pressagio.SinosDaAbadia) depois = true;
+                }
+                Afirmar(comRecorde && !semRecorde && !depois, "aparece no 4 já vencido, nunca na primeira vez nem no 12");
+            });
+
             Teste("presságio Febre do Ouro: só do andar 20 em diante; dobra o ouro dos abates", () =>
             {
                 bool antes = false, depois = false; int semente = -1;

@@ -122,7 +122,7 @@ namespace Necro.Nucleo
         // Equipamento
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
-        private readonly Rng _rngOssario, _rngNoite;
+        private readonly Rng _rngOssario, _rngNoite, _rngSinos;
         private readonly Rng _rngGrevalda; private bool _grevaldaUsada;   // Grevalda, a Pele de Cardo: Único nomeado raro dos andares 10–20
         public const string NomeGrevalda = "Grevalda, a Pele de Cardo";
         private readonly Rng _rngVorasta; private bool _vorastaUsada;   // Vorasta, a Carne que Volta: Único nomeado raro dos andares 21–30
@@ -156,6 +156,7 @@ namespace Necro.Nucleo
             _rngVorasta = new Rng(semente ^ 0x564F5241UL);
             _rngOssario = new Rng(semente ^ 0x4F535355UL);
             _rngNoite = new Rng(semente ^ 0x4E4F4954UL);
+            _rngSinos = new Rng(semente ^ 0x53494E4FUL);
             _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
@@ -900,10 +901,12 @@ namespace Necro.Nucleo
             _ondaEliteNesteAndar = !chefe && Rng.Chance(Cfg.ChanceOndaElite);
             // Presságio do andar: sorteado num fluxo próprio; muda as regras só deste andar
             PressagioAtual = Pressagio.Nenhum; _aOrcamento = 1f; _aOssos = 1f; _aAlma = 0f; _aDanoInimigo = 1f; _aVidaInimigo = 1f; _aItem = 1f; _aOuro = 1f;
-            if (!chefe && Andar >= Cfg.PressagioAPartirDoAndar && _rngPressagio.Chance(Cfg.ChanceDePressagio))
+            bool sinos = !chefe && Andar >= Cfg.SinosAPartirDoAndar && Andar <= Cfg.SinosAteOAndar && Andar < Cfg.PressagioAPartirDoAndar && Andar <= _recordeInicial && _rngSinos.Chance(Cfg.SinosChance);   // fluxo próprio, só antes dos outros presságios e em andar já vencido: a primeira descida segue sem surpresas
+            if (sinos || (!chefe && Andar >= Cfg.PressagioAPartirDoAndar && _rngPressagio.Chance(Cfg.ChanceDePressagio)))
             {
+                if (sinos) PressagioAtual = Pressagio.SinosDaAbadia; else {
                 PressagioAtual = (Pressagio)(1 + _rngPressagio.Intervalo(0, Andar >= Cfg.FebreAPartirDoAndar ? 8 : 7));   // a Febre do Ouro só entra no sorteio do andar 20 em diante
-                if (Andar >= Cfg.NoiteAPartirDoAndar && Andar <= Cfg.NoiteAteOAndar && _rngNoite.Chance(Cfg.NoiteChance)) PressagioAtual = Pressagio.NoiteSemLua;   // fluxo próprio: o sorteio dos outros não muda
+                if (Andar >= Cfg.NoiteAPartirDoAndar && Andar <= Cfg.NoiteAteOAndar && _rngNoite.Chance(Cfg.NoiteChance)) PressagioAtual = Pressagio.NoiteSemLua; }   // fluxo próprio: o sorteio dos outros não muda
                 if (Cfg.ForcarPressagio > 0) PressagioAtual = (Pressagio)Cfg.ForcarPressagio;   // só capturas e testes
                 switch (PressagioAtual)
                 {
@@ -915,6 +918,7 @@ namespace Necro.Nucleo
                     case Pressagio.Calmaria: _aOrcamento = 0.7f; break;
                     case Pressagio.ChuvaDeCinzas: _aVidaInimigo = Cfg.CinzasVidaInimigo; _aItem = Cfg.CinzasItem; break;
                     case Pressagio.NoiteSemLua: _aAlma = Cfg.NoiteAlma; _aVidaInimigo = Cfg.NoiteVidaInimigo; break;
+                    case Pressagio.SinosDaAbadia: _aOssos = Cfg.SinosOssos; _aVidaInimigo = Cfg.SinosVidaInimigo; break;
                     case Pressagio.FebreDoOuro: _aOuro = Cfg.FebreOuro; _aDanoInimigo = Cfg.FebreDanoInimigo; break;
                 }
             }

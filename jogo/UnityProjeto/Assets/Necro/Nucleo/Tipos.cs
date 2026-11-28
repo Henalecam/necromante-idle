@@ -30,7 +30,7 @@ namespace Necro.Nucleo
     public enum ModificadorElite { Nenhum = 0, Vampirico = 1, Explosivo = 2, Veloz = 4, EscudoDeOssos = 8 }
 
     /// <summary>Presságio: condição sorteada que vale por um andar.</summary>
-    public enum Pressagio { Nenhum = 0, Horda = 1, Ossario = 2, AlmasInquietas = 3, SedeDeSangue = 4, CampeaoErrante = 5, Calmaria = 6, ChuvaDeCinzas = 7, FebreDoOuro = 8, NoiteSemLua = 9 }
+    public enum Pressagio { Nenhum = 0, Horda = 1, Ossario = 2, AlmasInquietas = 3, SedeDeSangue = 4, CampeaoErrante = 5, Calmaria = 6, ChuvaDeCinzas = 7, FebreDoOuro = 8, NoiteSemLua = 9, SinosDaAbadia = 10 }
 
     public enum EstadoAnimacao { Parado, Andando, Atacando, Conjurando, Morrendo }
 
