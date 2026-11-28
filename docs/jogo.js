@@ -424,20 +424,22 @@ function registrar(v) {
 }
 function estatHtml(e, titulo) {
   if (!e || !e.aliados.size) return `<h3>${titulo}</h3><p class="nota">Ainda sem dados.</p>`;
-  const dur = Math.max(1, (e.fim || tempoSim) - e.inicio), al = [...e.aliados.values()].sort((a, b) => b.dano - a.dano), maxD = Math.max(1, ...al.map((l) => l.dano)), maxS = Math.max(1, ...al.map((l) => l.sofrido));
+  const dur = Math.max(1, (e.fim || tempoSim) - e.inicio), al = [...e.aliados.values()].sort((a, b) => (b.necro ? 1 : 0) - (a.necro ? 1 : 0) || b.dano - a.dano), maxD = Math.max(1, ...al.map((l) => l.dano)), maxS = Math.max(1, ...al.map((l) => l.sofrido));
   let h = `<h3>${titulo}</h3><div class="est"><span>Dano total <b style="color:#fff;font-weight:normal">${fmt(Math.round(e.dano))}</b> · ${fmt(Math.round(e.dano / dur))} por segundo</span><span>${Math.floor(dur / 60)}m${String(Math.floor(dur % 60)).padStart(2, '0')}s</span>` +
     `<small>Dano tankado ${fmt(Math.round(e.sofrido))} · cura ${fmt(Math.round(e.cura))} · ${e.abates} abates · maior golpe ${fmt(Math.round(e.maiorGolpe))} · ${e.golpes ? Math.round(100 * e.criticos / e.golpes) : 0}% críticos</small></div>`;
   h += '<p class="nota">Por aliado: a barra vermelha é o dano causado; a azul, o dano tankado.</p>';
-  al.forEach((l) => {
+  al.forEach((l, k) => {
+    if (k === 6) h += `<details class="dobra" data-dobra="ali" ${dobrasAbertas.has('ali') ? 'open' : ''}><summary>Mais ${al.length - 6} aliado${al.length - 6 > 1 ? 's' : ''}</summary>`;   // necromante + os 5 que mais bateram à vista
     h += `<div class="est"><span class="${l.necro ? '' : 'q' + Math.max(0, l.q)}" ${l.necro ? 'style="color:var(--alma)"' : ''}>${esc(l.nome)}${l.morreu ? ` <span class="nota">· caiu ${l.morreu}×</span>` : ''}</span><span>${fmt(Math.round(l.dano))} <span class="nota">(${Math.round(100 * l.dano / Math.max(1, e.dano))}%)</span></span>` +
       `<div class="b"><i style="width:${100 * l.dano / maxD}%;background:#c8323c"></i></div><div class="b"><i style="width:${100 * l.sofrido / maxS}%;background:#4a8fd0"></i></div>` +
       `<small>${fmt(Math.round(l.dano / dur))}/s · tankou ${fmt(Math.round(l.sofrido))} · ${l.abates} abates · maior golpe ${fmt(Math.round(l.maior))}${l.cura ? ' · curou ' + fmt(Math.round(l.cura)) : ''}${l.curado ? ' · recebeu ' + fmt(Math.round(l.curado)) + ' de cura' : ''}</small></div>`;
   });
+  if (al.length > 6) h += '</details>';
   const ini = [...e.inimigos.values()].sort((a, b) => b.dano - a.dano);
   if (ini.length) {
     h += '<p class="nota">Por tipo de inimigo: quanto dano fizeram no seu exército.</p>';
     const mx = Math.max(1, ...ini.map((l) => l.dano));
-    ini.forEach((l, k) => { if (k === 5) h += `<details class="dobra" data-dobra="ini" ${dobrasAbertas.has('ini') ? 'open' : ''}><summary>Mais ${ini.length - 5} tipos</summary>`; h += `<div class="est"><span>${esc(l.nome)}</span><span>${fmt(Math.round(l.dano))}</span><div class="b"><i style="width:${100 * l.dano / mx}%;background:#d9b25f"></i></div><small>${l.mortos} mortos · sofreram ${fmt(Math.round(l.sofrido))} de dano</small></div>`; });
+    ini.forEach((l, k) => { if (k === 5) h += `<details class="dobra" data-dobra="ini" ${dobrasAbertas.has('ini') ? 'open' : ''}><summary>Mais ${ini.length - 5} tipo${ini.length - 5 > 1 ? 's' : ''}</summary>`; h += `<div class="est"><span>${esc(l.nome)}</span><span>${fmt(Math.round(l.dano))}</span><div class="b"><i style="width:${100 * l.dano / mx}%;background:#d9b25f"></i></div><small>${l.mortos} mortos · sofreram ${fmt(Math.round(l.sofrido))} de dano</small></div>`; });
     if (ini.length > 5) h += '</details>';
   }
   return h;
