@@ -791,7 +791,9 @@ const SANTUARIOS = [null,
   ['Santuário Mágico', 'Um véu se ergue entre você e o golpe.', 'um escudo envolve todos os aliados'],
   ['Santuário Ornado', 'Cada lição custa um punhado de ossos.', 'muita experiência para o necromante, mas menos Ossos'],
   ['Santuário Tétrico', 'Onde a carne cede, o ouro brota.', 'tira parte da vida de todos, e paga em ouro'],
-  ['Santuário Profano', 'As almas ouvem; os vivos também.', 'caem mais almas, mas os inimigos ferem mais']];
+  ['Santuário Profano', 'As almas ouvem; os vivos também.', 'caem mais almas, mas os inimigos ferem mais'],
+  null, null, null,   // 11–13: portas de missão (Açougueiro, Rei, Câmara) usam esses códigos
+  ['Santuário Rachado', 'Pela fenda escorre tutano, e algo lá de baixo sente o cheiro.', 'muito mais Ossos neste andar, mas os inimigos ferem mais']];
 const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
 let santuariosVistos = 0;
 let quebraveis = [];   // objetos quebráveis do andar: [sala, tipo, x, y, quebrado]
@@ -2016,7 +2018,7 @@ function atualizarPainel(forcar) {
     { let hu = `<p class="nota">Itens de nome próprio, com afixos fixos, mais fortes que qualquer Raro, e um efeito só deles (vale enquanto o item está vestido). Marcados com ★. Você achou ${d.unicos.filter((u) => u.achado).length} de ${d.unicos.length}.</p>`;
     d.unicos.forEach((u) => { hu += `<div class="linha">${icone(u.tipo)}<div class="corpo">${u.achado ? `<b style="color:#ffcf5a;font-weight:normal">★ ${esc(u.nome)}</b>` : `<span style="color:var(--fraco)">? ? ?</span> <span class="nota">${TIPOS[u.tipo]}</span>`}<small>${u.achado ? '<span style="color:#e8dcb0">' + esc(u.efeito) + '</span><br>' : ''}${esc(u.lenda)}</small></div></div>`; });
       h += dobra('unicos', `Livro de Únicos · ${d.unicos.filter((u) => u.achado).length} de ${d.unicos.length}`, hu); }
-    h += dobra('santuarios', `Livro dos Santuários · ${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}`, `<p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.length - 1}).</p>` +
+    h += dobra('santuarios', `Livro dos Santuários · ${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.filter(Boolean).length}`, `<p class="nota">Como no Diablo, cada santuário só diz o que faz depois de usado. O que você descobre fica anotado aqui (${SANTUARIOS.filter((x, k) => x && (d.santuarios & (1 << k))).length} de ${SANTUARIOS.filter(Boolean).length}).</p>` +
       SANTUARIOS.map((x, k) => (x ? `<div class="linha"><div class="corpo"><span style="color:${d.santuarios & (1 << k) ? '#7fd8ff' : '#8d7c6c'}">${x[0]}</span> <span class="nota">“${x[1]}”</span><small>${d.santuarios & (1 << k) ? x[2] : '? ? ?'}</small></div></div>` : '')).join(''));
     if (pressagio) h += `<div class="linha"><div class="corpo">Presságio: ${PRESSAGIOS[pressagio][0]}<small>${PRESSAGIOS[pressagio][1]}</small></div></div>`;
     h += '<h3>Diário da descida</h3><div class="diario">' + (diario.length ? diario.map(([a, tx]) => `<div><small>andar ${a}</small>${tx}</div>`).join('') : '<p class="nota">Nada digno de nota ainda. Baús, santuários, emboscadas e achados raros aparecem aqui.</p>') + '</div>';

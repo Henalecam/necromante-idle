@@ -21,7 +21,7 @@ namespace Necro.Nucleo
     /// Santuários de efeito incerto, como os do Diablo 1: cada um tem um nome e uma frase enigmática, e o que ele faz só se
     /// descobre usando. Uns ajudam, outros cobram um preço.
     /// </summary>
-    public enum Bencao { Nenhuma = 0, Misterioso = 1, Sombrio = 2, Estranho = 3, Reluzente = 4, Oculto = 5, Religioso = 6, Magico = 7, Ornado = 8, Tetrico = 9, Profano = 10 }
+    public enum Bencao { Nenhuma = 0, Misterioso = 1, Sombrio = 2, Estranho = 3, Reluzente = 4, Oculto = 5, Religioso = 6, Magico = 7, Ornado = 8, Tetrico = 9, Profano = 10, Rachado = 14 }   // 11–13 são as portas de missão em BencaosOferecidas
 
     /// <summary>
     /// A masmorra: cada andar é uma sequência de salas. O necromante atravessa salas de combate (as ondas) e, entre
@@ -682,7 +682,7 @@ namespace Necro.Nucleo
                 if (BencaosOferecidas == null)
                 {
                     // um santuário de nome sorteado: [tipo, 1 se o efeito já é conhecido, 0]. O jogador pode usar (0) ou recusar (1); sem resposta, o necromante usa.
-                    int tipoS = Cfg.ForcarSantuario > 0 ? Cfg.ForcarSantuario : 1 + _rngMasmorra.Intervalo(0, 10);
+                    int tipoS = Cfg.ForcarSantuario > 0 ? Cfg.ForcarSantuario : 1 + _rngMasmorra.Intervalo(0, 11); if (tipoS == 11) tipoS = (int)Bencao.Rachado;
                     BencaosOferecidas = new[] { tipoS, (_santuariosVistos & (1 << tipoS)) != 0 ? 1 : 0, 0 }; TempoDaBencao = Cfg.TempoDeEscolhaDaBencao; _escolhaDeBencao = -1;
                     return;
                 }
@@ -775,7 +775,8 @@ namespace Necro.Nucleo
                         case Bencao.Tetrico:
                             for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo) e.Vida = Math.Max(1f, e.Vida * (1f - 2f * f)); }
                             Resultado.Ouro += (long)(Cfg.OuroBau * 3f * (1f + 0.1f * (AndarEfetivo - 1)) + 0.5f); break;                 // sangue em troca de ouro
-                        case Bencao.Profano: _bProtecao *= 1f + 1.5f * f; _bAlma += f * 4f; break;                                // os inimigos ferem mais, as almas caem mais
+                        case Bencao.Profano: _bProtecao *= 1f + 1.5f * f; _bAlma += f * 4f; break;
+                        case Bencao.Rachado: _bOssos *= 1f + 6f * f; _bProtecao *= 1f + 1.5f * f; break;                         // muito mais Ossos no andar, os inimigos ferem mais                                // os inimigos ferem mais, as almas caem mais
                     }
                     sub = (int)qual; valor = f;
                     break;

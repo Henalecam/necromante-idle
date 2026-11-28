@@ -2109,6 +2109,18 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Santuário Rachado: entra no sorteio com o código 14 (sem colidir com as portas 11–13)", () =>
+            {
+                bool viu14 = false, viuPorta = false;
+                for (int k = 1; k <= 120 && !(viu14 && viuPorta); k++)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarSalaEspecial = (int)TipoSala.Santuario };
+                    var s = new Simulacao(c, ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos), (ulong)k, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 };
+                    for (int g = 0; g < 6000 && !s.Encerrada; g++) { s.Tick(); var b = s.BencaosOferecidas; if (b != null) { if (b[0] == 14) viu14 = true; if (b[0] >= 11 && b[0] <= 13) viuPorta = true; break; } }
+                }
+                Afirmar(viu14 && !viuPorta, "o santuário 14 aparece e nenhum santuário usa 11–13");
+            });
+
             Teste("Grevalda, a Pele de Cardo: Único nomeado dos andares 10–20; devolve parte do golpe e larga livro e ouro", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarGrevalda = true, ChanceDeUnico = 1f };

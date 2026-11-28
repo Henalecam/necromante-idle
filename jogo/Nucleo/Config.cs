@@ -483,7 +483,7 @@ namespace Necro.Nucleo
         public float TempoDeEscolhaDaBencao = 4f;        // s para o jogador escolher; depois o necromante pega uma ao acaso
         public float FonteCura = 0.20f;
         public int EspelhosMaximo = 6;                     // Cripta dos Espelhos: reflexos no máximo
-        public int ForcarSantuario = 0;                    // só para testes: 1..10 escolhe o santuário
+        public int ForcarSantuario = 0;                    // só para testes: 1..10 ou 14 escolhe o santuário
         public int ForcarSalaEspecial = 0;                 // só para testes: põe este TipoSala logo depois da primeira sala de combate
         public int ForcarSecreto = 0;                      // só para testes: 1..3 escolhe o nível secreto
         public int TorturaSangue = 2, TorturaSangueDoToque = 1;   // Sala de tortura
