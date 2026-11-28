@@ -2084,7 +2084,7 @@ function atualizarPainel(forcar) {
   } else if (aba === 'bestiario') {
     h += `<h3>Bestiário</h3><p class="nota">Cada marco de mortes de uma espécie dá um nível de Domínio: seus minions dessa espécie ganham +${d.bestiario[0].porNivel}% de vida e dano por nível.</p>`;
     d.bestiario.forEach((b) => {
-      if (!b.mortes && !b.conhecida) { h += '<div class="linha"><div class="corpo"><span class="nota">??? · espécie ainda não encontrada</span></div></div>'; return; }
+      if (!b.mortes && !b.conhecida) return;   // as não encontradas viram uma linha só no fim
       const pct = b.prox ? Math.min(100, Math.round(100 * b.mortes / b.prox)) : 100;
       const kb = b.nome.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase(), hb = HABILIDADE[kb];
       const TD = ['físico', 'fogo', 'gelo', 'raio', 'veneno', 'sombra'], rs = (b.res && b.res[d.dif]) || [], imu = [], rst = [], frc = [];
@@ -2093,6 +2093,7 @@ function atualizarPainel(forcar) {
       h += `<div class="linha">${monstros[kb] ? thumb(kb) : ''}<div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
         `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${linhaRes ? `<small>Como inimigo (${DIFICULDADES[d.dif][0]}): ${linhaRes}</small>` : ''}${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
+    { const nf = d.bestiario.filter((b) => !b.mortes && !b.conhecida).length; if (nf) h += `<p class="nota" style="margin-top:6px">${d.bestiario.length - nf} de ${d.bestiario.length} espécies encontradas · ${nf} ainda escondidas na masmorra.</p>`; }
   } else if (aba === 'necropole') {
     h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, e nas mais altas os inimigos resistem mais e alguns ficam <b>imunes</b> a um tipo de dano (o Bestiário mostra quais); com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
     DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}${d.vitoria && (d.vitoria.feitas >> k) & 1 ? ' <span style="color:#ffcf5a">· Diablo vencido</span>' : ''}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
