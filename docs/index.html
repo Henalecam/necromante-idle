@@ -138,6 +138,7 @@
   #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }
   #aviso.alto { top:15%; }  #ficha:not([hidden]) ~ #aviso.alto { top:70%; }   /* o título grande do andar ocupa o meio da tela */
   #resumo:not([hidden]) ~ #aviso { top:62%; }   /* o cartão de fim de expedição ocupa o alto */   /* com um painel de escolha aberto, o aviso desce para não ficar por cima */
+  @media (max-width:520px) { #aviso:not(.alto) { font-family:Alegreya, Georgia, serif; font-style:italic; letter-spacing:0; font-size:15px; padding:4px 8px; } }   /* no celular, Cinzel em caixa alta quebrava em duas linhas por cima dos minions */
   #ausente { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--ouro); background:#000a; }
   #ausente .caixa-aus { width:min(340px, 90%); } #ausente .barra-aus { height:8px; margin:10px 0 6px; background:#0008; border:1px solid var(--borda); border-radius:4px; overflow:hidden; } #ausente .barra-aus i { display:block; height:100%; background:linear-gradient(90deg,#6dffa8,#d9b25f); } #ausente small { color:var(--fraco); }
   #carregando { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:var(--fraco); background:#000c; }
