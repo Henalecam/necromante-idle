@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26, RelicarioProfanado = 27, ForjaDoAbismo = 28, OssarioEsquecido = 29, CanilMaldito = 30 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26, RelicarioProfanado = 27, ForjaDoAbismo = 28, OssarioEsquecido = 29, CanilMaldito = 30, AltarDeVelas = 31 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -124,6 +124,7 @@ namespace Necro.Nucleo
                     if (_rngMasmorra.Chance(Cfg.ChanceDeSegundaSalaVazia + vaziaExtra)) Salas.Add(TipoSala.Vazia);
                     Salas.Add(r < 22f ? TipoSala.Bau : r < 28f ? TipoSala.ForjaDeOssos : r < 42f ? TipoSala.Santuario : r < 48f ? TipoSala.AlmasPresas : r < 52f ? TipoSala.FossoDeMonstros : r < 60f ? TipoSala.Fonte : r < 65f ? TipoSala.Biblioteca : r < 71f ? TipoSala.Emboscada : r < 76f ? TipoSala.Ninho : r < 81f ? TipoSala.Mercador : r < 84f ? TipoSala.Arsenal : r < 88f ? TipoSala.AltarDeSangue : r < 91f ? TipoSala.SalaDeTortura : r < 95f || temCofre ? TipoSala.Armadilha : TipoSala.Cofre);
                     if (!forcarTipo && Salas[Salas.Count - 1] == TipoSala.Bau && Andar <= Cfg.OssarioAteOAndar && _rngOssario.Chance(Cfg.OssarioNoLugarDoBau)) Salas[Salas.Count - 1] = TipoSala.OssarioEsquecido;   // fluxo próprio: o resto do sorteio não muda
+                    if (!forcarTipo && Salas[Salas.Count - 1] == TipoSala.Fonte && Andar <= Cfg.VelasAteOAndar && _rngVelas.Chance(Cfg.VelasNoLugarDaFonte)) Salas[Salas.Count - 1] = TipoSala.AltarDeVelas;   // fluxo próprio, como o Ossário
                     if (forcarTipo) Salas[Salas.Count - 1] = (TipoSala)Cfg.ForcarSalaEspecial;
                     if (Salas[Salas.Count - 1] == TipoSala.Cofre) temCofre = true;
                 }
@@ -945,6 +946,15 @@ namespace Necro.Nucleo
                         if (e.Viva && e.Faccao != Faccao.Inimigo && e.Escudo < e.VidaMax * f) e.Escudo = e.VidaMax * f;
                     }
                     valor = f;
+                    break;
+                }
+                case TipoSala.AltarDeVelas:
+                {
+                    // Altar de Velas: velas de luto acesas por mãos esquecidas; aquecem os feridos e chamam as almas do andar (com toque, mais almas)
+                    for (int i = 0; i < Entidades.Count; i++) { var e = Entidades[i]; if (e.Viva && e.Faccao != Faccao.Inimigo) Curar(null, e, e.VidaMax * Cfg.VelasCura); }
+                    float b = toque ? Cfg.VelasAlmaDoToque : Cfg.VelasAlma;
+                    if (b > _bAlma) _bAlma = b;
+                    Resultado.AltaresDeVelas++; valor = b;
                     break;
                 }
                 case TipoSala.Fonte:

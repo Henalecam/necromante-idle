@@ -2158,6 +2158,23 @@ namespace Necro.Testes
                 Afirmar(!apareceFundo, "não aparece depois do andar 10");
             });
 
+            Teste("Altar de Velas: no lugar da Fonte nos andares 1–10; cura um pouco e dá chance de alma no andar", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarSalaEspecial = (int)TipoSala.AltarDeVelas };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 10; foreach (var m in p.Minions) m.Nivel = 10;
+                var s = new Simulacao(c, p, 4, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 };
+                for (int k = 0; k < 20000 && !s.Encerrada && s.Resultado.AltaresDeVelas == 0; k++) s.Tick();
+                Afirmar(s.Salas.Contains(TipoSala.AltarDeVelas) && s.Resultado.AltaresDeVelas == 1, "a sala existe e é resolvida");
+                bool cedo = false, fundo = false;
+                for (int k = 1; k <= 80; k++)
+                {
+                    var c2 = new ConfigJogo { ChanceDeSalaEspecial = 1f };
+                    if (new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 5).Salas.Contains(TipoSala.AltarDeVelas)) cedo = true;
+                    if (new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 14).Salas.Contains(TipoSala.AltarDeVelas)) fundo = true;
+                }
+                Afirmar(cedo && !fundo, "aparece no andar 5 e nunca no 14");
+            });
+
             Teste("Sandálias do Cortejo: Botas Únicas do andar 12; com elas, Arautos e Carpideiras erguidos agem 25% mais vezes", () =>
             {
                 var d = Unicos.Obter(16); Afirmar(d != null && d.Tipo == TipoItem.Botas && d.AndarMinimo == 12 && !d.SoDeMissao, "dados do Único");

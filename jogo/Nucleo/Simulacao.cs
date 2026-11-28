@@ -122,7 +122,7 @@ namespace Necro.Nucleo
         // Equipamento
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
-        private readonly Rng _rngOssario, _rngNoite, _rngSinos;
+        private readonly Rng _rngOssario, _rngNoite, _rngSinos, _rngVelas;
         private readonly Rng _rngGrevalda; private bool _grevaldaUsada;   // Grevalda, a Pele de Cardo: Único nomeado raro dos andares 10–20
         public const string NomeGrevalda = "Grevalda, a Pele de Cardo";
         private readonly Rng _rngVorasta; private bool _vorastaUsada;   // Vorasta, a Carne que Volta: Único nomeado raro dos andares 21–30
@@ -157,6 +157,7 @@ namespace Necro.Nucleo
             _rngOssario = new Rng(semente ^ 0x4F535355UL);
             _rngNoite = new Rng(semente ^ 0x4E4F4954UL);
             _rngSinos = new Rng(semente ^ 0x53494E4FUL);
+            _rngVelas = new Rng(semente ^ 0x56454C41UL);
             _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);

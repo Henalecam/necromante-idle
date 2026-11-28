@@ -34,7 +34,7 @@ enquanto você está fora.
 - **Monstros únicos** com nome e séquito, alguns com habilidade própria (como Grevalda, a Pele de Cardo, que devolve parte
   de cada golpe, ou Vorasta, a Carne que Volta, que regenera), e Campeões que surgem no meio do andar.
 - **Presságios** que mudam as regras de um andar (Horda, Chuva de cinzas, Febre do ouro, Noite sem lua...) e **11 santuários** com efeito
-  a descobrir. Nos primeiros andares, o **Ossário esquecido** levanta um esqueleto que luta pelo grupo.
+  a descobrir. Nos primeiros andares, o **Ossário esquecido** levanta um esqueleto que luta pelo grupo e o **Altar de velas** chama almas.
 - **Feitiços por livro**, como no Diablo: 12 feitiços (Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra
   Maldita, Espírito de Ossos, Lamento de Ossos...), cada leitura sobe um nível.
 - **Exército de almas**: 18 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, o Sineiro atordoa, a
