@@ -5,14 +5,21 @@ afundada, sala por sala, andar por andar. Você assiste e dá os toques que faze
 na hora, interromper o golpe de um chefe. Entre as descidas, gasta Ossos e Essência para crescer. O jogo continua
 enquanto você está fora.
 
-![O HUD no computador](imagens/hud4_computador.png)
+![No computador: Grevalda, a Pele de Cardo, e o séquito dela](imagens/grevalda_computador.png)
+
+<p><img src="imagens/febre_do_ouro_390.png" width="240" alt="Celular: presságio Febre do ouro"> <img src="imagens/brasamor_390.png" width="240" alt="Celular: Brasamor na Forja do Abismo"></p>
 
 ## Como jogar
 
-- **No navegador:** a pasta [`docs/`](docs) é o jogo pronto (C# compilado para WebAssembly, sem instalar nada).
-  Para ter um link público, ligue o GitHub Pages: *Settings → Pages → branch `main`, pasta `/docs`*.
-- Funciona no celular e no computador. O progresso fica salvo no próprio navegador.
-- Na primeira vez aparece uma boas-vindas curta; o resto o jogo ensina com dicas rápidas durante a partida.
+1. Abra o jogo e toque em **Começar**: o exército desce sozinho.
+2. Na luta, toque num inimigo para marcar o alvo, no orbe verde para ceifar a alma e no retrato de um aliado para curá-lo.
+3. Entre as descidas, gaste Ossos e Essência no **Exército** e na **Necrópole**; os cartões de porta e santuário pedem um toque para decidir.
+
+**Onde jogar:**
+- O link do jogo no Claude só abre para quem o dono compartilhar.
+- Link público: a pasta [`docs/`](docs) é o jogo pronto (C# compilado para WebAssembly, sem instalar nada). Ele aparece
+  assim que o dono ligar o GitHub Pages: *Settings → Pages → branch `main`, pasta `/docs`*.
+- Funciona no celular e no computador. O progresso fica salvo no próprio navegador e o jogo continua enquanto você está fora.
 
 ## O que tem
 
@@ -20,11 +27,15 @@ enquanto você está fora.
   sala, com raio de luz: fora dele, só os olhos dos monstros brilham no escuro.
 - **3 dificuldades** (Normal, Pesadelo e Inferno), com resistências e imunidades crescentes.
 - **Missões de cenário** sorteadas por jogo: a porta do carniceiro, a tumba do rei, a fonte envenenada, a câmara de ossos,
-  os salões dos cegos e a Fortaleza Rubra.
+  os salões dos cegos, a Fortaleza Rubra, o Poço dos Lamentos, o Relicário Profanado e a Forja do Abismo.
+- **Monstros únicos** com nome e séquito, alguns com habilidade própria (como Grevalda, a Pele de Cardo, que devolve parte
+  de cada golpe), e Campeões que surgem no meio do andar.
+- **Presságios** que mudam as regras de um andar (Horda, Chuva de cinzas, Febre do ouro...) e **11 santuários** com efeito
+  a descobrir.
 - **Feitiços por livro**, como no Diablo: Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra Maldita, Espírito de Ossos e
   outros, cada leitura sobe um nível.
 - **Exército de almas**: cada espécie erguida tem uma habilidade própria; níveis, qualidades, fusões e Bestiário.
-- **Itens** com 5 raridades, Lendários, Únicos com efeito próprio, conjuntos, durabilidade, identificação, armadilhas
+- **Itens** com 5 raridades, Lendários, 15 Únicos com efeito próprio, conjuntos, durabilidade, identificação, armadilhas
   em sarcófagos e urnas, e uma cidade (Ferreiro, Curandeira, Bruxa, Ancião).
 - **Ascensão** com uma árvore de 5 ramos para as vidas seguintes.
 
@@ -43,7 +54,7 @@ ambas sob a SIL Open Font License (licenças em `docs/fontes/`).
 | Pasta | Conteúdo |
 |---|---|
 | `jogo/Nucleo` | Regras do jogo em C# puro, determinístico, 10 ticks por segundo. |
-| `jogo/Testes` | 160 testes e o portão de balanceamento: um robô joga campanhas inteiras e confere 9 metas de tempo. |
+| `jogo/Testes` | 169 testes e o portão de balanceamento: um robô joga campanhas inteiras e confere 9 metas de tempo. |
 | `jogo/Web` | Versão de navegador (WebAssembly + canvas). `./montar.sh` gera o site em `Web/dist`. |
 | `jogo/UnityProjeto` | Projeto Unity 6.3 com o mesmo núcleo (camada visual em andamento). |
 | `pipeline` | Fábrica de monstros em Blender (Python): modelos procedurais viram sprites isométricos em 8 direções. |
