@@ -133,7 +133,7 @@
   #encruzilhada .g, #bencaos .g { color:#8fd89f; display:block; } #encruzilhada .p, #bencaos .p { color:#e08a8a; display:block; }
   #encruzilhada.min { top:auto; bottom:58px; left:auto; right:6px; padding:5px 9px; } #encruzilhada.min .ops { display:none; } #encruzilhada.min .cab { margin:0; gap:10px; cursor:pointer; font-size:12px; } #encruzilhada .cab { cursor:pointer; }
   #t-pactos { font-size:11px; color:var(--ouro); text-shadow:0 0 4px #000; pointer-events:none; }
-  #aviso { position:absolute; left:0; right:0; top:30%; padding:0 12px; text-align:center; font-size:15px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
+  #aviso { position:absolute; left:0; right:0; top:30%; padding:5px 12px; z-index:3; background:linear-gradient(90deg, transparent, rgba(8,4,6,.55) 18%, rgba(8,4,6,.55) 82%, transparent); text-align:center; font-size:15px; color:var(--ouro); text-shadow:0 0 8px #000, 0 0 2px #000; pointer-events:none; opacity:0; transition:opacity .4s; letter-spacing:1px; }
   #encruzilhada:not([hidden]):not(.min) ~ #aviso, #bencaos:not([hidden]) ~ #aviso { top:64%; }
   #aviso.alto { top:15%; }  #ficha:not([hidden]) ~ #aviso.alto { top:70%; }   /* o título grande do andar ocupa o meio da tela */
   #resumo:not([hidden]) ~ #aviso { top:62%; }   /* o cartão de fim de expedição ocupa o alto */   /* com um painel de escolha aberto, o aviso desce para não ficar por cima */
