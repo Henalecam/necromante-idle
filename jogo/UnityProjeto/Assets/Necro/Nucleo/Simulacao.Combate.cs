@@ -21,6 +21,7 @@ namespace Necro.Nucleo
             if (Bonus.Unico[14] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && alvo.Familia == Familia.Demonio) danoBase *= 1f + Cfg.MaosDeEscoria;   // Mãos de Escória
             if (Bonus.Unico[12] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && (alvo.Elite || alvo.Campeao || alvo.Unico || alvo.Chefe)) danoBase *= 1f + Cfg.EstandarteDanoContraFortes;   // Estandarte Sangrento
             if (Bonus.Unico[15] && tipo == TipoDano.Fogo && alvo.Faccao == Faccao.Minion) danoBase *= 1f - Cfg.BrasaCativa;   // Anel da Brasa Cativa
+            if (golpe && atacante != null && atacante.Viva && atacante.Faccao == Faccao.Minion && alvo.NomeProprio == NomeGrevalda) CausarDano(null, atacante, danoBase * Cfg.GrevaldaEspinhos, TipoDano.Fisico, false);   // Grevalda: a pele de cardo devolve parte do golpe
             // Cavaleiro Negro erguido — Couraça: sente menos o golpe físico
             if (tipo == TipoDano.Fisico && alvo.Faccao == Faccao.Minion && alvo.Especie == EspecieId.CavaleiroNegro && Cfg.HabilidadesDeEspecie) danoBase *= 1f - Cfg.CouracaDoCavaleiro;
             if (alvo.Imune != 0 && (alvo.Imune & (1 << (int)tipo)) != 0)
@@ -278,6 +279,7 @@ namespace Necro.Nucleo
                 // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
                 _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1)) * premio * _aOuro * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
                 { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
+                if (alvo.NomeProprio == NomeGrevalda) { if (Cfg.LivrosDeFeitico) SoltarLivro(alvo.Pos); Resultado.Ouro += Cfg.GrevaldaOuro; }   // Grevalda: livro e ouro garantidos
                 // livros de feitiço: o chefe sempre larga um; Únicos com frequência; elites e Campeões de vez em quando
                 if (Cfg.LivrosDeFeitico && (alvo.Chefe || (alvo.Unico && _rngItens.Chance(Cfg.ChanceDeLivroDeUnico)) || (!alvo.Unico && (alvo.Elite || alvo.Campeao) && _rngItens.Chance(Cfg.ChanceDeLivroDeElite)))) SoltarLivro(alvo.Pos);
 

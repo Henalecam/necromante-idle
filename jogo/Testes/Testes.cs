@@ -2109,6 +2109,26 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Grevalda, a Pele de Cardo: Único nomeado dos andares 10–20; devolve parte do golpe e larga livro e ouro", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarGrevalda = true, ChanceDeUnico = 1f };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto); p.NivelNecromante = 40; p.PoderNecromantico = 500f; foreach (var m in p.Minions) m.Nivel = 18;
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 12) { LimiteDeAndares = 1 }; bool viu = false, viuFora = false;
+                for (int k = 0; k < 30000 && !s.Encerrada && !viu; k++) { s.Tick(); viu = s.Entidades.Exists(e => e.NomeProprio == Simulacao.NomeGrevalda); }
+                Afirmar(viu, "aparece no andar 12 quando forçada");
+                var s2 = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 25) { LimiteDeAndares = 1 };
+                for (int k = 0; k < 8000 && !s2.Encerrada; k++) { s2.Tick(); if (s2.Entidades.Exists(e => e.NomeProprio == Simulacao.NomeGrevalda)) viuFora = true; }
+                Afirmar(!viuFora, "não aparece fora dos andares 10–20");
+                var c2 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var t = new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), 3, ModoExpedicao.Avancar, 12);
+                var mi = t.Entidades.Find(e => e.Faccao == Faccao.Minion); mi.VidaMax = mi.Vida = 1e6f; mi.Armadura = 0f; for (int k = 0; k < 6; k++) mi.Resistencias[k] = 0f;
+                var g = t.CriarInimigo(EspecieId.Zumbi, new Vec2(10f, 6f)); g.Unico = true; g.NomeProprio = Simulacao.NomeGrevalda; g.Imune = 0; g.VidaMax = g.Vida = 1e6f;
+                float v0 = mi.Vida; t.CausarDano(mi, g, 1000f, TipoDano.Fisico, true);
+                Afirmar(Math.Abs((v0 - mi.Vida) - 150f) < 1f, "devolve 15% do golpe (" + (v0 - mi.Vida) + ")");
+                long o0 = t.Resultado.Ouro; t.CausarDano(mi, g, 1e9f, TipoDano.Fisico, false);
+                Afirmar(!g.Viva && t.Resultado.Ouro - o0 >= c2.GrevaldaOuro, "morta, larga o ouro garantido");
+            });
+
             Teste("presságio Febre do Ouro: só do andar 20 em diante; dobra o ouro dos abates", () =>
             {
                 bool antes = false, depois = false; int semente = -1;

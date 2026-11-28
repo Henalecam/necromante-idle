@@ -122,6 +122,8 @@ namespace Necro.Nucleo
         // Equipamento
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
+        private readonly Rng _rngGrevalda; private bool _grevaldaUsada;   // Grevalda, a Pele de Cardo: Único nomeado raro dos andares 10–20
+        public const string NomeGrevalda = "Grevalda, a Pele de Cardo";
         private float _sorte;   // pontos de Sorte do progresso
         private float _restoDeOssos = 0.5f;
         private float _restoDeOuro = 0.5f;
@@ -147,6 +149,7 @@ namespace Necro.Nucleo
             _rngItens = new Rng(semente ^ 0x4954454E53UL); // "ITENS"
             _sementePactos = semente ^ 0x50414354UL;       // "PACT"
             _rngPressagio = new Rng(semente ^ 0x50524553UL);
+            _rngGrevalda = new Rng(semente ^ 0x47524556UL);
             _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
@@ -902,7 +905,7 @@ namespace Necro.Nucleo
                         if (s.Planejado != null) { pos = s.Planejado.Pos; s.Planejado.Desperto = true; }   // já estava na sala, à espera: só desperta
                         var novo = CriarInimigo(s.Especie, Limitar(pos), s.Elite, s.Mods, s.Chefe);
                         if (s.Oculto) { novo.Oculto = true; novo.OcultoAte = TickAtual * DT + Cfg.OcultoDuracao; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 46, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
-                        if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
+                        if (s.Planejado != null && s.Planejado.Unico) { novo.Unico = true; novo.NomeProprio = s.Planejado.Nome; novo.VidaMax *= Cfg.UnicoMultVida; novo.Vida = novo.VidaMax; if (!_grevaldaUsada && Andar >= Cfg.GrevaldaDe && Andar <= Cfg.GrevaldaAte && (Cfg.ForcarGrevalda || _rngGrevalda.Chance(Cfg.GrevaldaChance))) { _grevaldaUsada = true; novo.NomeProprio = NomeGrevalda; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 57, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); } Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Ferreiro) { novo.Unico = true; novo.NomeProprio = "Brasamor, o Ferreiro do Fundo"; novo.VidaMax *= Cfg.ForjaMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.ForjaMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Sermonario) { novo.Unico = true; novo.NomeProprio = "Sermonário Ossyr"; novo.VidaMax *= Cfg.RelicarioMultVida; novo.Vida = novo.VidaMax; novo.TempoHabilidade = 0f; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
                         else if (s.Senhor) { novo.Unico = true; novo.NomeProprio = "Vargoth, o Estandarte Sangrento"; novo.VidaMax *= Cfg.FortalezaMultVida; novo.Vida = novo.VidaMax; novo.Dano *= Cfg.FortalezaMultDano; Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 20, Alvo = novo.Id, Origem = -1, Pos = novo.Pos }); }
