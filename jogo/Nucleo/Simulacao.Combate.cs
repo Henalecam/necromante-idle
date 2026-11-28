@@ -20,6 +20,7 @@ namespace Necro.Nucleo
             if (alvo.Oculto) Revelar(alvo);
             if (Bonus.Unico[14] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && alvo.Familia == Familia.Demonio) danoBase *= 1f + Cfg.MaosDeEscoria;   // Mãos de Escória
             if (Bonus.Unico[12] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && (alvo.Elite || alvo.Campeao || alvo.Unico || alvo.Chefe)) danoBase *= 1f + Cfg.EstandarteDanoContraFortes;   // Estandarte Sangrento
+            if (Bonus.Unico[17] && atacante != null && atacante.Faccao == Faccao.Minion && alvo.Faccao == Faccao.Inimigo && alvo.AtordoadoAte > TickAtual * DT) danoBase *= 1f + Cfg.BadaloDano;   // Badalo do Campanário Partido
             if (Bonus.Unico[15] && tipo == TipoDano.Fogo && alvo.Faccao == Faccao.Minion) danoBase *= 1f - Cfg.BrasaCativa;   // Anel da Brasa Cativa
             if (golpe && atacante != null && atacante.Viva && atacante.Faccao == Faccao.Minion && alvo.NomeProprio == NomeGrevalda) CausarDano(null, atacante, danoBase * Cfg.GrevaldaEspinhos, TipoDano.Fisico, false);   // Grevalda: a pele de cardo devolve parte do golpe
             // Cavaleiro Negro erguido — Couraça: sente menos o golpe físico

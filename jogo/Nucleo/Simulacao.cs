@@ -738,7 +738,7 @@ namespace Necro.Nucleo
             {
                 var a = Entidades[i];
                 if (!a.Viva || a.Faccao != alvos || a == Necromante || a.Chefe || a.Oculto || Vec2.Dist2(a.Pos, s.Pos) > r2) continue;
-                a.TempoAcao = Math.Max(a.TempoAcao, Cfg.SineiroAtordoa); a.PreparandoGolpe = 0f; a.Animacao = EstadoAnimacao.Parado; n++;
+                a.TempoAcao = Math.Max(a.TempoAcao, Cfg.SineiroAtordoa); a.AtordoadoAte = TickAtual * DT + Cfg.SineiroAtordoa; a.PreparandoGolpe = 0f; a.Animacao = EstadoAnimacao.Parado; n++;
                 Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = codigo, Alvo = a.Id, Origem = s.Id, Valor = Cfg.SineiroAtordoa, Pos = a.Pos });
             }
             if (alvos == Faccao.Inimigo) Resultado.Badaladas += n;

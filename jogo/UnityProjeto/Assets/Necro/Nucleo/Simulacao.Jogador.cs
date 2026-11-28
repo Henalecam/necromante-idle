@@ -117,7 +117,7 @@ namespace Necro.Nucleo
                     if (alvoMarca.PreparandoGolpe > 0f)
                     {
                         // marcar durante o aviso quebra o Golpe Brutal e atordoa
-                        alvoMarca.PreparandoGolpe = 0f; alvoMarca.TempoAcao = Cfg.GolpeBrutalAtordoamento; alvoMarca.Animacao = EstadoAnimacao.Parado;
+                        alvoMarca.PreparandoGolpe = 0f; alvoMarca.TempoAcao = Cfg.GolpeBrutalAtordoamento; alvoMarca.AtordoadoAte = TickAtual * DT + Cfg.GolpeBrutalAtordoamento; alvoMarca.Animacao = EstadoAnimacao.Parado;
                         Resultado.GolpesInterrompidos++;
                         Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 10, Alvo = alvoMarca.Id, Origem = Necromante.Id, Valor = Cfg.GolpeBrutalAtordoamento, Pos = alvoMarca.Pos });
                     }

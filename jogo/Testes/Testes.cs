@@ -2204,6 +2204,23 @@ namespace Necro.Testes
                 Afirmar(v64 && s2.Resultado.Badaladas > 0, "o Sineiro erguido atordoou um inimigo");
             });
 
+            Teste("Badalo do Campanário Partido: Elmo Único do andar 7; com ele, inimigos atordoados sofrem +30% de dano dos minions", () =>
+            {
+                var d = Unicos.Obter(17); Afirmar(d != null && d.Tipo == TipoItem.Elmo && d.AndarMinimo == 7 && !d.SoDeMissao, "dados do Único");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                Func<bool, float> dano = (atordoado) =>
+                {
+                    var p = ProgressoCom(EspecieId.Esqueleto);
+                    Equipamento.Equipar(p, Unicos.Gerar(new Rng(5), c, 8, d));
+                    var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 8);
+                    var m = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Esqueleto);
+                    var z = s.CriarInimigo(EspecieId.Zumbi, new Vec2(40f, 40f)); z.VidaMax = z.Vida = 1e6f; z.AtordoadoAte = atordoado ? 999f : 0f;
+                    return s.CausarDano(m, z, 100f, TipoDano.Fisico, false);
+                };
+                float sem = dano(false), com = dano(true);
+                Afirmar(com > sem * 1.25f && com < sem * 1.35f, "atordoado: " + sem.ToString("0.0") + " -> " + com.ToString("0.0"));
+            });
+
             Teste("Santuário Rachado: entra no sorteio com o código 14 (sem colidir com as portas 11–13)", () =>
             {
                 bool viu14 = false, viuPorta = false;

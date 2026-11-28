@@ -39,7 +39,7 @@ enquanto você está fora.
   Maldita, Espírito de Ossos, Lamento de Ossos...), cada leitura sobe um nível.
 - **Exército de almas**: 18 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, o Sineiro atordoa, a
   Carpideira cura, o Lacaio explode); níveis, qualidades, fusões e Bestiário.
-- **Itens** com 5 raridades, Lendários, 16 Únicos com efeito próprio, 4 conjuntos (como os Véus do Cortejo Fúnebre, que prolongam os mortos
+- **Itens** com 5 raridades, Lendários, 17 Únicos com efeito próprio, 4 conjuntos (como os Véus do Cortejo Fúnebre, que prolongam os mortos
   temporários), durabilidade, identificação, armadilhas
   em sarcófagos e urnas, e uma cidade (Ferreiro, Curandeira, Bruxa, Ancião).
 - **Ascensão** com uma árvore de 5 ramos para as vidas seguintes.
