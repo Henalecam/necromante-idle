@@ -495,3 +495,5 @@ Dono pediu ciclos a cada 5 minutos.
 - **272** (07:48): limpeza. A dica de toque "Missão cumprida" já aparecia só até o jogador aprender (toque, 20 s vista ou resgate automático); encurtada para "toque em Resgatar ↓" e, no celular, as dicas podem usar 88% da largura: cabem em uma linha e cobrem menos o pé da arena. teste_web4 sem erros, desktop conferido. Publicado 1795852103-f66e.
 
 - **273** (08:00): conteúdo. Presságio 10 Sinos da abadia: andares 2–6 já vencidos (nunca na primeira descida), 18% por fluxo próprio, Ossos x1,35 e inimigos +10% de vida; som de sino, linha na ajuda. 179 testes. Gate ausente 1.42/3.73/7.78 h; ativo 0.86/2.49/5.42 h (os dois FORA de sempre, por rapidez). Publicado 1795852855-4ded.
+
+- **274** (08:11): HUD. Cartas do Exército e do Filactério: "N de comando", "nv x/y", "estágio N", "Poder N", cada dom (Vida/Dano/Vel.) e cada traço não quebram mais no meio da expressão (classe .nw). Desktop conferido; teste_web4 sem erros. Notado para depois: o topo mostra "50.0k" com ponto. Publicado 1795853474-8f74.
