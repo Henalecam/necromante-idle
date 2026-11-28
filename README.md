@@ -29,16 +29,18 @@ enquanto você está fora.
   sala, com raio de luz: fora dele, só os olhos dos monstros brilham no escuro.
 - **3 dificuldades** (Normal, Pesadelo e Inferno), com resistências e imunidades crescentes.
 - **Missões de cenário** sorteadas por jogo: a porta do carniceiro, a tumba do rei, a fonte envenenada, a câmara de ossos,
-  os salões dos cegos, a Fortaleza Rubra, o Poço dos Lamentos, o Relicário Profanado e a Forja do Abismo.
+  os salões dos cegos, a Fortaleza Rubra, o Poço dos Lamentos, o Relicário Profanado, a Forja do Abismo e o Canil Maldito. Missão pronta é resgatada sozinha se você
+  esquecer.
 - **Monstros únicos** com nome e séquito, alguns com habilidade própria (como Grevalda, a Pele de Cardo, que devolve parte
-  de cada golpe), e Campeões que surgem no meio do andar.
-- **Presságios** que mudam as regras de um andar (Horda, Chuva de cinzas, Febre do ouro...) e **11 santuários** com efeito
+  de cada golpe, ou Vorasta, a Carne que Volta, que regenera), e Campeões que surgem no meio do andar.
+- **Presságios** que mudam as regras de um andar (Horda, Chuva de cinzas, Febre do ouro, Noite sem lua...) e **11 santuários** com efeito
   a descobrir. Nos primeiros andares, o **Ossário esquecido** levanta um esqueleto que luta pelo grupo.
 - **Feitiços por livro**, como no Diablo: 12 feitiços (Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra
   Maldita, Espírito de Ossos, Lamento de Ossos...), cada leitura sobe um nível.
 - **Exército de almas**: 17 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, a
   Carpideira cura, o Lacaio explode); níveis, qualidades, fusões e Bestiário.
-- **Itens** com 5 raridades, Lendários, 16 Únicos com efeito próprio, conjuntos, durabilidade, identificação, armadilhas
+- **Itens** com 5 raridades, Lendários, 16 Únicos com efeito próprio, 4 conjuntos (como os Véus do Cortejo Fúnebre, que prolongam os mortos
+  temporários), durabilidade, identificação, armadilhas
   em sarcófagos e urnas, e uma cidade (Ferreiro, Curandeira, Bruxa, Ancião).
 - **Ascensão** com uma árvore de 5 ramos para as vidas seguintes.
 
