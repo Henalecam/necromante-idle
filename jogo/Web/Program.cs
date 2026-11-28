@@ -491,6 +491,7 @@ public static partial class Jogo
                 break;
             case "novas":   // teste: almas do Arauto de Cinzas e do Lacaio Ígneo no fim do Filactério
                 _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.ArautoDeCinzas, Qualidade.Vigorosa)); _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.LacaioIgneo, Qualidade.Vigorosa));
+                for (int k = 0; k < 3; k++) { _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Carpideira, Qualidade.Comum)); _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Magistrado, Qualidade.Comum)); }   // e 3+3 para testar a fusão
                 break;
             case "almas":
                 for (int i = 0; i < (int)Math.Min(30, v); i++)
