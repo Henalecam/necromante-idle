@@ -1847,7 +1847,8 @@ namespace Necro.Testes
                 var s0 = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; int g = 0; while (!s0.Encerrada && g++ < 60000) s0.Tick();
                 Afirmar(Grimorio.Nivel(p, FeiticoId.RelampagoEmCadeia) == 0 && s0.Resultado.Relampagos == 0, "sem livro, ninguém conjura");
                 p.NiveisDeFeitico[(int)FeiticoId.RelampagoEmCadeia] = 1;
-                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 2 }; g = 0; int ev41 = 0, maiorCadeia = 0, cadeia = 0; float danoDeRaio = 0f, primeiro = 0f, segundo = 0f; bool repetiu = false; var vistos = new System.Collections.Generic.HashSet<int>();
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 6) { LimiteDeAndares = 3 }; g = 0;   // semente 5 e 3 andares: com a semente 3 o necromante morria no andar 7 depois que o Sineiro mudou o sorteio de espécies
+                int ev41 = 0, maiorCadeia = 0, cadeia = 0; float danoDeRaio = 0f, primeiro = 0f, segundo = 0f; bool repetiu = false; var vistos = new System.Collections.Generic.HashSet<int>();
                 while (!s.Encerrada && g++ < 60000)
                 {
                     s.Tick();
@@ -1857,7 +1858,7 @@ namespace Necro.Testes
                         if (ev.Tipo == TipoEvento.Dano && ev.TipoDano == TipoDano.Raio && ev.Origem == s.Necromante.Id) { danoDeRaio += ev.Valor; if (!ev.Critico) { if (cadeia == 1 && primeiro == 0f) primeiro = ev.Valor; else if (cadeia == 2 && segundo == 0f && primeiro > 0f) segundo = ev.Valor; } }
                     }
                 }
-                Console.WriteLine("        (relâmpagos: " + s.Resultado.Relampagos + ", saltos: " + s.Resultado.SaltosDeRelampago + ", maior cadeia: " + maiorCadeia + ", dano de raio: " + danoDeRaio.ToString("0") + ")");
+                Console.WriteLine("        (andar final " + s.Resultado.AndarFinal + " " + s.Resultado.Motivo + ", ticks " + g + ", relâmpagos: " + s.Resultado.Relampagos + ", saltos: " + s.Resultado.SaltosDeRelampago + ", maior cadeia: " + maiorCadeia + ", dano de raio: " + danoDeRaio.ToString("0") + ")");
                 Afirmar(s.Encerrada && s.Resultado.Relampagos >= 3 && ev41 == s.Resultado.Relampagos + s.Resultado.SaltosDeRelampago, "com o livro, o necromante lança o raio (" + s.Resultado.Relampagos + ")");
                 Afirmar(s.Resultado.SaltosDeRelampago >= 2 && maiorCadeia >= 2 && maiorCadeia <= c.RelampagoSaltos + 1, "o raio salta, até " + (c.RelampagoSaltos + 1) + " alvos: " + maiorCadeia);
                 Afirmar(danoDeRaio > 0f && !repetiu, "fere com raio e não repete alvo na mesma cadeia");
@@ -2185,6 +2186,22 @@ namespace Necro.Testes
                 var es = s2.Entidades.FindAll(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Esqueleto); es[0].Vida = es[0].VidaMax * 0.3f; float v0 = es[0].Vida;
                 bool viu = false; for (int k = 0; k < 120 && !viu; k++) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 59) viu = true; }
                 Afirmar(viu && s2.Resultado.Lamentos > 0, "o lamento curou um minion");
+            });
+
+            Teste("Sineiro Oco: a badalada atordoa os minions em volta; erguido, atordoa os inimigos (nunca chefes nem o necromante)", () =>
+            {
+                var d = TabelaEspecies.Obter(EspecieId.Sineiro); Afirmar(d != null && d.Familia == Familia.MortoVivo && d.AndarMinimo == 6 && !d.Chefe, "dados da espécie");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var s = new Simulacao(c, ProgressoCom(EspecieId.Zumbi, EspecieId.Zumbi), 3, ModoExpedicao.Avancar, 6);
+                var mz = s.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Zumbi);
+                s.CriarInimigo(EspecieId.Sineiro, mz.Pos + new Vec2(1f, 0f));
+                bool v63 = false, noNecro = false; for (int k = 0; k < 200 && !v63; k++) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 63) { v63 = true; if (ev.Alvo == s.Necromante.Id) noNecro = true; } }
+                Afirmar(v63 && !noNecro, "a badalada inimiga atordoou um minion, não o necromante");
+                var s2 = new Simulacao(c, ProgressoCom(EspecieId.Sineiro, EspecieId.Esqueleto), 3, ModoExpedicao.Avancar, 2);
+                var si = s2.Entidades.Find(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Sineiro);
+                var z = s2.CriarInimigo(EspecieId.Zumbi, si.Pos + new Vec2(1f, 0f));
+                bool v64 = false; for (int k = 0; k < 200 && !v64; k++) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 64) v64 = true; }
+                Afirmar(v64 && s2.Resultado.Badaladas > 0, "o Sineiro erguido atordoou um inimigo");
             });
 
             Teste("Santuário Rachado: entra no sorteio com o código 14 (sem colidir com as portas 11–13)", () =>

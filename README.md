@@ -37,7 +37,7 @@ enquanto você está fora.
   a descobrir. Nos primeiros andares, o **Ossário esquecido** levanta um esqueleto que luta pelo grupo.
 - **Feitiços por livro**, como no Diablo: 12 feitiços (Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra
   Maldita, Espírito de Ossos, Lamento de Ossos...), cada leitura sobe um nível.
-- **Exército de almas**: 17 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, a
+- **Exército de almas**: 18 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, o Sineiro atordoa, a
   Carpideira cura, o Lacaio explode); níveis, qualidades, fusões e Bestiário.
 - **Itens** com 5 raridades, Lendários, 16 Únicos com efeito próprio, 4 conjuntos (como os Véus do Cortejo Fúnebre, que prolongam os mortos
   temporários), durabilidade, identificação, armadilhas

@@ -54,7 +54,7 @@ namespace Necro.Nucleo
 
         private static DadosEspecie[] CriarPadrao()
         {
-            var t = new DadosEspecie[22];
+            var t = new DadosEspecie[23];
             t[(int)EspecieId.Necromante] = new DadosEspecie
             {
                 Id = EspecieId.Necromante, Nome = "Necromante", Familia = Familia.Espirito, Porte = Porte.Medio, Papel = Papel.Conjurador,
@@ -183,6 +183,13 @@ namespace Necro.Nucleo
                 Id = EspecieId.Carpideira, Nome = "Carpideira", Familia = Familia.MortoVivo, Porte = Porte.Medio, Papel = Papel.Suporte,
                 Vida = 60f, Dano = 6f, VelAtaque = 0.7f, Armadura = 5f, Alcance = 1.0f, VelMovimento = 1.8f, TipoDano = TipoDano.Sombra,
                 Resistencias = Res(0f, -0.2f, 0.2f, 0f, 0.3f, 0.3f), AndarMinimo = 5, PesoOnda = 1.5f, CustoOnda = 2f
+            };
+            // Sineiro Oco (original): morto que ainda carrega o sino da torre da abadia; a badalada atordoa quem está perto. Mate-o antes que o grupo pare.
+            t[(int)EspecieId.Sineiro] = new DadosEspecie
+            {
+                Id = EspecieId.Sineiro, Nome = "Sineiro Oco", Familia = Familia.MortoVivo, Porte = Porte.Medio, Papel = Papel.Suporte,
+                Vida = 70f, Dano = 9f, VelAtaque = 0.8f, Armadura = 8f, Alcance = 1.0f, VelMovimento = 1.9f, TipoDano = TipoDano.Fisico,
+                Resistencias = Res(0f, -0.1f, 0.1f, 0f, 0.3f, 0.25f), AndarMinimo = 6, PesoOnda = 1.5f, CustoOnda = 2f
             };
             // Chefe do Ato 3 (Diablo 1): o Arcebispo Lázarus. Acende muralhas de fogo sob o grupo, some quando o cercam e chama Súcubos.
             t[(int)EspecieId.Lazarus] = new DadosEspecie

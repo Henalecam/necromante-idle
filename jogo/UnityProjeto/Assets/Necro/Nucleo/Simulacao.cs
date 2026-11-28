@@ -730,6 +730,34 @@ namespace Necro.Nucleo
             }
         }
 
+        /// <summary>Badalada do Sineiro Oco: atordoa até tantos alvos da facção dada em volta dele (nunca o necromante nem chefes). Devolve quantos.</summary>
+        private int Badalada(Entidade s, Faccao alvos, int codigo)
+        {
+            int n = 0; float r2 = Cfg.SineiroRaio * Cfg.SineiroRaio;
+            for (int i = 0; i < Entidades.Count && n < Cfg.SineiroAlvos; i++)
+            {
+                var a = Entidades[i];
+                if (!a.Viva || a.Faccao != alvos || a == Necromante || a.Chefe || a.Oculto || Vec2.Dist2(a.Pos, s.Pos) > r2) continue;
+                a.TempoAcao = Math.Max(a.TempoAcao, Cfg.SineiroAtordoa); a.PreparandoGolpe = 0f; a.Animacao = EstadoAnimacao.Parado; n++;
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = codigo, Alvo = a.Id, Origem = s.Id, Valor = Cfg.SineiroAtordoa, Pos = a.Pos });
+            }
+            if (alvos == Faccao.Inimigo) Resultado.Badaladas += n;
+            return n;
+        }
+
+        /// <summary>Sineiro Oco erguido: a cada tantos segundos, a badalada atordoa os inimigos em volta.</summary>
+        private void Badaladas()
+        {
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var si = Entidades[i];
+                if (!si.Viva || si.Faccao != Faccao.Minion || si.Especie != EspecieId.Sineiro) continue;
+                si.TempoHabilidade -= DT * 5f;
+                if (si.TempoHabilidade > 0f) continue;
+                si.TempoHabilidade = Badalada(si, Faccao.Inimigo, 64) > 0 ? Cfg.SineiroIntervalo : 1f;   // sem ninguém perto, tenta de novo logo
+            }
+        }
+
         private void SermoesDeOssos()
         {
             for (int i = 0; i < Entidades.Count; i++)
@@ -1286,7 +1314,7 @@ namespace Necro.Nucleo
             if (SacrificioTempo > 0f) SacrificioTempo -= DT;
 
             if (Muralhas.Count > 0) AtualizarMuralhas();
-            if (Cfg.HabilidadesDeEspecie && TickAtual % 5 == 0) { SermoesDeOssos(); Lamentos(); }
+            if (Cfg.HabilidadesDeEspecie && TickAtual % 5 == 0) { SermoesDeOssos(); Lamentos(); Badaladas(); }
             for (int i = 0; i < Entidades.Count; i++) { var vo = Entidades[i]; if (vo.Unico && vo.Viva && (object)vo.NomeProprio == (object)NomeVorasta && vo.Vida < vo.VidaMax) vo.Vida = Math.Min(vo.VidaMax, vo.Vida + vo.VidaMax * Cfg.VorastaRegen * DT); }   // Vorasta: a carne volta (2% da vida por segundo)
 
             // Poças de sangue: curam o chefe dono enquanto ele estiver dentro do raio.

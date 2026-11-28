@@ -143,6 +143,11 @@ namespace Necro.Nucleo
                 }
             }
             if (e.Oculto && TickAtual * DT >= e.OcultoAte) Revelar(e);
+            if (e.Especie == EspecieId.Sineiro && Cfg.HabilidadesDeEspecie && (e.TempoHabilidade -= DT) <= 0f)
+            {
+                e.TempoHabilidade = Cfg.SineiroIntervalo;
+                if (Badalada(e, Faccao.Minion, 63) > 0) { e.Animacao = EstadoAnimacao.Conjurando; e.TempoAcao = 0.6f; return true; }
+            }
             if (e.Especie == EspecieId.Carpideira && Cfg.HabilidadesDeEspecie && (e.TempoHabilidade -= DT) <= 0f)
             {
                 e.TempoHabilidade = Cfg.CarpideiraIntervalo; int curados = 0; float r2 = Cfg.CarpideiraRaio * Cfg.CarpideiraRaio;
