@@ -234,7 +234,7 @@ public static partial class Jogo
         for (int e = 1; e < TabelaEspecies.Total; e++)
         {
             var id = (EspecieId)e; if (e > 1) sb.Append(',');
-            sb.Append("{\"nome\":").Append(S(TabelaEspecies.Obter(id).Nome)).Append(",\"mortes\":").Append(Bestiario.Mortes(_p, id) + (e < _sim.Resultado.MortesPorEspecie.Length ? _sim.Resultado.MortesPorEspecie[e] : 0))
+            sb.Append("{\"nome\":").Append(S(TabelaEspecies.Obter(id).Nome)).Append(",\"chave\":").Append(S(id.ToString().ToLowerInvariant())).Append(",\"mortes\":").Append(Bestiario.Mortes(_p, id) + (e < _sim.Resultado.MortesPorEspecie.Length ? _sim.Resultado.MortesPorEspecie[e] : 0))
               .Append(",\"dominio\":").Append(Bestiario.Dominio(_p, id, _cfg)).Append(",\"max\":").Append(_cfg.MarcosDoBestiario.Length)
               .Append(",\"prox\":").Append(Bestiario.ProximoMarco(_p, id, _cfg)).Append(",\"bonus\":").Append((int)Math.Round(100 * _cfg.BonusPorDominio * Bestiario.Dominio(_p, id, _cfg)))
               .Append(",\"porNivel\":").Append((int)Math.Round(100 * _cfg.BonusPorDominio)).Append(",\"conhecida\":").Append(B(_p.EspeciesConhecidas.Contains(id)));
@@ -496,6 +496,9 @@ public static partial class Jogo
                     it.NaoIdentificado = _cfg.ItensNaoIdentificados;   // como cairiam na masmorra
                     if (Equipamento.Cabe(_p, it, _cfg)) _p.Inventario.Add(it);
                 }
+                break;
+            case "conhecer":   // teste: todas as espécies não-chefe aparecem no Bestiário
+                for (int e = 1; e < TabelaEspecies.Total; e++) { var d = TabelaEspecies.Obter((EspecieId)e); if (d != null && !d.Chefe && d.AndarMinimo < 99 && !_p.EspeciesConhecidas.Contains((EspecieId)e)) _p.EspeciesConhecidas.Add((EspecieId)e); }
                 break;
             case "sineiro":   // teste: uma alma Vigorosa de Sineiro Oco no começo do Filactério
                 _p.Filacterio.Insert(0, GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Sineiro, Qualidade.Vigorosa));

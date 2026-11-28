@@ -1866,10 +1866,10 @@ const donsHtml = (dn) => dn && dn.some((x) => x) ? '<small>Dons: ' + ['Vida', 'D
 // miniatura do sprite (quadro parado, de frente para a câmera) para as listas
 // espécies com arte provisória (sprite emprestado + tinta) também ganham a tinta no retrato das cartas, senão o Sineiro parece um Esqueleto
 function filtroTinta(sprite) {
-  const v = visual(String(sprite || '')); if (!v || !v[2]) return '';
+  const n = String(sprite || '').toLowerCase(), v = !monstros[n] ? PROVISORIO[n] : null; if (!v || !v[2]) return '';   // só arte emprestada; quem tem arte própria (Aparição) fica como é
   const [r, g, b] = v[2].split(',').map(Number), mx = Math.max(r, g, b) / 255, mn = Math.min(r, g, b) / 255, d = mx - mn;
   let h = 0; if (d > 0.04) { const R = r / 255, G = g / 255, B = b / 255; h = mx === R ? 60 * (((G - B) / d) % 6) : mx === G ? 60 * ((B - R) / d + 2) : 60 * ((R - G) / d + 4); }
-  const forca = Math.min(1, (v[3] || 0.4) * 1.6), luz = Math.max(0.45, Math.min(1.15, (0.3 * r + 0.59 * g + 0.11 * b) / 150));
+  const forca = Math.min(1, (v[3] || 0.4) * 1.6), luz = Math.max(0.8, Math.min(1.15, (0.3 * r + 0.59 * g + 0.11 * b) / 150));   // no retrato a tinta escura (Cavaleiro, Súcubo) não pode apagar a figura
   return d > 0.04 ? `filter:sepia(${forca.toFixed(2)}) saturate(${(1 + forca).toFixed(2)}) hue-rotate(${Math.round(h - 38)}deg) brightness(${luz.toFixed(2)});` : `filter:grayscale(${forca.toFixed(2)}) brightness(${luz.toFixed(2)});`;
 }
 function thumb(sprite) {
@@ -2119,11 +2119,11 @@ function atualizarPainel(forcar) {
     d.bestiario.forEach((b) => {
       if (!b.mortes && !b.conhecida) return;   // as não encontradas viram uma linha só no fim
       const pct = b.prox ? Math.min(100, Math.round(100 * b.mortes / b.prox)) : 100;
-      const kb = b.nome.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase(), hb = HABILIDADE[kb];
+      const kb = b.chave || b.nome.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase(), hb = HABILIDADE[kb];   // chave = nome do enum (o nome de tela "Sineiro Oco" não batia com "sineiro")
       const TD = ['físico', 'fogo', 'gelo', 'raio', 'veneno', 'sombra'], rs = (b.res && b.res[d.dif]) || [], imu = [], rst = [], frc = [];
       rs.forEach((v, t) => { if (v >= 100) imu.push(TD[t]); else if (v > 0) rst.push(TD[t] + ' ' + v + '%'); else if (v < 0) frc.push(TD[t] + ' +' + (-v) + '%'); });
       const linhaRes = (imu.length ? `<b style="color:#ff8a6a;font-weight:normal">Imune a ${imu.join(', ')}</b> · ` : '') + (rst.length ? 'resiste a ' + rst.join(', ') : '') + (frc.length ? (rst.length ? ' · ' : '') + `<span style="color:#8fd89f">fraco a ${frc.join(', ')}</span>` : '');
-      h += `<div class="linha">${monstros[kb] ? thumb(kb) : ''}<div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
+      h += `<div class="linha">${monstros[kb] || PROVISORIO[kb] ? thumb(kb) : ''}<div class="corpo">${esc(b.nome)} <span class="nota">Domínio ${b.dominio}/${b.max}${b.bonus ? ` · +${b.bonus}% vida e dano` : ''}</span>` +
         `<small>${b.prox ? `${fmt(b.mortes)} de ${fmt(b.prox)} mortes para o próximo nível` : `${fmt(b.mortes)} mortes · Domínio completo`}</small>${linhaRes ? `<small>Como inimigo (${DIFICULDADES[d.dif][0]}): ${linhaRes}</small>` : ''}${hb ? `<small>Erguido como minion — <b style="color:#7fd6a0;font-weight:normal">${hb[0]}</b>: ${hb[1]}</small>` : ''}<div class="xp"><div style="width:${pct}%;background:#a01420"></div></div></div></div>`;
     });
     { const nf = d.bestiario.filter((b) => !b.mortes && !b.conhecida).length; if (nf) h += `<p class="nota" style="margin-top:6px">${d.bestiario.length - nf} de ${d.bestiario.length} espécies encontradas · ${nf} ainda escondidas na masmorra.</p>`; }
