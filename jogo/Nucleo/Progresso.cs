@@ -138,6 +138,7 @@ namespace Necro.Nucleo
         public int MissaoReiEsqueleto;                      // idem, para o Rei Esqueleto (andar 3)
         public int MissaoForja;                              // Forja do Abismo: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoRelicario;                          // Relicário Profanado: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
+        public int MissaoCanil;                              // Canil Maldito: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoPoco;                               // Poço dos Lamentos: 0 = não sorteada, 1 = existe, 2 = não existe, 3 = vencida
         public int MissaoFortaleza;                          // Fortaleza Rubra: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
         public int MissaoCegos;                              // Salões dos Cegos: 0 = não sorteada, 1 = existe neste save, 2 = não existe, 3 = vencida
@@ -201,6 +202,7 @@ namespace Necro.Nucleo
         public int ForjaSorteio; public bool ForjaVencida;
         public int RelicarioSorteio; public bool RelicarioVencido;
         public int PocoSorteio; public bool PocoVencido;
+        public int CanilSorteio; public bool CanilVencido;
         public int FortalezaSorteio; public bool FortalezaVencida;
         public int CegosSorteio; public bool CegosVencidos; public int OcultosRevelados;
         public int ReiEsqueletoSorteio; public bool ReiEsqueletoMorto;
@@ -426,6 +428,8 @@ namespace Necro.Nucleo
             if (r.FortalezaVencida) p.MissaoFortaleza = 3;
             if (p.MissaoPoco == 0 && r.PocoSorteio != 0) p.MissaoPoco = r.PocoSorteio;
             if (r.PocoVencido) p.MissaoPoco = 3;
+            if (p.MissaoCanil == 0 && r.CanilSorteio != 0) p.MissaoCanil = r.CanilSorteio;
+            if (r.CanilVencido) p.MissaoCanil = 3;
             if (p.MissaoRelicario == 0 && r.RelicarioSorteio != 0) p.MissaoRelicario = r.RelicarioSorteio;
             if (r.RelicarioVencido) p.MissaoRelicario = 3;
             if (p.MissaoForja == 0 && r.ForjaSorteio != 0) p.MissaoForja = r.ForjaSorteio;

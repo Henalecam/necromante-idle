@@ -178,6 +178,9 @@ namespace Necro.Nucleo
             _relicario = progresso.MissaoRelicario;
             if (_relicario == 0 && Cfg.MissoesDeCenario) { _relicario = (semente * 668265263UL >> 17) % 3UL != 0UL ? 1 : 2; Resultado.RelicarioSorteio = _relicario; }
             if (Cfg.ForcarRelicario && _relicario != 3) _relicario = 1;
+            _canil = progresso.MissaoCanil;
+            if (_canil == 0 && Cfg.MissoesDeCenario) { _canil = (semente * 2654435761UL >> 13) % 3UL != 0UL ? 1 : 2; Resultado.CanilSorteio = _canil; }
+            if (Cfg.ForcarCanil && _canil != 3) _canil = 1;
             _poco = progresso.MissaoPoco;
             if (_poco == 0 && Cfg.MissoesDeCenario) { _poco = (semente * 3266489917UL >> 15) % 3UL != 0UL ? 1 : 2; Resultado.PocoSorteio = _poco; }
             if (Cfg.ForcarPoco && _poco != 3) _poco = 1;

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Necro.Nucleo
 {
     /// <summary>Tipo de cada sala de um andar. As de combate correspondem às ondas; as outras ficam entre elas.</summary>
-    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26, RelicarioProfanado = 27, ForjaDoAbismo = 28, OssarioEsquecido = 29 }
+    public enum TipoSala { Combate = 0, Elite = 1, Chefe = 2, Bau = 3, Santuario = 4, AlmasPresas = 5, Emboscada = 6, Fonte = 7, Secreta = 8, Mercador = 9, AltarDeSangue = 10, Vazia = 11, Armadilha = 12, Cofre = 13, ForjaDeOssos = 14, Ninho = 15, Biblioteca = 16, FossoDeMonstros = 17, SalaDeTortura = 18, Arsenal = 19, Acougue = 20, TumbaDoRei = 21, FonteEnvenenada = 22, CamaraDeOssos = 23, SaloesDosCegos = 24, FortalezaRubra = 25, PocoDosLamentos = 26, RelicarioProfanado = 27, ForjaDoAbismo = 28, OssarioEsquecido = 29, CanilMaldito = 30 }
 
     /// <summary>Posição de uma sala no mapa do andar (grade) e de qual sala já colocada se chega a ela.</summary>
     [Serializable]
@@ -59,7 +59,7 @@ namespace Necro.Nucleo
         /// <summary>O jogador escolhe uma das três bênçãos oferecidas (0 a 2). Escolher conta como pôr a mão: a bênção vem mais forte.</summary>
         public void ComandoEscolherBencao(int opcao) { if (BencaosOferecidas != null && opcao >= 0 && opcao < 2 && _escolhaDeBencao < 0) { _escolhaDeBencao = opcao; Resultado.InteracoesPorToque++; } }
         private float _tempoAmbiente;
-        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos, _fortaleza, _poco, _relicario, _forja; private bool _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos, _lutaDaFortaleza, _lutaDoPoco, _lutaDoRelicario, _lutaDaForja; private float _tempoDoRei;
+        private int _acougueiro, _recordeInicial, _reiEsqueleto, _fonte, _camara, _cegos, _fortaleza, _poco, _relicario, _forja, _canil; private bool _lutaDoCanil, _lutaDoAcougueiro, _lutaDoRei, _lutaDaFonte, _lutaDaCamara, _lutaDosCegos, _lutaDaFortaleza, _lutaDoPoco, _lutaDoRelicario, _lutaDaForja; private float _tempoDoRei;
         private int _ticksDeExploracao;
         private float _viagem;    // caminhada até a sala atual (0 na primeira sala do andar)
         /// <summary>Verdadeiro enquanto o grupo ainda caminha até o objeto da sala (o necromante só vai até ele depois).</summary>
@@ -111,6 +111,7 @@ namespace Necro.Nucleo
                 if (w == 1 && TotalDeOndas > 1 && (_camara == 1 || (Cfg.ForcarCamara && _camara != 3)) && Andar == Cfg.CamaraAndar) Salas.Add(TipoSala.CamaraDeOssos);   // missão da Câmara de Ossos
                 if (w == 1 && TotalDeOndas > 1 && (_cegos == 1 || (Cfg.ForcarCegos && _cegos != 3)) && Andar == Cfg.CegosAndar) Salas.Add(TipoSala.SaloesDosCegos);   // missão dos Salões dos Cegos
                 if (w == 1 && TotalDeOndas > 1 && (_fortaleza == 1 || (Cfg.ForcarFortaleza && _fortaleza != 3)) && Andar == Cfg.FortalezaAndar) Salas.Add(TipoSala.FortalezaRubra);   // missão da Fortaleza Rubra
+                if (w == 1 && TotalDeOndas > 1 && (_canil == 1 || (Cfg.ForcarCanil && _canil != 3)) && Andar == Cfg.CanilAndar) Salas.Add(TipoSala.CanilMaldito);   // missão do Canil Maldito
                 if (w == 1 && TotalDeOndas > 1 && (_poco == 1 || (Cfg.ForcarPoco && _poco != 3)) && Andar == Cfg.PocoAndar) Salas.Add(TipoSala.PocoDosLamentos);   // missão do Poço dos Lamentos
                 if (w == 1 && TotalDeOndas > 1 && (_relicario == 1 || (Cfg.ForcarRelicario && _relicario != 3)) && Andar == Cfg.RelicarioAndar) Salas.Add(TipoSala.RelicarioProfanado);   // missão do Relicário Profanado
                 if (w == 1 && TotalDeOndas > 1 && (_forja == 1 || (Cfg.ForcarForja && _forja != 3)) && Andar == Cfg.ForjaAndar) Salas.Add(TipoSala.ForjaDoAbismo);   // missão da Forja do Abismo
@@ -367,6 +368,14 @@ namespace Necro.Nucleo
                     EntrarNaProximaSala(Cfg.PausaEntreOndas);
                     return true;
                 }
+                if (_lutaDoCanil)
+                {
+                    _lutaDoCanil = false; _canil = 3; Resultado.CanilVencido = true; Resultado.Ouro += Cfg.CanilOuro;
+                    SoltarItemEm(PosDoObjeto, RaridadeItem.Raro);   // a coleira da matilheira: um Raro garantido
+                    Emitir(new EventoSim { Tipo = TipoEvento.SalaResolvida, Extra = (int)TipoSala.CanilMaldito, Valor = ossos, Pos = PosDoObjeto, Alvo = -1, Origem = -1 });
+                    EntrarNaProximaSala(Cfg.PausaEntreOndas);
+                    return true;
+                }
                 if (_lutaDoPoco)
                 {
                     _lutaDoPoco = false; _poco = 3; Resultado.PocoVencido = true; Resultado.Ouro += Cfg.PocoOuro;
@@ -472,6 +481,7 @@ namespace Necro.Nucleo
             if (t == TipoSala.SaloesDosCegos) { IniciarSaloesDosCegos(); return; }
             if (t == TipoSala.FortalezaRubra) { IniciarFortalezaRubra(); return; }
             if (t == TipoSala.PocoDosLamentos) { IniciarPocoDosLamentos(); return; }
+            if (t == TipoSala.CanilMaldito) { IniciarCanilMaldito(); return; }
             if (t == TipoSala.RelicarioProfanado) { IniciarRelicarioProfanado(); return; }
             if (t == TipoSala.ForjaDoAbismo) { IniciarForjaDoAbismo(); return; }
             Fase = FaseExpedicao.Explorando;
@@ -532,6 +542,17 @@ namespace Necro.Nucleo
             for (int k = 0; k < Cfg.RelicarioDevotos; k++)
                 _filaDeSpawn.Add(new SpawnPendente { Especie = k % 3 == 2 ? EspecieId.Magistrado : EspecieId.CavaleiroNegro, Portal = (k + 1) % 3, TickDeSpawn = TickAtual + 3 + k * 3 });
             Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 55, Alvo = -1, Origem = -1, Valor = Cfg.RelicarioDevotos, Pos = Necromante.Pos });
+            Fase = FaseExpedicao.EmOnda;
+        }
+
+        /// <summary>O Canil Maldito (missão original): duas levas de Cães de Cripta soltos das jaulas, a segunda guiada pela Matilheira (elite); vencido, ouro e um Raro.</summary>
+        private void IniciarCanilMaldito()
+        {
+            _emEmboscada = true; _mimico = false; _lutaDoCanil = true;
+            for (int leva = 0; leva < Cfg.CanilLevas; leva++)
+                for (int k = 0; k < Cfg.CanilPorLeva; k++)
+                    _filaDeSpawn.Add(new SpawnPendente { Especie = EspecieId.CaoDeCripta, Elite = leva == Cfg.CanilLevas - 1 && k == 0, Portal = k % 3, TickDeSpawn = TickAtual + 1 + leva * Cfg.CanilIntervaloTicks + k * 2 });
+            Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 61, Alvo = -1, Origem = -1, Valor = Cfg.CanilLevas, Pos = Necromante.Pos });
             Fase = FaseExpedicao.EmOnda;
         }
 

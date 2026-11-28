@@ -2109,6 +2109,18 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("missão do Canil Maldito: andar 11, duas levas de Cães de Cripta; vencida, dá ouro e um Raro e não volta", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarCanil = true, PortasFechadas = false, EmboscadaDeCorredor = false, SalasLigadas = false };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto, EspecieId.Esqueleto); p.NivelNecromante = 45; p.PoderNecromantico = 600f; foreach (var m in p.Minions) m.Nivel = 18;
+                var s = new Simulacao(c, p, 7, ModoExpedicao.Avancar, c.CanilAndar) { LimiteDeAndares = 1 }; int g = 0; bool ev61 = false;
+                while (!s.Encerrada && g++ < 90000) { s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 61) ev61 = true; }
+                Afirmar(s.Salas.Contains(TipoSala.CanilMaldito) && ev61, "a sala existe e os cães saem");
+                Afirmar(s.Resultado.CanilVencido && s.Resultado.Itens.Exists(it => it.Raridade >= RaridadeItem.Raro), "vencida, larga um Raro");
+                Progressao.AplicarResultado(p, s.Resultado, c);
+                Afirmar(p.MissaoCanil == 3 && !new Simulacao(c, p, 9, ModoExpedicao.Avancar, c.CanilAndar) { LimiteDeAndares = 1 }.Salas.Contains(TipoSala.CanilMaldito), "cumprida e não volta");
+            });
+
             Teste("afixo Duração dos mortos temporários: só em Grimório e Relicário; alonga Golem/Ossário/Coroa/Mãe Carniça", () =>
             {
                 var d = TabelaItens.Afixo(AfixoItem.DuracaoDosTemporarios); Afirmar(d != null, "existe na tabela");

@@ -458,6 +458,7 @@ namespace Necro.Nucleo
         public long ReiOuro = 250;
         public bool ForcarForja; public int ForjaAndar = 35, ForjaLevas = 3, ForjaPorLeva = 3, ForjaIntervaloTicks = 80; public float ForjaMultVida = 7f, ForjaMultDano = 1.4f, MaosDeEscoria = 0.25f, BrasaCativa = 0.30f, CortejoRitmo = 0.25f; public long ForjaOuro = 700;   // missão da Forja do Abismo
         public bool ForcarRelicario; public int RelicarioAndar = 25, RelicarioDevotos = 5; public float RelicarioMultVida = 8f, CinzaDoSermao = 0.10f; public long RelicarioOuro = 500;   // missão do Relicário Profanado
+        public bool ForcarCanil; public int CanilAndar = 11, CanilLevas = 2, CanilPorLeva = 6, CanilIntervaloTicks = 60; public long CanilOuro = 300;   // missão do Canil Maldito
         public bool ForcarPoco; public int PocoAndar = 16, PocoLevas = 3, PocoPorLeva = 4, PocoIntervaloTicks = 70; public long PocoOuro = 350;   // missão do Poço dos Lamentos
         public bool ForcarFortaleza;                     // só para testes e capturas
         public int FortalezaAndar = 13, FortalezaSequito = 4; public float FortalezaMultVida = 7f, FortalezaMultDano = 1.5f, EstandarteDanoContraFortes = 0.3f; public long FortalezaOuro = 400;   // missão da Fortaleza Rubra
