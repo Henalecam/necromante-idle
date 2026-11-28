@@ -1866,10 +1866,11 @@ const donsHtml = (dn) => dn && dn.some((x) => x) ? '<small>Dons: ' + ['Vida', 'D
 // miniatura do sprite (quadro parado, de frente para a câmera) para as listas
 // espécies com arte provisória (sprite emprestado + tinta) também ganham a tinta no retrato das cartas, senão o Sineiro parece um Esqueleto
 function filtroTinta(sprite) {
-  const n = String(sprite || '').toLowerCase(), v = !monstros[n] ? PROVISORIO[n] : null; if (!v || !v[2]) return '';   // só arte emprestada; quem tem arte própria (Aparição) fica como é
+  const n = String(sprite || '').toLowerCase(), fixa = monstros[n] ? TINTA_FIXA[n] : null, v = fixa || (!monstros[n] ? PROVISORIO[n] : null); if (!v || !v[2]) return '';   // arte emprestada, ou arte própria quase branca que a arena tinge (Aparição)
   const [r, g, b] = v[2].split(',').map(Number), mx = Math.max(r, g, b) / 255, mn = Math.min(r, g, b) / 255, d = mx - mn;
   let h = 0; if (d > 0.04) { const R = r / 255, G = g / 255, B = b / 255; h = mx === R ? 60 * (((G - B) / d) % 6) : mx === G ? 60 * ((B - R) / d + 2) : 60 * ((R - G) / d + 4); }
   const forca = Math.min(1, (v[3] || 0.4) * 1.6), luz = Math.max(0.8, Math.min(1.15, (0.3 * r + 0.59 * g + 0.11 * b) / 150));   // no retrato a tinta escura (Cavaleiro, Súcubo) não pode apagar a figura
+  if (fixa) return `filter:brightness(0.72) sepia(1) saturate(2.6) hue-rotate(${Math.round(h - 38)}deg) opacity(0.9);`;   // a Aparição é desenhada branca: escurece antes de tingir, senão o filtro não pega
   return d > 0.04 ? `filter:sepia(${forca.toFixed(2)}) saturate(${(1 + forca).toFixed(2)}) hue-rotate(${Math.round(h - 38)}deg) brightness(${luz.toFixed(2)});` : `filter:grayscale(${forca.toFixed(2)}) brightness(${luz.toFixed(2)});`;
 }
 function thumb(sprite) {
