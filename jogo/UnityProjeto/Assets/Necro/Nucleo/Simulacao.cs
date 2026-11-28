@@ -684,7 +684,7 @@ namespace Necro.Nucleo
             {
                 var ca = Entidades[i];
                 if (!ca.Viva || ca.Faccao != Faccao.Minion || ca.Especie != EspecieId.Carpideira) continue;
-                ca.TempoHabilidade -= DT * 5f;
+                ca.TempoHabilidade -= DT * 5f * (Bonus.Unico[16] ? 1f + Cfg.CortejoRitmo : 1f);   // Sandálias do Cortejo
                 if (ca.TempoHabilidade > 0f) continue;
                 ca.TempoHabilidade = Cfg.LamentoIntervalo;
                 for (int n = 0; n < Cfg.LamentoAlvos; n++)
@@ -704,7 +704,7 @@ namespace Necro.Nucleo
             {
                 var ar = Entidades[i];
                 if (!ar.Viva || ar.Faccao != Faccao.Minion || ar.Especie != EspecieId.ArautoDeCinzas) continue;
-                ar.TempoHabilidade -= DT * 5f;
+                ar.TempoHabilidade -= DT * 5f * (Bonus.Unico[16] ? 1f + Cfg.CortejoRitmo : 1f);   // Sandálias do Cortejo
                 if (ar.TempoHabilidade > 0f) continue;
                 ar.TempoHabilidade = Cfg.SermaoIntervalo;
                 for (int n = 0; n < Cfg.SermaoAlvos; n++)

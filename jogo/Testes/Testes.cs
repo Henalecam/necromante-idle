@@ -2109,6 +2109,21 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Sandálias do Cortejo: Botas Únicas do andar 12; com elas, Arautos e Carpideiras erguidos agem 25% mais vezes", () =>
+            {
+                var d = Unicos.Obter(16); Afirmar(d != null && d.Tipo == TipoItem.Botas && d.AndarMinimo == 12 && !d.SoDeMissao, "dados do Único");
+                int Lamentos(bool sandalias)
+                {
+                    var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                    var p = ProgressoCom(EspecieId.Carpideira, EspecieId.Esqueleto, EspecieId.Esqueleto);
+                    var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2); s.Bonus.Unico[16] = sandalias; int n = 0;
+                    for (int k = 0; k < 1200; k++) { foreach (var m in s.Entidades) if (m.Viva && m.Faccao == Faccao.Minion && m.Especie == EspecieId.Esqueleto) m.Vida = Math.Min(m.Vida, m.VidaMax * 0.5f); s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 59) n++; }
+                    return n;
+                }
+                int sem = Lamentos(false), com = Lamentos(true);
+                Afirmar(com > sem, "mais lamentos com as sandálias (" + sem + " → " + com + ")");
+            });
+
             Teste("Carpideira: cura os inimigos feridos em volta; erguida, cura os minions mais feridos", () =>
             {
                 var d = TabelaEspecies.Obter(EspecieId.Carpideira); Afirmar(d != null && d.Familia == Familia.MortoVivo && d.AndarMinimo == 5, "dados da espécie");
