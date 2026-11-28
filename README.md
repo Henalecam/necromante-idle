@@ -9,6 +9,8 @@ enquanto você está fora.
 
 <p><img src="imagens/febre_do_ouro_390.png" width="240" alt="Celular: presságio Febre do ouro"> <img src="imagens/brasamor_390.png" width="240" alt="Celular: Brasamor na Forja do Abismo"></p>
 
+![Objetos de sala: Arsenal, Fortaleza Rubra e Forja do Abismo](imagens/fortaleza_forja_depois.png)
+
 ## Como jogar
 
 1. Abra o jogo e toque em **Começar**: o exército desce sozinho.
@@ -31,11 +33,12 @@ enquanto você está fora.
 - **Monstros únicos** com nome e séquito, alguns com habilidade própria (como Grevalda, a Pele de Cardo, que devolve parte
   de cada golpe), e Campeões que surgem no meio do andar.
 - **Presságios** que mudam as regras de um andar (Horda, Chuva de cinzas, Febre do ouro...) e **11 santuários** com efeito
-  a descobrir.
-- **Feitiços por livro**, como no Diablo: Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra Maldita, Espírito de Ossos e
-  outros, cada leitura sobe um nível.
-- **Exército de almas**: cada espécie erguida tem uma habilidade própria; níveis, qualidades, fusões e Bestiário.
-- **Itens** com 5 raridades, Lendários, 15 Únicos com efeito próprio, conjuntos, durabilidade, identificação, armadilhas
+  a descobrir. Nos primeiros andares, o **Ossário esquecido** levanta um esqueleto que luta pelo grupo.
+- **Feitiços por livro**, como no Diablo: 12 feitiços (Golem, Muralha de Fogo, Relâmpago em Cadeia, Pedra
+  Maldita, Espírito de Ossos, Lamento de Ossos...), cada leitura sobe um nível.
+- **Exército de almas**: 17 espécies erguíveis, cada uma com uma habilidade própria (o Arauto ergue escudos, a
+  Carpideira cura, o Lacaio explode); níveis, qualidades, fusões e Bestiário.
+- **Itens** com 5 raridades, Lendários, 16 Únicos com efeito próprio, conjuntos, durabilidade, identificação, armadilhas
   em sarcófagos e urnas, e uma cidade (Ferreiro, Curandeira, Bruxa, Ancião).
 - **Ascensão** com uma árvore de 5 ramos para as vidas seguintes.
 
@@ -54,7 +57,7 @@ ambas sob a SIL Open Font License (licenças em `docs/fontes/`).
 | Pasta | Conteúdo |
 |---|---|
 | `jogo/Nucleo` | Regras do jogo em C# puro, determinístico, 10 ticks por segundo. |
-| `jogo/Testes` | 169 testes e o portão de balanceamento: um robô joga campanhas inteiras e confere 9 metas de tempo. |
+| `jogo/Testes` | 173 testes e o portão de balanceamento: um robô joga campanhas inteiras e confere 9 metas de tempo. |
 | `jogo/Web` | Versão de navegador (WebAssembly + canvas). `./montar.sh` gera o site em `Web/dist`. |
 | `jogo/UnityProjeto` | Projeto Unity 6.3 com o mesmo núcleo (camada visual em andamento). |
 | `pipeline` | Fábrica de monstros em Blender (Python): modelos procedurais viram sprites isométricos em 8 direções. |
