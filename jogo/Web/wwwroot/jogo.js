@@ -1065,7 +1065,7 @@ function desenharObjeto(dt) {
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
   });
-  if (window.__amostra) { const m = ctx.getTransform(); ctx.setTransform(1, 0, 0, 1, 0, 0); window.__amostra.forEach((tp, k) => pintarObjeto({ tipo: tp, t: tempoSim, aberto: k % 2, tocado: false }, 90 + k * 110, 140)); ctx.setTransform(m); }
+  if (window.__amostra) { const m = ctx.getTransform(); ctx.setTransform(1, 0, 0, 1, 0, 0); window.__amostra.forEach((tp, k) => { const [t0, ab] = Array.isArray(tp) ? tp : [tp, k % 2]; pintarObjeto({ tipo: t0, t: tempoSim, aberto: ab, tocado: false }, 70 + (k % 6) * 115, 110 + Math.floor(k / 6) * 120); }); ctx.setTransform(m); }
   if (!objeto) return;
   const o = objeto; o.t += dt; if (o.aberto) { o.aberto += dt; if (o.aberto > 1.6 && masm.fase !== 'Explorando') { objeto = null; return; } }
   { const [px, py] = naTela(o.x, o.y); pintarObjeto(o, px, py); }
@@ -1191,7 +1191,17 @@ function pintarObjeto(o, px, py) {
     ctx.globalCompositeOperation = 'lighter'; const gf = ctx.createRadialGradient(0, -26, 0, 0, -26, 46); gf.addColorStop(0, `rgba(255,150,60,${0.45 + 0.25 * pulso})`); gf.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = gf; ctx.beginPath(); ctx.arc(0, -26, 46, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = `rgba(255,${150 + 60 * pulso | 0},70,0.95)`; ctx.fillRect(-18, -27, 36, 3);
     if (!o.futuro && Math.random() < 0.4) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.7, rnd(-0.6, 0.6), 0, rnd(4, 8), '#ffb050', rnd(0.3, 0.7)]);
-  } else if (o.tipo === 7 || o.tipo === 26 || o.tipo === 27) {    // fonte
+  } else if (o.tipo === 26) {    // Poço dos Lamentos: poço redondo de pedra, água negra e almas pálidas subindo
+    ctx.fillStyle = '#4a4650'; ctx.beginPath(); ctx.ellipse(0, -2, 30, 12, 0, 0, 7); ctx.fill(); ctx.fillRect(-30, -22, 60, 20); ctx.fillStyle = '#5c5864'; ctx.beginPath(); ctx.ellipse(0, -22, 30, 12, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#2c2a32'; ctx.lineWidth = 1.5; for (const [x1, y1] of [[-30, -12], [-15, -4], [0, -1], [15, -4], [30, -12]]) { ctx.beginPath(); ctx.moveTo(x1, y1 - 10); ctx.lineTo(x1, y1 + 8); ctx.stroke(); }
+    ctx.fillStyle = '#0a0c14'; ctx.beginPath(); ctx.ellipse(0, -22, 22, 8, 0, 0, 7); ctx.fill();
+    if (!ab) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let k = 0; k < 3; k++) { const f = (o.t * 0.5 + k / 3) % 1, x = Math.sin(o.t * 2 + k * 2) * 8, y = -24 - f * 46; ctx.fillStyle = `rgba(150,190,255,${0.5 * (1 - f)})`; ctx.beginPath(); ctx.ellipse(x, y, 5, 8, 0, 0, 7); ctx.fill(); } ctx.restore(); }
+  } else if (o.tipo === 27) {    // Relicário Profanado: bloco de altar com um relicário dourado em cima, entre duas velas; cinzas caem
+    ctx.fillStyle = '#3c3a40'; ctx.fillRect(-28, -22, 56, 24); ctx.fillStyle = '#56535c'; ctx.beginPath(); ctx.moveTo(-28, -22); ctx.lineTo(0, -30); ctx.lineTo(28, -22); ctx.lineTo(0, -14); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = ab ? '#6a5a3a' : '#c9a24a'; ctx.fillRect(-11, -42, 22, 16); ctx.beginPath(); ctx.moveTo(-13, -42); ctx.lineTo(0, -52); ctx.lineTo(13, -42); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#5a4520'; ctx.lineWidth = 1.5; ctx.strokeRect(-11, -42, 22, 16);
+    for (const x of [-22, 22]) { ctx.fillStyle = '#e6dfcc'; ctx.fillRect(x - 2, -36, 4, 12); if (!ab) { ctx.fillStyle = `rgba(255,190,90,${0.7 + 0.3 * pulso})`; ctx.beginPath(); ctx.ellipse(x, -39, 2.2, 4, 0, 0, 7); ctx.fill(); } }
+    if (!o.futuro && Math.random() < 0.3) particulas.push([o.x + rnd(-0.4, 0.4), o.y, 1.6, rnd(-0.2, 0.2), 0, rnd(1.5, 3), '#9a948c', rnd(0.6, 1.1)]);
+  } else if (o.tipo === 7) {    // fonte
     ctx.fillStyle = '#3a3438'; ctx.beginPath(); ctx.ellipse(0, -6, 36, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#2a2428'; ctx.fillRect(-7, -6, 14, 10);
     ctx.fillStyle = `rgba(170,20,32,${0.8 + 0.2 * pulso})`; ctx.beginPath(); ctx.ellipse(0, -8, 30, 10, 0, 0, 7); ctx.fill();
     if (!o.futuro && Math.random() < 0.5) particulas.push([o.x + rnd(-0.3, 0.3), o.y, 0.5, rnd(-0.4, 0.4), 0, rnd(3, 6), '#c8202c', rnd(0.4, 0.8)]);
