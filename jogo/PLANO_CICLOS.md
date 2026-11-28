@@ -491,3 +491,5 @@ Dono pediu ciclos a cada 5 minutos.
 - **270** (07:30): marco de 270 ciclos. README atualizado (Canil, Vorasta, Noite sem lua, conjunto Véus do Cortejo Fúnebre, resgate automático). Ajuda: linha sobre Missões e resgate automático; presságios citam Noite sem lua. Captura 390 px, teste_web4 sem erros. Publicado 1795851044-14de.
 
 - **271** (07:39): HUD. No celular (≤520 px) o aviso no meio da arena usa Alegreya itálico em vez de Cinzel em caixa alta: frases como a dica do Canil cabiam em duas linhas por cima dos minions, agora em uma. Desktop inalterado. teste_web4 sem erros. Publicado 1795851582-17ac.
+
+- **272** (07:48): limpeza. A dica de toque "Missão cumprida" já aparecia só até o jogador aprender (toque, 20 s vista ou resgate automático); encurtada para "toque em Resgatar ↓" e, no celular, as dicas podem usar 88% da largura: cabem em uma linha e cobrem menos o pé da arena. teste_web4 sem erros, desktop conferido. Publicado 1795852103-f66e.

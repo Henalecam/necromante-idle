@@ -752,7 +752,7 @@ function batizar(id, mods, especie) {
 }
 // ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
 let escolheuSeguir = false;   // a última porta de missão foi deixada fechada de propósito (texto do diário muda)
-const LICOES = [['resgatar', 'Missão cumprida: toque em Resgatar para levar o prêmio', () => !!document.querySelector('#missao .pronta')], ['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
+const LICOES = [['resgatar', 'Missão cumprida: toque em Resgatar ↓', () => !!document.querySelector('#missao .pronta')], ['orbe', 'Toque no orbe verde para ceifar a alma na hora', () => orbes.length > 0], ['sala', 'Toque no objeto da sala: rende mais (e desarma armadilhas)', () => !!objeto && !objeto.aberto && masm.fase === 'Explorando'],
   ['golpe', 'Toque no inimigo com o círculo vermelho para interromper o golpe', () => [...estado.values()].some((e) => e.viva && e.inimigo && e.golpe > 0)],
   ['cura', 'Toque no retrato de um aliado ferido para curá-lo', () => sopro <= 0 && [...estado.values()].some((e) => e.viva && !e.inimigo && e.vida < 0.5)],
   ['marca', 'Toque num inimigo para marcar o alvo dos seus minions', () => [...estado.values()].filter((e) => e.viva && e.inimigo).length >= 3],
