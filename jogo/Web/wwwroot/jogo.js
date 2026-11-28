@@ -2105,7 +2105,7 @@ function atualizarPainel(forcar) {
     });
     { const nf = d.bestiario.filter((b) => !b.mortes && !b.conhecida).length; if (nf) h += `<p class="nota" style="margin-top:6px">${d.bestiario.length - nf} de ${d.bestiario.length} espécies encontradas · ${nf} ainda escondidas na masmorra.</p>`; }
   } else if (aba === 'necropole') {
-    h += `<h3>Dificuldade</h3><p class="nota">Como no Diablo: cada dificuldade é uma descida própria, e nas mais altas os inimigos resistem mais e alguns ficam <b>imunes</b> a um tipo de dano (o Bestiário mostra quais); com o seu Ponto de Ancoragem (trocar não apaga o da outra). Vencer o chefe do Ato 2 abre a seguinte. A troca vale a partir da próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
+    h += `<h3>Dificuldade</h3><p class="nota">Cada dificuldade é uma descida própria, com o seu Ponto de Ancoragem. Nas mais altas os inimigos resistem mais e alguns ficam <b>imunes</b> a um tipo de dano (veja no Bestiário). Vencer o chefe do Ato 2 abre a seguinte; a troca vale na próxima descida${d.difAgora !== d.dif ? ' (esta ainda é ' + DIFICULDADES[d.difAgora][0] + ')' : ''}.</p>`;
     DIFICULDADES.forEach((df, k) => { const aberta = k <= d.difMax, atual = k === d.dif; h += `<div class="linha"><div class="corpo">${df[0]}${d.vitoria && (d.vitoria.feitas >> k) & 1 ? ' <span style="color:#ffcf5a">· Diablo vencido</span>' : ''}<small>${df[1]}</small></div><button data-ac="dificuldade" data-i="${k}" class="${atual ? 'ativo' : ''}" ${atual || !aberta ? 'disabled' : ''}>${atual ? 'Escolhida' : aberta ? 'Escolher' : 'Trancada'}</button></div>`; });
     h += '<h3>Construções</h3>';
     d.construcoes.forEach((c, i) => {
