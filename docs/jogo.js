@@ -755,7 +755,10 @@ function batizar(id, mods, especie) {
   const a = NOME_A[(id * 7 + mods * 3) % NOME_A.length], b = NOME_B[(id * 13 + mods) % NOME_B.length], ep = EPITETOS.filter(([m]) => mods & m).map(([, e]) => e);
   const nome = a + b + (ep.length ? ', ' + ep[(id + mods) % ep.length] : ', o Maldito');
   campeoes.set(id, { nome, especie }); if (campeoes.size > 40) campeoes.delete(campeoes.keys().next().value);
-  if (!silencio) { aviso('Campeão: ' + nome); anotar(`Surge o campeão <b style="color:#ffd84a">${nome}</b>.`); som('perigo'); }
+  if (!silencio) {   // há um elite em quase todo andar: o aviso grande só nos 4 primeiros da sessão e depois 1 em cada 4 (o nome segue na barra e no diário)
+    batizar.n = (batizar.n || 0) + 1; if (batizar.n <= 4 || batizar.n % 4 === 0) { aviso('Campeão: ' + nome); som('perigo'); }
+    anotar(`Surge o campeão <b style="color:#ffd84a">${nome}</b>.`);
+  }
 }
 // ---- lições de toque: uma por vez, só quando a chance aparece; somem quando o jogador faz ----
 let escolheuSeguir = false;   // a última porta de missão foi deixada fechada de propósito (texto do diário muda)
