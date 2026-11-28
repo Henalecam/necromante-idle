@@ -1822,7 +1822,8 @@ function dobrarCumpridas(h) {   // aba Masmorra: as missões já cumpridas desce
   const ini = h.indexOf('<h3>Missões deste save</h3>'); if (ini < 0) return h;
   const corpo0 = ini + '<h3>Missões deste save</h3>'.length, fim = Math.min(...['<h3', '<details', '<p'].map((m) => h.indexOf(m, corpo0)).filter((i) => i >= 0), h.length);
   const linhas = h.slice(corpo0, fim).split(/(?=<div class="linha">)/).filter(Boolean), feitas = linhas.filter((l) => l.includes('· cumprida')), faltam = linhas.filter((l) => !l.includes('· cumprida'));
-  if (feitas.length < 2) return h;
+  const andarDe = (l) => { const m = l.match(/Andar (\d+)/); return m ? +m[1] : 0; }; faltam.sort((a, b) => andarDe(a) - andarDe(b));   // a próxima missão (andar mais raso) primeiro
+  if (feitas.length < 2) return h.slice(0, corpo0) + faltam.join('') + feitas.join('') + h.slice(fim);
   return h.slice(0, corpo0) + faltam.join('') + dobra('cumpridas', `Missões cumpridas · ${feitas.length}`, feitas.join('')) + h.slice(fim);
 }
 function emSubAbas(h, chave) {
