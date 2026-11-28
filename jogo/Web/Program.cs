@@ -543,6 +543,7 @@ public static partial class Jogo
             case "secreto": _forcarSecreto = true; _cfg.ForcarSecreto = v >= 1 && v <= 3 ? (int)v : 0; break;
             case "cofre": _forcarCofre = true; break;
             case "pressagio": _cfg.ForcarPressagio = (int)v; _cfg.ChanceDePressagio = 1f; break;
+            case "vorasta": _cfg.ForcarVorasta = true; _cfg.ChanceDeUnico = 1f; break;
             case "grevalda": _cfg.ForcarGrevalda = true; _cfg.ChanceDeUnico = 1f; break;
             case "cumpridas": _p.MissaoReiEsqueleto = _p.MissaoAcougueiro = _p.MissaoFonte = _p.MissaoCamara = _p.MissaoCegos = _p.MissaoCanil = 3; _p.MissaoFortaleza = 1; break;   // só para capturas: várias missões cumpridas e uma em aberto
             case "reiniciar": break;

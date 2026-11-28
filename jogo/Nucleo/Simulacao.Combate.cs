@@ -279,6 +279,7 @@ namespace Necro.Nucleo
                 // Ouro: todo inimigo larga um pouco; elites e chefes, bem mais
                 _restoDeOuro += Cfg.OuroPorPorte[(int)alvo.Porte] * (1f + 0.1f * (AndarEfetivo - 1)) * premio * _aOuro * (alvo.Chefe ? Cfg.OuroChefe : alvo.Elite ? Cfg.OuroElite : 1f);
                 { long qo = (long)_restoDeOuro; _restoDeOuro -= qo; Resultado.Ouro += qo; }
+                if (alvo.NomeProprio == NomeVorasta) { if (Cfg.LivrosDeFeitico) SoltarLivro(alvo.Pos); Resultado.Ouro += Cfg.VorastaOuro; }   // Vorasta: livro e ouro garantidos
                 if (alvo.NomeProprio == NomeGrevalda) { if (Cfg.LivrosDeFeitico) SoltarLivro(alvo.Pos); Resultado.Ouro += Cfg.GrevaldaOuro; }   // Grevalda: livro e ouro garantidos
                 // livros de feitiço: o chefe sempre larga um; Únicos com frequência; elites e Campeões de vez em quando
                 if (Cfg.LivrosDeFeitico && (alvo.Chefe || (alvo.Unico && _rngItens.Chance(Cfg.ChanceDeLivroDeUnico)) || (!alvo.Unico && (alvo.Elite || alvo.Campeao) && _rngItens.Chance(Cfg.ChanceDeLivroDeElite)))) SoltarLivro(alvo.Pos);

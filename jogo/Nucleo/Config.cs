@@ -327,7 +327,8 @@ namespace Necro.Nucleo
         public float TemaFundoSalaVaziaExtra = 0.2f;     // chance somada de sala vazia (galeria) nas Cavernas e no Inferno: andares maiores
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
         public float CinzasVidaInimigo = 1.25f, CinzasItem = 1.6f;
-        public int GrevaldaDe = 10, GrevaldaAte = 20; public float GrevaldaChance = 0.2f, GrevaldaEspinhos = 0.15f; public long GrevaldaOuro = 300; public bool ForcarGrevalda;   // Grevalda, a Pele de Cardo: devolve parte de cada golpe; larga livro e ouro
+        public int GrevaldaDe = 10, GrevaldaAte = 20; public float GrevaldaChance = 0.2f, GrevaldaEspinhos = 0.15f; public long GrevaldaOuro = 300; public bool ForcarGrevalda;
+        public int VorastaDe = 21, VorastaAte = 30; public float VorastaChance = 0.2f, VorastaRegen = 0.02f; public long VorastaOuro = 600; public bool ForcarVorasta;   // Vorasta, a Carne que Volta: regenera; larga livro e ouro   // Grevalda, a Pele de Cardo: devolve parte de cada golpe; larga livro e ouro
         public int OssarioAteOAndar = 10; public float OssarioNoLugarDoBau = 0.35f, OssarioDuracao = 150f;   // Ossário Esquecido: sala especial dos primeiros andares
         public int NoiteAPartirDoAndar = 7, NoiteAteOAndar = 19; public float NoiteChance = 0.12f, NoiteAlma = 0.30f, NoiteVidaInimigo = 1.10f;   // presságio Noite sem Lua: escuro, mais almas, inimigos um pouco mais duros
         public int ForcarPressagio; public int FebreAPartirDoAndar = 20; public float FebreOuro = 2f, FebreDanoInimigo = 1.1f;   // presságio Febre do Ouro (andar 20+): o dobro de ouro, inimigos batem mais   // presságio Chuva de Cinzas: inimigos mais duros, mais itens

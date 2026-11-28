@@ -2199,6 +2199,26 @@ namespace Necro.Testes
                 Afirmar(viu14 && !viuPorta, "o santuário 14 aparece e nenhum santuário usa 11–13");
             });
 
+            Teste("Vorasta, a Carne que Volta: Único nomeado dos andares 21–30; regenera; larga ouro", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarVorasta = true, ChanceDeUnico = 1f };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos, EspecieId.Esqueleto); p.NivelNecromante = 60; p.PoderNecromantico = 1500f; foreach (var m in p.Minions) m.Nivel = 20;
+                var s = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 24) { LimiteDeAndares = 1 }; bool viu = false;
+                for (int k = 0; k < 30000 && !s.Encerrada && !viu; k++) { s.Tick(); viu = s.Entidades.Exists(e => e.NomeProprio == Simulacao.NomeVorasta); }
+                Afirmar(viu, "aparece no andar 24 quando forçada");
+                var s2 = new Simulacao(c, p, 5, ModoExpedicao.Avancar, 12) { LimiteDeAndares = 1 }; bool fora = false;
+                for (int k = 0; k < 8000 && !s2.Encerrada; k++) { s2.Tick(); if (s2.Entidades.Exists(e => e.NomeProprio == Simulacao.NomeVorasta)) fora = true; }
+                Afirmar(!fora, "não aparece fora dos andares 21–30");
+                var c2 = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var t = new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), 3, ModoExpedicao.Avancar, 24);
+                foreach (var m in t.Entidades) if (m.Faccao == Faccao.Minion || m.Faccao == Faccao.Necromante) m.Pos = new Vec2(1f, 1f);
+                var v = t.CriarInimigo(EspecieId.Zumbi, new Vec2(40f, 10f)); v.Unico = true; v.NomeProprio = Simulacao.NomeVorasta; v.VidaMax = 1000f; v.Vida = 500f;
+                for (int k = 0; k < 10; k++) t.Tick();
+                Afirmar(v.Vida > 505f, "regenera (" + v.Vida + ")");
+                var mi = t.Entidades.Find(e => e.Faccao == Faccao.Minion); long o0 = t.Resultado.Ouro; v.Imune = 0; t.CausarDano(mi, v, 1e9f, TipoDano.Fisico, false);
+                Afirmar(!v.Viva && t.Resultado.Ouro - o0 >= c2.VorastaOuro, "morta, larga o ouro garantido");
+            });
+
             Teste("Grevalda, a Pele de Cardo: Único nomeado dos andares 10–20; devolve parte do golpe e larga livro e ouro", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarGrevalda = true, ChanceDeUnico = 1f };
