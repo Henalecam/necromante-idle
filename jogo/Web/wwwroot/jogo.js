@@ -298,7 +298,7 @@ const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
 function limparArena(tudo) {
   mortos.clear(); cadaverDe.clear(); particulas = [];
-  if (tudo) { sctx.clearRect(0, 0, sangue.width, sangue.height); return; }
+  if (tudo) { nomesUnicos.clear(); unicoAnunciar = -1; sctx.clearRect(0, 0, sangue.width, sangue.height); return; }   // expedição nova: os ids das entidades recomeçam, então nomes antigos não podem grudar em outro monstro
   // andar novo na mesma expedição: o chão guarda metade do que aconteceu
   sctx.save(); sctx.globalCompositeOperation = 'destination-out'; sctx.fillStyle = 'rgba(0,0,0,0.5)'; sctx.fillRect(0, 0, sangue.width, sangue.height); sctx.restore();
 }
@@ -1523,8 +1523,8 @@ function desenhar(dt) {
       const nm = nomesUnicos.get(s.id), ty = py - 150 * (prov ? prov[1] : 1);
       if (unicoAnunciar === s.id) { unicoAnunciar = -1; aviso(nm); anotar(`<b style="color:#ffcf5a">${nm}</b> e seu séquito guardam esta sala.`); }
       const zc = Math.max(0.3, Math.min(1, ctx.getTransform().a / (window.devicePixelRatio || 1)));   // escala atual da câmera
-      if (performance.now() < (aviso.ate || 0)) ctx.globalAlpha = 0.12;   // com o aviso central na tela, o nome some para os dois não se embolarem
-      ctx.font = `bold ${Math.round(14 / zc)}px Alegreya, Georgia, serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty); ctx.globalAlpha = 1;   // legível também no mapa inteiro
+      const avisoNaTela = performance.now() < (aviso.ate || 0);   // com o aviso central na tela, o nome sobre o monstro some para os dois não se embolarem
+      if (!avisoNaTela) { ctx.font = `bold ${Math.round(14 / zc)}px Alegreya, Georgia, serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3 / zc; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(nm, px, ty); ctx.fillStyle = '#ffcf5a'; ctx.fillText(nm, px, ty); }   // legível também no mapa inteiro
     }
     if (morto && nomesUnicos.has(s.id)) { const nm = nomesUnicos.get(s.id); nomesUnicos.delete(s.id); aviso(nm + ' caiu!'); anotar(`<b style="color:#ffcf5a">${nm}</b> foi destruído e largou seu tesouro.`); clarao = 0.4; }
     if (!morto && s.id === marcado) {
