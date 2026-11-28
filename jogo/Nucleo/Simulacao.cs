@@ -122,6 +122,7 @@ namespace Necro.Nucleo
         // Equipamento
         private readonly ulong _sementePactos;
         private readonly Rng _rngPressagio;
+        private readonly Rng _rngOssario;
         private readonly Rng _rngGrevalda; private bool _grevaldaUsada;   // Grevalda, a Pele de Cardo: Único nomeado raro dos andares 10–20
         public const string NomeGrevalda = "Grevalda, a Pele de Cardo";
         private float _sorte;   // pontos de Sorte do progresso
@@ -150,6 +151,7 @@ namespace Necro.Nucleo
             _sementePactos = semente ^ 0x50414354UL;       // "PACT"
             _rngPressagio = new Rng(semente ^ 0x50524553UL);
             _rngGrevalda = new Rng(semente ^ 0x47524556UL);
+            _rngOssario = new Rng(semente ^ 0x4F535355UL);
             _rngArmadilha = new Rng(semente ^ 0x41524D41UL);   // "ARMA": sorteio próprio, não mexe nas outras sequências
             _rngMasmorra = new Rng(semente ^ 0x4D41534DUL);    // "MASM"   // "PRES"
             Bonus = Equipamento.CalcularBonus(progresso, cfg);
@@ -486,9 +488,12 @@ namespace Necro.Nucleo
         /// Grimório da Mãe Carniça: Zumbi temporário (Comum, no nível do necromante) que luta por alguns segundos.
         /// Não ocupa Comando, não deixa cadáver e não conta como minion perdido.
         /// </summary>
-        public Entidade CriarZumbiTemporario(Vec2 pos, float duracao)
+        public Entidade CriarZumbiTemporario(Vec2 pos, float duracao) { return CriarMortoTemporario(EspecieId.Zumbi, pos, duracao); }
+
+        /// <summary>Morto temporário de uma espécie (Comum, no nível do necromante): não ocupa Comando nem deixa cadáver.</summary>
+        public Entidade CriarMortoTemporario(EspecieId especie, Vec2 pos, float duracao)
         {
-            var d = TabelaEspecies.Obter(EspecieId.Zumbi);
+            var d = TabelaEspecies.Obter(especie);
             var e = CriarBase(Faccao.Minion, d, Limitar(pos));
             int nivel = Math.Min(_nivelNecromante, Cfg.NivelMaximoPorEstagio * Cfg.EstagioMaximo);
             e.VidaMax = Formulas.AtributoMinion(d.Vida, Qualidade.Comum, nivel, _poderTotal, Cfg);

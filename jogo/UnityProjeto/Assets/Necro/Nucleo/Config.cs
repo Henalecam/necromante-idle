@@ -328,6 +328,7 @@ namespace Necro.Nucleo
         public bool MissoesDeCenario = true;                   // missões sorteadas por save, com cenário próprio (Diablo 1)
         public float CinzasVidaInimigo = 1.25f, CinzasItem = 1.6f;
         public int GrevaldaDe = 10, GrevaldaAte = 20; public float GrevaldaChance = 0.2f, GrevaldaEspinhos = 0.15f; public long GrevaldaOuro = 300; public bool ForcarGrevalda;   // Grevalda, a Pele de Cardo: devolve parte de cada golpe; larga livro e ouro
+        public int OssarioAteOAndar = 10; public float OssarioNoLugarDoBau = 0.35f, OssarioDuracao = 150f;   // Ossário Esquecido: sala especial dos primeiros andares
         public int ForcarPressagio; public int FebreAPartirDoAndar = 20; public float FebreOuro = 2f, FebreDanoInimigo = 1.1f;   // presságio Febre do Ouro (andar 20+): o dobro de ouro, inimigos batem mais   // presságio Chuva de Cinzas: inimigos mais duros, mais itens
         public float PregadorCura = 0.03f;   // conjunto Sermão do Pregador de Cinzas (3 peças): cada feitiço cura o necromante nesta fração da vida máxima
         public float SermaoIntervalo = 10f, SermaoEscudo = 0.15f, BrasaFinalMult = 2.5f; public int SermaoAlvos = 2;   // Arauto erguido (Sermão de Ossos) e Lacaio erguido (Brasa Final)

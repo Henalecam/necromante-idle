@@ -2109,6 +2109,19 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Ossário Esquecido: sala dos andares 1–10; ergue um Esqueleto temporário (dois com toque) que não ocupa Comando", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarSalaEspecial = (int)TipoSala.OssarioEsquecido };
+                var p = ProgressoCom(EspecieId.ColossoDeOssos, EspecieId.ColossoDeOssos); p.NivelNecromante = 10; foreach (var m in p.Minions) m.Nivel = 10;
+                var s = new Simulacao(c, p, 4, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; bool viuTemp = false;
+                for (int k = 0; k < 20000 && !s.Encerrada && s.Resultado.OssariosErguidos == 0; k++) s.Tick();
+                viuTemp = s.Entidades.Exists(e => e.Viva && e.Faccao == Faccao.Minion && e.Temporario && e.Especie == EspecieId.Esqueleto);
+                Afirmar(s.Salas.Contains(TipoSala.OssarioEsquecido) && s.Resultado.OssariosErguidos >= 1 && viuTemp, "a sala existe e um esqueleto temporário se levanta (" + s.Resultado.OssariosErguidos + ")");
+                bool apareceFundo = false;
+                for (int k = 1; k <= 60 && !apareceFundo; k++) { var c2 = new ConfigJogo { ChanceDeSalaEspecial = 1f }; if (new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 14).Salas.Contains(TipoSala.OssarioEsquecido)) apareceFundo = true; }
+                Afirmar(!apareceFundo, "não aparece depois do andar 10");
+            });
+
             Teste("Sandálias do Cortejo: Botas Únicas do andar 12; com elas, Arautos e Carpideiras erguidos agem 25% mais vezes", () =>
             {
                 var d = Unicos.Obter(16); Afirmar(d != null && d.Tipo == TipoItem.Botas && d.AndarMinimo == 12 && !d.SoDeMissao, "dados do Único");
