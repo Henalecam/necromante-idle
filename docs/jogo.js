@@ -299,7 +299,7 @@ const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
 function limparArena(tudo) {
   mortos.clear(); cadaverDe.clear(); particulas = [];
-  if (tudo) { nomesUnicos.clear(); campeoes.clear(); ocultos.clear(); unicoAnunciar = -1; sctx.clearRect(0, 0, sangue.width, sangue.height); return; }   // expedição nova: os ids das entidades recomeçam, então nomes antigos não podem grudar em outro monstro
+  if (tudo) { nomesUnicos.clear(); campeoes.clear(); faseChefe.clear(); faseFx = null; ocultos.clear(); unicoAnunciar = -1; sctx.clearRect(0, 0, sangue.width, sangue.height); return; }   // expedição nova: os ids das entidades recomeçam, então nomes antigos não podem grudar em outro monstro
   // andar novo na mesma expedição: o chão guarda metade do que aconteceu
   sctx.save(); sctx.globalCompositeOperation = 'destination-out'; sctx.fillStyle = 'rgba(0,0,0,0.5)'; sctx.fillRect(0, 0, sangue.width, sangue.height); sctx.restore();
 }
@@ -818,6 +818,7 @@ let camX = 0, camY = 0, salaSuja = false, mapa = [], dica = true, dicaMarca = tr
 // ---- masmorra: salas, objeto da sala, ambiente do chefe ----
 const SALAS = [['⚔', 'Combate'], ['☠', 'Elite'], ['♛', 'Chefe'], ['▣', 'Baú'], ['✦', 'Santuário'], ['☥', 'Almas presas'], ['‼', 'Emboscada'], ['♨', 'Fonte'], ['?', 'Nível secreto'], ['$', 'Mercador'], ['†', 'Altar de sangue'], ['·', 'Câmara vazia'], ['▲', 'Armadilha'], ['▩', 'Cofre trancado'], ['⚒', 'Forja de ossos'], ['◍', 'Ninho'], ['▤', 'Biblioteca'], ['☣', 'Fosso de monstros'], ['⛓', 'Sala de tortura'], ['⚔', 'Arsenal'], ['🜏', 'Porta do Açougueiro'], ['♚', 'Tumba do Rei'], ['♒', 'Fonte envenenada'], ['☗', 'Câmara de Ossos'], ['◉', 'Salões dos Cegos'], ['⚑', 'Fortaleza Rubra'], ['◎', 'Poço dos Lamentos'], ['✠', 'Relicário Profanado'], ['⚒', 'Forja do Abismo'], ['⚱', 'Ossário esquecido'], ['ψ', 'Canil Maldito'], ['✟', 'Altar de velas']];
 let chaveCofre = [-1, false];
+const faseChefe = new Set(); let faseFx = null;   // fase da Abadessa já anunciada (por id) e o efeito do chão rachando
 let patRota = [], patAlvo = -1, patGeo = '';
 let patrulha = null, patPos = null;   // patrulha errante: {sala, especies}; patPos = onde ela está desenhada no mundo (anda até a sala nova)   // [sala de combate que guarda a chave do cofre, já foi pega]
 const AMBIENTES = [null, ['Lava', 'erupções queimam quem estiver em cima, dos dois lados'], ['Névoa pútrida', 'todos perdem vida aos poucos e as curas rendem menos'], ['Geada', 'de tempos em tempos, unidades dos dois lados congelam'], ['Desabamento', 'pedras caem do teto sobre os dois lados, pequenas e frequentes']];
@@ -1718,6 +1719,20 @@ function desenhar(dt) {
   let chefe = null; for (const s of estado.values()) if (s.chefe && s.viva && s.inimigo) chefe = s;
   let campeao = null; if (!chefe) for (const s of estado.values()) if (s.elite && s.viva && s.inimigo && campeoes.has(s.id)) { campeao = s; break; }
   if (campeao) chefe = campeao;
+  // Abadessa Costurada (chefe do Ato 1): ao cair abaixo de metade, rasga as costuras — aviso, tremor e o chão racha em vermelho (só apresentação)
+  if (chefe && !campeao && chefe.especie === 'AbadessaCosturada' && chefe.vida < 0.5 && !faseChefe.has(chefe.id)) {
+    faseChefe.add(chefe.id); faseFx = { t0: performance.now(), sem: chefe.id * 7 + 3 };
+    if (!silencio) { aviso('A Abadessa rasga as costuras · algo acorda nela'); anotar('<b style="color:#ff8a6a">A Abadessa Costurada</b> rasgou as costuras na metade da luta. Ela bate igual, mas não vai cair quieta.'); som('chefe'); tremor = Math.max(tremor, 0.55); clarao = Math.max(clarao, 0.25); }
+  }
+  if (faseFx) {
+    const k = (performance.now() - faseFx.t0) / 2600;
+    if (k >= 1) faseFx = null; else {
+      ctx.save(); ctx.globalAlpha = (1 - k) * 0.85; ctx.strokeStyle = '#c8202a'; ctx.shadowColor = '#ff3a2a'; ctx.shadowBlur = 8; ctx.lineWidth = Math.max(1.5, larg / 260);
+      let sm = faseFx.sem; const r01 = () => { sm = (sm * 1103515245 + 12345) & 0x7fffffff; return sm / 0x7fffffff; };
+      for (let f = 0; f < 6; f++) { let x = larg / 2, y = alt * 0.6, a = f * Math.PI / 3 + r01() * 0.6; ctx.beginPath(); ctx.moveTo(x, y); for (let q = 0; q < 7; q++) { a += (r01() - 0.5) * 0.9; x += Math.cos(a) * larg * 0.06 * Math.min(1, k * 4); y += Math.sin(a) * alt * 0.045 * Math.min(1, k * 4); ctx.lineTo(x, y); } ctx.stroke(); }
+      ctx.restore();
+    }
+  }
   if (chefe) {
     const bw = Math.min(larg * 0.7, 520 * (larg / tela.clientWidth)), bx = (larg - bw) / 2, by = alt * 0.18, bh = Math.max(8, alt * 0.022);
     ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
