@@ -240,6 +240,8 @@
   .linha small { display:block; color:var(--fraco); font-size:12px; margin-top:2px; }
   .xp { height:3px; background:#0008; border-radius:2px; margin-top:5px; } .xp div { height:100%; background:#5a8f6a; border-radius:2px; }
   .linha button { white-space:nowrap; }
+  @media (max-width:1050px) { .linha.carta { flex-wrap:nowrap; } .linha.carta .corpo { flex:1 1 0; } }   /* gaveta do celular (~350 px): botão ao lado; na coluna do computador (~270 px) ele desce */
+  .linha.carta button { padding:4px 9px; line-height:1.15; } .linha button small.cbt { display:block; margin:1px 0 0; font-size:11px; color:inherit; opacity:.75; }
   .linha .bts { display:flex; gap:5px; flex-direction:column; align-items:stretch; flex:none; } .linha .bts button { padding:5px 8px; font-size:12.5px; }
   .nota { color:var(--fraco); font-size:13px; margin:6px 0; }
   .q0,.r0 { color:#9a9a9a; } .q1 { color:#e6e0d0; } .q2,.r1 { color:#6fa8ff; } .q3,.r2 { color:#ffd84a; } .q4,.r4 { color:#ff4d6a; } .r3 { color:#ff9a2e; }
