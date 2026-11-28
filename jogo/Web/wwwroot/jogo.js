@@ -2169,7 +2169,7 @@ function atualizarPainel(forcar) {
       h += `<p class="nota"><b>Se ascender agora:</b> ${as.pode ? '+' + fmt(as.renderia) + ' Cinzas' : 'ainda não pode nesta vida'} <span style="color:#cfc4b4">(andar ${as.maior} → ${as.czAndar} · ${as.nChefes} chefe${as.nChefes === 1 ? '' : 's'} de ato → +${as.czChefes}${+as.czFator > 1 ? ' · ' + DIFICULDADES[d.dif][0] + ' ×' + String(as.czFator).replace('.', ',') : ''})</span>. Pela profundidade: o andar ${prox5} vale ${cz(prox5)}, o ${prox5 + 5} vale ${cz(prox5 + 5)}; cada chefe de ato vale +${as.czPorChefe}; ascender no Pesadelo multiplica por 1,5 e no Inferno por 2.<br><b>O que a vida seguinte já leva:</b> ${as.leva.length ? as.leva.map(esc).join(' · ') : 'nada da Herança ainda (os outros ramos e os Legados valem sempre)'}.</p>`;
       h += `<div class="rodape"><button data-ac="ascender" ${as.pode && as.renderia > 0 ? '' : 'disabled'}>${as.pode ? `Ascender agora · +${fmt(as.renderia)} Cinzas` : 'Vença a chefe do Ato 1 nesta vida para ascender de novo'}</button></div>`;
     }
-    h += '<div class="rodape"><button data-ac="novo">Apagar save e começar de novo</button></div>';
+    h += dobra('apagar', 'Apagar o save', '<p class="nota">Apaga tudo, inclusive Cinzas, Legados e Bestiário, e começa um jogo do zero. Não é a Ascensão.</p><div class="rodape"><button data-ac="novo" style="border-color:#7a2a2a;color:#e08a8a">Apagar save e começar de novo</button></div>');   // recolhido: sozinho e grande logo abaixo do texto da Ascensão, parecia o botão de ascender
   }
   return h;
   };
