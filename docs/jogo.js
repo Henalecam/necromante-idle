@@ -1851,7 +1851,7 @@ const ALVO = { esq: 'p-esq', dir: 'p-dir', baixo: 'painel' }, htmlAnterior = { e
 const botoesDeAba = () => document.querySelectorAll('.abas button[data-aba]');
 let painelAnterior = '', missaoAnterior = '', recursosAnterior = '', exFiltro = 'todos', exOrdem = 'campo';
 try { exFiltro = localStorage.getItem(CHAVE + '-filtro') || 'todos'; exOrdem = localStorage.getItem(CHAVE + '-ordem') || 'campo'; } catch (e) { /* padrão */ }
-const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : String(n);
+const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',') + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1).replace('.', ',') + 'k' : String(n);   // só para a tela: vírgula decimal, como no resto do jogo
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ESPACOS = ['Arma', 'Mão 2', 'Elmo', 'Peitoral', 'Luvas', 'Botas', 'Amuleto', 'Anel', 'Anel'];
 const TRACOS = { 0: ['Faminto', 'rouba vida a cada golpe'], 1: ['Frenético', 'ataca mais rápido'], 2: ['Pétreo', 'mais armadura'], 3: ['Rancoroso', 'explode ao morrer'],

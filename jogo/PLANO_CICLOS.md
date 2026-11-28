@@ -497,3 +497,5 @@ Dono pediu ciclos a cada 5 minutos.
 - **273** (08:00): conteúdo. Presságio 10 Sinos da abadia: andares 2–6 já vencidos (nunca na primeira descida), 18% por fluxo próprio, Ossos x1,35 e inimigos +10% de vida; som de sino, linha na ajuda. 179 testes. Gate ausente 1.42/3.73/7.78 h; ativo 0.86/2.49/5.42 h (os dois FORA de sempre, por rapidez). Publicado 1795852855-4ded.
 
 - **274** (08:11): HUD. Cartas do Exército e do Filactério: "N de comando", "nv x/y", "estágio N", "Poder N", cada dom (Vida/Dano/Vel.) e cada traço não quebram mais no meio da expressão (classe .nw). Desktop conferido; teste_web4 sem erros. Notado para depois: o topo mostra "50.0k" com ponto. Publicado 1795853474-8f74.
+
+- **275** (08:20): limpeza. fmt() (só tela) passa a vírgula nos abreviados: "50,0k", "2,50M". Varredura dec_txt (com 2,5M de Ossos, 50k de Essência e ouro) sem "\d.\d" restante em nenhuma aba. Topo conferido a 390 px e desktop; teste_web4 sem erros. Publicado 1795854050-6fda.
