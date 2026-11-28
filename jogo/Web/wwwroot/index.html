@@ -81,7 +81,8 @@
   #vel { display:flex; gap:3px; flex:none; } #vel button { padding:3px 7px; }
   #topo .nv { display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #topo .xpn { display:inline-block; width:46px; height:5px; background:#0008; border:1px solid #3a2a2c; border-radius:3px; overflow:hidden; }
-  #topo .xpn span { display:block; height:100%; width:0; background:#6dffa8; }
+  #topo .xpn { position:relative; } #topo .xpn span { display:block; height:100%; width:0; background:#6dffa8; position:absolute; left:0; top:0; } #topo .xpn #t-xpp { background:#6dffa855; }   /* barra clara: XP desta descida, que entra no fim */
+  #topo .nv small { color:#8fd89f; font-size:11px; margin-left:2px; }
   #recursos { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
   @media (max-width:520px) { .rec:not([data-rec=poder]) small { display:none; } .rec { padding:2px 7px 2px 4px; } }
   #recursos::-webkit-scrollbar { display:none; }
@@ -253,7 +254,7 @@
 <div id="topo">
   <div class="l1">
     <span class="andar" id="t-andar">Andar –</span>
-    <span class="nv">Nv <b id="t-nivel">–</b><span class="xpn"><span id="t-xp"></span></span></span>
+    <span class="nv">Nv <b id="t-nivel">–</b><span class="xpn"><span id="t-xpp"></span><span id="t-xp"></span></span></span>
     <button id="b-cheats" title="Painel de testes">⚙</button>
     <button id="b-som" title="Som" style="padding:3px 8px">♪</button>
     <button id="b-ajuda" title="Como jogar">?</button>

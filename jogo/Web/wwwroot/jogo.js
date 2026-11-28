@@ -1833,7 +1833,7 @@ function atualizarPainel(forcar) {
   cintoHud = d.cinto ? [d.cinto.v, d.cinto.m] : null; cintoMax = d.cinto ? d.cinto.max : 3; $('b-portal').hidden = !(d.portal && d.portal.agora);
   pactos = d.pactos; ritoEmCurso = d.ritoEmCurso;
   $('t-andar').textContent = `Andar ${d.andar} · ${TEMAS_ANDAR[temaDoAndar(d.andar)][0]}${d.difAgora ? ' · ' + DIFICULDADES[d.difAgora][0] : ''}` + (d.recorde ? ` · rec. ${d.recorde}` : '');
-  $('t-nivel').textContent = d.nivel; $('t-xp').style.width = Math.round(d.xp * 100) + '%';
+  { const sobe = d.nvPrev > d.nivel, tn = d.nivel + (sobe ? `<small title="no fim desta descida">→${d.nvPrev}</small>` : ''); if ($('t-nivel').innerHTML !== tn) $('t-nivel').innerHTML = tn; $('t-xp').style.width = Math.round(d.xp * 100) + '%'; $('t-xpp').style.width = (sobe ? 100 : Math.round((d.xpPrev || 0) * 100)) + '%'; $('t-nivel').parentElement.title = sobe ? `Nível ${d.nivel}; no fim desta descida, ${d.nvPrev}` : 'Nível do necromante (a XP da descida entra no fim)'; }
   const IC = {
     ossos: '<path d="M5 5l14 14M4 7a2 2 0 1 1 3-3M17 20a2 2 0 1 0 3-3" stroke="#d8c9b4"/>', ess: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" stroke="#6dffa8"/>',
     sangue: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" fill="#a01420" stroke="#ff5060"/>', frag: '<path d="M12 3l5 7-5 11-5-11z" stroke="#9a6aff"/>',

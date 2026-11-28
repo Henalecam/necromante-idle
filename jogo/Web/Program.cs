@@ -109,7 +109,7 @@ public static partial class Jogo
         Progressao.AjustarAoComando(_p, _cfg);   // equipamento ou talentos podem ter baixado o Comando
         var sb = new StringBuilder(4096);
         sb.Append("{\"andar\":").Append(_sim.Andar).Append(",\"recorde\":").Append(_p.MaiorAndarConcluido).Append(",\"ossos\":").Append(_p.Ossos)
-          .Append(",\"essencia\":").Append(_p.Essencia).Append(",\"sangue\":").Append(_p.Sangue).Append(",\"nivel\":").Append(_p.NivelNecromante).Append(",\"poder\":").Append(Poder.Total(_p, _cfg)).Append(",\"poderSugerido\":").Append(Poder.SugeridoParaOAndar(_sim.AndarEfetivo, _cfg)).Append(",\"poderProximo\":").Append(Poder.SugeridoParaOAndar(_p.MaiorAndarConcluido + 1, _cfg)).Append(",\"sorte\":").Append(F(_p.Sorte)).Append(",\"poderNec\":").Append((int)Math.Round(_p.PoderNecromantico * 100f)).Append(",\"comandoBase\":").Append(_p.ComandoMaximo).Append(",\"cheats\":").Append(B(_p.UsouCheats)).Append(",\"cinzas\":").Append(_p.Cinzas).Append(",\"xp\":").Append(F(Math.Min(1f, _p.XpNecromante / Formulas.XpParaProximoNivelNecromante(_p.NivelNecromante))))
+          .Append(",\"essencia\":").Append(_p.Essencia).Append(",\"sangue\":").Append(_p.Sangue).Append(",\"nivel\":").Append(_p.NivelNecromante).Append(",\"poder\":").Append(Poder.Total(_p, _cfg)).Append(",\"poderSugerido\":").Append(Poder.SugeridoParaOAndar(_sim.AndarEfetivo, _cfg)).Append(",\"poderProximo\":").Append(Poder.SugeridoParaOAndar(_p.MaiorAndarConcluido + 1, _cfg)).Append(",\"sorte\":").Append(F(_p.Sorte)).Append(",\"poderNec\":").Append((int)Math.Round(_p.PoderNecromantico * 100f)).Append(",\"comandoBase\":").Append(_p.ComandoMaximo).Append(",\"cheats\":").Append(B(_p.UsouCheats)).Append(",\"cinzas\":").Append(_p.Cinzas).Append(",\"xp\":").Append(F(Math.Min(1f, _p.XpNecromante / Formulas.XpParaProximoNivelNecromante(_p.NivelNecromante)))).Append(",\"nvPrev\":").Append(NivelPrevisto(out float xpPrev)).Append(",\"xpPrev\":").Append(F(xpPrev))
           .Append(",\"comando\":").Append(Progressao.ComandoEmUso(_p, _cfg)).Append(",\"comandoMax\":").Append(Progressao.ComandoMaximoEfetivo(_p, _cfg))
           .Append(",\"filacterioMax\":").Append(Necropole.CapacidadeDoFilacterio(_p, _cfg)).Append(",\"inventarioMax\":").Append(_cfg.CapacidadeInventario)
           .Append(",\"largura\":").Append(F(_cfg.LarguraArena)).Append(",\"altura\":").Append(F(_cfg.AlturaArena));
@@ -536,6 +536,13 @@ public static partial class Jogo
         }
         NovaExpedicao();    // o que foi mexido vale já
         return nome;
+    }
+    /// <summary>Prévia para a barra do topo: o nível e a fração de XP que o necromante terá se a descida acabar agora (a XP só entra no fim).</summary>
+    private static int NivelPrevisto(out float fracao)
+    {
+        int nv = _p.NivelNecromante; float xp = _p.XpNecromante + (_sim != null ? _sim.Resultado.Xp * (1f + Arvore.Xp(_p, _cfg)) : 0f);
+        while (xp >= Formulas.XpParaProximoNivelNecromante(nv)) { xp -= Formulas.XpParaProximoNivelNecromante(nv); nv++; }
+        fracao = Math.Min(1f, xp / Formulas.XpParaProximoNivelNecromante(nv)); return nv;
     }
     /// <summary>Só para capturas de teste: derruba os inimigos vivos da sala atual (marca o save como de teste).</summary>
     [JSExport] public static int LimparSalaTeste() { _p.UsouCheats = true; int n = 0; foreach (var e in _sim.Entidades.ToArray()) if (e.Viva && e.Faccao == Faccao.Inimigo && !e.Unico && !e.Chefe) { _sim.CausarDano(null, e, e.Vida * 10f + 1f, TipoDano.Fisico, false); n++; } return n; }
