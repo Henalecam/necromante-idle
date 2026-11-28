@@ -1907,7 +1907,7 @@ function atualizarPainel(forcar) {
   if (hr !== recursosAnterior) { recursosAnterior = hr; $('recursos').innerHTML = hr; }
   // missão atual: objetivo sempre à vista
   const m = d.missao; let hm = '';
-  if (!m) hm = '<div class="corpo"><span class="tit">Todas as missões cumpridas</span><div class="hist">Agora é descer: cada andar novo rende mais, e os Únicos e santuários que faltam aparecem na aba Masmorra.</div></div>';
+  if (!m) hm = '<div class="corpo"><span class="tit">Missões da história: todas cumpridas</span><div class="hist">Agora é descer: cada andar novo rende mais. As missões deste save, os Únicos e os santuários que faltam estão na aba Masmorra.</div></div>';
   else {
     const premio = [m.ossos ? fmt(m.ossos) + ' Ossos' : '', m.essencia ? fmt(m.essencia) + ' Ess.' : ''].filter(Boolean).join(' + ');
     hm = `<div class="corpo"><span class="tit">Missão ${m.n}/${m.total} · ${esc(m.titulo)}</span><div class="hist">${esc(m.historia)}</div>${esc(m.objetivo)}` +
