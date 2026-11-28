@@ -782,6 +782,10 @@ function atualizarFicha() {
 }
 const licaoVista = {}; let licaoT0 = 0;
 function atualizarLicao() {
+  // missão pronta esquecida: depois de 40 s à espera (jogo rodando), o prêmio é resgatado sozinho — quem só assiste não fica preso na primeira missão
+  { const pronta = !silencio && velocidade > 0 && !!document.querySelector('#missao .pronta'), agora = performance.now();
+    if (!pronta) atualizarLicao.prontaT = 0; else if (!atualizarLicao.prontaT) atualizarLicao.prontaT = agora;
+    else if (agora - atualizarLicao.prontaT > 40000 && J) { atualizarLicao.prontaT = 0; aprendeu('resgatar'); if (J.Resgatar()) { aviso('Prêmio da missão resgatado'); anotar('O prêmio da missão foi resgatado sozinho. Da próxima vez, toque em <b>Resgatar</b> para levá-lo na hora.'); salvar(); atualizarPainel(true); } } }
   const l = !silencio && velocidade > 0 ? LICOES.find(([k, , cond]) => !licoes[k] && cond()) : null, c = $('licao'), tx = l ? l[1] : '', agoraL = performance.now();
   if (l && licaoT0) { licaoVista[l[0]] = (licaoVista[l[0]] || 0) + Math.min(1000, agoraL - licaoT0); if (licaoVista[l[0]] > 20000) aprendeu(l[0]); }   // dica vista por 20 s sai sozinha: quem só assiste não fica com ela grudada
   licaoT0 = agoraL;
