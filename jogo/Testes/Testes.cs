@@ -2109,6 +2109,17 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("afixo Duração dos mortos temporários: só em Grimório e Relicário; alonga Golem/Ossário/Coroa/Mãe Carniça", () =>
+            {
+                var d = TabelaItens.Afixo(AfixoItem.DuracaoDosTemporarios); Afirmar(d != null, "existe na tabela");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                float dur(float bonus) { var s = new Simulacao(c, ProgressoCom(EspecieId.Esqueleto), 3, ModoExpedicao.Avancar, 2); s.Bonus.DuracaoDosTemporarios = bonus; var e = s.CriarMortoTemporario(EspecieId.Esqueleto, s.Necromante.Pos, 100f); return e.TempoDeVida; }
+                Afirmar(Math.Abs(dur(0f) - 100f) < 0.01f && Math.Abs(dur(0.3f) - 130f) < 0.01f, "100 s → 130 s com +30%");
+                var rng = new Rng(5); bool foraDoLugar = false, viu = false;
+                for (int k = 0; k < 3000; k++) { var it = GeradorDeItens.Gerar(rng, c, 20, RaridadeItem.Raro); foreach (var af in it.Afixos) if (af.Afixo == AfixoItem.DuracaoDosTemporarios) { viu = true; if (it.Tipo != TipoItem.Grimorio && it.Tipo != TipoItem.Relicario) foraDoLugar = true; } }
+                Afirmar(viu && !foraDoLugar, "cai e só em Grimório/Relicário");
+            });
+
             Teste("Lamento de Ossos: feitiço de livro; com 2+ minions feridos perto do necromante, cura todos no raio; saves com 11 feitiços continuam valendo", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };

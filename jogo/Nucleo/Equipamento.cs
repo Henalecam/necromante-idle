@@ -32,6 +32,7 @@ namespace Necro.Nucleo
         public float DanoDosMinions;        // "aumento" (aditivo) no dano
         public float VelAtaqueDosMinions;   // velocidade de ataque x (1 + valor)
         public float RouboDeVidaDosMinions;
+        public float DuracaoDosTemporarios;   // afixo: Golem, Ossário, Coroa do Rei Morto e Mãe Carniça duram mais
 
         // ---- Lendários e conjuntos ----
         public bool CeifeiroFaminto;
@@ -88,6 +89,7 @@ namespace Necro.Nucleo
                 case AfixoItem.DanoDosMinions: DanoDosMinions += valor; break;
                 case AfixoItem.VelAtaqueDosMinions: VelAtaqueDosMinions += valor; break;
                 case AfixoItem.RouboDeVidaDosMinions: RouboDeVidaDosMinions += valor; break;
+                case AfixoItem.DuracaoDosTemporarios: DuracaoDosTemporarios += valor; break;
             }
         }
     }

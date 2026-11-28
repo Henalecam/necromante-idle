@@ -504,7 +504,7 @@ namespace Necro.Nucleo
             e.Postura = Postura.Agressiva;
             e.Custo = 0;
             e.Temporario = true;
-            e.TempoDeVida = duracao;
+            e.TempoDeVida = duracao * (1f + Bonus.DuracaoDosTemporarios);
             Adicionar(e);
             Emitir(new EventoSim { Tipo = TipoEvento.EntidadeSurgiu, Alvo = e.Id, Origem = Necromante.Id, Pos = e.Pos, Especie = e.Especie });
             return e;
@@ -769,7 +769,7 @@ namespace Necro.Nucleo
             e.Armadura = Formulas.AtributoMinion(d.Armadura, Qualidade.Comum, nivel, _poderTotal, Cfg);
             AplicarEquipamentoAoMinion(e);
             if (Bonus.Unico[9]) { e.VidaMax *= Cfg.AmuletoGolem; Resultado.EfeitosDeUnicos++; }   // Único 9, Amuleto do Senhor do Terror
-            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = f.Duracao * (Bonus.Unico[9] ? 2f : 1f) * (Bonus.ArvoreFinal[0] ? 2f : 1f); e.Golem = true; e.NomeProprio = "Golem de Ossos";
+            e.Vida = e.VidaMax; e.Postura = Postura.Agressiva; e.Custo = 0; e.Temporario = true; e.TempoDeVida = (1f + Bonus.DuracaoDosTemporarios) * f.Duracao * (Bonus.Unico[9] ? 2f : 1f) * (Bonus.ArvoreFinal[0] ? 2f : 1f); e.Golem = true; e.NomeProprio = "Golem de Ossos";
             Adicionar(e);
             PagarFeitico(FeiticoId.Golem, e, e.Pos, 0f);
             Emitir(new EventoSim { Tipo = TipoEvento.EntidadeSurgiu, Alvo = e.Id, Origem = n.Id, Pos = e.Pos, Especie = e.Especie });

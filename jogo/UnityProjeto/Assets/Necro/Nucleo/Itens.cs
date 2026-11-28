@@ -18,7 +18,7 @@ namespace Necro.Nucleo
         ResFisico = 5, ResFogo = 6, ResGelo = 7, ResRaio = 8, ResVeneno = 9, ResSombra = 10,
         ChanceCritico = 11, DanoCritico = 12, PoderNecromantico = 13, Comando = 14,
         VelocidadeDeCeifa = 15, ReducaoDeRecarga = 16, ChanceDeAlma = 17,
-        VidaDosMinions = 18, DanoDosMinions = 19, VelAtaqueDosMinions = 20, RouboDeVidaDosMinions = 21
+        VidaDosMinions = 18, DanoDosMinions = 19, VelAtaqueDosMinions = 20, RouboDeVidaDosMinions = 21, DuracaoDosTemporarios = 22
     }
 
     /// <summary>Efeito único dos Lendários (muda mecânica, não só números).</summary>
@@ -151,7 +151,7 @@ namespace Necro.Nucleo
     {
         public const int TotalDeEspacos = 9;
         public const int TotalDeTipos = 10;
-        public const int TotalDeAfixos = 22;
+        public const int TotalDeAfixos = 23;
         public const int TotalDeRaridades = 5;
 
         private static readonly string[] NomesDosTipos = { "Cajado", "Foice", "Grimório", "Relicário", "Elmo", "Peitoral", "Luvas", "Botas", "Amuleto", "Anel" };
@@ -340,6 +340,7 @@ namespace Necro.Nucleo
             t[(int)AfixoItem.DanoDosMinions] = A(AfixoItem.DanoDosMinions, "Dano dos minions", 0.05f, 0.10f, EscalaAfixo.Linear, 0f, true, "Sanguinário|Sanguinária|Sanguinárias", "da Matança", 1f, 1.5f);
             t[(int)AfixoItem.VelAtaqueDosMinions] = A(AfixoItem.VelAtaqueDosMinions, "Velocidade de ataque dos minions", 0.03f, 0.06f, EscalaAfixo.Linear, 0.25f, true, "Frenético|Frenética|Frenéticas", "do Frenesi", 1f, 1.2f);
             t[(int)AfixoItem.RouboDeVidaDosMinions] = A(AfixoItem.RouboDeVidaDosMinions, "Roubo de vida dos minions", 0.01f, 0.02f, EscalaAfixo.Linear, 0.06f, true, "Faminto|Faminta|Famintas", "da Fome");
+            t[(int)AfixoItem.DuracaoDosTemporarios] = A(AfixoItem.DuracaoDosTemporarios, "Duração dos mortos temporários", 0.15f, 0.30f, EscalaAfixo.Linear, 1.0f, true, "Insepulto|Insepulta|Insepultas", "do Velório");
             return t;
         }
 
@@ -360,12 +361,12 @@ namespace Necro.Nucleo
             t[(int)TipoItem.Grimorio] = new[]
             {
                 AfixoItem.RegenMana, AfixoItem.DanoDeFeiticos, AfixoItem.ReducaoDeRecarga, AfixoItem.DanoCritico, AfixoItem.PoderNecromantico,
-                AfixoItem.VidaDosMinions, AfixoItem.DanoDosMinions
+                AfixoItem.VidaDosMinions, AfixoItem.DanoDosMinions, AfixoItem.DuracaoDosTemporarios
             };
             t[(int)TipoItem.Relicario] = new[]
             {
                 AfixoItem.Vida, AfixoItem.ChanceDeAlma, AfixoItem.VidaDosMinions, AfixoItem.VelAtaqueDosMinions, AfixoItem.RouboDeVidaDosMinions,
-                AfixoItem.ResSombra, AfixoItem.RegenMana
+                AfixoItem.ResSombra, AfixoItem.RegenMana, AfixoItem.DuracaoDosTemporarios
             };
             t[(int)TipoItem.Elmo] = new[]
             {
