@@ -221,7 +221,7 @@ public static partial class Jogo
         }
         sb.Append("],\"fusoes\":[");
         bool pf = true;
-        for (int e = 1; e < 16; e++)
+        for (int e = 1; e < TabelaEspecies.Total; e++)   // todas as espécies erguíveis (antes parava na 15 e deixava de fora Magistrado, Arauto, Lacaio...)
             for (int q = 0; q < (int)Qualidade.Profana; q++)
             {
                 int n = Fusao.Contar(_p, (EspecieId)e, (Qualidade)q);

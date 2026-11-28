@@ -2109,6 +2109,21 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Carpideira: cura os inimigos feridos em volta; erguida, cura os minions mais feridos", () =>
+            {
+                var d = TabelaEspecies.Obter(EspecieId.Carpideira); Afirmar(d != null && d.Familia == Familia.MortoVivo && d.AndarMinimo == 5, "dados da espécie");
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var s = new Simulacao(c, ProgressoCom(EspecieId.Zumbi), 3, ModoExpedicao.Avancar, 6);
+                var ca = s.CriarInimigo(EspecieId.Carpideira, new Vec2(30f, 6f)); var z = s.CriarInimigo(EspecieId.Zumbi, new Vec2(31f, 6f)); z.Vida = z.VidaMax * 0.5f;
+                for (int k = 0; k < 120; k++) s.Tick();
+                Afirmar(z.Vida > z.VidaMax * 0.55f, "o zumbi ferido foi curado (" + (z.Vida / z.VidaMax) + ")");
+                var p = ProgressoCom(EspecieId.Carpideira, EspecieId.Esqueleto, EspecieId.Esqueleto);
+                var s2 = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2);
+                var es = s2.Entidades.FindAll(e => e.Faccao == Faccao.Minion && e.Especie == EspecieId.Esqueleto); es[0].Vida = es[0].VidaMax * 0.3f; float v0 = es[0].Vida;
+                bool viu = false; for (int k = 0; k < 120 && !viu; k++) { s2.Tick(); foreach (var ev in s2.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 59) viu = true; }
+                Afirmar(viu && s2.Resultado.Lamentos > 0, "o lamento curou um minion");
+            });
+
             Teste("Santuário Rachado: entra no sorteio com o código 14 (sem colidir com as portas 11–13)", () =>
             {
                 bool viu14 = false, viuPorta = false;

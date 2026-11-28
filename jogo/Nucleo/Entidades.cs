@@ -54,7 +54,7 @@ namespace Necro.Nucleo
         public bool Golem;                                         // o Golem conjurado pelo necromante (um só por vez)
         public bool Unico; public string NomeProprio;              // monstro único: nome próprio e séquito
         public bool DaHorda, Campeao;                              // inimigo comum de horda (mais fraco, rende menos) / campeão de pacote
-        public bool Aparou; public int GolpesSofridos;             // Esqueleto (minion): já aparou um golpe nesta sala
+        public bool Aparou; public int GolpesSofridos; public long UltimoLamento = -1;             // Esqueleto (minion): já aparou um golpe nesta sala
         public float SedeTempo;         // Cão de Cripta (minion): ataca mais rápido depois de matar
         public float FraquezaTempo;     // Maldição da Fraqueza
         public int ProvocadoPor = -1;

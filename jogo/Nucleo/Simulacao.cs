@@ -677,6 +677,27 @@ namespace Necro.Nucleo
         }
 
         /// <summary>Arauto de Cinzas erguido — Sermão de Ossos: a cada tantos segundos, escudo de ossos nos minions mais próximos que estão sem escudo.</summary>
+        /// <summary>Carpideira erguida — Lamento: a cada tantos segundos, cura os minions mais feridos.</summary>
+        private void Lamentos()
+        {
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var ca = Entidades[i];
+                if (!ca.Viva || ca.Faccao != Faccao.Minion || ca.Especie != EspecieId.Carpideira) continue;
+                ca.TempoHabilidade -= DT * 5f;
+                if (ca.TempoHabilidade > 0f) continue;
+                ca.TempoHabilidade = Cfg.LamentoIntervalo;
+                for (int n = 0; n < Cfg.LamentoAlvos; n++)
+                {
+                    Entidade pior = null; float pf = 0.999f;
+                    for (int j = 0; j < Entidades.Count; j++) { var m = Entidades[j]; if (!m.Viva || m.Faccao != Faccao.Minion || m.Vida >= m.VidaMax || m.UltimoLamento == TickAtual) continue; float f = m.Vida / m.VidaMax; if (f < pf) { pf = f; pior = m; } }
+                    if (pior == null) break;
+                    pior.UltimoLamento = TickAtual; pior.Vida = Math.Min(pior.VidaMax, pior.Vida + pior.VidaMax * Cfg.LamentoCura); Resultado.Lamentos++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 59, Alvo = pior.Id, Origem = ca.Id, Pos = ca.Pos, Dir = pior.Pos - ca.Pos });
+                }
+            }
+        }
+
         private void SermoesDeOssos()
         {
             for (int i = 0; i < Entidades.Count; i++)
@@ -1228,7 +1249,7 @@ namespace Necro.Nucleo
             if (SacrificioTempo > 0f) SacrificioTempo -= DT;
 
             if (Muralhas.Count > 0) AtualizarMuralhas();
-            if (Cfg.HabilidadesDeEspecie && TickAtual % 5 == 0) SermoesDeOssos();
+            if (Cfg.HabilidadesDeEspecie && TickAtual % 5 == 0) { SermoesDeOssos(); Lamentos(); }
 
             // Poças de sangue: curam o chefe dono enquanto ele estiver dentro do raio.
             for (int i = Pocas.Count - 1; i >= 0; i--)

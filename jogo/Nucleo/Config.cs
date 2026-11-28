@@ -332,6 +332,8 @@ namespace Necro.Nucleo
         public float PregadorCura = 0.03f;   // conjunto Sermão do Pregador de Cinzas (3 peças): cada feitiço cura o necromante nesta fração da vida máxima
         public float SermaoIntervalo = 10f, SermaoEscudo = 0.15f, BrasaFinalMult = 2.5f; public int SermaoAlvos = 2;   // Arauto erguido (Sermão de Ossos) e Lacaio erguido (Brasa Final)
         public float LacaioExplosaoMult = 0.5f, LacaioExplosaoRaio = 2.6f;   // Lacaio Ígneo: explosão de fogo ao morrer (× o dano dele)
+        public float CarpideiraIntervalo = 8f, CarpideiraRaio = 5f, CarpideiraCura = 0.10f; public int CarpideiraAlvos = 3;   // Carpideira: o lamento cura os aliados feridos em volta
+        public float LamentoIntervalo = 8f, LamentoCura = 0.06f; public int LamentoAlvos = 3;   // Carpideira erguida: cura os minions mais feridos
         public float ArautoIntervalo = 7f, ArautoRaio = 5f, ArautoEscudo = 0.25f; public int ArautoAlvos = 3;   // Arauto de Cinzas: escudo de ossos nos aliados próximos
         public bool PedraAtiva = true; public int PedraMinimoDeInimigos = 3;
         public bool EspiritoAtivo = true; public float EspiritoVidaMinima = 6f;   // só vale a pena em alvo com vida atual acima de N× o dano do necromante

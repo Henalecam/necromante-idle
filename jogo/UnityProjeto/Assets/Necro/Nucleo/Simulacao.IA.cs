@@ -143,6 +143,18 @@ namespace Necro.Nucleo
                 }
             }
             if (e.Oculto && TickAtual * DT >= e.OcultoAte) Revelar(e);
+            if (e.Especie == EspecieId.Carpideira && Cfg.HabilidadesDeEspecie && (e.TempoHabilidade -= DT) <= 0f)
+            {
+                e.TempoHabilidade = Cfg.CarpideiraIntervalo; int curados = 0; float r2 = Cfg.CarpideiraRaio * Cfg.CarpideiraRaio;
+                for (int i = 0; i < Entidades.Count && curados < Cfg.CarpideiraAlvos; i++)
+                {
+                    var a = Entidades[i];
+                    if (!a.Viva || a.Faccao != Faccao.Inimigo || a.Vida >= a.VidaMax || Vec2.Dist2(a.Pos, e.Pos) > r2) continue;
+                    a.Vida = Math.Min(a.VidaMax, a.Vida + a.VidaMax * Cfg.CarpideiraCura); curados++;
+                    Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 58, Alvo = a.Id, Origem = e.Id, Pos = e.Pos, Dir = a.Pos - e.Pos });
+                }
+                if (curados > 0) { e.Animacao = EstadoAnimacao.Conjurando; e.TempoAcao = 0.6f; return true; }
+            }
             if (e.Especie == EspecieId.ArautoDeCinzas && Cfg.HabilidadesDeEspecie && (e.TempoHabilidade -= DT) <= 0f)
             {
                 e.TempoHabilidade = Cfg.ArautoIntervalo; int dados = 0; float r2 = Cfg.ArautoRaio * Cfg.ArautoRaio;
