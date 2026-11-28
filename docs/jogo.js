@@ -298,7 +298,7 @@ const tinta = document.createElement('canvas'), tctx = tinta.getContext('2d');
 
 function limparArena(tudo) {
   mortos.clear(); cadaverDe.clear(); particulas = [];
-  if (tudo) { nomesUnicos.clear(); unicoAnunciar = -1; sctx.clearRect(0, 0, sangue.width, sangue.height); return; }   // expedição nova: os ids das entidades recomeçam, então nomes antigos não podem grudar em outro monstro
+  if (tudo) { nomesUnicos.clear(); campeoes.clear(); ocultos.clear(); unicoAnunciar = -1; sctx.clearRect(0, 0, sangue.width, sangue.height); return; }   // expedição nova: os ids das entidades recomeçam, então nomes antigos não podem grudar em outro monstro
   // andar novo na mesma expedição: o chão guarda metade do que aconteceu
   sctx.save(); sctx.globalCompositeOperation = 'destination-out'; sctx.fillStyle = 'rgba(0,0,0,0.5)'; sctx.fillRect(0, 0, sangue.width, sangue.height); sctx.restore();
 }
