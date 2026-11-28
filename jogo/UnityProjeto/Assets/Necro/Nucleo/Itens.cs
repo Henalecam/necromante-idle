@@ -297,7 +297,7 @@ namespace Necro.Nucleo
             var d = _afixos[(int)a.Afixo];
             var ci = System.Globalization.CultureInfo.InvariantCulture;
             if (d.Percentual) return "+" + (a.Valor * 100f).ToString("0.#", ci) + "% " + d.Nome;
-            return "+" + a.Valor.ToString(a.Valor < 10f && a.Afixo != AfixoItem.Comando ? "0.##" : "0", ci) + " " + d.Nome;
+            return "+" + a.Valor.ToString(a.Afixo == AfixoItem.RegenMana ? "0.#" : "0", ci) + " " + d.Nome;   // planos sem casas (Vida, Armadura, Mana); só a regeneração por segundo leva uma casa
         }
 
         /// <summary>Adjetivo do afixo concordando com o tipo de item ("Sepulcral", "Vigorosa", "Blindadas").</summary>
