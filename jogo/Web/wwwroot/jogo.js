@@ -776,7 +776,7 @@ function atualizarFicha() {
     }
   }
   if (h) { let chefeVivo = false; for (const eC of estado.values()) if (eC.viva && eC.chefe && eC.inimigo) { chefeVivo = true; break; } c.style.top = chefeVivo ? '104px' : ''; }
-  if (h !== fichaTxt) { fichaTxt = h; c.innerHTML = h; c.hidden = !h; }
+  if (h !== fichaTxt) { fichaTxt = h; c.innerHTML = h; c.hidden = !h; virgulas(c); }
 }
 const licaoVista = {}; let licaoT0 = 0;
 function atualizarLicao() {
@@ -1872,6 +1872,8 @@ const donsTracosCurto = (dn, t) => { const ds = (dn || []).map((v, k) => v ? `<s
 const QUALIDADES = ['Fraca', 'Comum', 'Vigorosa', 'Ancestral', 'Profana'];
 
 const decBR = (t) => String(t).replace(/(\d)\.(\d)/g, '$1,$2');   // números do núcleo vêm com ponto; na tela, vírgula
+// passa a vírgula em todo texto visível de um painel (só nós de texto: estilos e atributos ficam intactos)
+function virgulas(el) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) if (/\d\.\d/.test(n.nodeValue)) n.nodeValue = decBR(n.nodeValue); }
 function itemHtml(it) { return `<span class="r${it.r}">${esc(it.nome)}</span> <span class="nota">nv ${it.nivel}</span><small>${it.afixos.map((a) => esc(decBR(a))).join(' · ')}</small>`; }
 
 function atualizarPainel(forcar) {
@@ -2137,7 +2139,7 @@ function atualizarPainel(forcar) {
   for (const lado of ['esq', 'dir', 'baixo']) {
     if (lado === 'esq' && invAberto) continue;
     const h0 = render(abasSel[lado]), h = abasSel[lado] === 'necropole' || abasSel[lado] === 'ferreiro' ? emSubAbas(h0, abasSel[lado]) : abasSel[lado] === 'masmorra' ? dobrarCumpridas(h0) : h0;
-    if (forcar || h !== htmlAnterior[lado]) { htmlAnterior[lado] = h; $(ALVO[lado]).innerHTML = h; }
+    if (forcar || h !== htmlAnterior[lado]) { htmlAnterior[lado] = h; $(ALVO[lado]).innerHTML = h; virgulas($(ALVO[lado])); }
   }
 }
 
@@ -2190,7 +2192,7 @@ function desenharInventario(d) {
   h += `<div class="linha" style="margin-top:10px"><div class="corpo">Desmanchar ao pegar<small>itens abaixo desta raridade viram Essência na hora</small></div><select data-regra="0">` +
     RARIDADES.map((r, k) => `<option value="${k}" ${k === d.regras[0] ? 'selected' : ''}>${k === 0 ? 'nada' : 'abaixo de ' + r}</option>`).join('') + '</select></div>';
   h += '<p class="nota">O que você equipa vale a partir da próxima expedição.</p>';
-  if (h !== invAnterior) { invAnterior = h; $('inventario').innerHTML = h; }
+  if (h !== invAnterior) { invAnterior = h; $('inventario').innerHTML = h; virgulas($('inventario')); }
 }
 function acaoDoPainel(b) {
   const i = +b.dataset.i;
@@ -2250,7 +2252,7 @@ function desenharFicha(d) {
     (m.imbuir >= 0 ? `<button data-ac="imbuir" data-i="${fichaIdx}" ${m.imbuir > d.fragmentos ? 'disabled' : ''}>Imbuir · ${fmt(m.imbuir)} Frag.</button>` : '') +
     (m.evoluir >= 0 ? `<button data-ac="evoluir" data-i="${fichaIdx}" ${m.evoluir > d.essencia ? 'disabled' : ''}>Evoluir · ${fmt(m.evoluir)} Ess.</button>` : '') +
     `<button data-ac="sacrificar" data-i="${fichaIdx}">Sacrificar · +${fmt(m.frag)}</button><button data-fechar="1">Fechar</button></div>`;
-  if (h !== fichaAnterior) { fichaAnterior = h; $('ficha-corpo').innerHTML = h; }
+  if (h !== fichaAnterior) { fichaAnterior = h; $('ficha-corpo').innerHTML = h; virgulas($('ficha-corpo')); }
 }
 function animarRetrato(agora) {
   requestAnimationFrame(animarRetrato);
