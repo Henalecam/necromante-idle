@@ -2109,6 +2109,18 @@ namespace Necro.Testes
                 Afirmar(d1 > d0 * 1.25f && Math.Abs(d2 - d0) < 0.5f, "com o Estandarte, +30% só contra os fortes (" + d0 + " → " + d1 + ", comum " + d2 + ")");
             });
 
+            Teste("Lamento de Ossos: feitiço de livro; com 2+ minions feridos perto do necromante, cura todos no raio; saves com 11 feitiços continuam valendo", () =>
+            {
+                var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false };
+                var p = ProgressoCom(EspecieId.Esqueleto, EspecieId.Esqueleto, EspecieId.Esqueleto); Grimorio.Receber(p, FeiticoId.LamentoDeOssos, c); p.Atributos[1] = 200;
+                Afirmar(Grimorio.Nivel(p, FeiticoId.LamentoDeOssos) >= 1, "o livro foi lido");
+                var s = new Simulacao(c, p, 3, ModoExpedicao.Avancar, 2); bool viu = false;
+                for (int k = 0; k < 600 && !viu; k++) { foreach (var m in s.Entidades) if (m.Viva && m.Faccao == Faccao.Minion) { m.Vida = Math.Min(m.Vida, m.VidaMax * 0.3f); m.Pos = s.Necromante.Pos + new Vec2(1f, 0f); } s.Tick(); foreach (var ev in s.Eventos) if (ev.Tipo == TipoEvento.EfeitoAplicado && ev.Extra == 60) viu = true; }
+                Afirmar(viu && s.Resultado.LamentosDeOssos > 0, "o lamento curou os minions");
+                var velho = new EstadoProgresso(); velho.NiveisDeFeitico = new int[11]; velho.NiveisDeFeitico[10] = 2;
+                Afirmar(Grimorio.Nivel(velho, FeiticoId.EspiritoDeOssos) == 2 && Grimorio.Nivel(velho, FeiticoId.LamentoDeOssos) == 0, "save antigo com 11 posições lê certo");
+            });
+
             Teste("Ossário Esquecido: sala dos andares 1–10; ergue um Esqueleto temporário (dois com toque) que não ocupa Comando", () =>
             {
                 var c = new ConfigJogo { ObjetosPorSala = 0, MissoesDeCenario = false, ForcarSalaEspecial = (int)TipoSala.OssarioEsquecido };

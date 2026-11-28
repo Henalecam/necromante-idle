@@ -653,6 +653,7 @@ namespace Necro.Nucleo
             new DadosFeitico { Id = FeiticoId.PedraMaldita, Nome = "Pedra Maldita", CustoMana = 24f, Recarga = 11f, Alcance = 8f, Potencia = 3.5f },
             // Espírito de Ossos (Diablo 1, Bone Spirit): um espírito persegue o alvo e arranca uma fração da vida ATUAL dele. Potência = fração; Raio = teto em múltiplos do dano do necromante
             new DadosFeitico { Id = FeiticoId.EspiritoDeOssos, Nome = "Espírito de Ossos", CustoMana = 30f, Recarga = 14f, Alcance = 9f, Potencia = 0.33f, Raio = 12f },
+            new DadosFeitico { Id = FeiticoId.LamentoDeOssos, Nome = "Lamento de Ossos", CustoMana = 28f, Recarga = 18f, Alcance = 6f, Potencia = 0.18f, Raio = 6f },   // cura os minions em volta do necromante
         };
 
         public float ExplosaoCadaverFracaoVida = 0.10f; // + fração da vida máxima de cada cadáver consumido

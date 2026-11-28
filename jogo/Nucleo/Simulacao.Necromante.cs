@@ -67,6 +67,7 @@ namespace Necro.Nucleo
             if (LancarMuralha()) return;
             if (LancarRelampago()) return;
             if (LancarPedra()) return;
+            if (LancarLamentoDeOssos()) return;
             if (LancarEspirito()) return;   // o Golem vem antes das ordens: é o escudo do exército
 
             // Ordens "SE condição ENTÃO ação", de cima para baixo; a primeira que puder agir encerra o tick.
@@ -265,7 +266,7 @@ namespace Necro.Nucleo
             _recargaFeitico[(int)id] = f.Recarga * _fatorRecarga;
             if (Bonus.PecasDeConjunto.Length > (int)ConjuntoId.PregadorDeCinzas && Bonus.PecasDeConjunto[(int)ConjuntoId.PregadorDeCinzas] >= 3 && n.Vida < n.VidaMax) { Curar(n, n, n.VidaMax * Cfg.PregadorCura); Resultado.SermoesDoPregador++; }   // Sermão do Pregador de Cinzas
             // Único 7, Grimório de Pele Humana: às vezes o feitiço não entra em recarga (o Golem não conta)
-            if (Bonus.Unico[7] && id != FeiticoId.Golem && id != FeiticoId.MuralhaDeFogo && id != FeiticoId.RelampagoEmCadeia && id != FeiticoId.PedraMaldita && id != FeiticoId.EspiritoDeOssos && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
+            if (Bonus.Unico[7] && id != FeiticoId.Golem && id != FeiticoId.MuralhaDeFogo && id != FeiticoId.RelampagoEmCadeia && id != FeiticoId.PedraMaldita && id != FeiticoId.EspiritoDeOssos && id != FeiticoId.LamentoDeOssos && Rng.Chance(Cfg.GrimorioSemRecarga)) { _recargaFeitico[(int)id] = 0f; Resultado.EfeitosDeUnicos++; }
             n.TempoAcao = Cfg.TempoDeConjuracao;
             n.Animacao = EstadoAnimacao.Conjurando;
             Olhar(n, ponto);

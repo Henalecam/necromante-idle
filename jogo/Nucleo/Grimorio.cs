@@ -8,10 +8,10 @@ namespace Necro.Nucleo
     /// </summary>
     public static class Grimorio
     {
-        public const int Quantos = 11;
+        public const int Quantos = 12;
 
         /// <summary>Feitiços que não são de nascença: só existem depois do primeiro livro.</summary>
-        public static bool SoPorLivro(FeiticoId id) { return id == FeiticoId.Golem || id == FeiticoId.MuralhaDeFogo || id == FeiticoId.RelampagoEmCadeia || id == FeiticoId.PedraMaldita || id == FeiticoId.EspiritoDeOssos; }
+        public static bool SoPorLivro(FeiticoId id) { return id == FeiticoId.Golem || id == FeiticoId.MuralhaDeFogo || id == FeiticoId.RelampagoEmCadeia || id == FeiticoId.PedraMaldita || id == FeiticoId.EspiritoDeOssos || id == FeiticoId.LamentoDeOssos; }
 
         private static void Garantir(EstadoProgresso p)
         {

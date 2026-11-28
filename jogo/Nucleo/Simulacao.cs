@@ -191,6 +191,7 @@ namespace Necro.Nucleo
             _relampagoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.RelampagoEmCadeia) >= 1;
             _pedraAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.PedraMaldita) >= 1;
             _espiritoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.EspiritoDeOssos) >= 1;
+            _lamentoAprendido = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.LamentoDeOssos) >= 1;
             _muralhaAprendida = cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.MuralhaDeFogo) >= 1;
             _golemAprendido = (cfg.LivrosDeFeitico && Grimorio.Nivel(progresso, FeiticoId.Golem) >= 1) || Bonus.ArvoreFinal[0];
             for (int fi = 0; fi < Grimorio.Quantos; fi++)
@@ -611,7 +612,25 @@ namespace Necro.Nucleo
             return true;
         }
 
-        private bool _relampagoAprendido, _pedraAprendida, _espiritoAprendido;
+        private bool _relampagoAprendido, _pedraAprendida, _espiritoAprendido, _lamentoAprendido;
+
+        /// <summary>Lamento de Ossos (original): com dois ou mais minions feridos (abaixo de 60%) perto do necromante, cura todos os minions no raio numa fração da vida máxima.</summary>
+        private bool LancarLamentoDeOssos()
+        {
+            if (!_lamentoAprendido || !PodeLancar(FeiticoId.LamentoDeOssos)) return false;
+            var f = Fei(FeiticoId.LamentoDeOssos); var n = Necromante; float r2 = f.Raio * f.Raio; int feridos = 0;
+            for (int i = 0; i < Entidades.Count; i++) { var m = Entidades[i]; if (m.Viva && m.Faccao == Faccao.Minion && m.Vida < m.VidaMax * 0.6f && Vec2.Dist2(m.Pos, n.Pos) <= r2) feridos++; }
+            if (feridos < 2) return false;
+            PagarFeitico(FeiticoId.LamentoDeOssos, n, n.Pos, 0f);
+            for (int i = 0; i < Entidades.Count; i++)
+            {
+                var m = Entidades[i]; if (!m.Viva || m.Faccao != Faccao.Minion || m.Vida >= m.VidaMax || Vec2.Dist2(m.Pos, n.Pos) > r2) continue;
+                m.Vida = Math.Min(m.VidaMax, m.Vida + m.VidaMax * f.Potencia);
+                Emitir(new EventoSim { Tipo = TipoEvento.EfeitoAplicado, Extra = 60, Alvo = m.Id, Origem = n.Id, Pos = n.Pos, Dir = m.Pos - n.Pos });
+            }
+            Resultado.LamentosDeOssos++;
+            return true;
+        }
 
         /// <summary>Espírito de Ossos: no inimigo de mais vida atual ao alcance (que valha a pena), arranca uma fração da vida atual dele, com teto em múltiplos do dano do necromante (chefe não derrete).</summary>
         private bool LancarEspirito()
