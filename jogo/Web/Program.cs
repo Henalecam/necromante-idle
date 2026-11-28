@@ -118,7 +118,7 @@ public static partial class Jogo
         sb.Append(",\"missao\":");
         if (mi == null) sb.Append("null");
         else sb.Append("{\"n\":").Append(_p.MissaoAtual + 1).Append(",\"total\":").Append(_cfg.Missoes.Length).Append(",\"titulo\":").Append(S(mi.Titulo)).Append(",\"historia\":").Append(S(mi.Historia))
-               .Append(",\"objetivo\":").Append(S(mi.Objetivo)).Append(",\"feito\":").Append(Missoes.Progresso(_p, _cfg, _sim.Resultado)).Append(",\"de\":").Append(mi.Quantidade)
+               .Append(",\"tipo\":").Append((int)mi.Tipo).Append(",\"objetivo\":").Append(S(mi.Objetivo)).Append(",\"feito\":").Append(Missoes.Progresso(_p, _cfg, _sim.Resultado)).Append(",\"de\":").Append(mi.Quantidade)
                .Append(",\"pronta\":").Append(B(Missoes.Completa(_p, _cfg, _sim.Resultado)))
                .Append(",\"ossos\":").Append(mi.Ossos).Append(",\"essencia\":").Append(mi.Essencia).Append('}');
         sb.Append(",\"pactos\":[");

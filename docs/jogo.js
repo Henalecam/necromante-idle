@@ -638,7 +638,17 @@ function evento(v) {
   }
 }
 
+// missão da história parada: quantas expedições seguidas terminaram sem a missão andar (o Ancião dá a dica depois de 3)
+let parada = { n: 0, f: -1, exp: 0 }; try { parada = JSON.parse(localStorage.getItem('necromante-idle-save-v1-parada')) || parada; } catch (e) { /* começa do zero */ }
+function contarParada() {
+  try { const m = JSON.parse(J.Painel()).missao; if (!m) return; if (m.n !== parada.n || m.feito !== parada.f) parada = { n: m.n, f: m.feito, exp: 0 }; else parada.exp++; localStorage.setItem('necromante-idle-save-v1-parada', JSON.stringify(parada)); } catch (e) { /* sem painel, sem conta */ }
+}
+const DICA_MISSAO = ['Desça mais: ponha os minions mais fortes em campo e use os Ritos de Sangue antes de partir.', 'Erga mais minions: o Comando sobe com a Cripta (Necrópole) e com talentos.', 'Vista mais itens: abra o Inventário e equipe o que tiver, mesmo Comum.', 'Gaste Ossos nas Construções da Necrópole: é o que esta missão conta.', 'O chefe é forte: melhore o exército, use Frenesi e Sopro na luta e volte.',
+  'Deixe o exército limpar os andares: cada inimigo morto conta.', 'Essa espécie aparece em certos andares: veja no Bestiário onde ela vive.', 'Elites aparecem nas salas ☠ e com os presságios: siga a rota por elas.', 'Toque nos orbes verdes ou espere: cada alma ceifada conta.', 'Erga almas do Filactério na aba Exército.', 'Suba qualquer construção da Necrópole.', 'Desmanche itens que não usa, no Inventário.',
+  'Toque no orbe verde assim que ele sobe de um morto: só o toque conta aqui.', 'Os pactos aparecem do andar 5 em diante: escolha um nas encruzilhadas.', 'Junte 3 almas iguais da mesma qualidade e funda na aba Exército.', 'Em Regras automáticas (Exército), escolha sacrificar a reserva ao fim da expedição.', 'Ofereça Restos nos altares da Necrópole (Oferendas).',
+  'Mate mais dessa espécie: o Domínio aparece no Bestiário.', 'Baús ficam nas salas ▣: toque na sala no mapa para ir até ela.', 'Salas especiais são as com símbolo no mapa: toque nelas para o grupo passar.', 'Toque no símbolo de uma sala no mapa para mudar a rota.', 'Cofres ▩ pedem a chave da sala indicada no mapa: passe por ela antes.'];
 function fimDeExpedicao(p) {
+  contarParada();
   if (estat) { estat.fim = tempoSim; estatAnterior = estat; } estat = null;
   som('fim');
   if (!silencio) {
@@ -2048,6 +2058,7 @@ function atualizarPainel(forcar) {
     }
     // o Ancião: uma dica sobre o que vem pela frente
     { const prox = (d.recorde || 0) + 1, tm = TEMAS_ANDAR[temaDoAndar(prox)], dicas = [`O andar ${prox} fica em <b>${tm[0]}</b>: ${tm[4]}.`];
+      if (d.missao && !d.missao.pronta && parada.n === d.missao.n && parada.exp >= 3 && DICA_MISSAO[d.missao.tipo]) dicas.unshift(`A missão <b>${esc(d.missao.titulo)}</b> está parada há ${parada.exp} expedições. ${DICA_MISSAO[d.missao.tipo]}`);
       if (d.acougueiro === 1) dicas.push('O <b>Açougueiro</b> ainda espera atrás da porta do andar 2. Volte forte: ele larga o Cutelo.');
       if (d.canil === 1) dicas.push('O <b>Canil Maldito</b> espera no andar ' + d.canilAndar + ': cães em bando. Minions de área e bom tanque ajudam.');
       if (d.forja === 1) dicas.push('A <b>Forja do Abismo</b> espera no andar ' + d.forjaAndar + ': Brasamor e os Lacaios Ígneos. Mate os Lacaios de longe.');
