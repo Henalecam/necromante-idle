@@ -782,14 +782,14 @@ const DICA_SALA = { 28: 'missão: Brasamor e os Lacaios da fornalha', 27: 'miss�
 const NOME_SECRETO = ['', 'O Pasto Profano', 'A Câmara do Tesouro', 'A Cripta dos Espelhos'];
 // Santuários de efeito incerto (Diablo 1): [nome, frase enigmática, efeito revelado depois de usado]
 const SANTUARIOS = [null,
-  ['Santuário Misterioso', 'Uns minguam para que um cresça.', 'seus aliados batem muito mais forte, mas apanham um pouco mais'],
-  ['Santuário Sombrio', 'Quem se guarda pouco fere.', 'seus aliados apanham bem menos, mas batem um pouco menos'],
-  ['Santuário Estranho', 'A lâmina justa é ligeira.', 'seus aliados causam mais dano'],
-  ['Santuário Reluzente', 'À luz, o oculto se mostra.', 'identifica os itens já achados nesta descida e faz cair mais itens'],
+  ['Santuário Misterioso', 'O que um ganha, outro paga.', 'seus aliados batem muito mais forte, mas apanham um pouco mais'],
+  ['Santuário Sombrio', 'Escudo erguido, braço lento.', 'seus aliados apanham bem menos, mas batem um pouco menos'],
+  ['Santuário Estranho', 'A pedra afia o que toca.', 'seus aliados causam mais dano'],
+  ['Santuário Reluzente', 'Uma luz fria vasculha a mochila.', 'identifica os itens já achados nesta descida e faz cair mais itens'],
   ['Santuário Oculto', 'O que se gasta aqui, ali se poupa.', 'o equipamento não perde durabilidade nesta descida'],
-  ['Santuário Religioso', 'A fé fecha as feridas.', 'cura todos os aliados por completo'],
-  ['Santuário Mágico', 'Um véu se ergue entre ti e o golpe.', 'um escudo envolve todos os aliados'],
-  ['Santuário Ornado', 'Saber custa o que o chão dá.', 'muita experiência para o necromante, mas menos Ossos'],
+  ['Santuário Religioso', 'A água ainda morna lava o sangue.', 'cura todos os aliados por completo'],
+  ['Santuário Mágico', 'Um véu se ergue entre você e o golpe.', 'um escudo envolve todos os aliados'],
+  ['Santuário Ornado', 'Cada lição custa um punhado de ossos.', 'muita experiência para o necromante, mas menos Ossos'],
   ['Santuário Tétrico', 'Onde a carne cede, o ouro brota.', 'tira parte da vida de todos, e paga em ouro'],
   ['Santuário Profano', 'As almas ouvem; os vivos também.', 'caem mais almas, mas os inimigos ferem mais']];
 const BENCAOS = SANTUARIOS.map((x) => (x ? x[0] + ': ' + x[2] : ''));
@@ -1666,11 +1666,11 @@ function desenhar(dt) {
   if (chB !== bencaosMostradas) {
     bencaosMostradas = chB; $('bencaos').hidden = !chB;
     if (chB && bencaos[0] === 13) {
-      $('bencaos').innerHTML = `<div class="cab"><span>A Câmara de Ossos</span><span id="ben-t"></span></div><p class="frase">“Além do Salão dos Heróis jaz a Câmara de Ossos. Morte eterna aguarda quem lhe roubar os tesouros.”</p><p class="nota">Missão deste save. Atrás do selo há uma sala cheia de esqueletos, dois deles de elite. Limpa a sala, você leva um <b>livro de feitiço garantido</b> (um feitiço que você ainda não conhece, se houver) e ouro. Sem resposta, o necromante só rompe o selo depois de já ter concluído o andar 8.</p><div class="ops"><button data-b="0"><b>Romper o selo</b><span class="g">enfrentar a Câmara</span></button><button data-b="1"><b>Deixar selada</b><span class="g">ela continua aqui na próxima descida</span></button></div>`;
+      $('bencaos').innerHTML = `<div class="cab"><span>A Câmara de Ossos</span><span id="ben-t"></span></div><p class="frase">“O selo está frio. Quem o rompe acorda os que o guardam.”</p><p class="nota">Missão deste save. Atrás do selo há uma sala cheia de esqueletos, dois deles de elite. Limpa a sala, você leva um <b>livro de feitiço garantido</b> (um feitiço que você ainda não conhece, se houver) e ouro. Sem resposta, o necromante só rompe o selo depois de já ter concluído o andar 8.</p><div class="ops"><button data-b="0"><b>Romper o selo</b><span class="g">enfrentar a Câmara</span></button><button data-b="1"><b>Deixar selada</b><span class="g">ela continua aqui na próxima descida</span></button></div>`;
     } else if (chB && bencaos[0] === 12) {
-      $('bencaos').innerHTML = `<div class="cab"><span>A tumba do Rei Esqueleto</span><span id="ben-t"></span></div><p class="frase">“O calor da vida entrou na minha tumba. Prepare-se, mortal, para servir ao meu senhor.”</p><p class="nota">Missão deste save. No sarcófago dorme o Rei Esqueleto: enquanto ele vive, mais esqueletos se erguem. Mate o Rei primeiro. Vencê-lo dá a <b>Coroa do Rei Morto</b> e ouro. Sem resposta, o necromante só abre depois de já ter concluído o andar 7.</p><div class="ops"><button data-b="0"><b>Abrir a tumba</b><span class="g">enfrentar o Rei Esqueleto</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">ele continua aqui na próxima descida</span></button></div>`;
+      $('bencaos').innerHTML = `<div class="cab"><span>A tumba do Rei Esqueleto</span><span id="ben-t"></span></div><p class="frase">“Ossos estalam no escuro. Uma coroa espera quem a leve.”</p><p class="nota">Missão deste save. No sarcófago dorme o Rei Esqueleto: enquanto ele vive, mais esqueletos se erguem. Mate o Rei primeiro. Vencê-lo dá a <b>Coroa do Rei Morto</b> e ouro. Sem resposta, o necromante só abre depois de já ter concluído o andar 7.</p><div class="ops"><button data-b="0"><b>Abrir a tumba</b><span class="g">enfrentar o Rei Esqueleto</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">ele continua aqui na próxima descida</span></button></div>`;
     } else if (chB && bencaos[0] === 11) {
-      $('bencaos').innerHTML = `<div class="cab"><span>A porta do Açougueiro</span><span id="ben-t"></span></div><p class="frase">“Ah... carne fresca!”</p><p class="nota">Missão deste save. Atrás da porta, entre os corpos, está o Açougueiro: um só inimigo, muito forte e rápido. Vencê-lo dá o <b>Cutelo do Açougueiro</b> e ouro. Sem resposta, o necromante só abre depois de já ter concluído o andar 5.</p><div class="ops"><button data-b="0"><b>Abrir a porta</b><span class="g">enfrentar o Açougueiro</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">ele continua aqui na próxima descida</span></button></div>`;
+      $('bencaos').innerHTML = `<div class="cab"><span>A porta do Açougueiro</span><span id="ben-t"></span></div><p class="frase">“Do outro lado, um gancho range e alguém afia um cutelo.”</p><p class="nota">Missão deste save. Atrás da porta, entre os corpos, está o Açougueiro: um só inimigo, muito forte e rápido. Vencê-lo dá o <b>Cutelo do Açougueiro</b> e ouro. Sem resposta, o necromante só abre depois de já ter concluído o andar 5.</p><div class="ops"><button data-b="0"><b>Abrir a porta</b><span class="g">enfrentar o Açougueiro</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">ele continua aqui na próxima descida</span></button></div>`;
     } else if (chB) { const sv = SANTUARIOS[bencaos[0]] || ['Santuário', '', ''], conhecido = bencaos[1] === 1;
       $('bencaos').innerHTML = `<div class="cab"><span>${escHtml(sv[0])}</span><span id="ben-t"></span></div><p class="frase">“${escHtml(sv[1])}”</p><p class="nota">${conhecido ? 'Você já conhece este santuário: ' + escHtml(sv[2]) + '.' : 'Você ainda não sabe o que ele faz. Pode ajudar ou cobrar um preço.'} Sem resposta, o necromante usa.</p><div class="ops"><button data-b="0"><b>Usar o santuário</b><span class="g">${conhecido ? escHtml(sv[2]) : 'descobrir o efeito'}</span></button><button data-b="1"><b>Seguir adiante</b><span class="p" style="color:var(--fraco)">deixar o santuário intocado</span></button></div>`; }
   }
@@ -1956,7 +1956,7 @@ function atualizarPainel(forcar) {
       if (d.grimorio[8] && !d.grimorio[8].nivel) dicas.push('Você ainda não conhece o <b>Relâmpago em Cadeia</b>. É dano de raio: bom contra Súcubos e contra o que é imune a sombra.');
       if (d.grimorio[7] && !d.grimorio[7].nivel) dicas.push('Você ainda não conhece a <b>Muralha de Fogo</b>. O livro cai de chefes e elites, e a Bruxa às vezes o vende; fogo fere o que é imune a sombra e veneno.');
       if (d.grimorio[6] && !d.grimorio[6].nivel) dicas.push('Você ainda não conhece o <b>Golem</b>. A Bruxa às vezes tem o livro.');
-      h += `<h3>Ancião</h3><p class="nota" style="font-style:italic">“Fique um pouco e escute.”</p>` + dicas.slice(0, 3).map((t) => `<div class="linha"><div class="corpo"><small style="font-size:13px;color:#d8cfc0">${t}</small></div></div>`).join(''); }
+      h += `<h3>Ancião</h3><p class="nota" style="font-style:italic">“Sente-se. Os mortos falam, se você souber ouvir.”</p>` + dicas.slice(0, 3).map((t) => `<div class="linha"><div class="corpo"><small style="font-size:13px;color:#d8cfc0">${t}</small></div></div>`).join(''); }
     const fechados = d.inventario.map((it, i) => [it, i]).filter(([it]) => it && it.nid);
     if (fechados.length) {
       const total = fechados.reduce((t, [it]) => t + it.custoId, 0);
