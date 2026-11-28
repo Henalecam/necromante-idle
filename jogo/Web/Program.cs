@@ -495,7 +495,10 @@ public static partial class Jogo
                 break;
             case "almas":
                 for (int i = 0; i < (int)Math.Min(30, v); i++)
-                    _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, (EspecieId)(1 + rng.Intervalo(0, TabelaEspecies.Total - 1)), (Qualidade)rng.Intervalo(1, 5)));
+                {
+                    EspecieId es; do es = (EspecieId)(1 + rng.Intervalo(0, TabelaEspecies.Total - 1)); while (TabelaEspecies.Obter(es).Chefe);   // só espécies erguíveis
+                    _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, es, (Qualidade)rng.Intervalo(1, 5)));
+                }
                 break;
             case "missao": if (Missoes.Atual(_p, _cfg) != null) { _p.MissaoAtual++; _p.ProgressoMissao = 0; } break;
             case "conjunto":
