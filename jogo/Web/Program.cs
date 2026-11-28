@@ -497,6 +497,9 @@ public static partial class Jogo
                     if (Equipamento.Cabe(_p, it, _cfg)) _p.Inventario.Add(it);
                 }
                 break;
+            case "sineiro":   // teste: uma alma Vigorosa de Sineiro Oco no começo do Filactério
+                _p.Filacterio.Insert(0, GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Sineiro, Qualidade.Vigorosa));
+                break;
             case "novas":   // teste: almas do Arauto de Cinzas e do Lacaio Ígneo no fim do Filactério
                 _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.ArautoDeCinzas, Qualidade.Vigorosa)); _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.LacaioIgneo, Qualidade.Vigorosa));
                 for (int k = 0; k < 3; k++) { _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Carpideira, Qualidade.Comum)); _p.Filacterio.Add(GeradorDeAlmas.Gerar(rng, _cfg, EspecieId.Magistrado, Qualidade.Comum)); }   // e 3+3 para testar a fusão

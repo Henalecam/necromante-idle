@@ -541,7 +541,7 @@ function evento(v) {
     return;
   }
   if (tipo === 'EfeitoAplicado' && (v[14] === '63' || v[14] === '64')) {   // Sineiro Oco: a badalada atordoa (63 os seus minions, 64 inimigos, pelo Sineiro erguido)
-    const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'atordoado', cor: '#e0c070', t: 0.9, amigo: v[14] === '64' });
+    const g = estado.get(+v[3]); if (g) numeros.push({ x: g.x, y: g.y, txt: 'atordoado', cor: '#e0c070', t: 0.9, amigo: v[14] === '64' }); if (v[14] === '64') window.__badaladas = (window.__badaladas || 0) + 1;   // contador para os testes de tela
     if (performance.now() - (evento.sinoEm || 0) > 1500) { evento.sinoEm = performance.now(); som('sino'); }
     if (v[14] === '63' && !evento.avisouSineiro) { evento.avisouSineiro = true; aviso('Sineiro Oco · a badalada atordoa quem está perto'); anotar('Um <b>Sineiro Oco</b> apareceu: a badalada dele deixa os seus minions parados por um instante. Mate-o primeiro (toque nele para marcar o alvo).'); }
     return;
@@ -1864,10 +1864,18 @@ const TRACOS = { 0: ['Faminto', 'rouba vida a cada golpe'], 1: ['Frenético', 'a
   4: ['Leal', 'sofre menos dano perto do necromante'], 5: ['Incandescente', 'parte do dano vira fogo'], 11: ['Colosso', 'muito mais vida'], 12: ['Carniceiro', 'muito mais dano'], 13: ['Agourento', 'mais acertos críticos'] };
 const donsHtml = (dn) => dn && dn.some((x) => x) ? '<small>Dons: ' + ['Vida', 'Dano', 'Velocidade'].map((n, k) => dn[k] ? `<span style="color:${dn[k] > 0 ? '#8fd89f' : '#e08a8a'}">${n} ${dn[k] > 0 ? '+' : ''}${dn[k]}%</span>` : '').filter(Boolean).join(' · ') + '</small>' : '';
 // miniatura do sprite (quadro parado, de frente para a câmera) para as listas
+// espécies com arte provisória (sprite emprestado + tinta) também ganham a tinta no retrato das cartas, senão o Sineiro parece um Esqueleto
+function filtroTinta(sprite) {
+  const v = visual(String(sprite || '')); if (!v || !v[2]) return '';
+  const [r, g, b] = v[2].split(',').map(Number), mx = Math.max(r, g, b) / 255, mn = Math.min(r, g, b) / 255, d = mx - mn;
+  let h = 0; if (d > 0.04) { const R = r / 255, G = g / 255, B = b / 255; h = mx === R ? 60 * (((G - B) / d) % 6) : mx === G ? 60 * ((B - R) / d + 2) : 60 * ((R - G) / d + 4); }
+  const forca = Math.min(1, (v[3] || 0.4) * 1.6), luz = Math.max(0.45, Math.min(1.15, (0.3 * r + 0.59 * g + 0.11 * b) / 150));
+  return d > 0.04 ? `filter:sepia(${forca.toFixed(2)}) saturate(${(1 + forca).toFixed(2)}) hue-rotate(${Math.round(h - 38)}deg) brightness(${luz.toFixed(2)});` : `filter:grayscale(${forca.toFixed(2)}) brightness(${luz.toFixed(2)});`;
+}
 function thumb(sprite) {
   const m = monstro(sprite, false), a = m.acoes.parado; if (!a) return '<div class="thumb"></div>';
   const k = 46 / Math.min(m.W, m.H) * 1.9, x = 23 - m.pivo[0] * k, y = 40 - (m.H - m.pivo[1]) * k;
-  return `<div class="thumb" style="background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
+  return `<div class="thumb" style="${filtroTinta(sprite)}background-image:url(arte/${m.meta.nome}/${a.arquivo.replace('.png', '.webp')});background-size:${a.frames * m.W * k}px ${8 * m.H * k}px;background-position:${x}px ${y - m.H * k}px"></div>`;
 }
 // o que cada feitiço faz (conferido com o núcleo: Config.Feiticos e Simulacao.Necromante/Lancar*)
 const DESC_FEITICO = {
