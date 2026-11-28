@@ -316,6 +316,14 @@ public static partial class Jogo
             int tem = (int)c.Id < bq.PecasDeConjunto.Length ? bq.PecasDeConjunto[(int)c.Id] : 0;
             sb.Append(",\"conj\":{\"nome\":").Append(S(c.Nome)).Append(",\"tem\":").Append(tem).Append(",\"pecas\":[");
             for (int i = 0; i < c.NomesDasPecas.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(c.NomesDasPecas[i])); }
+            sb.Append("],\"st\":[");   // por peça: 2 = vestida, 1 = no inventário, 0 = falta achar
+            for (int i = 0; i < c.NomesDasPecas.Length; i++)
+            {
+                int st = 0; string nm = c.NomesDasPecas[i];
+                for (int e = 0; e < TabelaItens.TotalDeEspacos && st < 2; e++) { var eq = Equipamento.Obter(_p, (EspacoEquipamento)e); if (eq != null && eq.Nome == nm) st = 2; }
+                if (st == 0) foreach (var iv in _p.Inventario) if (iv != null && iv.Nome == nm) { st = 1; break; }
+                if (i > 0) sb.Append(','); sb.Append(st);
+            }
             sb.Append("],\"b2\":[");
             for (int i = 0; i < c.BonusCom2.Length; i++) { if (i > 0) sb.Append(','); sb.Append(S(TabelaItens.Descrever(c.BonusCom2[i]))); }
             sb.Append("],\"b3\":[");
@@ -501,8 +509,8 @@ public static partial class Jogo
                 }
                 break;
             case "missao": if (Missoes.Atual(_p, _cfg) != null) { _p.MissaoAtual++; _p.ProgressoMissao = 0; } break;
-            case "conjunto":
-                for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) for (int i = 0; i < 3; i++)
+            case "conjunto":   // teste: as 3 peças do conjunto v (1..N)
+                for (int c = 0; c < TabelaItens.Conjuntos.Length; c++) if ((int)TabelaItens.Conjuntos[c].Id == (int)v) for (int i = 0; i < 3; i++)
                 { var pc = GeradorDeItens.GerarPecaDeConjunto(rng, _cfg, Math.Max(1, _p.MaiorAndarConcluido), TabelaItens.Conjuntos[c].Id, i); if (Equipamento.Cabe(_p, pc, _cfg)) _p.Inventario.Add(pc); }
                 break;
             case "afixo":   // teste: um Relicário Raro com o afixo de duração dos mortos temporários
