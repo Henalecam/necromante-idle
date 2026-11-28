@@ -39,7 +39,7 @@ namespace Necro.Nucleo
         MareRubra = 6
     }
 
-    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1, GarrasDoCarniceiro = 2, PregadorDeCinzas = 3 }
+    public enum ConjuntoId { Nenhum = 0, VestesDoCoveiro = 1, GarrasDoCarniceiro = 2, PregadorDeCinzas = 3, CortejoFunebre = 4 }
 
     /// <summary>Como a faixa de um afixo cresce com o nível do item.</summary>
     public enum EscalaAfixo
@@ -208,6 +208,15 @@ namespace Necro.Nucleo
                 NomesDasPecas = new[] { "Báculo do Pregador de Cinzas", "Missal do Pregador de Cinzas", "Aliança do Pregador de Cinzas" },
                 BonusCom2 = new[] { new AfixoRolado(AfixoItem.DanoDeFeiticos, 0.15f) },
                 BonusCom3 = new[] { new AfixoRolado(AfixoItem.RegenMana, 1.0f) }
+            },
+            // conjunto original: as vestes de quem acompanha os enterros. Liga-se aos mortos temporários (Golem, Ossário, Coroa, Mãe Carniça)
+            new DadosConjunto
+            {
+                Id = ConjuntoId.CortejoFunebre, Nome = "Véus do Cortejo Fúnebre",
+                Pecas = new[] { TipoItem.Relicario, TipoItem.Peitoral, TipoItem.Luvas },
+                NomesDasPecas = new[] { "Relicário do Cortejo", "Mortalha do Cortejo", "Luvas do Cortejo" },
+                BonusCom2 = new[] { new AfixoRolado(AfixoItem.DuracaoDosTemporarios, 0.30f) },
+                BonusCom3 = new[] { new AfixoRolado(AfixoItem.VidaDosMinions, 0.15f), new AfixoRolado(AfixoItem.RouboDeVidaDosMinions, 0.02f) }
             }
         };
 
