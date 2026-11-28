@@ -2116,7 +2116,7 @@ namespace Necro.Testes
                 var s = new Simulacao(c, p, 4, ModoExpedicao.Avancar, 3) { LimiteDeAndares = 1 }; bool viuTemp = false;
                 for (int k = 0; k < 20000 && !s.Encerrada && s.Resultado.OssariosErguidos == 0; k++) s.Tick();
                 viuTemp = s.Entidades.Exists(e => e.Viva && e.Faccao == Faccao.Minion && e.Temporario && e.Especie == EspecieId.Esqueleto);
-                Afirmar(s.Salas.Contains(TipoSala.OssarioEsquecido) && s.Resultado.OssariosErguidos >= 1 && viuTemp, "a sala existe e um esqueleto temporário se levanta (" + s.Resultado.OssariosErguidos + ")");
+                Afirmar(s.Salas.Contains(TipoSala.OssarioEsquecido) && s.Resultado.OssariosErguidos == 1 && viuTemp, "a sala existe e um esqueleto temporário se levanta (" + s.Resultado.OssariosErguidos + ")");
                 bool apareceFundo = false;
                 for (int k = 1; k <= 60 && !apareceFundo; k++) { var c2 = new ConfigJogo { ChanceDeSalaEspecial = 1f }; if (new Simulacao(c2, ProgressoCom(EspecieId.Zumbi), (ulong)k, ModoExpedicao.Avancar, 14).Salas.Contains(TipoSala.OssarioEsquecido)) apareceFundo = true; }
                 Afirmar(!apareceFundo, "não aparece depois do andar 10");

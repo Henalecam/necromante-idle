@@ -1065,6 +1065,7 @@ function desenharObjeto(dt) {
     const o2 = offDaSala(i), [fx, fy] = W(o2[0] + 10, o2[1] + 6);
     pintarObjeto({ tipo: t, x: 10, y: 6, t: tempoSim + i, aberto: 0, tocado: false, futuro: true }, fx, fy);
   });
+  if (window.__amostra) { const m = ctx.getTransform(); ctx.setTransform(1, 0, 0, 1, 0, 0); window.__amostra.forEach((tp, k) => pintarObjeto({ tipo: tp, t: tempoSim, aberto: k % 2, tocado: false }, 90 + k * 110, 140)); ctx.setTransform(m); }
   if (!objeto) return;
   const o = objeto; o.t += dt; if (o.aberto) { o.aberto += dt; if (o.aberto > 1.6 && masm.fase !== 'Explorando') { objeto = null; return; } }
   { const [px, py] = naTela(o.x, o.y); pintarObjeto(o, px, py); }
@@ -1162,10 +1163,12 @@ function pintarObjeto(o, px, py) {
     ctx.fillStyle = '#3a2a1a'; ctx.fillRect(26, -40, 3, 40); ctx.fillRect(18, -2, 19, 4);
     if (!ab) { const ga = ctx.createLinearGradient(16, 0, 40, 0); ga.addColorStop(0, '#4a5058'); ga.addColorStop(0.5, '#a8b0bc'); ga.addColorStop(1, '#3a4048'); ctx.fillStyle = ga; ctx.beginPath(); ctx.moveTo(17, -44); ctx.lineTo(38, -44); ctx.lineTo(36, -18); ctx.lineTo(19, -18); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.arc(27.5, -50, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#14181c'; ctx.fillRect(24, -52, 7, 2);
       ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = `rgba(200,215,240,${0.10 + 0.12 * pulso})`; ctx.beginPath(); ctx.arc(27, -34, 26, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
-  } else if (o.tipo === 29) {    // ossário esquecido: monte de ossos com um crânio no topo; aberto, os ossos se espalham
-    const sp = ab ? 1.6 : 1; ctx.fillStyle = '#cfc6b0';
-    for (let k = 0; k < 14; k++) { const a = k * 2.4, r = (6 + (k % 4) * 5) * sp; ctx.save(); ctx.translate(Math.cos(a) * r, Math.sin(a) * r * 0.4 - (ab ? 0 : 6 + (k % 3) * 3)); ctx.rotate(a); ctx.fillRect(-8, -1.6, 16, 3.2); ctx.beginPath(); ctx.arc(-8, 0, 2.4, 0, 7); ctx.arc(8, 0, 2.4, 0, 7); ctx.fill(); ctx.restore(); }
-    if (!ab) { ctx.fillStyle = '#e6dfcc'; ctx.beginPath(); ctx.arc(0, -22, 8, 0, 7); ctx.fill(); ctx.fillStyle = '#1a1410'; ctx.beginPath(); ctx.arc(-3, -23, 1.8, 0, 7); ctx.arc(3, -23, 1.8, 0, 7); ctx.fill(); }
+  } else if (o.tipo === 29) {    // ossário esquecido: monte de ossos com crânios; aberto, os ossos se espalham
+    const sp = ab ? 1.7 : 1;
+    if (!ab) { ctx.fillStyle = '#3a3026'; ctx.beginPath(); ctx.ellipse(0, -4, 30, 14, 0, 0, 7); ctx.fill(); }
+    for (let k = 0; k < 26; k++) { const a = k * 2.399, r = (3 + (k * 7 % 23)) * sp, alt = ab ? 0 : Math.max(0, 16 - r * 0.6); ctx.fillStyle = k % 3 ? '#cfc6b0' : '#a89e86'; ctx.save(); ctx.translate(Math.cos(a) * r, Math.sin(a) * r * 0.45 - alt); ctx.rotate(a * 1.7); ctx.fillRect(-7, -1.4, 14, 2.8); ctx.beginPath(); ctx.arc(-7, 0, 2.1, 0, 7); ctx.arc(7, 0, 2.1, 0, 7); ctx.fill(); ctx.restore(); }
+    const cranio = (x, y, r) => { ctx.fillStyle = '#e6dfcc'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.fillRect(x - r * 0.6, y + r * 0.5, r * 1.2, r * 0.6); ctx.fillStyle = '#1a1410'; ctx.beginPath(); ctx.arc(x - r * 0.38, y, r * 0.24, 0, 7); ctx.arc(x + r * 0.38, y, r * 0.24, 0, 7); ctx.fill(); };
+    if (!ab) { cranio(0, -24, 9); cranio(-15, -10, 6); cranio(13, -8, 6); } else { cranio(-26, 2, 6); cranio(24, -2, 6); }
   } else if (o.tipo === 16) {    // biblioteca: estante alta de livros entre duas velas, com um tomo aberto no atril
     ctx.fillStyle = '#2a1a10'; ctx.fillRect(-30, -74, 60, 74); ctx.fillStyle = '#3c2616'; ctx.fillRect(-33, -78, 66, 6); ctx.fillRect(-33, -2, 66, 5);
     for (let pr = 0; pr < 4; pr++) {
@@ -2322,6 +2325,8 @@ window.__nomesUnicos = () => { const r = []; for (const s of estado.values()) if
 window.__unicos = () => { let n = 0; for (const s of estado.values()) if (s.viva && nomesUnicos.has(s.id)) n++; return n; };
 window.__quebraveis = () => quebraveis.filter((q) => q[0] === masm.sala && !q[4]).length;
 window.__objetoTipo = () => (objeto && !objeto.aberto ? objeto.tipo : -1);
+window.__objetoTela = () => (objeto ? [objeto.tipo, objeto.aberto, ...naTela(objeto.x, objeto.y).map(Math.round)] : null);   // testes: onde o objeto da sala está na tela
+window.__amostraObjetos = (tipos) => { window.__amostra = tipos; };   // testes: desenha objetos de sala no canto da arena para conferir a arte
 window.__patrulha = () => (patrulha ? patrulha.sala : -1);
 window.__cena = () => [!!descida, !!chegada];
 window.__esp = () => espFx.length > 0 && performance.now() - espFx[espFx.length - 1].t < 300;
