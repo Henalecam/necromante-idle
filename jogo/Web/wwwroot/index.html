@@ -155,6 +155,7 @@
   #missao .tit { color:var(--ouro); letter-spacing:.5px; }
   #missao .hist { color:var(--fraco); font-style:italic; margin:2px 0 4px; }
   @media (max-width:1050px) { #missao .hist { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; } }   /* no celular, o texto de sabor da missão ocupa uma linha só */
+  #missao .hist.dica { color:#e8c878; font-style:normal; -webkit-line-clamp:3; } #missao.min .hist.dica { display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }   /* dica de missão parada: aparece até minimizada e pode ocupar mais linhas */
   #missao .barra { height:5px; background:#0008; border-radius:3px; margin-top:5px; overflow:hidden; }
   #missao .barra div { height:100%; background:linear-gradient(90deg,#6a0f18,#c8323c); }
   #missao button.pronta { background:#5a1a10; border-color:var(--ouro); color:#fff; animation:pulso 1.2s infinite; }

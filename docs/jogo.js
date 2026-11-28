@@ -1958,7 +1958,7 @@ function atualizarPainel(forcar) {
   if (!m) hm = '<div class="corpo"><span class="tit">Missões da história: todas cumpridas</span><div class="hist">Agora é descer: cada andar novo rende mais. As missões deste save, os Únicos e os santuários que faltam estão na aba Masmorra.</div></div>';
   else {
     const premio = [m.ossos ? fmt(m.ossos) + ' Ossos' : '', m.essencia ? fmt(m.essencia) + ' Ess.' : ''].filter(Boolean).join(' + ');
-    hm = `<div class="corpo"><span class="tit">Missão ${m.n}/${m.total} · ${esc(m.titulo)}</span><div class="hist">${esc(m.historia)}</div>${esc(m.objetivo)}` +
+    hm = `<div class="corpo"><span class="tit">Missão ${m.n}/${m.total} · ${esc(m.titulo)}</span>${!m.pronta && parada.n === m.n && parada.exp >= 3 && DICA_MISSAO[m.tipo] ? `<div class="hist dica" title="${esc(m.historia)}">Dica: ${DICA_MISSAO[m.tipo]}</div>` : `<div class="hist">${esc(m.historia)}</div>`}${esc(m.objetivo)}` +
       (m.de > 1 ? ` <span class="nota">(${m.feito}/${m.de})</span>` : '') + `<div class="barra"><div style="width:${Math.round(100 * m.feito / m.de)}%"></div></div></div>` +
       (m.pronta ? `<button data-ac="resgatar" class="pronta">Resgatar<br><small>${premio}</small></button>`
         : `<span class="nota">Prêmio:<br>${premio}</span>`);
